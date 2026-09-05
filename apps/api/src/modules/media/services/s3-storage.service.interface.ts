@@ -43,6 +43,19 @@ export interface IS3StorageService {
     key: string,
     expiresInSeconds?: number
   ): Promise<string>;
+
+  downloadFile(
+    bucket: string,
+    key: string,
+    localDestinationPath: string
+  ): Promise<void>;
+
+  uploadFileFromDisk(
+    bucket: string,
+    key: string,
+    localFilePath: string,
+    contentType: string
+  ): Promise<void>;
 }
 
 export const S3_STORAGE_SERVICE = "S3_STORAGE_SERVICE";

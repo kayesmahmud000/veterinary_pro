@@ -17,6 +17,8 @@ describe("MediaUploadService", () => {
       abortMultipartUpload: jest.fn(),
       getPresignedPutUrl: jest.fn(),
       getPresignedGetUrl: jest.fn(),
+      downloadFile: jest.fn(),
+      uploadFileFromDisk: jest.fn(),
     };
 
     envService = {
@@ -137,6 +139,39 @@ describe("MediaUploadService", () => {
       expect(result.location).toBe("https://s3.amazonaws.com/raw-videos/lecture.mp4");
       expect(result.etag).toBe('"combined-etag"');
       expect(s3Storage.completeMultipartUpload).toHaveBeenCalled();
+    });
+
+    it("should automatically dispatch transcode job when raw-video upload completes", async () => {
+      const mockQueue = {
+        dispatchTranscodeJob: jest.fn().mockResolvedValue({ jobId: "job-1" }),
+        getJobStatus: jest.fn(),
+      };
+      const serviceWithQueue = new MediaUploadService(
+        s3Storage,
+        envService,
+        mockQueue
+      );
+
+      s3Storage.completeMultipartUpload.mockResolvedValueOnce({
+        location: "https://s3.amazonaws.com/raw-videos/prod-1111/lecture.mp4",
+        etag: '"etag"',
+      });
+
+      await serviceWithQueue.completeMultipartUpload(
+        {
+          uploadId: "upload-123",
+          key: "raw-videos/prod-1111/1725540000-uuid.mp4",
+          parts: [{ partNumber: 1, etag: '"etag"' }],
+        },
+        "user-vet-1"
+      );
+
+      expect(mockQueue.dispatchTranscodeJob).toHaveBeenCalledWith({
+        productId: "prod-1111",
+        rawS3Key: "raw-videos/prod-1111/1725540000-uuid.mp4",
+        bucket: "vetralink-media-test",
+        requestedBy: "user-vet-1",
+      });
     });
 
     it("should throw ValidationDomainException if parts array is empty", async () => {

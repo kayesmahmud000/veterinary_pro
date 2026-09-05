@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import {
   JwtPayload,
   MediaCategory,
+  TranscodeStatus,
   UserRole,
   UserStatus,
 } from "@vetralink/shared-types";
@@ -10,11 +11,19 @@ import {
   IMediaUploadService,
   MEDIA_UPLOAD_SERVICE,
 } from "./services/media-upload.service.interface";
+import {
+  IVideoTranscodeQueueService,
+  VIDEO_TRANSCODE_QUEUE_SERVICE,
+} from "./services/video-transcode-queue.service.interface";
+import { EnvService } from "../../config/env.service";
 import { TOKEN_SERVICE } from "../auth/services/token.service.interface";
+import { EntityNotFoundException } from "../../common/exceptions/domain.exception";
 
 describe("MediaUploadController", () => {
   let controller: MediaUploadController;
   let mockMediaUploadService: jest.Mocked<IMediaUploadService>;
+  let mockTranscodeQueueService: jest.Mocked<IVideoTranscodeQueueService>;
+  let mockEnvService: jest.Mocked<EnvService>;
 
   const mockUser: JwtPayload = {
     sub: "user-vet-123",
@@ -32,12 +41,29 @@ describe("MediaUploadController", () => {
       generateDirectUploadUrl: jest.fn(),
     };
 
+    mockTranscodeQueueService = {
+      dispatchTranscodeJob: jest.fn(),
+      getJobStatus: jest.fn(),
+    };
+
+    mockEnvService = {
+      s3BucketMedia: "test-media-bucket",
+    } as unknown as jest.Mocked<EnvService>;
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MediaUploadController],
       providers: [
         {
           provide: MEDIA_UPLOAD_SERVICE,
           useValue: mockMediaUploadService,
+        },
+        {
+          provide: VIDEO_TRANSCODE_QUEUE_SERVICE,
+          useValue: mockTranscodeQueueService,
+        },
+        {
+          provide: EnvService,
+          useValue: mockEnvService,
         },
         {
           provide: TOKEN_SERVICE,
@@ -185,4 +211,65 @@ describe("MediaUploadController", () => {
       expect(result).toEqual(expectedResponse);
     });
   });
+
+  describe("queueTranscode", () => {
+    it("should delegate to transcodeQueueService and return accepted payload", async () => {
+      const dto = {
+        productId: "prod-1111-1111-1111-111111111111",
+        rawS3Key: "raw-videos/prod-1111/master.mp4",
+      };
+
+      mockTranscodeQueueService.dispatchTranscodeJob.mockResolvedValueOnce({
+        jobId: "transcode-prod-1111-12345",
+      });
+
+      const result = await controller.queueTranscode(dto, mockUser);
+
+      expect(mockTranscodeQueueService.dispatchTranscodeJob).toHaveBeenCalledWith({
+        productId: dto.productId,
+        rawS3Key: dto.rawS3Key,
+        bucket: "test-media-bucket",
+        requestedBy: mockUser.sub,
+      });
+      expect(result).toEqual({
+        jobId: "transcode-prod-1111-12345",
+        productId: dto.productId,
+        status: TranscodeStatus.PENDING,
+      });
+    });
+  });
+
+  describe("getTranscodeStatus", () => {
+    it("should return job status when job exists", async () => {
+      const mockStatus = {
+        jobId: "transcode-123",
+        state: "active" as const,
+        progress: 50,
+        data: {
+          productId: "prod-1",
+          rawS3Key: "raw-videos/master.mp4",
+          bucket: "test-bucket",
+          requestedBy: "vet-1",
+        },
+      };
+
+      mockTranscodeQueueService.getJobStatus.mockResolvedValueOnce(mockStatus);
+
+      const result = await controller.getTranscodeStatus("transcode-123");
+
+      expect(mockTranscodeQueueService.getJobStatus).toHaveBeenCalledWith(
+        "transcode-123"
+      );
+      expect(result).toEqual(mockStatus);
+    });
+
+    it("should throw EntityNotFoundException when job does not exist", async () => {
+      mockTranscodeQueueService.getJobStatus.mockResolvedValueOnce(null);
+
+      await expect(
+        controller.getTranscodeStatus("non-existent-job")
+      ).rejects.toThrow(EntityNotFoundException);
+    });
+  });
 });
+

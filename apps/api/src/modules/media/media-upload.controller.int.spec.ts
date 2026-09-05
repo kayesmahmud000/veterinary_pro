@@ -22,12 +22,18 @@ import {
   ITokenService,
   TOKEN_SERVICE,
 } from "../auth/services/token.service.interface";
+import {
+  IVideoTranscodeQueueService,
+  VIDEO_TRANSCODE_QUEUE_SERVICE,
+} from "./services/video-transcode-queue.service.interface";
+import { EnvService } from "../../config/env.service";
 import { ResponseInterceptor } from "../../common/interceptors/response.interceptor";
 import { GlobalExceptionFilter } from "../../common/filters/global-exception.filter";
 
 describe("MediaUploadController (Integration via Supertest)", () => {
   let app: INestApplication;
   let mediaUploadService: jest.Mocked<IMediaUploadService>;
+  let transcodeQueueService: jest.Mocked<IVideoTranscodeQueueService>;
   let tokenService: jest.Mocked<ITokenService>;
 
   const vetPayload = {
@@ -56,6 +62,11 @@ describe("MediaUploadController (Integration via Supertest)", () => {
       generateDirectUploadUrl: jest.fn(),
     };
 
+    transcodeQueueService = {
+      dispatchTranscodeJob: jest.fn(),
+      getJobStatus: jest.fn(),
+    };
+
     tokenService = {
       generateTokens: jest.fn(),
       generateAccessToken: jest.fn(),
@@ -75,6 +86,14 @@ describe("MediaUploadController (Integration via Supertest)", () => {
         {
           provide: MEDIA_UPLOAD_SERVICE,
           useValue: mediaUploadService,
+        },
+        {
+          provide: VIDEO_TRANSCODE_QUEUE_SERVICE,
+          useValue: transcodeQueueService,
+        },
+        {
+          provide: EnvService,
+          useValue: { s3BucketMedia: "vetralink-media" },
         },
         {
           provide: TOKEN_SERVICE,
@@ -305,4 +324,103 @@ describe("MediaUploadController (Integration via Supertest)", () => {
       );
     });
   });
+
+  describe("POST /media/uploads/transcode", () => {
+    const validBody = {
+      productId: "11111111-1111-4111-8111-111111111111",
+      rawS3Key: "raw-videos/11111111-1111-4111-8111-111111111111/master.mp4",
+    };
+
+    it("should return 401 when no token is provided", async () => {
+      await request(app.getHttpServer())
+        .post("/media/uploads/transcode")
+        .send(validBody)
+        .expect(401);
+    });
+
+    it("should return 403 when FARMER requests transcoding", async () => {
+      await request(app.getHttpServer())
+        .post("/media/uploads/transcode")
+        .set("Authorization", `Bearer ${farmerToken}`)
+        .send(validBody)
+        .expect(403);
+    });
+
+    it("should return 202 and queue transcode job for VET", async () => {
+      transcodeQueueService.dispatchTranscodeJob.mockResolvedValueOnce({
+        jobId: "transcode-prod-1111-12345",
+      });
+
+      const res = await request(app.getHttpServer())
+        .post("/media/uploads/transcode")
+        .set("Authorization", `Bearer ${vetToken}`)
+        .send(validBody)
+        .expect(202);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.statusCode).toBe(202);
+      expect(res.body.message).toBe("Video transcoding job queued successfully");
+      expect(res.body.data).toEqual({
+        jobId: "transcode-prod-1111-12345",
+        productId: validBody.productId,
+        status: "PENDING",
+      });
+      expect(transcodeQueueService.dispatchTranscodeJob).toHaveBeenCalledWith({
+        productId: validBody.productId,
+        rawS3Key: validBody.rawS3Key,
+        bucket: "vetralink-media",
+        requestedBy: vetPayload.sub,
+      });
+    });
+
+    it("should return 400 when productId is not a valid UUID", async () => {
+      await request(app.getHttpServer())
+        .post("/media/uploads/transcode")
+        .set("Authorization", `Bearer ${vetToken}`)
+        .send({ productId: "invalid-uuid", rawS3Key: "raw-videos/video.mp4" })
+        .expect(400);
+    });
+  });
+
+  describe("GET /media/uploads/transcode/:jobId/status", () => {
+    it("should return 401 when unauthenticated", async () => {
+      await request(app.getHttpServer())
+        .get("/media/uploads/transcode/job-123/status")
+        .expect(401);
+    });
+
+    it("should return 200 with job status when job exists", async () => {
+      const mockStatus = {
+        jobId: "job-123",
+        state: "active" as const,
+        progress: 60,
+        data: {
+          productId: "prod-1",
+          rawS3Key: "raw-videos/master.mp4",
+          bucket: "vetralink-media",
+          requestedBy: vetPayload.sub,
+        },
+      };
+
+      transcodeQueueService.getJobStatus.mockResolvedValueOnce(mockStatus);
+
+      const res = await request(app.getHttpServer())
+        .get("/media/uploads/transcode/job-123/status")
+        .set("Authorization", `Bearer ${vetToken}`)
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toEqual(mockStatus);
+    });
+
+    it("should return 404 when job does not exist", async () => {
+      transcodeQueueService.getJobStatus.mockResolvedValueOnce(null);
+
+      await request(app.getHttpServer())
+        .get("/media/uploads/transcode/non-existent-job/status")
+        .set("Authorization", `Bearer ${vetToken}`)
+        .expect(404);
+    });
+  });
 });
+

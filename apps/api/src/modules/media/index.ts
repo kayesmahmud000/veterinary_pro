@@ -4,4 +4,10 @@ export * from "./services/s3-storage.service.interface";
 export * from "./services/s3-storage.service";
 export * from "./services/media-upload.service.interface";
 export * from "./services/media-upload.service";
+export * from "./services/video-transcoder.service.interface";
+export * from "./services/ffmpeg-transcoder.service";
+export * from "./services/video-transcode-queue.service.interface";
+export * from "./services/video-transcode-queue.service";
+export * from "./processors/video-transcode.processor";
 export * from "./dto";
+

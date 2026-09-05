@@ -10,6 +10,11 @@ import {
   UploadPartCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { createWriteStream } from "node:fs";
+import { mkdir, readFile } from "node:fs/promises";
+import { dirname } from "node:path";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import { EnvService } from "../../../config/env.service";
 import {
   IS3StorageService,
@@ -214,4 +219,65 @@ export class S3StorageService implements IS3StorageService {
       throw error;
     }
   }
+
+  public async downloadFile(
+    bucket: string,
+    key: string,
+    localDestinationPath: string
+  ): Promise<void> {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      });
+
+      const response = await this.s3Client.send(command);
+      if (!response.Body) {
+        throw new Error(
+          `S3 GetObject returned empty body for '${bucket}/${key}'`
+        );
+      }
+
+      await mkdir(dirname(localDestinationPath), { recursive: true });
+      const writeStream = createWriteStream(localDestinationPath);
+      await pipeline(response.Body as Readable, writeStream);
+
+      this.logger.log(
+        `Successfully downloaded 's3://${bucket}/${key}' to '${localDestinationPath}'`
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to download 's3://${bucket}/${key}' to '${localDestinationPath}': ${(error as Error).message}`
+      );
+      throw error;
+    }
+  }
+
+  public async uploadFileFromDisk(
+    bucket: string,
+    key: string,
+    localFilePath: string,
+    contentType: string
+  ): Promise<void> {
+    try {
+      const fileBuffer = await readFile(localFilePath);
+      const command = new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: fileBuffer,
+        ContentType: contentType,
+      });
+
+      await this.s3Client.send(command);
+      this.logger.log(
+        `Successfully uploaded '${localFilePath}' to 's3://${bucket}/${key}' [${contentType}]`
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to upload '${localFilePath}' to 's3://${bucket}/${key}': ${(error as Error).message}`
+      );
+      throw error;
+    }
+  }
 }
+

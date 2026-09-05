@@ -1,6 +1,10 @@
 import { S3StorageService } from "./s3-storage.service";
 import { EnvService } from "../../../config/env.service";
 import { ValidationDomainException } from "../../../common/exceptions/domain.exception";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { Readable } from "node:stream";
 
 jest.mock("@aws-sdk/client-s3", () => {
   const actual = jest.requireActual("@aws-sdk/client-s3");
@@ -159,4 +163,61 @@ describe("S3StorageService", () => {
       expect(url).toBe("https://mock-s3-presigned-url.com");
     });
   });
+
+  describe("downloadFile", () => {
+    it("should download object stream to local path", async () => {
+      const mockStream = new Readable({
+        read() {
+          this.push("test data");
+          this.push(null);
+        },
+      });
+      mockS3Send.mockResolvedValueOnce({
+        Body: mockStream,
+      });
+
+      const destPath = path.join(os.tmpdir(), `test-s3-${Date.now()}.txt`);
+      await service.downloadFile("test-bucket", "test.txt", destPath);
+
+      expect(mockS3Send).toHaveBeenCalled();
+      expect(fs.existsSync(destPath)).toBe(true);
+
+      if (fs.existsSync(destPath)) {
+        fs.unlinkSync(destPath);
+      }
+    });
+
+    it("should throw error if S3 returns empty body", async () => {
+      mockS3Send.mockResolvedValueOnce({ Body: null });
+
+      await expect(
+        service.downloadFile("test-bucket", "test.txt", "/tmp/dest.txt")
+      ).rejects.toThrow("S3 GetObject returned empty body");
+    });
+  });
+
+  describe("uploadFileFromDisk", () => {
+    it("should upload local file stream to S3", async () => {
+      const tempFile = path.join(os.tmpdir(), `upload-test-${Date.now()}.txt`);
+      fs.writeFileSync(tempFile, "sample video data");
+
+      mockS3Send.mockResolvedValueOnce({});
+
+      await service.uploadFileFromDisk(
+        "test-bucket",
+        "hls/master.m3u8",
+        tempFile,
+        "application/vnd.apple.mpegurl"
+      );
+
+      expect(mockS3Send).toHaveBeenCalled();
+
+      try {
+        fs.unlinkSync(tempFile);
+      } catch {
+        // ignore if locked
+      }
+    });
+  });
 });
+

@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Inject,
+  Param,
   Post,
   UseGuards,
 } from "@nestjs/common";
@@ -11,6 +13,7 @@ import {
   ApiBearerAuth,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiResponse,
@@ -23,6 +26,9 @@ import {
   GetPresignedPartUrlResponseDto,
   InitiateMultipartUploadResponseDto,
   JwtPayload,
+  QueueTranscodeResponseDto,
+  TranscodeJobStatusResponseDto,
+  TranscodeStatus,
   UserRole,
 } from "@vetralink/shared-types";
 import { CurrentUser, ResponseMessage, Roles } from "../../common/decorators";
@@ -33,11 +39,18 @@ import {
   DirectUploadDto,
   GetPresignedPartUrlDto,
   InitiateMultipartUploadDto,
+  QueueTranscodeDto,
 } from "./dto";
 import {
   IMediaUploadService,
   MEDIA_UPLOAD_SERVICE,
 } from "./services/media-upload.service.interface";
+import {
+  IVideoTranscodeQueueService,
+  VIDEO_TRANSCODE_QUEUE_SERVICE,
+} from "./services/video-transcode-queue.service.interface";
+import { EnvService } from "../../config/env.service";
+import { EntityNotFoundException } from "../../common/exceptions/domain.exception";
 
 @ApiTags("Media Uploads")
 @ApiBearerAuth()
@@ -46,7 +59,10 @@ import {
 export class MediaUploadController {
   constructor(
     @Inject(MEDIA_UPLOAD_SERVICE)
-    private readonly mediaUploadService: IMediaUploadService
+    private readonly mediaUploadService: IMediaUploadService,
+    @Inject(VIDEO_TRANSCODE_QUEUE_SERVICE)
+    private readonly transcodeQueueService: IVideoTranscodeQueueService,
+    private readonly envService: EnvService
   ) {}
 
   @Post("multipart/initiate")
@@ -160,4 +176,65 @@ export class MediaUploadController {
   ): Promise<DirectUploadResponseDto> {
     return this.mediaUploadService.generateDirectUploadUrl(dto, user.sub);
   }
+
+  @Post("transcode")
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.VET)
+  @ResponseMessage("Video transcoding job queued successfully")
+  @ApiOperation({
+    summary: "Manually queue FFmpeg multi-bitrate HLS transcoding job",
+    description:
+      "Dispatches background worker task to convert raw video master into adaptive HLS stream.",
+  })
+  @ApiResponse({
+    status: HttpStatus.ACCEPTED,
+    description: "Transcoding job accepted and queued in BullMQ",
+  })
+  @ApiUnauthorizedResponse({ description: "Missing or invalid JWT token" })
+  @ApiForbiddenResponse({
+    description: "Requires SUPER_ADMIN, ADMIN, or VET role",
+  })
+  public async queueTranscode(
+    @Body() dto: QueueTranscodeDto,
+    @CurrentUser() user: JwtPayload
+  ): Promise<QueueTranscodeResponseDto> {
+    const result = await this.transcodeQueueService.dispatchTranscodeJob({
+      productId: dto.productId,
+      rawS3Key: dto.rawS3Key,
+      bucket: this.envService.s3BucketMedia,
+      requestedBy: user.sub,
+    });
+
+    return {
+      jobId: result.jobId,
+      productId: dto.productId,
+      status: TranscodeStatus.PENDING,
+    };
+  }
+
+  @Get("transcode/:jobId/status")
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.VET)
+  @ResponseMessage("Transcoding job status retrieved")
+  @ApiOperation({
+    summary: "Get current progress and state of a video transcoding job",
+    description:
+      "Queries BullMQ for active, completed, or failed transcode job metadata.",
+  })
+  @ApiOkResponse({ description: "Current transcoding job state and progress" })
+  @ApiNotFoundResponse({ description: "Job ID not found in queue" })
+  @ApiUnauthorizedResponse({ description: "Missing or invalid JWT token" })
+  @ApiForbiddenResponse({
+    description: "Requires SUPER_ADMIN, ADMIN, or VET role",
+  })
+  public async getTranscodeStatus(
+    @Param("jobId") jobId: string
+  ): Promise<TranscodeJobStatusResponseDto> {
+    const status = await this.transcodeQueueService.getJobStatus(jobId);
+    if (!status) {
+      throw new EntityNotFoundException("TranscodeJob", jobId);
+    }
+    return status;
+  }
 }
+

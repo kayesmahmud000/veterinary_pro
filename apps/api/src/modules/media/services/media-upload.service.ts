@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger, Optional } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import { extname } from "node:path";
 import {
@@ -17,6 +17,10 @@ import {
   IS3StorageService,
   S3_STORAGE_SERVICE,
 } from "./s3-storage.service.interface";
+import {
+  IVideoTranscodeQueueService,
+  VIDEO_TRANSCODE_QUEUE_SERVICE,
+} from "./video-transcode-queue.service.interface";
 import { EnvService } from "../../../config/env.service";
 import { ValidationDomainException } from "../../../common/exceptions/domain.exception";
 import { IMediaUploadService } from "./media-upload.service.interface";
@@ -80,7 +84,10 @@ export class MediaUploadService implements IMediaUploadService {
   constructor(
     @Inject(S3_STORAGE_SERVICE)
     private readonly s3Storage: IS3StorageService,
-    private readonly envService: EnvService
+    private readonly envService: EnvService,
+    @Optional()
+    @Inject(VIDEO_TRANSCODE_QUEUE_SERVICE)
+    private readonly transcodeQueueService?: IVideoTranscodeQueueService
   ) {}
 
   public async initiateMultipartUpload(
@@ -163,6 +170,28 @@ export class MediaUploadService implements IMediaUploadService {
     this.logger.log(
       `User [${userId}] completed multipart upload on '${dto.key}' [${dto.uploadId}]`
     );
+
+    if (this.transcodeQueueService && dto.key.startsWith("raw-videos/")) {
+      const segments = dto.key.split("/");
+      if (segments.length >= 3 && segments[1]) {
+        const potentialProductId = segments[1];
+        try {
+          await this.transcodeQueueService.dispatchTranscodeJob({
+            productId: potentialProductId,
+            rawS3Key: dto.key,
+            bucket,
+            requestedBy: userId,
+          });
+          this.logger.log(
+            `Auto-queued video transcode for product [${potentialProductId}] from '${dto.key}'`
+          );
+        } catch (queueErr) {
+          this.logger.error(
+            `Failed to auto-queue video transcode for '${dto.key}': ${(queueErr as Error).message}`
+          );
+        }
+      }
+    }
 
     return {
       location: result.location,
