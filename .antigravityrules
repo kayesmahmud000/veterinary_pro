@@ -1,4 +1,4 @@
-﻿# VETRALINK PRO — Antigravity Agent Rules
+# VETRALINK PRO — Antigravity Agent Rules
 # Enforced across ALL sessions. These rules are non-negotiable.
 # Last Updated: 2026-09-05 | Version: 1.0.0
 
@@ -148,6 +148,11 @@ MUST emit an AuditLog record in the SAME transaction.
 Prisma migration files are schema-only.
 No data transformations in migration SQL.
 Use seeder scripts or dedicated data-migration scripts for data changes.
+
+### GUARDRAIL-09: STRICT GIT GUARDRAIL
+- The agent MUST NEVER execute `git add`, `git commit`, `git merge`, or `git push`.
+- All Git commit operations must be performed manually by the human developer.
+- When a task is complete, only suggest a conventional commit message.
 
 ---
 

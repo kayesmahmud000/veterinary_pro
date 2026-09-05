@@ -52,3 +52,10 @@ This document must outline:
 1. NEVER bundle an entire Sprint or multiple architectural layers into a single code execution.
 2. Every task in ROADMAP.md must be executed atomically: Spec/Plan -> DTO/Interface -> Implementation -> Test Verification.
 3. STRICT GATE: Complete ONE atomic task -> Verify criteria -> Check off [x] in ROADMAP.md -> STOP and wait for human review before touching the next task.
+
+---
+
+### STRICT GIT GUARDRAIL
+- The agent MUST NEVER execute `git add`, `git commit`, `git merge`, or `git push`.
+- All Git commit operations must be performed manually by the human developer.
+- When a task is complete, only suggest a conventional commit message.
