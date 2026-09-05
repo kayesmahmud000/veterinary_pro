@@ -61,10 +61,10 @@
 
 ### Phase 2: LMS & Digital Store with Payment Webhooks
 > **Sprint 3: Digital Product Catalog & Media Asset Pipeline**  
-> **Status**: 🟡 In Progress (Task 3.1 Complete)
+> **Status**: 🟡 In Progress (Tasks 3.1 & 3.2 Complete)
 
 - [x] **Task 3.1**: Product master CRUD (`VIDEO_COURSE`, `EBOOK`, `EXCEL_TOOL`).
-- [ ] **Task 3.2**: Presigned S3 direct multipart upload for heavy video masters and PDF assets.
+- [x] **Task 3.2**: Presigned S3 direct multipart upload for heavy video masters and PDF assets.
 - [ ] **Task 3.3**: BullMQ video processing worker: FFmpeg automated multi-bitrate HLS segmentation.
 - [ ] **Task 3.4**: AES-128 / DRM key server endpoint with time-bound JWT verification.
 - [ ] **Task 3.5**: CloudFront Origin Access Control (OAC) signed URL delivery pipeline.

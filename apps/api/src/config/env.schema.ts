@@ -48,6 +48,8 @@ export const EnvSchema = z
     AWS_SECRET_ACCESS_KEY: z.string().optional(),
     S3_BUCKET_MEDIA: z.string().default("vetralink-media-dev"),
     S3_BUCKET_DELIVERIES: z.string().default("vetralink-deliveries-dev"),
+    S3_ENDPOINT: z.string().optional(),
+    S3_FORCE_PATH_STYLE: z.coerce.boolean().default(false),
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     DAILY_API_KEY: z.string().optional(),

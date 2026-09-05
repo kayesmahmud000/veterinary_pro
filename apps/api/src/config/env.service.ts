@@ -25,6 +25,8 @@ export interface IEnvService {
   readonly awsSecretAccessKey?: string;
   readonly s3BucketMedia: string;
   readonly s3BucketDeliveries: string;
+  readonly s3Endpoint?: string;
+  readonly s3ForcePathStyle: boolean;
   readonly stripeSecretKey?: string;
   readonly stripeWebhookSecret?: string;
   readonly dailyApiKey?: string;
@@ -124,6 +126,14 @@ export class EnvService implements IEnvService {
 
   get s3BucketDeliveries(): string {
     return this.configService.get("S3_BUCKET_DELIVERIES", { infer: true });
+  }
+
+  get s3Endpoint(): string | undefined {
+    return this.configService.get("S3_ENDPOINT", { infer: true });
+  }
+
+  get s3ForcePathStyle(): boolean {
+    return this.configService.get("S3_FORCE_PATH_STYLE", { infer: true });
   }
 
   get stripeSecretKey(): string | undefined {
