@@ -3,6 +3,8 @@ import { AppConfigModule } from "./config";
 import { PrismaModule } from "./modules/prisma";
 import { AuditModule } from "./modules/audit";
 import { HealthModule } from "./modules/health/health.module";
+import { UsersModule } from "./modules/users";
+import { AuthModule } from "./modules/auth";
 
 @Module({
   imports: [
@@ -10,6 +12,8 @@ import { HealthModule } from "./modules/health/health.module";
     PrismaModule,
     AuditModule,
     HealthModule,
+    UsersModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
