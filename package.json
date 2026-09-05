@@ -1,0 +1,39 @@
+{
+    "name":  "vetralink-pro",
+    "version":  "1.0.0",
+    "private":  true,
+    "description":  "VETRALINK PRO â€” Enterprise Farm SaaS ERP, LMS \u0026 Tele-Veterinary Platform",
+    "workspaces":  [
+                       "apps/*",
+                       "packages/*"
+                   ],
+    "scripts":  {
+                    "build":  "turbo run build",
+                    "dev":  "turbo run dev",
+                    "lint":  "turbo run lint",
+                    "test":  "turbo run test",
+                    "clean":  "turbo run clean \u0026\u0026 rm -rf node_modules",
+                    "db:generate":  "turbo run db:generate",
+                    "db:migrate":  "turbo run db:migrate",
+                    "format":  "prettier --write \"**/*.{ts,tsx,md,json}\""
+                },
+    "devDependencies":  {
+                            "prettier":  "^3.3.3",
+                            "turbo":  "^2.1.1",
+                            "typescript":  "^5.5.4"
+                        },
+    "packageManager":  "pnpm@10.18.3",
+    "engines":  {
+                    "node":  "\u003e=20.0.0",
+                    "pnpm":  "\u003e=9.0.0"
+                },
+    "pnpm":  {
+                 "onlyBuiltDependencies":  [
+                                               "@nestjs/core",
+                                               "@prisma/client",
+                                               "@prisma/engines",
+                                               "esbuild",
+                                               "prisma"
+                                           ]
+             }
+}

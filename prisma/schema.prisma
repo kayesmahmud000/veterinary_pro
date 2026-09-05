@@ -1,0 +1,562 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  VET
+  FARMER
+  BUYER
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum FarmType {
+  DAIRY
+  BEEF
+  POULTRY
+  GOAT_SHEEP
+  MIXED
+}
+
+enum FarmRole {
+  OWNER
+  MANAGER
+  HERDSMAN
+  VET_STAFF
+}
+
+enum AnimalSpecies {
+  COW
+  BUFFALO
+  GOAT
+  SHEEP
+  CAMEL
+  POULTRY
+  OTHER
+}
+
+enum AnimalGender {
+  MALE
+  FEMALE
+}
+
+enum AnimalStatus {
+  ACTIVE
+  QUARANTINE
+  SOLD
+  DECEASED
+  CULLED
+}
+
+enum HealthEventType {
+  ILLNESS
+  INJURY
+  SURGERY
+  ROUTINE_CHECK
+  BREEDING_EXAM
+}
+
+enum SeverityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum MilkSession {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionCategory {
+  FEED
+  MEDICINE
+  LABOR
+  EQUIPMENT
+  MILK_SALES
+  LIVESTOCK_SALES
+  OTHER
+}
+
+enum ProductType {
+  VIDEO_COURSE
+  EBOOK
+  EXCEL_TOOL
+}
+
+enum SubscriptionTier {
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum ConsultationType {
+  ASYNC_TICKET
+  LIVE_VIDEO
+}
+
+enum ConsultationStatus {
+  SUBMITTED
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// ==========================================
+// AUTH & USERS DOMAIN
+// ==========================================
+
+model User {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email           String     @unique @db.VarChar(255)
+  phone           String?    @db.Text // Encrypted ciphertext (AES-256-GCM + IV + AuthTag)
+  phoneHash       String?    @unique @map("phone_hash") @db.VarChar(64) // HMAC-SHA256 blind index for O(1) indexed lookups
+  passwordHash    String     @map("password_hash") @db.VarChar(255)
+  name            String     @db.VarChar(100)
+  role            UserRole   @default(FARMER)
+  status          UserStatus @default(ACTIVE)
+  avatarUrl       String?    @map("avatar_url") @db.Text
+  isEmailVerified Boolean    @default(false) @map("is_email_verified")
+  lastLoginAt     DateTime?  @map("last_login_at") @db.Timestamptz(6)
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?  @map("deleted_at") @db.Timestamptz(6)
+
+  // Relations
+  refreshTokens        RefreshToken[]
+  ownedFarms           Farm[]            @relation("FarmOwner")
+  farmMemberships      FarmMember[]
+  orders               Order[]
+  subscriptions        Subscription[]
+  farmerConsultations  Consultation[]    @relation("FarmerConsultation")
+  vetConsultations     Consultation[]    @relation("VetConsultation")
+  prescriptions        Prescription[]
+  recordedHealthEvents HealthRecord[]    @relation("RecordedBy")
+  attendedHealthEvents HealthRecord[]    @relation("AttendingVet")
+  administeredVaccines VaccineRecord[]   @relation("AdministeredBy")
+  recordedMilkLogs     MilkLog[]
+  recordedTransactions FarmTransaction[]
+  auditLogs            AuditLog[]
+
+  @@index([email])
+  @@index([phoneHash])
+  @@index([role, status])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash") @db.VarChar(255)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(6)
+  ipAddress String?   @map("ip_address") @db.VarChar(45)
+  userAgent String?   @map("user_agent") @db.Text
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ==========================================
+// FARM & MULTI-TENANCY DOMAIN
+// ==========================================
+
+model Farm {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId   String    @map("owner_id") @db.Uuid
+  name      String    @db.VarChar(150)
+  slug      String    @unique @db.VarChar(120)
+  farmType  FarmType  @default(MIXED) @map("farm_type")
+  country   String    @db.VarChar(100)
+  address   String?   @db.Text
+  gpsLat    Decimal?  @map("gps_lat") @db.Decimal(10, 7)
+  gpsLng    Decimal?  @map("gps_lng") @db.Decimal(10, 7)
+  settings  Json      @default("{}")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  owner          User              @relation("FarmOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  members        FarmMember[]
+  animals        Animal[]
+  healthRecords  HealthRecord[]
+  vaccineRecords VaccineRecord[]
+  milkLogs       MilkLog[]
+  transactions   FarmTransaction[]
+  subscriptions  Subscription[]
+  consultations  Consultation[]
+
+  @@index([ownerId])
+  @@map("farms")
+}
+
+model FarmMember {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmId    String   @map("farm_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  role      FarmRole @default(HERDSMAN)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  farm Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([farmId, userId])
+  @@index([farmId])
+  @@index([userId])
+  @@map("farm_members")
+}
+
+// ==========================================
+// LIVESTOCK & ERP DOMAIN
+// ==========================================
+
+model Animal {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmId      String        @map("farm_id") @db.Uuid
+  tagNumber   String        @map("tag_number") @db.VarChar(50)
+  name        String?       @db.VarChar(100)
+  species     AnimalSpecies
+  breed       String?       @db.VarChar(100)
+  gender      AnimalGender
+  dateOfBirth DateTime?     @map("date_of_birth") @db.Date
+  weightKg    Decimal?      @map("weight_kg") @db.Decimal(6, 2)
+  status      AnimalStatus  @default(ACTIVE)
+  sireId      String?       @map("sire_id") @db.Uuid
+  damId       String?       @map("dam_id") @db.Uuid
+  metadata    Json          @default("{}")
+  syncVersion Int           @default(1) @map("sync_version") // Optimistic concurrency & offline sync
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  farm           Farm            @relation(fields: [farmId], references: [id], onDelete: Restrict)
+  sire           Animal?         @relation("SirePedigree", fields: [sireId], references: [id], onDelete: SetNull)
+  dam            Animal?         @relation("DamPedigree", fields: [damId], references: [id], onDelete: SetNull)
+  sireOffspring  Animal[]        @relation("SirePedigree")
+  damOffspring   Animal[]        @relation("DamPedigree")
+  healthRecords  HealthRecord[]
+  vaccineRecords VaccineRecord[]
+  milkLogs       MilkLog[]
+  consultations  Consultation[]
+
+  // Note: Active tag uniqueness enforced via PostgreSQL partial index:
+  // CREATE UNIQUE INDEX uq_active_farm_animal_tag ON animals(farm_id, tag_number) WHERE deleted_at IS NULL;
+  @@index([farmId, tagNumber])
+  @@index([farmId, status])
+  @@index([farmId, species])
+  @@index([farmId, updatedAt])
+  @@map("animals")
+}
+
+model HealthRecord {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmId         String          @map("farm_id") @db.Uuid
+  animalId       String          @map("animal_id") @db.Uuid
+  recordedById   String          @map("recorded_by_id") @db.Uuid
+  attendingVetId String?         @map("attending_vet_id") @db.Uuid
+  eventType      HealthEventType @map("event_type")
+  severity       SeverityLevel   @default(LOW)
+  symptoms       String          @db.Text
+  diagnosis      String?         @db.Text
+  treatment      String?         @db.Text
+  cost           Decimal         @default(0) @db.Decimal(10, 2)
+  resolvedAt     DateTime?       @map("resolved_at") @db.Timestamptz(6)
+  syncVersion    Int             @default(1) @map("sync_version") // Optimistic concurrency & offline sync
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  farm         Farm   @relation(fields: [farmId], references: [id], onDelete: Restrict)
+  animal       Animal @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  recordedBy   User   @relation("RecordedBy", fields: [recordedById], references: [id], onDelete: Restrict)
+  attendingVet User?  @relation("AttendingVet", fields: [attendingVetId], references: [id], onDelete: SetNull)
+
+  @@index([farmId, createdAt])
+  @@index([farmId, updatedAt])
+  @@index([animalId, eventType])
+  @@map("health_records")
+}
+
+model VaccineRecord {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmId         String    @map("farm_id") @db.Uuid
+  animalId       String    @map("animal_id") @db.Uuid
+  administeredBy String    @map("administered_by_id") @db.Uuid
+  vaccineName    String    @map("vaccine_name") @db.VarChar(150)
+  batchNumber    String?   @map("batch_number") @db.VarChar(100)
+  doseAmount     Decimal   @map("dose_amount") @db.Decimal(6, 2)
+  doseUnit       String    @default("ml") @map("dose_unit") @db.VarChar(20)
+  administeredAt DateTime  @map("administered_at") @db.Timestamptz(6)
+  nextDueDate    DateTime? @map("next_due_date") @db.Date
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  farm     Farm   @relation(fields: [farmId], references: [id], onDelete: Restrict)
+  animal   Animal @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  recorder User   @relation("AdministeredBy", fields: [administeredBy], references: [id], onDelete: Restrict)
+
+  @@index([farmId, nextDueDate])
+  @@index([animalId])
+  @@map("vaccine_records")
+}
+
+model MilkLog {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmId       String      @map("farm_id") @db.Uuid
+  animalId     String?     @map("animal_id") @db.Uuid
+  recordedById String      @map("recorded_by_id") @db.Uuid
+  session      MilkSession
+  yieldLiters  Decimal     @map("yield_liters") @db.Decimal(8, 3)
+  fatPercent   Decimal?    @map("fat_percentage") @db.Decimal(4, 2)
+  snfPercent   Decimal?    @map("snf_percentage") @db.Decimal(4, 2)
+  loggedDate   DateTime    @map("logged_date") @db.Date
+  syncVersion  Int         @default(1) @map("sync_version") // Optimistic concurrency & offline sync
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  farm       Farm    @relation(fields: [farmId], references: [id], onDelete: Restrict)
+  animal     Animal? @relation(fields: [animalId], references: [id], onDelete: SetNull)
+  recordedBy User    @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+
+  @@unique([farmId, animalId, loggedDate, session])
+  @@index([farmId, loggedDate])
+  @@index([farmId, updatedAt])
+  @@index([animalId, loggedDate])
+  @@map("milk_logs")
+}
+
+model FarmTransaction {
+  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmId        String              @map("farm_id") @db.Uuid
+  recordedById  String              @map("recorded_by_id") @db.Uuid
+  type          TransactionType
+  category      TransactionCategory
+  amount        Decimal             @db.Decimal(12, 2)
+  currency      String              @default("USD") @db.VarChar(3)
+  referenceNote String?             @map("reference_note") @db.Text
+  txDate        DateTime            @map("transaction_date") @db.Date
+  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  farm       Farm @relation(fields: [farmId], references: [id], onDelete: Restrict)
+  recordedBy User @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+
+  @@index([farmId, txDate])
+  @@index([farmId, category])
+  @@map("farm_transactions")
+}
+
+// ==========================================
+// LMS & DIGITAL ASSETS DOMAIN
+// ==========================================
+
+model Product {
+  id                  String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title               String           @db.VarChar(255)
+  slug                String           @unique @db.VarChar(200)
+  type                ProductType
+  description         String           @db.Text
+  priceCents          Int              @map("price_cents")
+  discountPriceCents  Int?             @map("discount_price_cents")
+  currency            String           @default("USD") @db.VarChar(3)
+  contentS3Key        String           @map("content_s3_key") @db.Text
+  minSubscriptionTier SubscriptionTier @default(STARTER) @map("min_subscription_tier")
+  isPublished         Boolean          @default(false) @map("is_published")
+  metadata            Json             @default("{}")
+  createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime?        @map("deleted_at") @db.Timestamptz(6)
+
+  orderItems OrderItem[]
+
+  @@index([type, isPublished])
+  @@map("products")
+}
+
+model Order {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String      @map("user_id") @db.Uuid
+  totalCents     Int         @map("total_cents")
+  currency       String      @default("USD") @db.VarChar(3)
+  status         OrderStatus @default(PENDING)
+  paymentGateway String      @map("payment_gateway") @db.VarChar(50)
+  gatewayTxId    String?     @unique @map("gateway_tx_id") @db.VarChar(255)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items OrderItem[]
+
+  @@index([userId, status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId          String    @map("order_id") @db.Uuid
+  productId        String    @map("product_id") @db.Uuid
+  priceCents       Int       @map("price_cents")
+  downloadToken    String    @default(dbgenerated("gen_random_uuid()")) @map("download_token") @db.Uuid
+  downloadCount    Int       @default(0) @map("download_count")
+  lastDownloadedAt DateTime? @map("last_downloaded_at") @db.Timestamptz(6)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([downloadToken])
+  @@map("order_items")
+}
+
+// ==========================================
+// SUBSCRIPTIONS DOMAIN
+// ==========================================
+
+model SubscriptionPlan {
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String           @db.VarChar(100)
+  tier              SubscriptionTier @unique
+  priceMonthlyCents Int              @map("price_monthly_cents")
+  priceAnnualCents  Int              @map("price_annual_cents")
+  maxAnimals        Int              @map("max_animals")
+  features          Json             @default("{}")
+  isActive          Boolean          @default(true) @map("is_active")
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String             @map("user_id") @db.Uuid
+  farmId             String?            @map("farm_id") @db.Uuid
+  planId             String             @map("plan_id") @db.Uuid
+  status             SubscriptionStatus @default(TRIALING)
+  currentPeriodStart DateTime           @map("current_period_start") @db.Timestamptz(6)
+  currentPeriodEnd   DateTime           @map("current_period_end") @db.Timestamptz(6)
+  gatewaySubId       String?            @unique @map("gateway_sub_id") @db.VarChar(255)
+  cancelAtPeriodEnd  Boolean            @default(false) @map("cancel_at_period_end")
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  farm Farm?            @relation(fields: [farmId], references: [id], onDelete: SetNull)
+  plan SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+  @@index([farmId])
+  @@map("subscriptions")
+}
+
+// ==========================================
+// TELE-VETERINARY & EHR DOMAIN
+// ==========================================
+
+model Consultation {
+  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmerId       String             @map("farmer_id") @db.Uuid
+  vetId          String?            @map("vet_id") @db.Uuid
+  farmId         String             @map("farm_id") @db.Uuid
+  animalId       String?            @map("animal_id") @db.Uuid
+  chiefComplaint String             @map("chief_complaint") @db.Text
+  mediaUrls      Json               @default("[]") @map("media_urls")
+  type           ConsultationType   @default(ASYNC_TICKET)
+  status         ConsultationStatus @default(SUBMITTED)
+  roomSessionId  String?            @map("room_session_id") @db.VarChar(255)
+  feeCents       Int                @default(0) @map("fee_cents")
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  farmer       User          @relation("FarmerConsultation", fields: [farmerId], references: [id], onDelete: Restrict)
+  vet          User?         @relation("VetConsultation", fields: [vetId], references: [id], onDelete: SetNull)
+  farm         Farm          @relation(fields: [farmId], references: [id], onDelete: Restrict)
+  animal       Animal?       @relation(fields: [animalId], references: [id], onDelete: SetNull)
+  prescription Prescription?
+
+  @@index([farmerId, status])
+  @@index([vetId, status])
+  @@index([farmId])
+  @@map("consultations")
+}
+
+model Prescription {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  consultationId       String   @unique @map("consultation_id") @db.Uuid
+  vetId                String   @map("vet_id") @db.Uuid
+  diagnosis            String   @db.Text
+  medications          Json     // [{ name, dosage, frequency, durationDays, withdrawalDays, notes }]
+  pdfS3Key             String   @map("pdf_s3_key") @db.Text
+  digitalSignatureHash String   @map("digital_signature_hash") @db.Text
+  signedAt             DateTime @map("signed_at") @db.Timestamptz(6)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  vet          User         @relation(fields: [vetId], references: [id], onDelete: Restrict)
+
+  @@index([vetId])
+  @@map("prescriptions")
+}
+
+// ==========================================
+// SYSTEM AUDITING DOMAIN
+// ==========================================
+
+model AuditLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String   @db.VarChar(50)
+  entityType String   @map("entity_type") @db.VarChar(100)
+  entityId   String   @map("entity_id") @db.Uuid
+  oldValues  Json?    @map("old_values")
+  newValues  Json?    @map("new_values")
+  traceId    String   @map("trace_id") @db.Uuid
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([userId, createdAt])
+  @@index([traceId])
+  @@map("audit_logs")
+}

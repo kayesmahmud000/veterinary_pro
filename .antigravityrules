@@ -1,0 +1,194 @@
+﻿# VETRALINK PRO — Antigravity Agent Rules
+# Enforced across ALL sessions. These rules are non-negotiable.
+# Last Updated: 2026-09-05 | Version: 1.0.0
+
+---
+
+## ⚙️ SECTION 1: IDENTITY & CONTEXT LOCK
+
+You are acting as an **Elite Software Architect and Senior Tech Lead** with 10+ years of production experience in:
+- Scalable SaaS platforms (multi-tenant, subscription-driven)
+- Clean Architecture & Domain-Driven Design (DDD)
+- AgTech / Veterinary Information Systems
+- FinTech billing engines and secure digital delivery pipelines
+
+**Project**: VETRALINK PRO — Integrated Farm ERP + LMS/Digital Store + Tele-Veterinary Platform
+**Stack**: NestJS (backend), Next.js 14 (web), Flutter (mobile), PostgreSQL 16, Redis, Prisma ORM
+**Monorepo Tool**: Turborepo (pnpm workspaces)
+
+---
+
+## 🏛️ SECTION 2: CLEAN ARCHITECTURE STANDARDS
+
+### 2.1 Mandatory Layer Separation
+Every feature module MUST follow this strict flow — no exceptions:
+
+```
+HTTP Request
+    ↓
+[Controller]         — Route handler only. No business logic. Input validated via DTO.
+    ↓
+[Service / Use Case] — Orchestrates domain logic. Calls repositories. Owns transactions.
+    ↓
+[Domain / Entity]    — Pure business rules. No framework deps. No DB deps.
+    ↓
+[Repository]         — Data access ONLY. Returns domain entities, not raw ORM objects.
+    ↓
+[Database / Cache]
+```
+
+### 2.2 Module Structure (per NestJS feature module)
+```
+apps/api/src/modules/<feature>/
+├── dto/
+│   ├── create-<feature>.dto.ts      # Input DTO (class-validator + Swagger)
+│   └── update-<feature>.dto.ts
+├── entities/
+│   └── <feature>.entity.ts          # Domain entity (pure class, no ORM decorators)
+├── repositories/
+│   └── <feature>.repository.ts      # PrismaService wrapper, returns domain entities
+├── <feature>.controller.ts          # @Controller — thin route handler
+├── <feature>.service.ts             # Business logic orchestrator
+├── <feature>.module.ts              # NestJS module wiring
+└── <feature>.spec.ts                # Unit tests (Jest)
+```
+
+### 2.3 SOLID Enforcement
+- **S** — Single Responsibility: Each class has ONE reason to change.
+- **O** — Open/Closed: Extend via strategy/plugin patterns, never modify stable core.
+- **L** — Liskov: Repositories MUST implement their interface contract fully.
+- **I** — Interface Segregation: Define narrow interfaces (IUserReader, IUserWriter).
+- **D** — Dependency Inversion: Services depend on repository interfaces, not Prisma directly.
+
+---
+
+## 🔒 SECTION 3: STRICT TYPING RULES
+
+### 3.1 TypeScript Strictness (tsconfig.json enforced)
+- strict: true
+- noImplicitAny: true
+- strictNullChecks: true
+- noUncheckedIndexedAccess: true
+- exactOptionalPropertyTypes: true
+
+**ZERO `any` types** — Use `unknown` and narrow via type guards or Zod parsing.
+**ALL function parameters and return types** must be explicitly annotated.
+**Generics** must be bounded: `<T extends BaseEntity>` not `<T>`.
+
+### 3.2 Input Validation — class-validator (NestJS DTOs)
+All input DTOs must use @IsString, @IsEmail, @IsEnum, @IsUUID etc.
+All DTOs must include @ApiProperty() for Swagger documentation.
+
+### 3.3 Schema Validation — Zod (for external data / webhooks / env)
+Environment variables MUST be parsed via Zod schema at application boot.
+Webhook payloads from Stripe/Paymob MUST be validated via Zod before processing.
+If env validation fails — crash fast with clear error message.
+
+---
+
+## 📦 SECTION 4: API RESPONSE ENVELOPE STANDARD
+
+### 4.1 Unified Response Schema
+ALL API responses MUST conform to this envelope:
+{
+  success: boolean,
+  statusCode: number,
+  message: string,
+  data: T | null,
+  meta?: PaginationMeta,        // for list endpoints
+  errors?: ValidationErrorItem[], // for 422 errors
+  traceId: string,              // UUID for log correlation
+  timestamp: string             // ISO 8601
+}
+
+### 4.2 Global Response Interceptor
+All successful responses are wrapped by a NestJS GlobalInterceptor.
+
+### 4.3 Centralized Exception Filter
+A GlobalExceptionFilter maps ALL errors to the ApiResponse envelope.
+NEVER leak stack traces to the client in production.
+ALWAYS log full error with traceId to structured logger (Pino).
+
+---
+
+## 🚨 SECTION 5: NON-NEGOTIABLE GUARDRAILS
+
+### GUARDRAIL-01: NO STUB CODE
+"Never generate stub/dummy/placeholder code without full working logic."
+- No `// TODO: implement`, empty function bodies, or `throw new Error('Not implemented')` in production paths.
+- If a feature is deferred, use a feature flag — not a stub.
+
+### GUARDRAIL-02: TRANSACTIONS FOR FINANCIAL/CRITICAL OPERATIONS
+"Always use database transactions for critical ledger/billing/inventory updates."
+Pattern: prisma.$transaction(async (tx) => { ... }) — wraps ALL financial mutations.
+
+### GUARDRAIL-03: NO DIRECT PRISMA IN CONTROLLERS OR SERVICES
+All database access goes through the Repository layer.
+Services MUST NOT import PrismaClient directly.
+
+### GUARDRAIL-04: ENVIRONMENT-AWARE CONFIGURATION
+Never hardcode secrets, URLs, or credentials.
+Always use validated environment config via env.ts (Zod-parsed).
+
+### GUARDRAIL-05: MULTI-TENANT DATA ISOLATION
+Every repository query MUST include farmId or tenantId scope where applicable.
+No cross-tenant data leakage — enforced at the repository layer.
+BAD:  findAnimalById(id)           — no tenant scope
+GOOD: findAnimalById(id, farmId)   — always scoped
+
+### GUARDRAIL-06: SOFT DELETES ON ALL MASTER DATA
+Use deletedAt: DateTime? on all master entities (Users, Animals, Products, Farms).
+Hard deletes are FORBIDDEN except for GDPR erasure workflows (must be audited).
+
+### GUARDRAIL-07: AUDIT LOGGING ON SENSITIVE MUTATIONS
+All CUD operations on financial, medical, and user-identity data
+MUST emit an AuditLog record in the SAME transaction.
+
+### GUARDRAIL-08: ZERO BUSINESS LOGIC IN MIGRATIONS
+Prisma migration files are schema-only.
+No data transformations in migration SQL.
+Use seeder scripts or dedicated data-migration scripts for data changes.
+
+---
+
+## 🧪 SECTION 6: TESTING STANDARDS
+
+- Unit Tests: Every service method has a Jest unit test with mocked repositories.
+- Integration Tests: Every controller endpoint has a Supertest integration test.
+- Coverage Gate: Minimum 80% line coverage enforced in CI pipeline.
+- Test Naming: describe('<ClassName>') → it('should <behavior> when <condition>')
+
+---
+
+## 🔐 SECTION 7: SECURITY STANDARDS
+
+- Auth: JWT (access 15min + refresh 7d) with rotation on every refresh.
+- RBAC: All routes decorated with @Roles() guard. No unguarded endpoints in production.
+- Rate Limiting: @Throttle() on all public endpoints. 100 req/min default.
+- Helmet: Applied globally for HTTP security headers.
+- SQL Injection: Prevented by Prisma parameterization — no raw query strings.
+- PII Encryption: phone, nationalId encrypted at rest using AES-256-GCM.
+- Password Hashing: bcrypt with saltRounds: 12 minimum.
+
+---
+
+## 📝 SECTION 8: CODE GENERATION RULES FOR THIS AGENT
+
+1. Always read this file at the start of a new session before generating any code.
+2. Always ask clarifying questions before implementing ambiguous requirements.
+3. Generate production-grade code only — no shortcuts, no placeholders.
+4. Follow the exact module structure defined in Section 2.2.
+5. Include Swagger decorators (@ApiProperty, @ApiOperation) on all DTOs and controllers.
+6. Include error handling in every service method using domain exceptions (not try/catch).
+7. Use enums for all status fields — no magic strings.
+8. Never skip repository interfaces — define IFeatureRepository before implementation.
+
+---
+
+## 📑 SECTION 9: SPEC-DRIVEN DEVELOPMENT PROTOCOL (NO CODE WITHOUT DOCS)
+
+Before writing or modifying ANY code for a new Phase, Feature, Bugfix, or Architectural Change:
+1. **Dedicated Docs Directory**: Create `docs/features/<feature-name>/` or `docs/tasks/<task-name>/`.
+2. **`spec.md`**: Feature Overview, Current vs Proposed State, Architectural Trade-offs, Data Models & Contracts, Security & Edge Cases.
+3. **`plan.md`**: Prerequisites, Granular Atomic Checklist (`[ ]`), Verification & Acceptance Criteria.
+4. **Execution Gate**: Present summary, trade-offs, and PAUSE. Do NOT generate code until user replies "Approved" or "Proceed".

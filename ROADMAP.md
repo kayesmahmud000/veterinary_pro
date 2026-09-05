@@ -1,0 +1,192 @@
+# VETRALINK PRO — Master Project Roadmap & Execution Plan
+# Version: 1.0.0 | Status: ACTIVE | Last Updated: 2026-09-05
+
+---
+
+## 🧭 HIGH-LEVEL PHASING & STATUS
+
+| Phase | Description | Sprints | Status |
+| :--- | :--- | :--- | :--- |
+| **Phase 0** | Workspace Bootstrap, Architectural Standard & Persistence | Sprint 0 | **READY / COMPLETED** |
+| **Phase 1** | Foundation, DB Migration & Auth RBAC | Sprint 1–2 | 🔲 Scheduled Next |
+| **Phase 2** | LMS & Digital Assets Store (Encrypted Stream / Watermark / Pay) | Sprint 3–5 | 🔲 Pending |
+| **Phase 3** | Farm ERP Core (Livestock Registry, Milk Logging, P&L, Health) | Sprint 6–9 | 🔲 Pending |
+| **Phase 4** | Subscription Engine (Tier Gating, Quotas & Stripe Billing) | Sprint 10–11 | 🔲 Pending |
+| **Phase 5** | Tele-Veterinary Platform (Triage, WebRTC, Signed EHR Prescriptions)| Sprint 12–15 | 🔲 Pending |
+
+---
+
+## 🚀 SPRINT BREAKDOWN & GRANULAR CHECKLISTS
+
+### Phase 0: Workspace Bootstrap & Persistent System Architecture
+> **Sprint 0: Engineering Foundation & Workspace Bootstrap**  
+> **Status**: ✅ **COMPLETE (2026-09-05)**  
+> **Documentation**: [`docs/features/sprint-0-bootstrap/spec.md`](docs/features/sprint-0-bootstrap/spec.md) | [`docs/features/sprint-0-bootstrap/plan.md`](docs/features/sprint-0-bootstrap/plan.md)
+
+- [x] Create `.antigravityrules` (Agent rules, Clean Architecture, SOLID, typing, guardrails).
+- [x] Create `ARCHITECTURE.md` (System design, Monorepo topology, 3NF schema, HLS & Watermarking pipelines).
+- [x] Create `ROADMAP.md` (Phased sprint tracker with granular checklists).
+- [x] Define Prisma 3NF database schema covering all core domains (Users, Farms, Livestock, EHR, Orders, Subscriptions, Prescriptions).
+- [x] Author Sprint 0 Specification Document (`docs/features/sprint-0-bootstrap/spec.md`).
+- [x] Author Sprint 0 Step-by-Step Execution Plan (`docs/features/sprint-0-bootstrap/plan.md`).
+- [x] Initialize Turborepo Monorepo structure (`apps/api`, `apps/web`, `apps/mobile`, `packages/shared-types`).
+- [x] Configure `docker-compose.yml` for local services (PostgreSQL 16, Redis 7, MinIO S3 mock).
+
+---
+
+### Phase 1: Foundation, DB Migration & Auth RBAC
+> **Sprint 1: Database Engine, Orm Migration & Framework Core**  
+> **Status**: 🔲 Pending User Review
+
+- [ ] Execute baseline Prisma migration against PostgreSQL 16.
+- [ ] Create composite indexes for multi-tenant queries (`farm_id` + `status`, `farm_id` + `tag_number`).
+- [ ] Implement NestJS `PrismaService` with connection pooling and clean shutdown hooks.
+- [ ] Implement Zod-powered startup environment validator (`env.schema.ts`).
+- [ ] Build `ApiResponse<T>` unified response envelope interceptor.
+- [ ] Build `GlobalExceptionFilter` with RFC-7807 compliant domain error mapping.
+- [ ] Implement `AuditLog` repository & database transaction interceptor.
+- [ ] Scaffold automated unit and integration test runner (Jest + Supertest).
+
+> **Sprint 2: Authentication, Token Lifecycle & Multi-Tenant RBAC**  
+> **Status**: 🔲 Pending
+
+- [ ] User registration with phone (E.164) and email uniqueness.
+- [ ] Password hashing via bcrypt (salt rounds = 12).
+- [ ] JWT authentication pipeline (15-minute access token + 7-day refresh token).
+- [ ] Cryptographic Refresh Token Rotation (RTR) with reuse detection in `refresh_tokens`.
+- [ ] `@Roles()` decorator and `RolesGuard` for role hierarchy (`SUPER_ADMIN`, `ADMIN`, `VET`, `FARMER`, `BUYER`).
+- [ ] Multi-tenant `TenantGuard` enforcing farm-level access control via `farm_members`.
+- [ ] Field-level AES-256-GCM encryption for PII fields (phone, national IDs).
+- [ ] Auth event audit logging (`AUTH_LOGIN`, `AUTH_LOGOUT`, `PASSWORD_RESET`).
+
+---
+
+### Phase 2: LMS & Digital Store with Payment Webhooks
+> **Sprint 3: Digital Product Catalog & Media Asset Pipeline**  
+> **Status**: 🔲 Pending
+
+- [ ] Product master CRUD (`VIDEO_COURSE`, `EBOOK`, `EXCEL_TOOL`).
+- [ ] Presigned S3 direct multipart upload for heavy video masters and PDF assets.
+- [ ] BullMQ video processing worker: FFmpeg automated multi-bitrate HLS segmentation.
+- [ ] AES-128 / DRM key server endpoint with time-bound JWT verification.
+- [ ] CloudFront Origin Access Control (OAC) signed URL delivery pipeline.
+- [ ] Product catalog public search with full-text indexing and filtering.
+
+> **Sprint 4: Orders, Checkout & Payment Webhooks**  
+> **Status**: 🔲 Pending
+
+- [ ] ACID-compliant checkout workflow inside Prisma `$transaction`:
+  - Verify price and product availability.
+  - Insert order and immutable snapshot `order_items`.
+  - Dispatch payment intent to gateway.
+- [ ] Stripe Webhook receiver with raw payload signature validation (`stripe-signature`).
+- [ ] Regional MFS Webhook receiver (bKash / SSLCommerz / Paymob IPN).
+- [ ] Idempotency key guard on payment events to prevent duplicate order fulfillment.
+- [ ] Automated download token generation upon payment completion.
+
+> **Sprint 5: Dynamic Anti-Piracy Watermarking & Fulfillment**  
+> **Status**: 🔲 Pending
+
+- [ ] BullMQ dynamic watermarking worker using `pdf-lib` / Gotenberg engine.
+- [ ] Burn buyer identity (Full Name, masked email, Order ID, timestamp) diagonally across pages.
+- [ ] Generate cryptographic verification QR code on watermarked PDFs.
+- [ ] Secure time-limited download endpoint (`/api/v1/orders/:id/download`) with download counters.
+- [ ] Transactional email dispatch (Resend / AWS SES) with presigned download links.
+
+---
+
+### Phase 3: Farm ERP Core Engine
+> **Sprint 6: Multi-Species Livestock Registry**  
+> **Status**: 🔲 Pending
+
+- [ ] Multi-species animal registration (`COW`, `BUFFALO`, `GOAT`, `SHEEP`, `CAMEL`, `POULTRY`).
+- [ ] Enforce unique ear tag / RFID numbers per tenant farm.
+- [ ] Animal lineage graph (sire/dam pedigree traversal).
+- [ ] Weight tracking history with automated growth curve calculation.
+- [ ] Bulk CSV/Excel animal import via BullMQ background parser with validation error reports.
+- [ ] Printable QR Code generation for physical barn tagging.
+
+> **Sprint 7: Daily Milk Production & Analytics**  
+> **Status**: 🔲 Pending
+
+- [ ] Daily milk yield logging per animal and session (`MORNING`, `AFTERNOON`, `EVENING`).
+- [ ] Bulk herd collection logging for commercial operations.
+- [ ] Aggregate daily, weekly, and monthly yield analytics with 7-day moving averages.
+- [ ] Anomaly detection worker: flag animals experiencing a >20% sudden drop in milk yield.
+- [ ] Export milk production logs to formatted CSV and Excel spreadsheets.
+
+> **Sprint 8: Clinical Health Events, Deworming & Vaccination Schedules**  
+> **Status**: 🔲 Pending
+
+- [ ] Clinical health incident logging (symptoms, diagnosis, treatments, costs).
+- [ ] Multi-species vaccination and deworming schedule tracker.
+- [ ] Automated BullMQ cron task: scan next due dates and send SMS/Push reminders.
+- [ ] Escalation worker for unresolved critical illnesses.
+- [ ] Image attachment upload for visible lesions/symptoms via presigned S3 URLs.
+
+> **Sprint 9: Farm Financial Ledger & P&L Engine**  
+> **Status**: 🔲 Pending
+
+- [ ] Expense tracking categorizer (Feed, Veterinary Drugs, Labor, Utility, Equipment).
+- [ ] Revenue tracking (Milk sales, Livestock sales, Manure, Byproducts).
+- [ ] Real-time farm Profit & Loss (P&L) generation per custom date ranges.
+- [ ] Feed Conversion Ratio (FCR) and cost-per-liter milk computation.
+- [ ] Comprehensive Monthly Farm Performance PDF statement generator.
+
+---
+
+### Phase 4: Subscription Engine & Quota Gating
+> **Sprint 10: Subscription Plans, Tier Quotas & Enforcement**  
+> **Status**: 🔲 Pending
+
+- [ ] Plan configuration (`STARTER`: 5 animals, `PRO`: 30 animals, `ENTERPRISE`: Unlimited).
+- [ ] Subscription lifecycle management (`TRIALING`, `ACTIVE`, `PAST_DUE`, `CANCELED`).
+- [ ] `SubscriptionGuard`: Intercept animal registration and member invitations against tier limits.
+- [ ] Upgrade/downgrade subscription flow with prorated billing calculation.
+- [ ] Stripe Customer Portal integration for self-service payment method updates.
+
+> **Sprint 11: Dunning Workflows & Grace Periods**  
+> **Status**: 🔲 Pending
+
+- [ ] Webhook handling for failed recurring subscription renewals (`invoice.payment_failed`).
+- [ ] 3-stage automated dunning retry notifications (Day 1, Day 3, Day 7).
+- [ ] Grace period mechanism: restrict to read-only access before account suspension.
+- [ ] SaaS metrics aggregator for platform admins (MRR, ARR, Churn rate, LTV).
+
+---
+
+### Phase 5: Tele-Veterinary Telehealth & EHR Platform
+> **Sprint 12: Triage Intake & Case Assignment Engine**  
+> **Status**: 🔲 Pending
+
+- [ ] Farmer consultation request submission (chief complaint, affected animal, image/video uploads).
+- [ ] Triage queue dashboard for triage officers and clinic administrators.
+- [ ] Vet assignment and scheduling algorithm based on availability and specialty.
+- [ ] Pay-per-consult checkout authorization hold before session confirmation.
+- [ ] Real-time notification dispatch to assigned veterinarian.
+
+> **Sprint 13: Clinical Portal & Real-time Consultation Room**  
+> **Status**: 🔲 Pending
+
+- [ ] Doctor clinical portal: comprehensive animal Electronic Health Record (EHR) view.
+- [ ] WebRTC 1-on-1 video room provisioning (Daily.co / LiveKit) with ephemeral security tokens.
+- [ ] WebSocket-driven real-time chat channel with media sharing.
+- [ ] Private internal clinical notes (accessible only to attending veterinarians).
+
+> **Sprint 14: Digitally Signed PDF Prescriptions**  
+> **Status**: 🔲 Pending
+
+- [ ] Structured prescription editor (Drug name, formulation, dosage, frequency, duration, withdrawal period).
+- [ ] Food Safety compliance: automated withdrawal period alert for milk/meat consumption.
+- [ ] PKI cryptographic digital signature (RSA-SHA256) applied to prescription hash.
+- [ ] Dynamic prescription PDF generation with clinic letterhead, vet license #, and verify QR code.
+- [ ] Public cryptographic verification endpoint (`/verify/prescription/:id`).
+- [ ] Automatic append of prescription into the animal's permanent EHR record.
+
+> **Sprint 15: Tele-Vet Settlement, Rating & Mobile App Sync**  
+> **Status**: 🔲 Pending
+
+- [ ] Vet consultation fee split & payout ledger (e.g., 80% vet / 20% platform).
+- [ ] Post-consultation rating and review pipeline.
+- [ ] Mobile offline sync engine (Flutter SQLite/WatermelonDB <-> NestJS REST sync).
+- [ ] Platform-wide security audit, load testing with k6, and production readiness sign-off.
