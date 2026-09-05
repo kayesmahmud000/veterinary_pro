@@ -12,6 +12,7 @@ import { TokenService } from "./services/token.service";
 import { TOKEN_SERVICE } from "./services/token.service.interface";
 import { AuthService } from "./services/auth.service";
 import { AUTH_SERVICE } from "./services/auth.service.interface";
+import { AuthController } from "./auth.controller";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AUTH_SERVICE } from "./services/auth.service.interface";
       }),
     }),
   ],
+  controllers: [AuthController],
   providers: [
     RefreshTokenRepository,
     {

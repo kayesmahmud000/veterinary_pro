@@ -7,4 +7,6 @@ export * from "./services/token.service.interface";
 export * from "./services/token.service";
 export * from "./services/auth.service.interface";
 export * from "./services/auth.service";
+export * from "./dto";
+export * from "./auth.controller";
 export * from "./auth.module";
