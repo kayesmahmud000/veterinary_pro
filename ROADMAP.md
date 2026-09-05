@@ -36,11 +36,11 @@
 
 ### Phase 1: Foundation, DB Migration & Auth RBAC
 > **Sprint 1: Database Engine, Prisma Migration & Framework Core**  
-> **Status**: 🔲 In Progress — Task 1.1 Active  
+> **Status**: 🟡 In Progress — Tasks 1.1 & 1.2 Completed & Verified  
 > **Protocol**: Strict Micro-Task Execution (Execute one atomic task at a time)
 
-- [ ] **Task 1.1**: Database baseline migration script with composite partial indexes (`uq_active_farm_animal_tag`, `phone_hash`).
-- [ ] **Task 1.2**: NestJS `PrismaService` with connection pooling, health checks, and graceful shutdown hooks.
+- [x] **Task 1.1**: Database baseline migration script with composite partial indexes (`uq_active_farm_animal_tag`, `phone_hash`).
+- [x] **Task 1.2**: NestJS `PrismaService` with connection pooling, health checks, and graceful shutdown hooks.
 - [ ] **Task 1.3**: Runtime environment configuration with strict Zod validation (`env.schema.ts`).
 - [ ] **Task 1.4**: Universal `ApiResponse<T>` interceptor and RFC-7807 `GlobalExceptionFilter`.
 - [ ] **Task 1.5**: Centralized `AuditLogRepository` and atomic database transaction wrapper.

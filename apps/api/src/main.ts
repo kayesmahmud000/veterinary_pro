@@ -12,6 +12,9 @@ async function bootstrap() {
     bufferLogs: true,
   });
 
+  // Enable graceful shutdown hooks for Prisma and async teardown
+  app.enableShutdownHooks();
+
   // Security headers
   app.use(helmet());
 
