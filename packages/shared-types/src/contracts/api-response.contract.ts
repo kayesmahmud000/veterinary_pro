@@ -10,6 +10,14 @@ export interface ValidationErrorItem {
   message: string;
 }
 
+export interface ProblemDetails {
+  type: string;
+  title: string;
+  status: number;
+  detail?: string;
+  instance: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   statusCode: number;
@@ -17,6 +25,7 @@ export interface ApiResponse<T> {
   data: T | null;
   meta?: PaginationMeta;
   errors?: ValidationErrorItem[];
+  errorDetails?: ProblemDetails;
   traceId: string;
   timestamp: string;
 }

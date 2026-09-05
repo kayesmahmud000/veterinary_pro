@@ -8,7 +8,7 @@
 | Phase | Description | Sprints | Status |
 | :--- | :--- | :--- | :--- |
 | **Phase 0** | Workspace Bootstrap, Architectural Standard & Persistence | Sprint 0 | **READY / COMPLETED** |
-| **Phase 1** | Foundation, DB Migration & Auth RBAC | Sprint 1–2 | 🔲 Scheduled Next |
+| **Phase 1** | Foundation, DB Migration & Auth RBAC | Sprint 1–2 | 🟡 In Progress (Sprint 1 Complete) |
 | **Phase 2** | LMS & Digital Assets Store (Encrypted Stream / Watermark / Pay) | Sprint 3–5 | 🔲 Pending |
 | **Phase 3** | Farm ERP Core (Livestock Registry, Milk Logging, P&L, Health) | Sprint 6–9 | 🔲 Pending |
 | **Phase 4** | Subscription Engine (Tier Gating, Quotas & Stripe Billing) | Sprint 10–11 | 🔲 Pending |
@@ -36,21 +36,21 @@
 
 ### Phase 1: Foundation, DB Migration & Auth RBAC
 > **Sprint 1: Database Engine, Prisma Migration & Framework Core**  
-> **Status**: 🟡 In Progress — Tasks 1.1, 1.2 & 1.3 Completed & Verified  
+> **Status**: ✅ **COMPLETE (2026-09-05)**  
 > **Protocol**: Strict Micro-Task Execution (Execute one atomic task at a time)
 
 - [x] **Task 1.1**: Database baseline migration script with composite partial indexes (`uq_active_farm_animal_tag`, `phone_hash`).
 - [x] **Task 1.2**: NestJS `PrismaService` with connection pooling, health checks, and graceful shutdown hooks.
 - [x] **Task 1.3**: Runtime environment configuration with strict Zod validation (`env.schema.ts`).
-- [ ] **Task 1.4**: Universal `ApiResponse<T>` interceptor and RFC-7807 `GlobalExceptionFilter`.
-- [ ] **Task 1.5**: Centralized `AuditLogRepository` and atomic database transaction wrapper.
-- [ ] **Task 1.6**: Jest test runner and basic `/api/v1/health` endpoint with DB/Redis probes.
+- [x] **Task 1.4**: Universal `ApiResponse<T>` interceptor and RFC-7807 `GlobalExceptionFilter`.
+- [x] **Task 1.5**: Centralized `AuditLogRepository` and atomic database transaction wrapper.
+- [x] **Task 1.6**: Jest test runner and basic `/api/v1/health` endpoint with DB/Redis probes.
 
 > **Sprint 2: Authentication, Token Lifecycle & Multi-Tenant RBAC**  
-> **Status**: 🔲 Pending
+> **Status**: 🟡 In Progress (Tasks 2.1–2.2 Complete)
 
-- [ ] **Task 2.1**: User entity schema, migration, and PII encryption engine (AES-256-GCM + HMAC-SHA256 `phone_hash`).
-- [ ] **Task 2.2**: Auth DTOs (Register, Login, Refresh, OTP) in `@vetralink/shared-types`.
+- [x] **Task 2.1**: User entity schema, migration, and PII encryption engine (AES-256-GCM + HMAC-SHA256 `phone_hash`).
+- [x] **Task 2.2**: Auth DTOs (Register, Login, Refresh, OTP) in `@vetralink/shared-types`.
 - [ ] **Task 2.3**: `UserRepository` and `RefreshTokenRepository` with interface contracts.
 - [ ] **Task 2.4**: `AuthService` core: Password hashing (bcrypt 12 rounds), JWT issuance, and Refresh Token Rotation (RTR).
 - [ ] **Task 2.5**: Role-based access control: `@Roles()` decorator and `RolesGuard`.
