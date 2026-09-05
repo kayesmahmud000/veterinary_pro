@@ -45,3 +45,18 @@ This document must outline:
 2. Present a concise summary of the proposed changes, trade-offs, and why this design is superior.
 3. **STOP AND PAUSE.** Do NOT write actual application code until the user explicitly reviews and approves the spec and plan with: "Approved" or "Proceed".
 4. Once approved, execute the steps strictly following `plan.md`, ticking off `[x]` items as you finish, and update `ROADMAP.md` upon final completion.
+
+---
+
+### STRICT MICRO-TASK EXECUTION PROTOCOL (ONE ATOMIC TASK AT A TIME)
+
+1. NEVER bundle an entire Sprint or multiple layers into a single prompt execution.
+2. Every Sprint in `ROADMAP.md` must be broken into granular, sequentially numbered micro-tasks:
+   - Task X.1: Spec & Plan authoring (docs/features/<task-slug>/)
+   - Task X.2: DTOs, Enums & Type Contracts (packages/shared-types)
+   - Task X.3: Database Migration / Schema & Composite Indexes
+   - Task X.4: Repository Layer & Data Access Interfaces
+   - Task X.5: Domain Service & Business Logic (ACID Transactions & Validation)
+   - Task X.6: Controller / API Route & Exception Filters
+   - Task X.7: Unit/Integration Tests & curl Verification
+3. STRICT GATE: Complete ONE atomic task -> Run verification/tests -> Check off `[x]` in `ROADMAP.md` -> STOP and wait for human review before touching the next task.

@@ -192,3 +192,18 @@ Before writing or modifying ANY code for a new Phase, Feature, Bugfix, or Archit
 2. **`spec.md`**: Feature Overview, Current vs Proposed State, Architectural Trade-offs, Data Models & Contracts, Security & Edge Cases.
 3. **`plan.md`**: Prerequisites, Granular Atomic Checklist (`[ ]`), Verification & Acceptance Criteria.
 4. **Execution Gate**: Present summary, trade-offs, and PAUSE. Do NOT generate code until user replies "Approved" or "Proceed".
+
+---
+
+## 🔬 SECTION 10: STRICT MICRO-TASK EXECUTION PROTOCOL (ONE ATOMIC TASK AT A TIME)
+
+1. NEVER bundle an entire Sprint or multiple layers into a single prompt execution.
+2. Every Sprint in `ROADMAP.md` must be broken into granular, sequentially numbered micro-tasks:
+   - Task X.1: Spec & Plan authoring (docs/features/<task-slug>/)
+   - Task X.2: DTOs, Enums & Type Contracts (packages/shared-types)
+   - Task X.3: Database Migration / Schema & Composite Indexes
+   - Task X.4: Repository Layer & Data Access Interfaces
+   - Task X.5: Domain Service & Business Logic (ACID Transactions & Validation)
+   - Task X.6: Controller / API Route & Exception Filters
+   - Task X.7: Unit/Integration Tests & curl Verification
+3. STRICT GATE: Complete ONE atomic task -> Run verification/tests -> Check off `[x]` in `ROADMAP.md` -> STOP and wait for human review before touching the next task.

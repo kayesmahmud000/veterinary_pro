@@ -35,17 +35,17 @@
 ---
 
 ### Phase 1: Foundation, DB Migration & Auth RBAC
-> **Sprint 1: Database Engine, Orm Migration & Framework Core**  
-> **Status**: 🔲 Pending User Review
+> **Sprint 1: Database Engine, ORM Migration & Framework Core**  
+> **Status**: 🔲 Ready for Task 1.1  
+> **Protocol**: Strict Micro-Task Execution (Execute one atomic task at a time)
 
-- [ ] Execute baseline Prisma migration against PostgreSQL 16.
-- [ ] Create composite indexes for multi-tenant queries (`farm_id` + `status`, `farm_id` + `tag_number`).
-- [ ] Implement NestJS `PrismaService` with connection pooling and clean shutdown hooks.
-- [ ] Implement Zod-powered startup environment validator (`env.schema.ts`).
-- [ ] Build `ApiResponse<T>` unified response envelope interceptor.
-- [ ] Build `GlobalExceptionFilter` with RFC-7807 compliant domain error mapping.
-- [ ] Implement `AuditLog` repository & database transaction interceptor.
-- [ ] Scaffold automated unit and integration test runner (Jest + Supertest).
+- [ ] **Task 1.1**: Spec & Plan Authoring (`docs/features/sprint-1-database-core/spec.md` & `plan.md`)
+- [ ] **Task 1.2**: DTOs, Enums & Type Contracts (`packages/shared-types`)
+- [ ] **Task 1.3**: Database Migration / Schema & Partial/Composite Indexes (`apps/api/prisma`)
+- [ ] **Task 1.4**: Repository Layer & Data Access Interfaces (`PrismaService`, `AuditLogRepository`)
+- [ ] **Task 1.5**: Domain Service & Business Logic (Startup Zod env validation & graceful connection lifecycle)
+- [ ] **Task 1.6**: Controller / API Route & Envelope Filters (`HealthController`, `GlobalExceptionFilter`, `ResponseInterceptor`)
+- [ ] **Task 1.7**: Unit/Integration Tests & curl Verification (`test/health.e2e-spec.ts` & Supertest runner)
 
 > **Sprint 2: Authentication, Token Lifecycle & Multi-Tenant RBAC**  
 > **Status**: 🔲 Pending
