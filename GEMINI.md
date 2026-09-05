@@ -1,4 +1,4 @@
-﻿# AGENT AUTO-BOOTSTRAP & SPEC-DRIVEN EXECUTION INSTRUCTIONS (READ ON EVERY SESSION)
+# AGENT AUTO-BOOTSTRAP & SPEC-DRIVEN EXECUTION INSTRUCTIONS (READ ON EVERY SESSION)
 
 At the beginning of ANY interaction, conversation, or task:
 1. Automatically read and enforce all guidelines in `.antigravityrules`.
@@ -49,14 +49,6 @@ This document must outline:
 ---
 
 ### STRICT MICRO-TASK EXECUTION PROTOCOL (ONE ATOMIC TASK AT A TIME)
-
-1. NEVER bundle an entire Sprint or multiple layers into a single prompt execution.
-2. Every Sprint in `ROADMAP.md` must be broken into granular, sequentially numbered micro-tasks:
-   - Task X.1: Spec & Plan authoring (docs/features/<task-slug>/)
-   - Task X.2: DTOs, Enums & Type Contracts (packages/shared-types)
-   - Task X.3: Database Migration / Schema & Composite Indexes
-   - Task X.4: Repository Layer & Data Access Interfaces
-   - Task X.5: Domain Service & Business Logic (ACID Transactions & Validation)
-   - Task X.6: Controller / API Route & Exception Filters
-   - Task X.7: Unit/Integration Tests & curl Verification
-3. STRICT GATE: Complete ONE atomic task -> Run verification/tests -> Check off `[x]` in `ROADMAP.md` -> STOP and wait for human review before touching the next task.
+1. NEVER bundle an entire Sprint or multiple architectural layers into a single code execution.
+2. Every task in ROADMAP.md must be executed atomically: Spec/Plan -> DTO/Interface -> Implementation -> Test Verification.
+3. STRICT GATE: Complete ONE atomic task -> Verify criteria -> Check off [x] in ROADMAP.md -> STOP and wait for human review before touching the next task.

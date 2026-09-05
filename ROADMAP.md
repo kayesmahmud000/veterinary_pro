@@ -35,29 +35,27 @@
 ---
 
 ### Phase 1: Foundation, DB Migration & Auth RBAC
-> **Sprint 1: Database Engine, ORM Migration & Framework Core**  
-> **Status**: 🔲 Ready for Task 1.1  
+> **Sprint 1: Database Engine, Prisma Migration & Framework Core**  
+> **Status**: 🔲 In Progress — Task 1.1 Active  
 > **Protocol**: Strict Micro-Task Execution (Execute one atomic task at a time)
 
-- [ ] **Task 1.1**: Spec & Plan Authoring (`docs/features/sprint-1-database-core/spec.md` & `plan.md`)
-- [ ] **Task 1.2**: DTOs, Enums & Type Contracts (`packages/shared-types`)
-- [ ] **Task 1.3**: Database Migration / Schema & Partial/Composite Indexes (`apps/api/prisma`)
-- [ ] **Task 1.4**: Repository Layer & Data Access Interfaces (`PrismaService`, `AuditLogRepository`)
-- [ ] **Task 1.5**: Domain Service & Business Logic (Startup Zod env validation & graceful connection lifecycle)
-- [ ] **Task 1.6**: Controller / API Route & Envelope Filters (`HealthController`, `GlobalExceptionFilter`, `ResponseInterceptor`)
-- [ ] **Task 1.7**: Unit/Integration Tests & curl Verification (`test/health.e2e-spec.ts` & Supertest runner)
+- [ ] **Task 1.1**: Database baseline migration script with composite partial indexes (`uq_active_farm_animal_tag`, `phone_hash`).
+- [ ] **Task 1.2**: NestJS `PrismaService` with connection pooling, health checks, and graceful shutdown hooks.
+- [ ] **Task 1.3**: Runtime environment configuration with strict Zod validation (`env.schema.ts`).
+- [ ] **Task 1.4**: Universal `ApiResponse<T>` interceptor and RFC-7807 `GlobalExceptionFilter`.
+- [ ] **Task 1.5**: Centralized `AuditLogRepository` and atomic database transaction wrapper.
+- [ ] **Task 1.6**: Jest test runner and basic `/api/v1/health` endpoint with DB/Redis probes.
 
 > **Sprint 2: Authentication, Token Lifecycle & Multi-Tenant RBAC**  
 > **Status**: 🔲 Pending
 
-- [ ] User registration with phone (E.164) and email uniqueness.
-- [ ] Password hashing via bcrypt (salt rounds = 12).
-- [ ] JWT authentication pipeline (15-minute access token + 7-day refresh token).
-- [ ] Cryptographic Refresh Token Rotation (RTR) with reuse detection in `refresh_tokens`.
-- [ ] `@Roles()` decorator and `RolesGuard` for role hierarchy (`SUPER_ADMIN`, `ADMIN`, `VET`, `FARMER`, `BUYER`).
-- [ ] Multi-tenant `TenantGuard` enforcing farm-level access control via `farm_members`.
-- [ ] Field-level AES-256-GCM encryption for PII fields (phone, national IDs).
-- [ ] Auth event audit logging (`AUTH_LOGIN`, `AUTH_LOGOUT`, `PASSWORD_RESET`).
+- [ ] **Task 2.1**: User entity schema, migration, and PII encryption engine (AES-256-GCM + HMAC-SHA256 `phone_hash`).
+- [ ] **Task 2.2**: Auth DTOs (Register, Login, Refresh, OTP) in `@vetralink/shared-types`.
+- [ ] **Task 2.3**: `UserRepository` and `RefreshTokenRepository` with interface contracts.
+- [ ] **Task 2.4**: `AuthService` core: Password hashing (bcrypt 12 rounds), JWT issuance, and Refresh Token Rotation (RTR).
+- [ ] **Task 2.5**: Role-based access control: `@Roles()` decorator and `RolesGuard`.
+- [ ] **Task 2.6**: Multi-tenant protection: `TenantGuard` enforcing farm isolation via `farm_members`.
+- [ ] **Task 2.7**: `AuthController` endpoints, Swagger OpenAPI docs, and integration test suite.
 
 ---
 
