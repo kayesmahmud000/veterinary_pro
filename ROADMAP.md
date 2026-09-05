@@ -47,12 +47,12 @@
 - [x] **Task 1.6**: Jest test runner and basic `/api/v1/health` endpoint with DB/Redis probes.
 
 > **Sprint 2: Authentication, Token Lifecycle & Multi-Tenant RBAC**  
-> **Status**: 🟡 In Progress (Tasks 2.1–2.3 Complete)
+> **Status**: 🟡 In Progress (Tasks 2.1–2.4 Complete)
 
 - [x] **Task 2.1**: User entity schema, migration, and PII encryption engine (AES-256-GCM + HMAC-SHA256 `phone_hash`).
 - [x] **Task 2.2**: Auth DTOs (Register, Login, Refresh, OTP) in `@vetralink/shared-types`.
 - [x] **Task 2.3**: `UserRepository` and `RefreshTokenRepository` with interface contracts.
-- [ ] **Task 2.4**: `AuthService` core: Password hashing (bcrypt 12 rounds), JWT issuance, and Refresh Token Rotation (RTR).
+- [x] **Task 2.4**: `AuthService` core: Password hashing (bcrypt 12 rounds), JWT issuance, and Refresh Token Rotation (RTR).
 - [ ] **Task 2.5**: Role-based access control: `@Roles()` decorator and `RolesGuard`.
 - [ ] **Task 2.6**: Multi-tenant protection: `TenantGuard` enforcing farm isolation via `farm_members`.
 - [ ] **Task 2.7**: `AuthController` endpoints, Swagger OpenAPI docs, and integration test suite.
