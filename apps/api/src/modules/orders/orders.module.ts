@@ -12,6 +12,9 @@ import { PAYMENT_GATEWAY_SERVICE } from "./services/payment-gateway.service.inte
 import { StripePaymentService } from "./services/stripe-payment.service";
 import { MockPaymentGatewayService } from "./services/mock-payment-gateway.service";
 import { OrdersController } from "./orders.controller";
+import { StripeWebhookController } from "./controllers/stripe-webhook.controller";
+import { StripeWebhookService } from "./services/stripe-webhook.service";
+import { STRIPE_WEBHOOK_SERVICE } from "./services/stripe-webhook.service.interface";
 
 @Module({
   imports: [
@@ -21,7 +24,7 @@ import { OrdersController } from "./orders.controller";
     AuthModule,
     ProductsModule,
   ],
-  controllers: [OrdersController],
+  controllers: [OrdersController, StripeWebhookController],
   providers: [
     OrderRepository,
     {
@@ -45,6 +48,11 @@ import { OrdersController } from "./orders.controller";
       provide: CHECKOUT_SERVICE,
       useClass: CheckoutService,
     },
+    StripeWebhookService,
+    {
+      provide: STRIPE_WEBHOOK_SERVICE,
+      useClass: StripeWebhookService,
+    },
   ],
   exports: [
     OrderRepository,
@@ -52,6 +60,8 @@ import { OrdersController } from "./orders.controller";
     CheckoutService,
     CHECKOUT_SERVICE,
     PAYMENT_GATEWAY_SERVICE,
+    StripeWebhookService,
+    STRIPE_WEBHOOK_SERVICE,
   ],
 })
 export class OrdersModule {}

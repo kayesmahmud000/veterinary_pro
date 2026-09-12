@@ -77,7 +77,7 @@
   - Verify price and product availability.
   - Insert order and immutable snapshot `order_items`.
   - Dispatch payment intent to gateway.
-- [ ] Stripe Webhook receiver with raw payload signature validation (`stripe-signature`).
+- [x] **Task 4.2**: Stripe Webhook receiver with raw payload signature validation (`stripe-signature`).
 - [ ] Regional MFS Webhook receiver (bKash / SSLCommerz / Paymob IPN).
 - [ ] Idempotency key guard on payment events to prevent duplicate order fulfillment.
 - [ ] Automated download token generation upon payment completion.
