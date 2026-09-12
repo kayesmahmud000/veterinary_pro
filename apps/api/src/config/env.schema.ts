@@ -74,6 +74,11 @@ export const EnvSchema = z
       .int()
       .positive()
       .default(3600),
+    EMAIL_PROVIDER: z.enum(["resend", "ses", "mock"]).default("mock"),
+    EMAIL_FROM: z.string().default("VetraLink Pro <orders@vetralink.pro>"),
+    RESEND_API_KEY: z.string().optional(),
+    AWS_SES_REGION: z.string().optional(),
+    API_BASE_URL: z.string().url().default("http://localhost:3001"),
   })
   .superRefine((data, ctx) => {
     if (data.NODE_ENV === "production" || data.NODE_ENV === "staging") {

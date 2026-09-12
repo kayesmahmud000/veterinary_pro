@@ -1,10 +1,16 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
+import { Inject, Injectable, Logger, Optional } from "@nestjs/common";
+import { PDFDocument, rgb, StandardFonts, degrees, PDFImage } from "pdf-lib";
 import {
   IPdfWatermarkService,
+  QrCodePlacement,
   WatermarkOptions,
   WatermarkResult,
 } from "./pdf-watermark.service.interface";
+import {
+  IQrCodeService,
+  QR_CODE_SERVICE,
+} from "./qr-code.service.interface";
+import { QrCodeService } from "./qr-code.service";
 import { ValidationDomainException } from "../../../common/exceptions/domain.exception";
 import {
   computePageLayoutGeometry,
@@ -16,6 +22,15 @@ import {
 @Injectable()
 export class PdfWatermarkService implements IPdfWatermarkService {
   private readonly logger = new Logger(PdfWatermarkService.name);
+  private readonly qrCodeService: IQrCodeService;
+
+  constructor(
+    @Optional()
+    @Inject(QR_CODE_SERVICE)
+    qrCodeService?: IQrCodeService
+  ) {
+    this.qrCodeService = qrCodeService ?? new QrCodeService();
+  }
 
   public async applyWatermark(
     pdfBuffer: Buffer,
@@ -55,8 +70,12 @@ export class PdfWatermarkService implements IPdfWatermarkService {
           : undefined;
 
       // 2. Format Buyer Attribution & Security Banners
-      const cleanName = sanitizeAsciiText(options.buyerName || "Licensed Customer");
-      const maskedEmail = maskBuyerEmail(options.buyerEmail || "customer@vetralink.pro");
+      const cleanName = sanitizeAsciiText(
+        options.buyerName || "Licensed Customer"
+      );
+      const maskedEmail = maskBuyerEmail(
+        options.buyerEmail || "customer@vetralink.pro"
+      );
 
       const watermarkText =
         options.customNotice ??
@@ -79,6 +98,26 @@ export class PdfWatermarkService implements IPdfWatermarkService {
       pdfDoc.setSubject(
         `Licensed to ${cleanName} (${maskedEmail}) - Order #${options.orderId}`
       );
+
+      // 3. Generate and Embed Cryptographic Verification QR Code
+      let qrCodeEmbedded = false;
+      let embeddedQrImage: PDFImage | null = null;
+
+      if (options.includeQrCode !== false) {
+        const verificationUrl =
+          options.verificationUrl ??
+          `https://vetralink.pro/verify/license?token=${encodeURIComponent(
+            options.downloadToken || options.orderId
+          )}&orderId=${encodeURIComponent(options.orderId)}`;
+
+        const qrPngBuffer = await this.qrCodeService.generateQrCodePngBuffer(
+          verificationUrl,
+          { width: 140, margin: 1, errorCorrectionLevel: "M" }
+        );
+
+        embeddedQrImage = await pdfDoc.embedPng(qrPngBuffer);
+        qrCodeEmbedded = true;
+      }
 
       // Calibrated Opacities & Angles
       const baseOpacity = Math.max(0.1, Math.min(0.5, options.opacity ?? 0.22));
@@ -170,7 +209,36 @@ export class PdfWatermarkService implements IPdfWatermarkService {
           opacity: 0.5,
         });
 
-        // 5. Security Footer with Timestamp & SHA-256 Buyer Proof Integrity Stamp
+        // 5. Verification QR Code Badge (Bottom-Right Corner)
+        if (
+          embeddedQrImage &&
+          this.shouldDrawQrOnPage(i, pageCount, options.qrPlacement)
+        ) {
+          const qrSize = 42;
+          const qrX = width - 36 - qrSize;
+          const qrY = 28;
+
+          page.drawImage(embeddedQrImage, {
+            x: qrX,
+            y: qrY,
+            width: qrSize,
+            height: qrSize,
+            opacity: 0.9,
+          });
+
+          const verifyLabel = "VERIFY";
+          const labelWidth = helveticaFont.widthOfTextAtSize(verifyLabel, 5);
+          page.drawText(verifyLabel, {
+            x: qrX + (qrSize - labelWidth) / 2,
+            y: qrY - 6,
+            size: 5,
+            font: helveticaFont,
+            color: rgb(0.4, 0.4, 0.4),
+            opacity: 0.75,
+          });
+        }
+
+        // 6. Security Footer with Timestamp & SHA-256 Buyer Proof Integrity Stamp
         page.drawText(footerText, {
           x: 36,
           y: 18,
@@ -180,7 +248,7 @@ export class PdfWatermarkService implements IPdfWatermarkService {
           opacity: 0.65,
         });
 
-        // 6. Page Counter Indicator
+        // 7. Page Counter Indicator
         const pageIndicator = `Page ${i + 1} of ${pageCount}`;
         const pageIndicatorWidth = helveticaFont.widthOfTextAtSize(
           pageIndicator,
@@ -200,7 +268,7 @@ export class PdfWatermarkService implements IPdfWatermarkService {
       const executionTimeMs = Date.now() - startTime;
 
       this.logger.debug(
-        `Watermarked ${pageCount} pages for order [${options.orderId}] in ${executionTimeMs}ms (Integrity: ${integrityHash ?? "none"})`
+        `Watermarked ${pageCount} pages for order [${options.orderId}] in ${executionTimeMs}ms (Integrity: ${integrityHash ?? "none"}, QR: ${qrCodeEmbedded})`
       );
 
       return {
@@ -208,6 +276,7 @@ export class PdfWatermarkService implements IPdfWatermarkService {
         pageCount,
         executionTimeMs,
         integrityHash,
+        qrCodeEmbedded,
       };
     } catch (error) {
       if (error instanceof ValidationDomainException) {
@@ -240,5 +309,22 @@ export class PdfWatermarkService implements IPdfWatermarkService {
         `Failed to parse PDF page count: ${(error as Error).message}`
       );
     }
+  }
+
+  private shouldDrawQrOnPage(
+    pageIndex: number,
+    pageCount: number,
+    placement?: QrCodePlacement
+  ): boolean {
+    if (!placement || placement === "all-pages") {
+      return true;
+    }
+    if (placement === "first-page") {
+      return pageIndex === 0;
+    }
+    if (placement === "first-and-last") {
+      return pageIndex === 0 || pageIndex === pageCount - 1;
+    }
+    return true;
   }
 }

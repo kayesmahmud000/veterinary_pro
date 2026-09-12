@@ -99,6 +99,7 @@ export class WatermarkProcessor extends WorkerHost {
           buyerEmail: buyerEmail || "customer@vetralink.pro",
           orderId,
           purchaseDate: purchaseDate || new Date().toISOString(),
+          downloadToken,
         }
       );
 

@@ -8,6 +8,9 @@ import { WatermarkQueueService } from "./services/watermark-queue.service";
 import { WATERMARK_QUEUE_SERVICE } from "./services/watermark-queue.service.interface";
 import { WatermarkProcessor } from "./processors/watermark.processor";
 
+import { QrCodeService } from "./services/qr-code.service";
+import { QR_CODE_SERVICE } from "./services/qr-code.service.interface";
+
 @Module({
   imports: [
     MediaModule,
@@ -16,6 +19,11 @@ import { WatermarkProcessor } from "./processors/watermark.processor";
     }),
   ],
   providers: [
+    QrCodeService,
+    {
+      provide: QR_CODE_SERVICE,
+      useClass: QrCodeService,
+    },
     PdfWatermarkService,
     {
       provide: PDF_WATERMARK_SERVICE,
@@ -29,6 +37,8 @@ import { WatermarkProcessor } from "./processors/watermark.processor";
     WatermarkProcessor,
   ],
   exports: [
+    QrCodeService,
+    QR_CODE_SERVICE,
     PdfWatermarkService,
     PDF_WATERMARK_SERVICE,
     WatermarkQueueService,

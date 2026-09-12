@@ -54,6 +54,11 @@ export interface IOrderRepository {
     itemId: string,
     tx?: Prisma.TransactionClient
   ): Promise<OrderItemEntity>;
+
+  findOrderUser(
+    userId: string,
+    tx?: Prisma.TransactionClient
+  ): Promise<{ email: string; name: string } | null>;
 }
 
 export const ORDER_REPOSITORY = "ORDER_REPOSITORY";

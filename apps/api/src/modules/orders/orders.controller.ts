@@ -13,14 +13,18 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
+import { Response } from "express";
+import * as crypto from "crypto";
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiFoundResponse,
   ApiHeader,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -34,6 +38,7 @@ import {
   JwtPayload,
   OrderDetailResponseDto,
   OrderDownloadTokensResponseDto,
+  SecureDownloadResponseDto,
   UserRole,
 } from "@vetralink/shared-types";
 import { CurrentUser, ResponseMessage } from "../../common/decorators";
@@ -169,6 +174,113 @@ export class OrdersController {
       id,
       user.sub,
       user.role
+    );
+  }
+
+  @Get(":id/download")
+  @ApiOperation({
+    summary: "Download secured digital asset with quota counter",
+    description:
+      "Generates a time-limited presigned S3 download URL (15-minute TTL) for a purchased digital asset, enforces quota limits (5 downloads max), and increments usage counter. Supports optional ?redirect=true for browser direct downloads.",
+  })
+  @ApiQuery({
+    name: "token",
+    required: true,
+    type: String,
+    description: "Digital item download token UUID",
+  })
+  @ApiQuery({
+    name: "redirect",
+    required: false,
+    type: Boolean,
+    description: "If true, redirects (HTTP 302) directly to presigned download URL",
+  })
+  @ApiOkResponse({
+    description: "Presigned download URL and quota status retrieved.",
+  })
+  @ApiBadRequestResponse({
+    description: "Bad Request: invalid token or quota limit exceeded.",
+  })
+  @ApiForbiddenResponse({
+    description: "Forbidden: user does not own this order.",
+  })
+  @ApiFoundResponse({
+    description: "HTTP 302 redirect directly to presigned download URL.",
+  })
+  @ApiNotFoundResponse({ description: "Order not found." })
+  @ApiUnauthorizedResponse({ description: "Authentication required." })
+  @ResponseMessage("Download link generated successfully.")
+  public async downloadOrderItem(
+    @CurrentUser() user: JwtPayload,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("token") downloadToken: string,
+    @Res() res: Response,
+    @Query("redirect") redirect?: string,
+    @Headers("x-trace-id") traceId?: string,
+    @Ip() ipAddress?: string
+  ): Promise<void> {
+    if (!this.fulfillmentService) {
+      throw new BadRequestException("Order fulfillment service is unavailable.");
+    }
+    if (!downloadToken || downloadToken.trim() === "") {
+      throw new BadRequestException("Query parameter 'token' is required.");
+    }
+
+    const result = await this.fulfillmentService.getSecureDownloadUrl(
+      id,
+      downloadToken.trim(),
+      user.sub,
+      user.role,
+      traceId,
+      ipAddress
+    );
+
+    if (redirect === "true") {
+      res.redirect(HttpStatus.FOUND, result.downloadUrl);
+      return;
+    }
+
+    const activeTraceId = traceId || crypto.randomUUID();
+    res.setHeader("x-trace-id", activeTraceId);
+    res.status(HttpStatus.OK).json({
+      success: true,
+      statusCode: HttpStatus.OK,
+      message: "Download link generated successfully.",
+      data: result,
+      traceId: activeTraceId,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  @Post(":id/resend-email")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "Resend transactional order delivery email with download links",
+    description:
+      "Re-triggers asynchronous dispatch of digital download links email to the verified owner of the completed order.",
+  })
+  @ApiOkResponse({ description: "Email delivery job enqueued successfully." })
+  @ApiBadRequestResponse({
+    description: "Order is not completed or fulfillment service unavailable.",
+  })
+  @ApiForbiddenResponse({ description: "Forbidden: user does not own this order." })
+  @ApiNotFoundResponse({ description: "Order not found." })
+  @ApiUnauthorizedResponse({ description: "Authentication required." })
+  @ResponseMessage("Order delivery email enqueued successfully.")
+  public async resendOrderEmail(
+    @CurrentUser() user: JwtPayload,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Headers("x-trace-id") traceId?: string
+  ): Promise<{ enqueued: boolean; orderId: string }> {
+    if (!this.fulfillmentService) {
+      throw new BadRequestException("Order fulfillment service is unavailable.");
+    }
+
+    return this.fulfillmentService.resendOrderDeliveryEmail(
+      id,
+      user.sub,
+      user.role,
+      traceId
     );
   }
 }

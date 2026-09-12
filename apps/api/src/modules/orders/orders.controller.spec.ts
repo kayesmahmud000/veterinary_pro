@@ -5,6 +5,10 @@ import {
   ICheckoutService,
   CHECKOUT_SERVICE,
 } from "./services/checkout.service.interface";
+import {
+  IOrderFulfillmentService,
+  ORDER_FULFILLMENT_SERVICE,
+} from "./services/order-fulfillment.service.interface";
 import { TOKEN_SERVICE } from "../auth/services/token.service.interface";
 import { Reflector } from "@nestjs/core";
 import { IDEMPOTENCY_SERVICE } from "../../common/idempotency";
@@ -12,6 +16,7 @@ import { IDEMPOTENCY_SERVICE } from "../../common/idempotency";
 describe("OrdersController", () => {
   let controller: OrdersController;
   let checkoutService: jest.Mocked<ICheckoutService>;
+  let fulfillmentService: jest.Mocked<IOrderFulfillmentService>;
 
   const mockUser = {
     sub: "user-1111-1111-1111-111111111111",
@@ -70,12 +75,25 @@ describe("OrdersController", () => {
       getUserOrders: jest.fn(),
     };
 
+    fulfillmentService = {
+      fulfillOrder: jest.fn(),
+      getOrderDownloadTokens: jest.fn(),
+      validateDownloadToken: jest.fn(),
+      recordDownload: jest.fn(),
+      getSecureDownloadUrl: jest.fn(),
+      resendOrderDeliveryEmail: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [OrdersController],
       providers: [
         {
           provide: CHECKOUT_SERVICE,
           useValue: checkoutService,
+        },
+        {
+          provide: ORDER_FULFILLMENT_SERVICE,
+          useValue: fulfillmentService,
         },
         {
           provide: TOKEN_SERVICE,
@@ -167,6 +185,127 @@ describe("OrdersController", () => {
         true
       );
       expect(result).toEqual(mockOrderDetail);
+    });
+  });
+
+  describe("downloadOrderItem", () => {
+    const mockDownloadDto = {
+      orderId: mockOrderDetail.id,
+      itemId: "item-1",
+      productId: "prod-1",
+      productTitle: "Veterinary Handbook",
+      productType: "EBOOK",
+      downloadUrl: "https://s3.amazonaws.com/test-bucket/item-1.pdf?sig=test",
+      expiresInSeconds: 900,
+      downloadCount: 1,
+      maxDownloads: 5,
+      remainingDownloads: 4,
+      lastDownloadedAt: new Date().toISOString(),
+    };
+
+    it("should throw BadRequestException if token is missing or blank", async () => {
+      const mockRes = {
+        redirect: jest.fn(),
+        setHeader: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      } as any;
+
+      await expect(
+        controller.downloadOrderItem(
+          mockUser,
+          mockOrderDetail.id,
+          "   ",
+          mockRes,
+          undefined,
+          undefined,
+          undefined
+        )
+      ).rejects.toThrow("Query parameter 'token' is required.");
+    });
+
+    it("should invoke fulfillmentService.getSecureDownloadUrl and send json response dto", async () => {
+      fulfillmentService.getSecureDownloadUrl.mockResolvedValueOnce(mockDownloadDto);
+      const mockRes = {
+        redirect: jest.fn(),
+        setHeader: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      } as any;
+
+      await controller.downloadOrderItem(
+        mockUser,
+        mockOrderDetail.id,
+        "token-uuid-1",
+        mockRes,
+        undefined,
+        "trace-123",
+        "127.0.0.1"
+      );
+
+      expect(fulfillmentService.getSecureDownloadUrl).toHaveBeenCalledWith(
+        mockOrderDetail.id,
+        "token-uuid-1",
+        mockUser.sub,
+        mockUser.role,
+        "trace-123",
+        "127.0.0.1"
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          data: mockDownloadDto,
+        })
+      );
+    });
+
+    it("should issue redirect to presigned download URL when redirect=true", async () => {
+      fulfillmentService.getSecureDownloadUrl.mockResolvedValueOnce(mockDownloadDto);
+      const mockRes = {
+        redirect: jest.fn(),
+        setHeader: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      } as any;
+
+      await controller.downloadOrderItem(
+        mockUser,
+        mockOrderDetail.id,
+        "token-uuid-1",
+        mockRes,
+        "true",
+        "trace-123",
+        "127.0.0.1"
+      );
+
+      expect(mockRes.redirect).toHaveBeenCalledWith(
+        302,
+        mockDownloadDto.downloadUrl
+      );
+    });
+  });
+
+  describe("resendOrderEmail", () => {
+    it("should delegate to fulfillmentService.resendOrderDeliveryEmail and return result", async () => {
+      fulfillmentService.resendOrderDeliveryEmail.mockResolvedValueOnce({
+        enqueued: true,
+        orderId: mockOrderDetail.id,
+      });
+
+      const result = await controller.resendOrderEmail(
+        mockUser,
+        mockOrderDetail.id,
+        "trace-123"
+      );
+
+      expect(fulfillmentService.resendOrderDeliveryEmail).toHaveBeenCalledWith(
+        mockOrderDetail.id,
+        mockUser.sub,
+        mockUser.role,
+        "trace-123"
+      );
+      expect(result).toEqual({ enqueued: true, orderId: mockOrderDetail.id });
     });
   });
 });

@@ -41,6 +41,14 @@ import {
   IAuditLogRepository,
   AUDIT_LOG_REPOSITORY,
 } from "../audit/repositories/audit-log.repository.interface";
+import {
+  IS3StorageService,
+  S3_STORAGE_SERVICE,
+} from "../media/services/s3-storage.service.interface";
+import {
+  IMailQueueService,
+  MAIL_QUEUE_SERVICE,
+} from "../mail/interfaces/mail-service.interface";
 import { EnvService } from "../../config/env.service";
 import { ResponseInterceptor } from "../../common/interceptors/response.interceptor";
 import { GlobalExceptionFilter } from "../../common/filters/global-exception.filter";
@@ -56,6 +64,8 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
   let tokenService: jest.Mocked<ITokenService>;
   let checkoutService: jest.Mocked<ICheckoutService>;
   let fulfillmentService: IOrderFulfillmentService;
+  let s3StorageService: jest.Mocked<IS3StorageService>;
+  let mailQueueService: jest.Mocked<IMailQueueService>;
 
   const customerUser = {
     sub: "11111111-1111-4111-8111-111111111111",
@@ -119,6 +129,10 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
       updateItemDownloadTokens: jest.fn(),
       findByDownloadToken: jest.fn(),
       incrementDownloadCount: jest.fn(),
+      findOrderUser: jest.fn().mockResolvedValue({
+        email: customerUser.email,
+        name: "Customer Farmer",
+      }),
     };
 
     transactionManager = {
@@ -130,6 +144,25 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
       findByEntity: jest.fn(),
       findByTraceId: jest.fn(),
       query: jest.fn(),
+    };
+
+    s3StorageService = {
+      getPresignedGetUrl: jest
+        .fn()
+        .mockResolvedValue(
+          "https://s3.amazonaws.com/test-deliveries/watermarked/sample-order/item.pdf?sig=test"
+        ),
+      getPresignedPutUrl: jest.fn(),
+      createMultipartUpload: jest.fn(),
+      getPresignedPartUploadUrl: jest.fn(),
+      completeMultipartUpload: jest.fn(),
+      abortMultipartUpload: jest.fn(),
+      downloadFile: jest.fn(),
+      uploadFileFromDisk: jest.fn(),
+    };
+
+    mailQueueService = {
+      enqueueOrderDeliveryEmail: jest.fn().mockResolvedValue("job-mail-123"),
     };
 
     tokenService = {
@@ -157,6 +190,9 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
       stripeSecretKey: "",
       stripeWebhookSecret: "",
       mfsWebhookSecret: "test_mfs_secret",
+      s3BucketDeliveries: "test-deliveries-bucket",
+      s3BucketMedia: "test-media-bucket",
+      apiBaseUrl: "http://localhost:3001",
     } as unknown as EnvService;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -186,6 +222,14 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
         {
           provide: CHECKOUT_SERVICE,
           useValue: checkoutService,
+        },
+        {
+          provide: S3_STORAGE_SERVICE,
+          useValue: s3StorageService,
+        },
+        {
+          provide: MAIL_QUEUE_SERVICE,
+          useValue: mailQueueService,
         },
         {
           provide: EnvService,
@@ -403,6 +447,194 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
         sampleItemId,
         undefined
       );
+    });
+  });
+
+  describe("GET /orders/:id/download", () => {
+    it("should return 200 with presigned download URL and remaining downloads for valid owner", async () => {
+      const completedOrder = buildMockOrder(OrderStatus.COMPLETED, 0);
+      orderRepository.findById.mockResolvedValueOnce(completedOrder);
+      orderRepository.findByDownloadToken.mockResolvedValueOnce({
+        order: completedOrder,
+        item: completedOrder.items[0]!,
+        contentS3Key: "products/ebooks/dairy-guide.pdf",
+        productType: "EBOOK",
+      });
+
+      const updatedItem = OrderItemEntity.reconstitute({
+        id: sampleItemId,
+        orderId: sampleOrderId,
+        productId: sampleProductId,
+        productTitle: "Dairy Health Protocol",
+        priceCents: 4900,
+        downloadToken: sampleToken,
+        downloadCount: 1,
+        lastDownloadedAt: new Date(),
+      });
+      orderRepository.incrementDownloadCount.mockResolvedValueOnce(updatedItem);
+
+      const res = await request(app.getHttpServer())
+        .get(`/orders/${sampleOrderId}/download?token=${sampleToken}`)
+        .set("Authorization", "Bearer customer-token");
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.orderId).toBe(sampleOrderId);
+      expect(res.body.data.itemId).toBe(sampleItemId);
+      expect(res.body.data.downloadUrl).toContain("https://s3.amazonaws.com");
+      expect(res.body.data.expiresInSeconds).toBe(900);
+      expect(res.body.data.downloadCount).toBe(1);
+      expect(res.body.data.maxDownloads).toBe(5);
+      expect(res.body.data.remainingDownloads).toBe(4);
+    });
+
+    it("should issue HTTP 302 redirect directly to presigned S3 URL when redirect=true", async () => {
+      const completedOrder = buildMockOrder(OrderStatus.COMPLETED, 0);
+      orderRepository.findById.mockResolvedValueOnce(completedOrder);
+      orderRepository.findByDownloadToken.mockResolvedValueOnce({
+        order: completedOrder,
+        item: completedOrder.items[0]!,
+        contentS3Key: "products/ebooks/dairy-guide.pdf",
+        productType: "EBOOK",
+      });
+
+      const updatedItem = OrderItemEntity.reconstitute({
+        id: sampleItemId,
+        orderId: sampleOrderId,
+        productId: sampleProductId,
+        productTitle: "Dairy Health Protocol",
+        priceCents: 4900,
+        downloadToken: sampleToken,
+        downloadCount: 1,
+        lastDownloadedAt: new Date(),
+      });
+      orderRepository.incrementDownloadCount.mockResolvedValueOnce(updatedItem);
+
+      const res = await request(app.getHttpServer())
+        .get(`/orders/${sampleOrderId}/download?token=${sampleToken}&redirect=true`)
+        .set("Authorization", "Bearer customer-token");
+
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toContain("https://s3.amazonaws.com");
+    });
+
+    it("should return 403 Forbidden when unauthorized user requests download", async () => {
+      const completedOrder = buildMockOrder(OrderStatus.COMPLETED, 0);
+      orderRepository.findById.mockResolvedValueOnce(completedOrder);
+
+      const res = await request(app.getHttpServer())
+        .get(`/orders/${sampleOrderId}/download?token=${sampleToken}`)
+        .set("Authorization", "Bearer other-token");
+
+      expect(res.status).toBe(403);
+    });
+
+    it("should allow ADMIN user to download order asset", async () => {
+      const completedOrder = buildMockOrder(OrderStatus.COMPLETED, 0);
+      orderRepository.findById.mockResolvedValueOnce(completedOrder);
+      orderRepository.findByDownloadToken.mockResolvedValueOnce({
+        order: completedOrder,
+        item: completedOrder.items[0]!,
+        contentS3Key: "products/ebooks/dairy-guide.pdf",
+        productType: "EBOOK",
+      });
+
+      const updatedItem = OrderItemEntity.reconstitute({
+        id: sampleItemId,
+        orderId: sampleOrderId,
+        productId: sampleProductId,
+        productTitle: "Dairy Health Protocol",
+        priceCents: 4900,
+        downloadToken: sampleToken,
+        downloadCount: 1,
+        lastDownloadedAt: new Date(),
+      });
+      orderRepository.incrementDownloadCount.mockResolvedValueOnce(updatedItem);
+
+      const res = await request(app.getHttpServer())
+        .get(`/orders/${sampleOrderId}/download?token=${sampleToken}`)
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.downloadUrl).toContain("https://s3.amazonaws.com");
+    });
+
+    it("should return 400 Bad Request when token query parameter is missing", async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/orders/${sampleOrderId}/download`)
+        .set("Authorization", "Bearer customer-token");
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain("Query parameter 'token' is required");
+    });
+
+    it("should return 422 Unprocessable Entity when download limit is reached", async () => {
+      const completedOrder = buildMockOrder(OrderStatus.COMPLETED, 5);
+      orderRepository.findById.mockResolvedValueOnce(completedOrder);
+      orderRepository.findByDownloadToken.mockResolvedValueOnce({
+        order: completedOrder,
+        item: completedOrder.items[0]!,
+        contentS3Key: "products/ebooks/dairy-guide.pdf",
+        productType: "EBOOK",
+      });
+
+      const res = await request(app.getHttpServer())
+        .get(`/orders/${sampleOrderId}/download?token=${sampleToken}`)
+        .set("Authorization", "Bearer customer-token");
+
+      expect(res.status).toBe(422);
+      expect(res.body.message).toContain("Maximum download limit reached");
+    });
+  });
+
+  describe("POST /orders/:id/resend-email", () => {
+    it("should return 200 OK and enqueue delivery email for valid owner", async () => {
+      const completedOrder = buildMockOrder(OrderStatus.COMPLETED, 0);
+      orderRepository.findById.mockResolvedValueOnce(completedOrder);
+      orderRepository.findOrderUser.mockResolvedValueOnce({
+        email: customerUser.email,
+        name: "Customer Farmer",
+      });
+
+      const res = await request(app.getHttpServer())
+        .post(`/orders/${sampleOrderId}/resend-email`)
+        .set("Authorization", "Bearer customer-token")
+        .set("x-trace-id", "test-trace-123");
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.enqueued).toBe(true);
+      expect(res.body.data.orderId).toBe(sampleOrderId);
+      expect(mailQueueService.enqueueOrderDeliveryEmail).toHaveBeenCalledWith(
+        sampleOrderId,
+        customerUser.email,
+        "Customer Farmer",
+        "test-trace-123"
+      );
+    });
+
+    it("should return 403 Forbidden for unauthorized user", async () => {
+      const completedOrder = buildMockOrder(OrderStatus.COMPLETED, 0);
+      orderRepository.findById.mockResolvedValueOnce(completedOrder);
+
+      const res = await request(app.getHttpServer())
+        .post(`/orders/${sampleOrderId}/resend-email`)
+        .set("Authorization", "Bearer other-token");
+
+      expect(res.status).toBe(403);
+    });
+
+    it("should return 422 Unprocessable Entity if order is not completed", async () => {
+      const pendingOrder = buildMockOrder(OrderStatus.PENDING, 0);
+      orderRepository.findById.mockResolvedValueOnce(pendingOrder);
+
+      const res = await request(app.getHttpServer())
+        .post(`/orders/${sampleOrderId}/resend-email`)
+        .set("Authorization", "Bearer customer-token");
+
+      expect(res.status).toBe(422);
+      expect(res.body.message).toContain("Cannot resend email: order is in 'PENDING' status");
     });
   });
 });

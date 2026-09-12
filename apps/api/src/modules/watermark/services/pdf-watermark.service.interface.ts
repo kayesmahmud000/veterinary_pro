@@ -1,3 +1,5 @@
+export type QrCodePlacement = "all-pages" | "first-page" | "first-and-last";
+
 export interface WatermarkOptions {
   readonly buyerName: string;
   readonly buyerEmail: string;
@@ -8,6 +10,10 @@ export interface WatermarkOptions {
   readonly rotationDegrees?: number;
   readonly repeatDiagonal?: boolean;
   readonly includeIntegrityHash?: boolean;
+  readonly includeQrCode?: boolean;
+  readonly verificationUrl?: string;
+  readonly qrPlacement?: QrCodePlacement;
+  readonly downloadToken?: string;
 }
 
 export interface WatermarkResult {
@@ -15,6 +21,7 @@ export interface WatermarkResult {
   readonly pageCount: number;
   readonly executionTimeMs: number;
   readonly integrityHash?: string;
+  readonly qrCodeEmbedded?: boolean;
 }
 
 export interface IPdfWatermarkService {

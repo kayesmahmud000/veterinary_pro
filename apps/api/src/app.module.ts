@@ -11,6 +11,7 @@ import { ProductsModule } from "./modules/products";
 import { MediaModule } from "./modules/media";
 import { OrdersModule } from "./modules/orders";
 import { WatermarkModule } from "./modules/watermark";
+import { MailModule } from "./modules/mail";
 import { IdempotencyModule } from "./common/idempotency";
 
 @Module({
@@ -42,6 +43,7 @@ import { IdempotencyModule } from "./common/idempotency";
     IdempotencyModule,
     OrdersModule,
     WatermarkModule,
+    MailModule,
   ],
 })
 export class AppModule {}

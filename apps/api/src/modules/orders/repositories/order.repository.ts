@@ -332,6 +332,18 @@ export class OrderRepository implements IOrderRepository {
     }
   }
 
+  public async findOrderUser(
+    userId: string,
+    tx?: Prisma.TransactionClient
+  ): Promise<{ email: string; name: string } | null> {
+    const client = tx ?? this.prisma;
+    const user = await client.user.findUnique({
+      where: { id: userId },
+      select: { email: true, name: true },
+    });
+    return user;
+  }
+
   private toEntity(raw: PrismaOrderWithItems): OrderEntity {
     const items = raw.items.map((rawItem) =>
       OrderItemEntity.reconstitute({

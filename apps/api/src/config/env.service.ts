@@ -182,4 +182,24 @@ export class EnvService implements IEnvService {
   get cloudfrontUrlExpirationSeconds(): number {
     return this.configService.get("CLOUDFRONT_URL_EXPIRATION_SECONDS", { infer: true });
   }
+
+  get emailProvider(): "resend" | "ses" | "mock" {
+    return this.configService.get("EMAIL_PROVIDER", { infer: true });
+  }
+
+  get emailFrom(): string {
+    return this.configService.get("EMAIL_FROM", { infer: true });
+  }
+
+  get resendApiKey(): string | undefined {
+    return this.configService.get("RESEND_API_KEY", { infer: true });
+  }
+
+  get awsSesRegion(): string | undefined {
+    return this.configService.get("AWS_SES_REGION", { infer: true });
+  }
+
+  get apiBaseUrl(): string {
+    return this.configService.get("API_BASE_URL", { infer: true });
+  }
 }

@@ -4,6 +4,8 @@ import { PrismaModule } from "../prisma";
 import { AuditModule } from "../audit";
 import { AuthModule } from "../auth";
 import { ProductsModule } from "../products/products.module";
+import { MediaModule } from "../media/media.module";
+import { MailModule } from "../mail/mail.module";
 import { OrderRepository } from "./repositories/order.repository";
 import { ORDER_REPOSITORY } from "./repositories/order.repository.interface";
 import { CheckoutService } from "./services/checkout.service";
@@ -29,6 +31,8 @@ import { IdempotencyModule } from "../../common/idempotency";
     AuditModule,
     AuthModule,
     ProductsModule,
+    MediaModule,
+    MailModule,
     IdempotencyModule,
   ],
   controllers: [

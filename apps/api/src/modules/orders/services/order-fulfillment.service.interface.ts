@@ -1,5 +1,8 @@
 import { Prisma } from "@prisma/client";
-import { OrderDownloadTokensResponseDto } from "@vetralink/shared-types";
+import {
+  OrderDownloadTokensResponseDto,
+  SecureDownloadResponseDto,
+} from "@vetralink/shared-types";
 import { OrderEntity } from "../entities/order.entity";
 
 export interface DownloadTokenValidationResult {
@@ -37,6 +40,22 @@ export interface IOrderFulfillmentService {
     downloadToken: string,
     tx?: Prisma.TransactionClient
   ): Promise<void>;
+
+  getSecureDownloadUrl(
+    orderId: string,
+    downloadToken: string,
+    userId: string,
+    userRole: string,
+    traceId?: string,
+    ipAddress?: string
+  ): Promise<SecureDownloadResponseDto>;
+
+  resendOrderDeliveryEmail(
+    orderId: string,
+    userId: string,
+    userRole: string,
+    traceId?: string
+  ): Promise<{ enqueued: boolean; orderId: string }>;
 }
 
 export const ORDER_FULFILLMENT_SERVICE = "ORDER_FULFILLMENT_SERVICE";

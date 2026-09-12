@@ -60,6 +60,7 @@ describe("StripeWebhookService", () => {
       updateItemDownloadTokens: jest.fn(),
       findByDownloadToken: jest.fn(),
       incrementDownloadCount: jest.fn(),
+      findOrderUser: jest.fn(),
     };
 
     transactionManager = {

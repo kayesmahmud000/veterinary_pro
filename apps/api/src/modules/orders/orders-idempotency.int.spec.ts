@@ -106,6 +106,7 @@ describe("Orders Idempotency Engine (Supertest & Service Integration)", () => {
       updateItemDownloadTokens: jest.fn(),
       findByDownloadToken: jest.fn(),
       incrementDownloadCount: jest.fn(),
+      findOrderUser: jest.fn(),
     };
 
     transactionManager = {

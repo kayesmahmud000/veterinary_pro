@@ -5,6 +5,7 @@ import {
   DownloadTokenItemDto,
   OrderDownloadTokensResponseDto,
   OrderStatus,
+  SecureDownloadResponseDto,
   UserRole,
 } from "@vetralink/shared-types";
 import {
@@ -26,9 +27,19 @@ import {
   AUDIT_LOG_REPOSITORY,
 } from "../../audit/repositories/audit-log.repository.interface";
 import {
+  IS3StorageService,
+  S3_STORAGE_SERVICE,
+} from "../../media/services/s3-storage.service.interface";
+import {
+  IMailQueueService,
+  MAIL_QUEUE_SERVICE,
+} from "../../mail/interfaces/mail-service.interface";
+import { EnvService } from "../../../config/env.service";
+import {
   DownloadTokenValidationResult,
   IOrderFulfillmentService,
 } from "./order-fulfillment.service.interface";
+import { Optional } from "@nestjs/common";
 
 export const MAX_DOWNLOADS_PER_ITEM = 5;
 
@@ -42,7 +53,13 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
     @Inject(TRANSACTION_MANAGER)
     private readonly transactionManager: ITransactionManager,
     @Inject(AUDIT_LOG_REPOSITORY)
-    private readonly auditLogRepository: IAuditLogRepository
+    private readonly auditLogRepository: IAuditLogRepository,
+    @Inject(S3_STORAGE_SERVICE)
+    private readonly s3Storage: IS3StorageService,
+    private readonly envService: EnvService,
+    @Optional()
+    @Inject(MAIL_QUEUE_SERVICE)
+    private readonly mailQueueService?: IMailQueueService
   ) {}
 
   public async fulfillOrder(
@@ -114,13 +131,32 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
       return updated!;
     };
 
-    if (tx) {
-      return runInTransaction(tx);
+    const fulfilledOrder = tx
+      ? await runInTransaction(tx)
+      : await this.transactionManager.run((activeTx) =>
+          runInTransaction(activeTx)
+        );
+
+    // Asynchronously dispatch delivery email if mail queue service is configured
+    if (this.mailQueueService) {
+      try {
+        const userInfo = await this.orderRepository.findOrderUser(fulfilledOrder.userId);
+        if (userInfo?.email) {
+          await this.mailQueueService.enqueueOrderDeliveryEmail(
+            orderId,
+            userInfo.email,
+            userInfo.name,
+            traceId
+          );
+        }
+      } catch (err: unknown) {
+        this.logger.warn(
+          `Failed to enqueue delivery email for fulfilled order [${orderId}]: ${(err as Error).message}`
+        );
+      }
     }
 
-    return this.transactionManager.run((activeTx) =>
-      runInTransaction(activeTx)
-    );
+    return fulfilledOrder;
   }
 
   public async getOrderDownloadTokens(
@@ -233,5 +269,165 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
     }
 
     await this.orderRepository.incrementDownloadCount(validation.itemId, tx);
+  }
+
+  public async getSecureDownloadUrl(
+    orderId: string,
+    downloadToken: string,
+    userId: string,
+    userRole: string,
+    traceId?: string,
+    ipAddress?: string
+  ): Promise<SecureDownloadResponseDto> {
+    const order = await this.orderRepository.findById(orderId);
+    if (!order) {
+      throw new EntityNotFoundException("Order", orderId);
+    }
+
+    const isAdmin =
+      userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN;
+    if (!isAdmin && order.userId !== userId) {
+      throw new ForbiddenOperationException(
+        "You are not authorized to download assets from this order."
+      );
+    }
+
+    if (order.status !== OrderStatus.COMPLETED) {
+      throw new ValidationDomainException(
+        `Cannot download assets: order is in '${order.status}' status, not settled.`
+      );
+    }
+
+    const validation = await this.validateDownloadToken(downloadToken);
+    if (!validation.isValid || !validation.itemId) {
+      throw new ValidationDomainException(
+        validation.reason ?? "Invalid download token."
+      );
+    }
+
+    if (validation.orderId !== orderId) {
+      throw new ValidationDomainException(
+        "Provided download token does not belong to this order."
+      );
+    }
+
+    // Determine target S3 bucket and object key
+    const deliveriesBucket = this.envService.s3BucketDeliveries;
+    const mediaBucket = this.envService.s3BucketMedia;
+
+    const watermarkedKey = `watermarked/${orderId}/${validation.itemId}.pdf`;
+    const targetBucket =
+      validation.productType === "EBOOK" ? deliveriesBucket : mediaBucket;
+    const targetKey =
+      validation.productType === "EBOOK"
+        ? watermarkedKey
+        : validation.contentS3Key || watermarkedKey;
+
+    const expiresInSeconds = 900; // 15 minutes
+    const downloadUrl = await this.s3Storage.getPresignedGetUrl(
+      targetBucket,
+      targetKey,
+      expiresInSeconds
+    );
+
+    // Atomically increment download counter
+    const updatedItem = await this.orderRepository.incrementDownloadCount(
+      validation.itemId
+    );
+
+    // Record audit log
+    await this.auditLogRepository.record({
+      userId,
+      action: "ORDER_ITEM_DOWNLOADED",
+      entityType: "order_items",
+      entityId: validation.itemId,
+      oldValues: {
+        downloadCount: validation.downloadCount,
+      },
+      newValues: {
+        downloadCount: updatedItem.downloadCount,
+        lastDownloadedAt: updatedItem.lastDownloadedAt,
+        targetKey,
+      },
+      traceId: traceId || crypto.randomUUID(),
+      ipAddress,
+    });
+
+    this.logger.log(
+      `Issued secure download URL for order [${orderId}], item [${validation.itemId}] -> User [${userId}] (Attempt ${updatedItem.downloadCount}/${MAX_DOWNLOADS_PER_ITEM})`
+    );
+
+    const remainingDownloads = Math.max(
+      0,
+      MAX_DOWNLOADS_PER_ITEM - updatedItem.downloadCount
+    );
+
+    return {
+      orderId,
+      itemId: validation.itemId,
+      productId: validation.productId ?? "",
+      productTitle: validation.productTitle ?? "",
+      productType: validation.productType ?? "",
+      downloadUrl,
+      expiresInSeconds,
+      downloadCount: updatedItem.downloadCount,
+      maxDownloads: MAX_DOWNLOADS_PER_ITEM,
+      remainingDownloads,
+      lastDownloadedAt: updatedItem.lastDownloadedAt
+        ? updatedItem.lastDownloadedAt.toISOString()
+        : new Date().toISOString(),
+    };
+  }
+
+  public async resendOrderDeliveryEmail(
+    orderId: string,
+    userId: string,
+    userRole: string,
+    traceId?: string
+  ): Promise<{ enqueued: boolean; orderId: string }> {
+    const order = await this.orderRepository.findById(orderId);
+    if (!order) {
+      throw new EntityNotFoundException("Order", orderId);
+    }
+
+    const isAdmin =
+      userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN;
+    if (!isAdmin && order.userId !== userId) {
+      throw new ForbiddenOperationException(
+        "You are not authorized to resend delivery emails for this order."
+      );
+    }
+
+    if (order.status !== OrderStatus.COMPLETED) {
+      throw new ValidationDomainException(
+        `Cannot resend email: order is in '${order.status}' status, not completed.`
+      );
+    }
+
+    if (!this.mailQueueService) {
+      throw new ValidationDomainException(
+        "Mail queue service is currently unavailable."
+      );
+    }
+
+    const userInfo = await this.orderRepository.findOrderUser(order.userId);
+    if (!userInfo?.email) {
+      throw new ValidationDomainException(
+        "No email address found for the user associated with this order."
+      );
+    }
+
+    await this.mailQueueService.enqueueOrderDeliveryEmail(
+      orderId,
+      userInfo.email,
+      userInfo.name,
+      traceId
+    );
+
+    this.logger.log(
+      `Re-enqueued delivery email for order [${orderId}] -> <${userInfo.email}>`
+    );
+
+    return { enqueued: true, orderId };
   }
 }

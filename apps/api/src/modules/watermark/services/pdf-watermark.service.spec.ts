@@ -113,6 +113,55 @@ describe("PdfWatermarkService", () => {
       expect(result.pdfBuffer.length).toBeGreaterThan(samplePdfBuffer.length);
     });
 
+    it("should embed verification QR code by default and report qrCodeEmbedded true", async () => {
+      const result = await service.applyWatermark(samplePdfBuffer, {
+        buyerName: "QR Test Buyer",
+        buyerEmail: "qr@farm.org",
+        orderId: "ord-qr-123",
+        purchaseDate: "2026-09-12T12:00:00Z",
+        downloadToken: "tok-abc-uuid-1234",
+      });
+
+      expect(result.qrCodeEmbedded).toBe(true);
+      const loadedDoc = await PDFDocument.load(result.pdfBuffer);
+      expect(loadedDoc.getPageCount()).toBe(2);
+    });
+
+    it("should honor qrPlacement first-page and first-and-last options", async () => {
+      const firstPageResult = await service.applyWatermark(samplePdfBuffer, {
+        buyerName: "First Page QR Buyer",
+        buyerEmail: "first@farm.org",
+        orderId: "ord-first-qr",
+        purchaseDate: "2026-09-12T12:00:00Z",
+        qrPlacement: "first-page",
+      });
+      expect(firstPageResult.qrCodeEmbedded).toBe(true);
+
+      const firstAndLastResult = await service.applyWatermark(
+        samplePdfBuffer,
+        {
+          buyerName: "First & Last QR Buyer",
+          buyerEmail: "last@farm.org",
+          orderId: "ord-last-qr",
+          purchaseDate: "2026-09-12T12:00:00Z",
+          qrPlacement: "first-and-last",
+        }
+      );
+      expect(firstAndLastResult.qrCodeEmbedded).toBe(true);
+    });
+
+    it("should omit QR code when includeQrCode is false", async () => {
+      const result = await service.applyWatermark(samplePdfBuffer, {
+        buyerName: "No QR Buyer",
+        buyerEmail: "noqr@farm.org",
+        orderId: "ord-no-qr",
+        purchaseDate: "2026-09-12T12:00:00Z",
+        includeQrCode: false,
+      });
+
+      expect(result.qrCodeEmbedded).toBe(false);
+    });
+
     it("should accept custom watermark notice if provided", async () => {
       const result = await service.applyWatermark(samplePdfBuffer, {
         buyerName: "Jane Smith",
