@@ -408,6 +408,7 @@ model Product {
   orderItems OrderItem[]
 
   @@index([type, isPublished])
+  @@index([isPublished, type, createdAt(sort: Desc)])
   @@map("products")
 }
 

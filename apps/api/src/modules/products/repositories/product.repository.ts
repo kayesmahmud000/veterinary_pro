@@ -1,6 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
-import { ProductType, SubscriptionTier } from "@vetralink/shared-types";
+import {
+  ProductSortBy,
+  ProductType,
+  SubscriptionTier,
+} from "@vetralink/shared-types";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ProductEntity } from "../entities/product.entity";
 import {
@@ -95,6 +99,61 @@ export class ProductRepository implements IProductRepository {
   ): Promise<{ products: ProductEntity[]; total: number }> {
     const client = tx ?? this.prisma;
 
+    const andConditions: Prisma.ProductWhereInput[] = [];
+
+    // Search query: multi-word keyword tokenization
+    if (filter.search && filter.search.trim()) {
+      const cleanSearch = filter.search.trim();
+      const words = cleanSearch.split(/\s+/).filter(Boolean);
+      if (words.length > 1) {
+        for (const word of words) {
+          andConditions.push({
+            OR: [
+              { title: { contains: word, mode: "insensitive" } },
+              { description: { contains: word, mode: "insensitive" } },
+            ],
+          });
+        }
+      } else {
+        andConditions.push({
+          OR: [
+            { title: { contains: cleanSearch, mode: "insensitive" } },
+            { description: { contains: cleanSearch, mode: "insensitive" } },
+          ],
+        });
+      }
+    }
+
+    // Min price condition (effective price = coalesce(discountPriceCents, priceCents))
+    if (filter.minPriceCents !== undefined) {
+      andConditions.push({
+        OR: [
+          {
+            discountPriceCents: { gte: filter.minPriceCents },
+          },
+          {
+            discountPriceCents: null,
+            priceCents: { gte: filter.minPriceCents },
+          },
+        ],
+      });
+    }
+
+    // Max price condition (effective price = coalesce(discountPriceCents, priceCents))
+    if (filter.maxPriceCents !== undefined) {
+      andConditions.push({
+        OR: [
+          {
+            discountPriceCents: { lte: filter.maxPriceCents },
+          },
+          {
+            discountPriceCents: null,
+            priceCents: { lte: filter.maxPriceCents },
+          },
+        ],
+      });
+    }
+
     const where: Prisma.ProductWhereInput = {
       deletedAt: filter.includeDeleted ? undefined : null,
       ...(filter.type && { type: filter.type }),
@@ -104,20 +163,37 @@ export class ProductRepository implements IProductRepository {
       ...(filter.isPublished !== undefined && {
         isPublished: filter.isPublished,
       }),
-      ...(filter.search && {
-        OR: [
-          { title: { contains: filter.search, mode: "insensitive" } },
-          { description: { contains: filter.search, mode: "insensitive" } },
-        ],
+      ...(andConditions.length > 0 && {
+        AND: andConditions,
       }),
     };
+
+    let orderBy: Prisma.ProductOrderByWithRelationInput = {
+      createdAt: "desc",
+    };
+    switch (filter.sortBy) {
+      case ProductSortBy.PRICE_ASC:
+        orderBy = { priceCents: "asc" };
+        break;
+      case ProductSortBy.PRICE_DESC:
+        orderBy = { priceCents: "desc" };
+        break;
+      case ProductSortBy.TITLE_ASC:
+        orderBy = { title: "asc" };
+        break;
+      case ProductSortBy.NEWEST:
+      case ProductSortBy.RELEVANCE:
+      default:
+        orderBy = { createdAt: "desc" };
+        break;
+    }
 
     const [rows, total] = await Promise.all([
       client.product.findMany({
         where,
         skip: filter.skip,
         take: filter.take,
-        orderBy: { createdAt: "desc" },
+        orderBy,
       }),
       client.product.count({ where }),
     ]);

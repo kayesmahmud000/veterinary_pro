@@ -4,6 +4,7 @@ import {
   ProductListItemDto,
   ProductQueryFilterDto,
   ProductResponseDto,
+  ProductSearchQueryRequestDto,
   UpdateProductRequestDto,
 } from "@vetralink/shared-types";
 
@@ -36,6 +37,10 @@ export interface IProductsService {
   listProducts(
     filter: ProductQueryFilterDto,
     includeUnpublished?: boolean
+  ): Promise<{ items: ProductListItemDto[]; meta: PaginationMeta }>;
+
+  searchProducts(
+    query: ProductSearchQueryRequestDto
   ): Promise<{ items: ProductListItemDto[]; meta: PaginationMeta }>;
 
   deleteProduct(

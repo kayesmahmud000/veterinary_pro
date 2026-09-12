@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, Optional } from "@nestjs/common";
 import { spawn } from "node:child_process";
 import { readdir, stat, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
@@ -24,7 +24,7 @@ export const STANDARD_RENDITIONS: readonly RenditionSpec[] = [
     videoBitrate: "4500k",
     maxRate: "4800k",
     bufSize: "9000k",
-    audioBitrate: "128k",
+    audioBitrate: "192k",
   },
   {
     name: "720p",
@@ -60,7 +60,7 @@ export class FfmpegTranscoderService implements IVideoTranscoderService {
   private readonly logger = new Logger(FfmpegTranscoderService.name);
   private readonly executor: ProcessExecutor;
 
-  constructor(customExecutor?: ProcessExecutor) {
+  constructor(@Optional() customExecutor?: ProcessExecutor) {
     this.executor = customExecutor ?? this.defaultSpawnExecutor;
   }
 
@@ -178,13 +178,18 @@ export class FfmpegTranscoderService implements IVideoTranscoderService {
   public async transcodeToHls(
     params: HlsTranscodeParams
   ): Promise<HlsTranscodeResult> {
-    const { inputFilePath, outputDirectory, segmentDurationSeconds = 6 } = params;
+    const {
+      inputFilePath,
+      outputDirectory,
+      segmentDurationSeconds = 6,
+      keyInfoFilePath,
+    } = params;
 
     const probe = await this.probeVideo(inputFilePath);
     const ladder = this.computeLadder(probe.height);
 
     this.logger.log(
-      `Transcoding '${inputFilePath}' (${probe.width}x${probe.height}, ${probe.durationSeconds}s) -> Renditions: [${ladder.map((r) => r.name).join(", ")}]`
+      `Transcoding '${inputFilePath}' (${probe.width}x${probe.height}, ${probe.durationSeconds}s) -> Renditions: [${ladder.map((r) => r.name).join(", ")}]${keyInfoFilePath ? " with AES-128 DRM encryption" : ""}`
     );
 
     // Build FFmpeg command for multi-bitrate HLS output
@@ -192,7 +197,8 @@ export class FfmpegTranscoderService implements IVideoTranscoderService {
       inputFilePath,
       outputDirectory,
       ladder,
-      segmentDurationSeconds
+      segmentDurationSeconds,
+      keyInfoFilePath
     );
 
     await this.executor("ffmpeg", ffmpegArgs);
@@ -223,7 +229,8 @@ export class FfmpegTranscoderService implements IVideoTranscoderService {
     inputFilePath: string,
     outputDirectory: string,
     ladder: RenditionSpec[],
-    segmentDurationSeconds: number
+    segmentDurationSeconds: number,
+    keyInfoFilePath?: string
   ): string[] {
     const args: string[] = ["-y", "-i", inputFilePath];
 
@@ -270,7 +277,14 @@ export class FfmpegTranscoderService implements IVideoTranscoderService {
       "-hls_playlist_type",
       "vod",
       "-hls_flags",
-      "independent_segments",
+      "independent_segments"
+    );
+
+    if (keyInfoFilePath) {
+      args.push("-hls_key_info_file", keyInfoFilePath);
+    }
+
+    args.push(
       "-master_pl_name",
       "master_raw.m3u8",
       "-var_stream_map",

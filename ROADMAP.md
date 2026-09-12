@@ -8,8 +8,8 @@
 | Phase | Description | Sprints | Status |
 | :--- | :--- | :--- | :--- |
 | **Phase 0** | Workspace Bootstrap, Architectural Standard & Persistence | Sprint 0 | **READY / COMPLETED** |
-| **Phase 1** | Foundation, DB Migration & Auth RBAC | Sprint 1–2 | 🟡 In Progress (Sprint 1 Complete) |
-| **Phase 2** | LMS & Digital Assets Store (Encrypted Stream / Watermark / Pay) | Sprint 3–5 | 🔲 Pending |
+| **Phase 1** | Foundation, DB Migration & Auth RBAC | Sprint 1–2 | **READY / COMPLETED** |
+| **Phase 2** | LMS & Digital Assets Store (Encrypted Stream / Watermark / Pay) | Sprint 3–5 | 🟡 In Progress (Sprint 3 Complete) |
 | **Phase 3** | Farm ERP Core (Livestock Registry, Milk Logging, P&L, Health) | Sprint 6–9 | 🔲 Pending |
 | **Phase 4** | Subscription Engine (Tier Gating, Quotas & Stripe Billing) | Sprint 10–11 | 🔲 Pending |
 | **Phase 5** | Tele-Veterinary Platform (Triage, WebRTC, Signed EHR Prescriptions)| Sprint 12–15 | 🔲 Pending |
@@ -61,19 +61,19 @@
 
 ### Phase 2: LMS & Digital Store with Payment Webhooks
 > **Sprint 3: Digital Product Catalog & Media Asset Pipeline**  
-> **Status**: 🟡 In Progress (Tasks 3.1, 3.2 & 3.3 Complete)
+> **Status**: ✅ **COMPLETE (2026-09-12)**  
 
 - [x] **Task 3.1**: Product master CRUD (`VIDEO_COURSE`, `EBOOK`, `EXCEL_TOOL`).
 - [x] **Task 3.2**: Presigned S3 direct multipart upload for heavy video masters and PDF assets.
 - [x] **Task 3.3**: BullMQ video processing worker: FFmpeg automated multi-bitrate HLS segmentation.
-- [ ] **Task 3.4**: AES-128 / DRM key server endpoint with time-bound JWT verification.
-- [ ] **Task 3.5**: CloudFront Origin Access Control (OAC) signed URL delivery pipeline.
-- [ ] **Task 3.6**: Product catalog public search with full-text indexing and filtering.
+- [x] **Task 3.4**: AES-128 / DRM key server endpoint with time-bound JWT verification.
+- [x] **Task 3.5**: CloudFront Origin Access Control (OAC) signed URL delivery pipeline.
+- [x] **Task 3.6**: Product catalog public search with full-text indexing and filtering.
 
 > **Sprint 4: Orders, Checkout & Payment Webhooks**  
-> **Status**: 🔲 Pending
+> **Status**: 🟡 In Progress  
 
-- [ ] ACID-compliant checkout workflow inside Prisma `$transaction`:
+- [x] **Task 4.1**: ACID-compliant checkout workflow inside Prisma `$transaction`:
   - Verify price and product availability.
   - Insert order and immutable snapshot `order_items`.
   - Dispatch payment intent to gateway.

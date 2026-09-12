@@ -69,6 +69,7 @@ describe("ProductsController (Integration via Supertest)", () => {
       getProductById: jest.fn(),
       getProductBySlug: jest.fn(),
       listProducts: jest.fn(),
+      searchProducts: jest.fn(),
       deleteProduct: jest.fn(),
       publishProduct: jest.fn(),
       unpublishProduct: jest.fn(),
@@ -158,6 +159,39 @@ describe("ProductsController (Integration via Supertest)", () => {
         data: expect.any(Array),
         meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
       });
+    });
+  });
+
+  describe("GET /products/search", () => {
+    it("should allow public access to product search with filters and pagination", async () => {
+      productsService.searchProducts.mockResolvedValueOnce({
+        items: [mockProductResponse],
+        meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+      });
+
+      const response = await request(app.getHttpServer())
+        .get(
+          "/products/search?q=mastitis&type=VIDEO_COURSE&minPriceCents=1000&maxPriceCents=8000&sortBy=price_asc"
+        )
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        success: true,
+        statusCode: 200,
+        message: "Product search results retrieved successfully",
+        data: expect.any(Array),
+        meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+      });
+
+      expect(productsService.searchProducts).toHaveBeenCalledWith(
+        expect.objectContaining({
+          q: "mastitis",
+          type: ProductType.VIDEO_COURSE,
+          minPriceCents: 1000,
+          maxPriceCents: 8000,
+          sortBy: "price_asc",
+        })
+      );
     });
   });
 

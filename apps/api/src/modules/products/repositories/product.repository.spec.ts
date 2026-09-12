@@ -1,5 +1,9 @@
 import { Prisma } from "@prisma/client";
-import { ProductType, SubscriptionTier } from "@vetralink/shared-types";
+import {
+  ProductSortBy,
+  ProductType,
+  SubscriptionTier,
+} from "@vetralink/shared-types";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ProductEntity } from "../entities/product.entity";
 import { ProductRepository } from "./product.repository";
@@ -118,6 +122,55 @@ describe("ProductRepository", () => {
 
       expect(result.products.length).toBe(1);
       expect(result.total).toBe(1);
+    });
+
+    it("should construct multi-word search conditions and price ranges", async () => {
+      (prisma.product.findMany as jest.Mock).mockResolvedValueOnce([mockDbRow]);
+      (prisma.product.count as jest.Mock).mockResolvedValueOnce(1);
+
+      await repository.findMany({
+        search: "bovine mastitis",
+        minPriceCents: 1000,
+        maxPriceCents: 5000,
+        sortBy: ProductSortBy.PRICE_ASC,
+      });
+
+      expect(prisma.product.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: expect.arrayContaining([
+              expect.objectContaining({
+                OR: expect.arrayContaining([
+                  { title: { contains: "bovine", mode: "insensitive" } },
+                  { description: { contains: "bovine", mode: "insensitive" } },
+                ]),
+              }),
+              expect.objectContaining({
+                OR: expect.arrayContaining([
+                  { title: { contains: "mastitis", mode: "insensitive" } },
+                  { description: { contains: "mastitis", mode: "insensitive" } },
+                ]),
+              }),
+            ]),
+          }),
+          orderBy: { priceCents: "asc" },
+        })
+      );
+    });
+
+    it("should order by title asc when TITLE_ASC is requested", async () => {
+      (prisma.product.findMany as jest.Mock).mockResolvedValueOnce([mockDbRow]);
+      (prisma.product.count as jest.Mock).mockResolvedValueOnce(1);
+
+      await repository.findMany({
+        sortBy: ProductSortBy.TITLE_ASC,
+      });
+
+      expect(prisma.product.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { title: "asc" },
+        })
+      );
     });
   });
 

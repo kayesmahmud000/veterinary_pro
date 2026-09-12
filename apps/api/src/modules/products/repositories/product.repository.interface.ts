@@ -1,5 +1,9 @@
 import { Prisma } from "@prisma/client";
-import { ProductType, SubscriptionTier } from "@vetralink/shared-types";
+import {
+  ProductSortBy,
+  ProductType,
+  SubscriptionTier,
+} from "@vetralink/shared-types";
 import { ProductEntity } from "../entities/product.entity";
 
 export interface ProductRepositoryFilter {
@@ -7,6 +11,9 @@ export interface ProductRepositoryFilter {
   minSubscriptionTier?: SubscriptionTier;
   isPublished?: boolean;
   search?: string;
+  minPriceCents?: number;
+  maxPriceCents?: number;
+  sortBy?: ProductSortBy;
   includeDeleted?: boolean;
   skip?: number;
   take?: number;

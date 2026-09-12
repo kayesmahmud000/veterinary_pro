@@ -45,6 +45,7 @@ import {
 import {
   CreateProductDto,
   ProductQueryDto,
+  ProductSearchQueryDto,
   UpdateProductDto,
 } from "./dto";
 
@@ -73,6 +74,23 @@ export class ProductsController {
     @Headers("x-trace-id") traceId?: string
   ): Promise<ProductResponseDto> {
     return this.productsService.createProduct(dto, user.sub, traceId);
+  }
+
+  @Get("search")
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ResponseMessage("Product search results retrieved successfully")
+  @ApiOperation({
+    summary:
+      "Public full-text search and multifaceted filtering across catalog products",
+  })
+  @ApiOkResponse({
+    description: "Product search results retrieved successfully",
+  })
+  public async searchProducts(
+    @Query() query: ProductSearchQueryDto
+  ): Promise<{ items: ProductListItemDto[]; meta: PaginationMeta }> {
+    return this.productsService.searchProducts(query);
   }
 
   @Get()

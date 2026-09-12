@@ -216,6 +216,45 @@ describe("ProductsService", () => {
     });
   });
 
+  describe("searchProducts", () => {
+    it("should throw ValidationDomainException when minPriceCents exceeds maxPriceCents", async () => {
+      await expect(
+        service.searchProducts({
+          minPriceCents: 5000,
+          maxPriceCents: 2000,
+        })
+      ).rejects.toThrow();
+    });
+
+    it("should execute search with sanitized query and parameters", async () => {
+      productRepository.findMany.mockResolvedValueOnce({
+        products: [mockProductEntity],
+        total: 1,
+      });
+
+      const result = await service.searchProducts({
+        q: "  dairy mastitis  ",
+        minPriceCents: 1000,
+        maxPriceCents: 8000,
+        page: 1,
+        limit: 10,
+      });
+
+      expect(productRepository.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          search: "dairy mastitis",
+          isPublished: true,
+          minPriceCents: 1000,
+          maxPriceCents: 8000,
+          skip: 0,
+          take: 10,
+        })
+      );
+      expect(result.items.length).toBe(1);
+      expect(result.meta.total).toBe(1);
+    });
+  });
+
   describe("deleteProduct", () => {
     it("should soft delete product and record audit log", async () => {
       productRepository.findById.mockResolvedValueOnce(mockProductEntity);

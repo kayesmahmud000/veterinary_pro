@@ -25,6 +25,26 @@ describe("Environment Schema & Validation (env.schema.ts)", () => {
     expect(config.SLOW_QUERY_THRESHOLD_MS).toBe(200);
     expect(config.DB_CONNECT_RETRY_DELAY_MS).toBe(1000);
     expect(config.S3_BUCKET_MEDIA).toBe("vetralink-media-dev");
+    expect(config.HLS_DRM_KEY_SECRET).toBe("dev_hls_drm_key_master_secret_32_chars_long");
+    expect(config.DRM_TOKEN_EXPIRATION_SECONDS).toBe(600);
+    expect(config.CLOUDFRONT_URL_EXPIRATION_SECONDS).toBe(3600);
+    expect(config.CLOUDFRONT_DISTRIBUTION_DOMAIN).toBeUndefined();
+  });
+
+  it("should parse custom CloudFront configuration correctly", () => {
+    const customConfig = {
+      ...validDevConfig,
+      CLOUDFRONT_DISTRIBUTION_DOMAIN: "cdn.vetralink.pro",
+      CLOUDFRONT_KEY_PAIR_ID: "K2JC3XQRI3UW74",
+      CLOUDFRONT_PRIVATE_KEY: "mock_pem_private_key",
+      CLOUDFRONT_URL_EXPIRATION_SECONDS: "7200",
+    };
+
+    const config = validateEnv(customConfig);
+    expect(config.CLOUDFRONT_DISTRIBUTION_DOMAIN).toBe("cdn.vetralink.pro");
+    expect(config.CLOUDFRONT_KEY_PAIR_ID).toBe("K2JC3XQRI3UW74");
+    expect(config.CLOUDFRONT_PRIVATE_KEY).toBe("mock_pem_private_key");
+    expect(config.CLOUDFRONT_URL_EXPIRATION_SECONDS).toBe(7200);
   });
 
   it("should fail validation if DATABASE_URL is missing or invalid URL", () => {

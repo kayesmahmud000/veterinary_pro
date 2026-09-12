@@ -202,5 +202,48 @@ describe("FfmpegTranscoderService", () => {
       expect(result.generatedFiles).toContain("master.m3u8");
       expect(result.totalSizeBytes).toBeGreaterThan(0);
     });
+
+    it("should pass -hls_key_info_file argument to ffmpeg when keyInfoFilePath is provided", async () => {
+      const probeOutput = {
+        streams: [
+          {
+            codec_type: "video",
+            codec_name: "h264",
+            width: 1280,
+            height: 720,
+            duration: "30.0",
+          },
+        ],
+      };
+
+      mockExecutor.mockImplementation(async (cmd: string) => {
+        if (cmd === "ffprobe") {
+          return { stdout: JSON.stringify(probeOutput), stderr: "" };
+        }
+        if (cmd === "ffmpeg") {
+          for (const res of ["720p", "480p", "360p"]) {
+            const resDir = path.join(testTempDir, res);
+            await fs.mkdir(resDir, { recursive: true });
+            await fs.writeFile(path.join(resDir, "index.m3u8"), "#EXTM3U\n");
+          }
+          return { stdout: "", stderr: "" };
+        }
+        return { stdout: "", stderr: "" };
+      });
+
+      const keyInfoPath = path.join(testTempDir, "video.keyinfo");
+
+      await service.transcodeToHls({
+        inputFilePath: "master.mp4",
+        outputDirectory: testTempDir,
+        segmentDurationSeconds: 6,
+        keyInfoFilePath: keyInfoPath,
+      });
+
+      expect(mockExecutor).toHaveBeenCalledWith(
+        "ffmpeg",
+        expect.arrayContaining(["-hls_key_info_file", keyInfoPath])
+      );
+    });
   });
 });

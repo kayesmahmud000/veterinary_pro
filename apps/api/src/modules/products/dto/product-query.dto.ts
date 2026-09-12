@@ -11,6 +11,7 @@ import {
 import { Transform, Type } from "class-transformer";
 import {
   ProductQueryFilterDto,
+  ProductSortBy,
   ProductType,
   SubscriptionTier,
 } from "@vetralink/shared-types";
@@ -50,6 +51,35 @@ export class ProductQueryDto implements ProductQueryFilterDto {
   @IsOptional()
   @IsString()
   public readonly search?: string;
+
+  @ApiPropertyOptional({
+    description: "Minimum price in cents",
+    example: 0,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  public readonly minPriceCents?: number;
+
+  @ApiPropertyOptional({
+    description: "Maximum price in cents",
+    example: 10000,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  public readonly maxPriceCents?: number;
+
+  @ApiPropertyOptional({
+    enum: ProductSortBy,
+    description: "Sort mode",
+    default: ProductSortBy.NEWEST,
+  })
+  @IsOptional()
+  @IsEnum(ProductSortBy)
+  public readonly sortBy?: ProductSortBy;
 
   @ApiPropertyOptional({
     description: "Page number for pagination",

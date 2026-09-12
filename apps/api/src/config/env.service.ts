@@ -30,6 +30,12 @@ export interface IEnvService {
   readonly stripeSecretKey?: string;
   readonly stripeWebhookSecret?: string;
   readonly dailyApiKey?: string;
+  readonly hlsDrmKeySecret: string;
+  readonly drmTokenExpirationSeconds: number;
+  readonly cloudfrontDistributionDomain?: string;
+  readonly cloudfrontKeyPairId?: string;
+  readonly cloudfrontPrivateKey?: string;
+  readonly cloudfrontUrlExpirationSeconds: number;
 }
 
 @Injectable()
@@ -146,5 +152,29 @@ export class EnvService implements IEnvService {
 
   get dailyApiKey(): string | undefined {
     return this.configService.get("DAILY_API_KEY", { infer: true });
+  }
+
+  get hlsDrmKeySecret(): string {
+    return this.configService.get("HLS_DRM_KEY_SECRET", { infer: true });
+  }
+
+  get drmTokenExpirationSeconds(): number {
+    return this.configService.get("DRM_TOKEN_EXPIRATION_SECONDS", { infer: true });
+  }
+
+  get cloudfrontDistributionDomain(): string | undefined {
+    return this.configService.get("CLOUDFRONT_DISTRIBUTION_DOMAIN", { infer: true });
+  }
+
+  get cloudfrontKeyPairId(): string | undefined {
+    return this.configService.get("CLOUDFRONT_KEY_PAIR_ID", { infer: true });
+  }
+
+  get cloudfrontPrivateKey(): string | undefined {
+    return this.configService.get("CLOUDFRONT_PRIVATE_KEY", { infer: true });
+  }
+
+  get cloudfrontUrlExpirationSeconds(): number {
+    return this.configService.get("CLOUDFRONT_URL_EXPIRATION_SECONDS", { infer: true });
   }
 }

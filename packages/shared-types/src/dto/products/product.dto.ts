@@ -1,4 +1,5 @@
 import { ProductType, SubscriptionTier } from "../../enums/index.js";
+import { ProductSortBy } from "./product-search.dto.js";
 
 export interface CreateProductRequestDto {
   readonly title: string;
@@ -66,6 +67,9 @@ export interface ProductQueryFilterDto {
   readonly minSubscriptionTier?: SubscriptionTier;
   readonly isPublished?: boolean;
   readonly search?: string;
+  readonly minPriceCents?: number;
+  readonly maxPriceCents?: number;
+  readonly sortBy?: ProductSortBy;
   readonly page?: number;
   readonly limit?: number;
 }

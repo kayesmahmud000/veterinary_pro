@@ -43,6 +43,7 @@ describe("ProductsController", () => {
       getProductById: jest.fn(),
       getProductBySlug: jest.fn(),
       listProducts: jest.fn(),
+      searchProducts: jest.fn(),
       deleteProduct: jest.fn(),
       publishProduct: jest.fn(),
       unpublishProduct: jest.fn(),
@@ -121,6 +122,36 @@ describe("ProductsController", () => {
         { page: 1, limit: 20 },
         false
       );
+    });
+  });
+
+  describe("searchProducts", () => {
+    it("should delegate to productsService.searchProducts with query parameters", async () => {
+      productsService.searchProducts.mockResolvedValueOnce({
+        items: [
+          {
+            id: mockProductResponse.id,
+            title: mockProductResponse.title,
+            slug: mockProductResponse.slug,
+            type: mockProductResponse.type,
+            priceCents: mockProductResponse.priceCents,
+            discountPriceCents: mockProductResponse.discountPriceCents,
+            effectivePriceCents: mockProductResponse.effectivePriceCents,
+            currency: mockProductResponse.currency,
+            minSubscriptionTier: mockProductResponse.minSubscriptionTier,
+            isPublished: mockProductResponse.isPublished,
+            metadata: mockProductResponse.metadata,
+            createdAt: mockProductResponse.createdAt,
+          },
+        ],
+        meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+      });
+
+      const queryDto = { q: "mastitis", page: 1, limit: 20 };
+      const result = await controller.searchProducts(queryDto);
+
+      expect(result.items.length).toBe(1);
+      expect(productsService.searchProducts).toHaveBeenCalledWith(queryDto);
     });
   });
 

@@ -5,6 +5,7 @@ import {
   ProductListItemDto,
   ProductQueryFilterDto,
   ProductResponseDto,
+  ProductSearchQueryRequestDto,
   UpdateProductRequestDto,
 } from "@vetralink/shared-types";
 import {
@@ -23,6 +24,7 @@ import { ProductEntity } from "../entities/product.entity";
 import {
   EntityConflictException,
   EntityNotFoundException,
+  ValidationDomainException,
 } from "../../../common/exceptions/domain.exception";
 import { IProductsService } from "./products.service.interface";
 
@@ -222,6 +224,53 @@ export class ProductsService implements IProductsService {
       minSubscriptionTier: filter.minSubscriptionTier,
       isPublished,
       search: filter.search,
+      minPriceCents: filter.minPriceCents,
+      maxPriceCents: filter.maxPriceCents,
+      sortBy: filter.sortBy,
+      skip,
+      take: limit,
+    });
+
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    return {
+      items: products.map((p) => p.toListItem()),
+      meta: {
+        page,
+        pageSize: limit,
+        total,
+        totalPages,
+      },
+    };
+  }
+
+  public async searchProducts(
+    query: ProductSearchQueryRequestDto
+  ): Promise<{ items: ProductListItemDto[]; meta: PaginationMeta }> {
+    if (
+      query.minPriceCents !== undefined &&
+      query.maxPriceCents !== undefined &&
+      query.minPriceCents > query.maxPriceCents
+    ) {
+      throw new ValidationDomainException(
+        `minPriceCents (${query.minPriceCents}) cannot be greater than maxPriceCents (${query.maxPriceCents}).`
+      );
+    }
+
+    const page = Math.max(1, query.page ?? 1);
+    const limit = Math.min(100, Math.max(1, query.limit ?? 20));
+    const skip = (page - 1) * limit;
+
+    const cleanSearch = query.q?.trim() || undefined;
+
+    const { products, total } = await this.productRepository.findMany({
+      type: query.type,
+      minSubscriptionTier: query.minSubscriptionTier,
+      isPublished: true, // Strictly published products for public storefront search
+      search: cleanSearch,
+      minPriceCents: query.minPriceCents,
+      maxPriceCents: query.maxPriceCents,
+      sortBy: query.sortBy,
       skip,
       take: limit,
     });

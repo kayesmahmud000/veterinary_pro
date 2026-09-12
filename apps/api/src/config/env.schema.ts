@@ -53,6 +53,23 @@ export const EnvSchema = z
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     DAILY_API_KEY: z.string().optional(),
+    HLS_DRM_KEY_SECRET: z
+      .string()
+      .min(32, "HLS_DRM_KEY_SECRET must be at least 32 characters long")
+      .default("dev_hls_drm_key_master_secret_32_chars_long"),
+    DRM_TOKEN_EXPIRATION_SECONDS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(600),
+    CLOUDFRONT_DISTRIBUTION_DOMAIN: z.string().optional(),
+    CLOUDFRONT_KEY_PAIR_ID: z.string().optional(),
+    CLOUDFRONT_PRIVATE_KEY: z.string().optional(),
+    CLOUDFRONT_URL_EXPIRATION_SECONDS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(3600),
   })
   .superRefine((data, ctx) => {
     if (data.NODE_ENV === "production" || data.NODE_ENV === "staging") {

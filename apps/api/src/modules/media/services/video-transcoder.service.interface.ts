@@ -20,7 +20,9 @@ export interface HlsTranscodeParams {
   readonly inputFilePath: string;
   readonly outputDirectory: string;
   readonly segmentDurationSeconds?: number;
+  readonly keyInfoFilePath?: string;
 }
+
 
 export interface HlsTranscodeResult {
   readonly masterPlaylistPath: string;
