@@ -12,6 +12,7 @@ import { MediaModule } from "./modules/media";
 import { OrdersModule } from "./modules/orders";
 import { WatermarkModule } from "./modules/watermark";
 import { MailModule } from "./modules/mail";
+import { AnimalsModule } from "./modules/animals";
 import { IdempotencyModule } from "./common/idempotency";
 
 @Module({
@@ -38,6 +39,7 @@ import { IdempotencyModule } from "./common/idempotency";
     UsersModule,
     AuthModule,
     FarmsModule,
+    AnimalsModule,
     ProductsModule,
     MediaModule,
     IdempotencyModule,

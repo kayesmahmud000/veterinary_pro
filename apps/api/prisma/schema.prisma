@@ -255,6 +255,7 @@ model Animal {
   id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   farmId      String        @map("farm_id") @db.Uuid
   tagNumber   String        @map("tag_number") @db.VarChar(50)
+  rfidNumber  String?       @map("rfid_number") @db.VarChar(50)
   name        String?       @db.VarChar(100)
   species     AnimalSpecies
   breed       String?       @db.VarChar(100)
@@ -280,9 +281,11 @@ model Animal {
   milkLogs       MilkLog[]
   consultations  Consultation[]
 
-  // Note: Active tag uniqueness enforced via PostgreSQL partial index:
+  // Note: Active tag & RFID uniqueness enforced via PostgreSQL partial indexes:
   // CREATE UNIQUE INDEX uq_active_farm_animal_tag ON animals(farm_id, tag_number) WHERE deleted_at IS NULL;
+  // CREATE UNIQUE INDEX uq_active_farm_animal_rfid ON animals(farm_id, rfid_number) WHERE deleted_at IS NULL AND rfid_number IS NOT NULL;
   @@index([farmId, tagNumber])
+  @@index([farmId, rfidNumber])
   @@index([farmId, status])
   @@index([farmId, species])
   @@index([farmId, updatedAt])

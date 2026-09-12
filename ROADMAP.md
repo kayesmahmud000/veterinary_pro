@@ -9,8 +9,8 @@
 | :--- | :--- | :--- | :--- |
 | **Phase 0** | Workspace Bootstrap, Architectural Standard & Persistence | Sprint 0 | **READY / COMPLETED** |
 | **Phase 1** | Foundation, DB Migration & Auth RBAC | Sprint 1–2 | **READY / COMPLETED** |
-| **Phase 2** | LMS & Digital Assets Store (Encrypted Stream / Watermark / Pay) | Sprint 3–5 | 🟡 In Progress (Sprint 3 Complete) |
-| **Phase 3** | Farm ERP Core (Livestock Registry, Milk Logging, P&L, Health) | Sprint 6–9 | 🔲 Pending |
+| **Phase 2** | LMS & Digital Assets Store (Encrypted Stream / Watermark / Pay) | Sprint 3–5 | **READY / COMPLETED** |
+| **Phase 3** | Farm ERP Core (Livestock Registry, Milk Logging, P&L, Health) | Sprint 6–9 | 🟡 In Progress |
 | **Phase 4** | Subscription Engine (Tier Gating, Quotas & Stripe Billing) | Sprint 10–11 | 🔲 Pending |
 | **Phase 5** | Tele-Veterinary Platform (Triage, WebRTC, Signed EHR Prescriptions)| Sprint 12–15 | 🔲 Pending |
 
@@ -95,14 +95,14 @@
 
 ### Phase 3: Farm ERP Core Engine
 > **Sprint 6: Multi-Species Livestock Registry**  
-> **Status**: 🔲 Pending
+> **Status**: 🟡 In Progress (Tasks 6.1 & 6.2 Complete)
 
-- [ ] Multi-species animal registration (`COW`, `BUFFALO`, `GOAT`, `SHEEP`, `CAMEL`, `POULTRY`).
-- [ ] Enforce unique ear tag / RFID numbers per tenant farm.
-- [ ] Animal lineage graph (sire/dam pedigree traversal).
-- [ ] Weight tracking history with automated growth curve calculation.
-- [ ] Bulk CSV/Excel animal import via BullMQ background parser with validation error reports.
-- [ ] Printable QR Code generation for physical barn tagging.
+- [x] **Task 6.1**: Multi-species animal registration (`COW`, `BUFFALO`, `GOAT`, `SHEEP`, `CAMEL`, `POULTRY`, `OTHER`) with tenant isolation and pedigree validation.
+- [x] **Task 6.2**: Enforce unique ear tag / RFID numbers per tenant farm.
+- [ ] **Task 6.3**: Animal lineage graph (sire/dam pedigree traversal).
+- [ ] **Task 6.4**: Weight tracking history with automated growth curve calculation.
+- [ ] **Task 6.5**: Bulk CSV/Excel animal import via BullMQ background parser with validation error reports.
+- [ ] **Task 6.6**: Printable QR Code generation for physical barn tagging.
 
 > **Sprint 7: Daily Milk Production & Analytics**  
 > **Status**: 🔲 Pending
