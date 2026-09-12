@@ -11,6 +11,8 @@ export * from "./services/stripe-webhook.service.interface";
 export * from "./services/stripe-webhook.service";
 export * from "./services/mfs-webhook.service.interface";
 export * from "./services/mfs-webhook.service";
+export * from "./services/order-fulfillment.service.interface";
+export * from "./services/order-fulfillment.service";
 export * from "./controllers/stripe-webhook.controller";
 export * from "./controllers/mfs-webhook.controller";
 export * from "./dto/create-checkout.dto";

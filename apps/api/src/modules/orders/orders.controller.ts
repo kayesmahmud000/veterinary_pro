@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,6 +8,7 @@ import {
   HttpStatus,
   Inject,
   Ip,
+  Optional,
   Param,
   ParseUUIDPipe,
   Post,
@@ -15,6 +17,7 @@ import {
   UseInterceptors,
 } from "@nestjs/common";
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiForbiddenResponse,
@@ -30,6 +33,7 @@ import {
   CheckoutResponseDto,
   JwtPayload,
   OrderDetailResponseDto,
+  OrderDownloadTokensResponseDto,
   UserRole,
 } from "@vetralink/shared-types";
 import { CurrentUser, ResponseMessage } from "../../common/decorators";
@@ -42,6 +46,10 @@ import {
   ICheckoutService,
   CHECKOUT_SERVICE,
 } from "./services/checkout.service.interface";
+import {
+  IOrderFulfillmentService,
+  ORDER_FULFILLMENT_SERVICE,
+} from "./services/order-fulfillment.service.interface";
 import { CreateCheckoutDto } from "./dto/create-checkout.dto";
 
 @ApiTags("Orders")
@@ -52,7 +60,10 @@ import { CreateCheckoutDto } from "./dto/create-checkout.dto";
 export class OrdersController {
   constructor(
     @Inject(CHECKOUT_SERVICE)
-    private readonly checkoutService: ICheckoutService
+    private readonly checkoutService: ICheckoutService,
+    @Optional()
+    @Inject(ORDER_FULFILLMENT_SERVICE)
+    private readonly fulfillmentService?: IOrderFulfillmentService
   ) {}
 
   @Post("checkout")
@@ -129,5 +140,35 @@ export class OrdersController {
   ): Promise<OrderDetailResponseDto> {
     const isAdmin = user.role === UserRole.ADMIN;
     return this.checkoutService.getOrderById(id, user.sub, isAdmin);
+  }
+
+  @Get(":id/download-tokens")
+  @ApiOperation({
+    summary: "Get active download tokens for completed order",
+    description:
+      "Returns active download tokens, quotas, and remaining downloads for digital items. Only accessible by the order owner or an administrator for settled (COMPLETED) orders.",
+  })
+  @ApiOkResponse({ description: "Download tokens retrieved." })
+  @ApiNotFoundResponse({ description: "Order not found." })
+  @ApiForbiddenResponse({
+    description: "Forbidden: user does not own this order.",
+  })
+  @ApiBadRequestResponse({
+    description: "Bad Request: order is not in COMPLETED status.",
+  })
+  @ApiUnauthorizedResponse({ description: "Authentication required." })
+  @ResponseMessage("Download tokens retrieved successfully.")
+  public async getOrderDownloadTokens(
+    @CurrentUser() user: JwtPayload,
+    @Param("id", ParseUUIDPipe) id: string
+  ): Promise<OrderDownloadTokensResponseDto> {
+    if (!this.fulfillmentService) {
+      throw new BadRequestException("Order fulfillment service is unavailable.");
+    }
+    return this.fulfillmentService.getOrderDownloadTokens(
+      id,
+      user.sub,
+      user.role
+    );
   }
 }

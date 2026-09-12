@@ -30,6 +30,10 @@ import {
   MfsIpnPayload,
   MfsWebhookResult,
 } from "./mfs-webhook.service.interface";
+import {
+  ORDER_FULFILLMENT_SERVICE,
+  IOrderFulfillmentService,
+} from "./order-fulfillment.service.interface";
 
 @Injectable()
 export class MfsWebhookService implements IMfsWebhookService {
@@ -45,7 +49,10 @@ export class MfsWebhookService implements IMfsWebhookService {
     private readonly auditLogRepository: IAuditLogRepository,
     @Optional()
     @Inject(IDEMPOTENCY_SERVICE)
-    private readonly idempotencyService?: IIdempotencyService
+    private readonly idempotencyService?: IIdempotencyService,
+    @Optional()
+    @Inject(ORDER_FULFILLMENT_SERVICE)
+    private readonly fulfillmentService?: IOrderFulfillmentService
   ) {}
 
   public async processSslCommerz(
@@ -159,12 +166,21 @@ export class MfsWebhookService implements IMfsWebhookService {
         }
 
         await this.transactionManager.run(async (tx) => {
-          await this.orderRepository.updateStatus(
-            order.id,
-            OrderStatus.COMPLETED,
-            payload.gatewayTxId,
-            tx
-          );
+          if (this.fulfillmentService) {
+            await this.fulfillmentService.fulfillOrder(
+              order.id,
+              payload.gatewayTxId,
+              tx,
+              activeTraceId
+            );
+          } else {
+            await this.orderRepository.updateStatus(
+              order.id,
+              OrderStatus.COMPLETED,
+              payload.gatewayTxId,
+              tx
+            );
+          }
 
           await this.auditLogRepository.record(
             {

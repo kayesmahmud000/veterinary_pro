@@ -49,6 +49,9 @@ describe("MfsWebhookService", () => {
       findByGatewayTxId: jest.fn(),
       findUserOrders: jest.fn(),
       updateStatus: jest.fn(),
+      updateItemDownloadTokens: jest.fn(),
+      findByDownloadToken: jest.fn(),
+      incrementDownloadCount: jest.fn(),
     };
 
     transactionManager = {

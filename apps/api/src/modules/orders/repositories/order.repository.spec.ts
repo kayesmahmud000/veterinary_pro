@@ -51,6 +51,10 @@ describe("OrderRepository", () => {
         count: jest.fn(),
         update: jest.fn(),
       },
+      orderItem: {
+        update: jest.fn(),
+        findFirst: jest.fn(),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -287,6 +291,95 @@ describe("OrderRepository", () => {
 
       await expect(
         repository.updateStatus("non-existent-id", OrderStatus.COMPLETED)
+      ).rejects.toThrow(EntityNotFoundException);
+    });
+  });
+
+  describe("updateItemDownloadTokens", () => {
+    it("should update tokens for all items in order", async () => {
+      (prismaService.orderItem.update as jest.Mock).mockResolvedValue(mockDbItem);
+
+      await repository.updateItemDownloadTokens("order-uuid-1", [
+        { itemId: "item-uuid-1", downloadToken: "new-token-1" },
+      ]);
+
+      expect(prismaService.orderItem.update).toHaveBeenCalledWith({
+        where: { id: "item-uuid-1" },
+        data: {
+          downloadToken: "new-token-1",
+          downloadCount: 0,
+          lastDownloadedAt: null,
+        },
+      });
+    });
+  });
+
+  describe("findByDownloadToken", () => {
+    it("should return order, item, and product details when token exists", async () => {
+      const mockRawItem = {
+        ...mockDbItem,
+        product: {
+          title: "Veterinary Medicine Handbook",
+          type: "EBOOK",
+          contentS3Key: "products/ebooks/manual.pdf",
+        },
+        order: mockDbOrder,
+      };
+
+      (prismaService.orderItem.findFirst as jest.Mock).mockResolvedValue(mockRawItem);
+
+      const result = await repository.findByDownloadToken("dl-token-1");
+
+      expect(result).not.toBeNull();
+      expect(result?.order.id).toBe("order-uuid-1");
+      expect(result?.item.id).toBe("item-uuid-1");
+      expect(result?.contentS3Key).toBe("products/ebooks/manual.pdf");
+      expect(result?.productType).toBe("EBOOK");
+    });
+
+    it("should return null when token does not exist", async () => {
+      (prismaService.orderItem.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const result = await repository.findByDownloadToken("invalid-token");
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("incrementDownloadCount", () => {
+    it("should increment count and return updated item entity", async () => {
+      const updatedMock = {
+        ...mockDbItem,
+        downloadCount: 1,
+        lastDownloadedAt: new Date(),
+      };
+      (prismaService.orderItem.update as jest.Mock).mockResolvedValue(updatedMock);
+
+      const result = await repository.incrementDownloadCount("item-uuid-1");
+
+      expect(prismaService.orderItem.update).toHaveBeenCalledWith({
+        where: { id: "item-uuid-1" },
+        data: {
+          downloadCount: { increment: 1 },
+          lastDownloadedAt: expect.any(Date),
+        },
+        include: {
+          product: {
+            select: { title: true },
+          },
+        },
+      });
+      expect(result.downloadCount).toBe(1);
+    });
+
+    it("should throw EntityNotFoundException if item not found (P2025)", async () => {
+      const p2025Error = new Prisma.PrismaClientKnownRequestError(
+        "Record to update not found.",
+        { code: "P2025", clientVersion: "5.0.0" }
+      );
+      (prismaService.orderItem.update as jest.Mock).mockRejectedValue(p2025Error);
+
+      await expect(
+        repository.incrementDownloadCount("non-existent-item")
       ).rejects.toThrow(EntityNotFoundException);
     });
   });

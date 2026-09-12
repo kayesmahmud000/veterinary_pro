@@ -71,7 +71,7 @@
 - [x] **Task 3.6**: Product catalog public search with full-text indexing and filtering.
 
 > **Sprint 4: Orders, Checkout & Payment Webhooks**  
-> **Status**: 🟡 In Progress  
+> **Status**: ✅ **COMPLETE (2026-09-12)**  
 
 - [x] **Task 4.1**: ACID-compliant checkout workflow inside Prisma `$transaction`:
   - Verify price and product availability.
@@ -80,16 +80,16 @@
 - [x] **Task 4.2**: Stripe Webhook receiver with raw payload signature validation (`stripe-signature`).
 - [x] **Task 4.3**: Regional MFS Webhook receiver (bKash / SSLCommerz / Paymob IPN).
 - [x] **Task 4.4**: Idempotency key guard on payment events to prevent duplicate order fulfillment.
-- [ ] Automated download token generation upon payment completion.
+- [x] **Task 4.5**: Automated download token generation upon payment completion.
 
 > **Sprint 5: Dynamic Anti-Piracy Watermarking & Fulfillment**  
-> **Status**: 🔲 Pending
+> **Status**: 🟡 In Progress (Task 5.1 Complete)
 
-- [ ] BullMQ dynamic watermarking worker using `pdf-lib` / Gotenberg engine.
-- [ ] Burn buyer identity (Full Name, masked email, Order ID, timestamp) diagonally across pages.
-- [ ] Generate cryptographic verification QR code on watermarked PDFs.
-- [ ] Secure time-limited download endpoint (`/api/v1/orders/:id/download`) with download counters.
-- [ ] Transactional email dispatch (Resend / AWS SES) with presigned download links.
+- [x] **Task 5.1**: BullMQ dynamic watermarking worker using `pdf-lib` / Gotenberg engine.
+- [ ] **Task 5.2**: Burn buyer identity (Full Name, masked email, Order ID, timestamp) diagonally across pages.
+- [ ] **Task 5.3**: Generate cryptographic verification QR code on watermarked PDFs.
+- [ ] **Task 5.4**: Secure time-limited download endpoint (`/api/v1/orders/:id/download`) with download counters.
+- [ ] **Task 5.5**: Transactional email dispatch (Resend / AWS SES) with presigned download links.
 
 ---
 

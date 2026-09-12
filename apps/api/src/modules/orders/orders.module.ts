@@ -18,6 +18,8 @@ import { STRIPE_WEBHOOK_SERVICE } from "./services/stripe-webhook.service.interf
 import { MfsWebhookController } from "./controllers/mfs-webhook.controller";
 import { MfsWebhookService } from "./services/mfs-webhook.service";
 import { MFS_WEBHOOK_SERVICE } from "./services/mfs-webhook.service.interface";
+import { OrderFulfillmentService } from "./services/order-fulfillment.service";
+import { ORDER_FULFILLMENT_SERVICE } from "./services/order-fulfillment.service.interface";
 import { IdempotencyModule } from "../../common/idempotency";
 
 @Module({
@@ -67,6 +69,11 @@ import { IdempotencyModule } from "../../common/idempotency";
       provide: MFS_WEBHOOK_SERVICE,
       useClass: MfsWebhookService,
     },
+    OrderFulfillmentService,
+    {
+      provide: ORDER_FULFILLMENT_SERVICE,
+      useClass: OrderFulfillmentService,
+    },
   ],
   exports: [
     OrderRepository,
@@ -78,6 +85,8 @@ import { IdempotencyModule } from "../../common/idempotency";
     STRIPE_WEBHOOK_SERVICE,
     MfsWebhookService,
     MFS_WEBHOOK_SERVICE,
+    OrderFulfillmentService,
+    ORDER_FULFILLMENT_SERVICE,
   ],
 })
 export class OrdersModule {}

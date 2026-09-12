@@ -30,6 +30,10 @@ import {
   IStripeWebhookService,
   WebhookProcessingResult,
 } from "./stripe-webhook.service.interface";
+import {
+  ORDER_FULFILLMENT_SERVICE,
+  IOrderFulfillmentService,
+} from "./order-fulfillment.service.interface";
 
 @Injectable()
 export class StripeWebhookService implements IStripeWebhookService {
@@ -46,7 +50,10 @@ export class StripeWebhookService implements IStripeWebhookService {
     private readonly auditLogRepository: IAuditLogRepository,
     @Optional()
     @Inject(IDEMPOTENCY_SERVICE)
-    private readonly idempotencyService?: IIdempotencyService
+    private readonly idempotencyService?: IIdempotencyService,
+    @Optional()
+    @Inject(ORDER_FULFILLMENT_SERVICE)
+    private readonly fulfillmentService?: IOrderFulfillmentService
   ) {
     const apiKey = this.envService.stripeSecretKey;
     if (apiKey) {
@@ -175,12 +182,21 @@ export class StripeWebhookService implements IStripeWebhookService {
     }
 
     await this.transactionManager.run(async (tx) => {
-      await this.orderRepository.updateStatus(
-        order.id,
-        OrderStatus.COMPLETED,
-        gatewayTxId,
-        tx
-      );
+      if (this.fulfillmentService) {
+        await this.fulfillmentService.fulfillOrder(
+          order.id,
+          gatewayTxId,
+          tx,
+          traceId
+        );
+      } else {
+        await this.orderRepository.updateStatus(
+          order.id,
+          OrderStatus.COMPLETED,
+          gatewayTxId,
+          tx
+        );
+      }
 
       await this.auditLogRepository.record(
         {

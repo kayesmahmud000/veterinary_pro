@@ -33,6 +33,27 @@ export interface IOrderRepository {
     gatewayTxId?: string,
     tx?: Prisma.TransactionClient
   ): Promise<OrderEntity>;
+
+  updateItemDownloadTokens(
+    orderId: string,
+    tokens: { itemId: string; downloadToken: string }[],
+    tx?: Prisma.TransactionClient
+  ): Promise<void>;
+
+  findByDownloadToken(
+    downloadToken: string,
+    tx?: Prisma.TransactionClient
+  ): Promise<{
+    order: OrderEntity;
+    item: OrderItemEntity;
+    contentS3Key: string;
+    productType: string;
+  } | null>;
+
+  incrementDownloadCount(
+    itemId: string,
+    tx?: Prisma.TransactionClient
+  ): Promise<OrderItemEntity>;
 }
 
 export const ORDER_REPOSITORY = "ORDER_REPOSITORY";
