@@ -10,6 +10,7 @@ import { FarmsModule } from "./modules/farms";
 import { ProductsModule } from "./modules/products";
 import { MediaModule } from "./modules/media";
 import { OrdersModule } from "./modules/orders";
+import { IdempotencyModule } from "./common/idempotency";
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { OrdersModule } from "./modules/orders";
     FarmsModule,
     ProductsModule,
     MediaModule,
+    IdempotencyModule,
     OrdersModule,
   ],
 })

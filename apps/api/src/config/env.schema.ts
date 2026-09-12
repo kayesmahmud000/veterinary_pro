@@ -53,6 +53,10 @@ export const EnvSchema = z
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     DAILY_API_KEY: z.string().optional(),
+    MFS_WEBHOOK_SECRET: z
+      .string()
+      .min(16, "MFS_WEBHOOK_SECRET must be at least 16 characters long")
+      .default("dev_mfs_webhook_secret_key_32_chars"),
     HLS_DRM_KEY_SECRET: z
       .string()
       .min(32, "HLS_DRM_KEY_SECRET must be at least 32 characters long")

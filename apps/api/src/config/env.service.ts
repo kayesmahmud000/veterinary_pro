@@ -29,6 +29,7 @@ export interface IEnvService {
   readonly s3ForcePathStyle: boolean;
   readonly stripeSecretKey?: string;
   readonly stripeWebhookSecret?: string;
+  readonly mfsWebhookSecret: string;
   readonly dailyApiKey?: string;
   readonly hlsDrmKeySecret: string;
   readonly drmTokenExpirationSeconds: number;
@@ -148,6 +149,10 @@ export class EnvService implements IEnvService {
 
   get stripeWebhookSecret(): string | undefined {
     return this.configService.get("STRIPE_WEBHOOK_SECRET", { infer: true });
+  }
+
+  get mfsWebhookSecret(): string {
+    return this.configService.get("MFS_WEBHOOK_SECRET", { infer: true });
   }
 
   get dailyApiKey(): string | undefined {

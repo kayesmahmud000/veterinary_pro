@@ -12,11 +12,13 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiHeader,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -33,6 +35,10 @@ import {
 import { CurrentUser, ResponseMessage } from "../../common/decorators";
 import { JwtAuthGuard, RolesGuard } from "../../common/guards";
 import {
+  Idempotent,
+  IdempotencyInterceptor,
+} from "../../common/idempotency";
+import {
   ICheckoutService,
   CHECKOUT_SERVICE,
 } from "./services/checkout.service.interface";
@@ -41,6 +47,7 @@ import { CreateCheckoutDto } from "./dto/create-checkout.dto";
 @ApiTags("Orders")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
+@UseInterceptors(IdempotencyInterceptor)
 @Controller("orders")
 export class OrdersController {
   constructor(
@@ -50,10 +57,16 @@ export class OrdersController {
 
   @Post("checkout")
   @HttpCode(HttpStatus.CREATED)
+  @Idempotent({ header: "idempotency-key", ttlSeconds: 86400, lockTtlSeconds: 60 })
   @ApiOperation({
     summary: "Initialize an ACID checkout workflow",
     description:
       "Calculates authoritative prices from database products, creates a pending order with snapshot line items, and dispatches a payment intent to the gateway.",
+  })
+  @ApiHeader({
+    name: "idempotency-key",
+    required: false,
+    description: "Unique client idempotency key to prevent duplicate checkouts",
   })
   @ApiCreatedResponse({
     description: "Checkout workflow initialized with payment intent.",

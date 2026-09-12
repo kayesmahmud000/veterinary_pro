@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  Optional,
 } from "@nestjs/common";
 import * as crypto from "crypto";
 import Stripe from "stripe";
@@ -22,6 +23,10 @@ import {
   AUDIT_LOG_REPOSITORY,
 } from "../../audit/repositories/audit-log.repository.interface";
 import {
+  IDEMPOTENCY_SERVICE,
+  IIdempotencyService,
+} from "../../../common/idempotency";
+import {
   IStripeWebhookService,
   WebhookProcessingResult,
 } from "./stripe-webhook.service.interface";
@@ -38,7 +43,10 @@ export class StripeWebhookService implements IStripeWebhookService {
     @Inject(TRANSACTION_MANAGER)
     private readonly transactionManager: ITransactionManager,
     @Inject(AUDIT_LOG_REPOSITORY)
-    private readonly auditLogRepository: IAuditLogRepository
+    private readonly auditLogRepository: IAuditLogRepository,
+    @Optional()
+    @Inject(IDEMPOTENCY_SERVICE)
+    private readonly idempotencyService?: IIdempotencyService
   ) {
     const apiKey = this.envService.stripeSecretKey;
     if (apiKey) {
@@ -56,32 +64,45 @@ export class StripeWebhookService implements IStripeWebhookService {
     const event = this.constructEvent(rawBody, signature);
     const activeTraceId = traceId ?? crypto.randomUUID();
 
-    this.logger.log(
-      `Received Stripe webhook event: ${event.type} [ID: ${event.id}]`
-    );
+    const dispatch = async (): Promise<WebhookProcessingResult> => {
+      this.logger.log(
+        `Received Stripe webhook event: ${event.type} [ID: ${event.id}]`
+      );
 
-    switch (event.type) {
-      case "payment_intent.succeeded":
-        return this.handlePaymentIntentSucceeded(event, activeTraceId);
+      switch (event.type) {
+        case "payment_intent.succeeded":
+          return this.handlePaymentIntentSucceeded(event, activeTraceId);
 
-      case "payment_intent.payment_failed":
-        return this.handlePaymentIntentFailed(event, activeTraceId);
+        case "payment_intent.payment_failed":
+          return this.handlePaymentIntentFailed(event, activeTraceId);
 
-      case "charge.refunded":
-        return this.handleChargeRefunded(event, activeTraceId);
+        case "charge.refunded":
+          return this.handleChargeRefunded(event, activeTraceId);
 
-      default:
-        this.logger.debug(
-          `Unhandled Stripe event type: ${event.type} [ID: ${event.id}]`
-        );
-        return {
-          received: true,
-          eventId: event.id,
-          eventType: event.type,
-          status: "ignored",
-          message: `Unhandled event type: ${event.type}`,
-        };
+        default:
+          this.logger.debug(
+            `Unhandled Stripe event type: ${event.type} [ID: ${event.id}]`
+          );
+          return {
+            received: true,
+            eventId: event.id,
+            eventType: event.type,
+            status: "ignored",
+            message: `Unhandled event type: ${event.type}`,
+          };
+      }
+    };
+
+    if (this.idempotencyService) {
+      return this.idempotencyService.execute(
+        `stripe:event:${event.id}`,
+        { eventId: event.id, eventType: event.type },
+        86400,
+        dispatch
+      );
     }
+
+    return dispatch();
   }
 
   private constructEvent(rawBody: Buffer, signature: string): Stripe.Event {

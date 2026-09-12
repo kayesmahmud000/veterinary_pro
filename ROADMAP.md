@@ -78,8 +78,8 @@
   - Insert order and immutable snapshot `order_items`.
   - Dispatch payment intent to gateway.
 - [x] **Task 4.2**: Stripe Webhook receiver with raw payload signature validation (`stripe-signature`).
-- [ ] Regional MFS Webhook receiver (bKash / SSLCommerz / Paymob IPN).
-- [ ] Idempotency key guard on payment events to prevent duplicate order fulfillment.
+- [x] **Task 4.3**: Regional MFS Webhook receiver (bKash / SSLCommerz / Paymob IPN).
+- [x] **Task 4.4**: Idempotency key guard on payment events to prevent duplicate order fulfillment.
 - [ ] Automated download token generation upon payment completion.
 
 > **Sprint 5: Dynamic Anti-Piracy Watermarking & Fulfillment**  

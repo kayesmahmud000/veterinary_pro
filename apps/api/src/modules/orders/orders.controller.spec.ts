@@ -7,6 +7,7 @@ import {
 } from "./services/checkout.service.interface";
 import { TOKEN_SERVICE } from "../auth/services/token.service.interface";
 import { Reflector } from "@nestjs/core";
+import { IDEMPOTENCY_SERVICE } from "../../common/idempotency";
 
 describe("OrdersController", () => {
   let controller: OrdersController;
@@ -80,6 +81,12 @@ describe("OrdersController", () => {
           provide: TOKEN_SERVICE,
           useValue: {
             verifyAccessToken: jest.fn(),
+          },
+        },
+        {
+          provide: IDEMPOTENCY_SERVICE,
+          useValue: {
+            execute: jest.fn().mockImplementation((_k, _p, _t, fn) => fn()),
           },
         },
         Reflector,

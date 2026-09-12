@@ -15,6 +15,10 @@ import { OrdersController } from "./orders.controller";
 import { StripeWebhookController } from "./controllers/stripe-webhook.controller";
 import { StripeWebhookService } from "./services/stripe-webhook.service";
 import { STRIPE_WEBHOOK_SERVICE } from "./services/stripe-webhook.service.interface";
+import { MfsWebhookController } from "./controllers/mfs-webhook.controller";
+import { MfsWebhookService } from "./services/mfs-webhook.service";
+import { MFS_WEBHOOK_SERVICE } from "./services/mfs-webhook.service.interface";
+import { IdempotencyModule } from "../../common/idempotency";
 
 @Module({
   imports: [
@@ -23,8 +27,13 @@ import { STRIPE_WEBHOOK_SERVICE } from "./services/stripe-webhook.service.interf
     AuditModule,
     AuthModule,
     ProductsModule,
+    IdempotencyModule,
   ],
-  controllers: [OrdersController, StripeWebhookController],
+  controllers: [
+    OrdersController,
+    StripeWebhookController,
+    MfsWebhookController,
+  ],
   providers: [
     OrderRepository,
     {
@@ -53,6 +62,11 @@ import { STRIPE_WEBHOOK_SERVICE } from "./services/stripe-webhook.service.interf
       provide: STRIPE_WEBHOOK_SERVICE,
       useClass: StripeWebhookService,
     },
+    MfsWebhookService,
+    {
+      provide: MFS_WEBHOOK_SERVICE,
+      useClass: MfsWebhookService,
+    },
   ],
   exports: [
     OrderRepository,
@@ -62,6 +76,8 @@ import { STRIPE_WEBHOOK_SERVICE } from "./services/stripe-webhook.service.interf
     PAYMENT_GATEWAY_SERVICE,
     StripeWebhookService,
     STRIPE_WEBHOOK_SERVICE,
+    MfsWebhookService,
+    MFS_WEBHOOK_SERVICE,
   ],
 })
 export class OrdersModule {}

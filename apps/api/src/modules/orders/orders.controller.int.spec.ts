@@ -18,6 +18,7 @@ import {
   ITokenService,
   TOKEN_SERVICE,
 } from "../auth/services/token.service.interface";
+import { IDEMPOTENCY_SERVICE } from "../../common/idempotency";
 import { ResponseInterceptor } from "../../common/interceptors/response.interceptor";
 import { GlobalExceptionFilter } from "../../common/filters/global-exception.filter";
 import {
@@ -115,6 +116,12 @@ describe("OrdersController (Integration via Supertest)", () => {
         {
           provide: TOKEN_SERVICE,
           useValue: tokenService,
+        },
+        {
+          provide: IDEMPOTENCY_SERVICE,
+          useValue: {
+            execute: jest.fn().mockImplementation((_k, _p, _t, fn) => fn()),
+          },
         },
       ],
     }).compile();
