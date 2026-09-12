@@ -3,3 +3,7 @@ export * from "./update-animal.dto.js";
 export * from "./animal-query.dto.js";
 export * from "./animal-response.dto.js";
 export * from "./tag-availability.dto.js";
+export * from "./animal-lineage.dto.js";
+export * from "./weight-tracking.dto.js";
+export * from "./bulk-import.dto.js";
+export * from "./tag-badge.dto.js";

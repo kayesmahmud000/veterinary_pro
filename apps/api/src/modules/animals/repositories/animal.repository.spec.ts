@@ -58,6 +58,7 @@ describe("AnimalRepository", () => {
         findMany: jest.fn(),
         count: jest.fn(),
       },
+      $queryRaw: jest.fn(),
     } as unknown as jest.Mocked<PrismaService>;
 
     repository = new AnimalRepository(prisma);
@@ -292,6 +293,61 @@ describe("AnimalRepository", () => {
         })
       );
       expect(result.isSoftDeleted()).toBe(true);
+    });
+  });
+
+  describe("findAncestors", () => {
+    it("should execute recursive CTE query with bounded generations and return raw ancestor records", async () => {
+      const mockAncestors = [
+        {
+          id: "22222222-2222-2222-2222-222222222222",
+          tag_number: "SIRE-01",
+          rfid_number: null,
+          name: "Sire One",
+          species: AnimalSpecies.COW,
+          breed: "Holstein",
+          gender: AnimalGender.MALE,
+          date_of_birth: new Date("2020-01-01"),
+          status: AnimalStatus.ACTIVE,
+          sire_id: null,
+          dam_id: null,
+          generation: 1,
+          branch: "SIRE",
+        },
+      ];
+      (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce(mockAncestors);
+
+      const result = await repository.findAncestors(mockEntity.id, mockEntity.farmId, 3);
+
+      expect(prisma.$queryRaw).toHaveBeenCalled();
+      expect(result).toEqual(mockAncestors);
+    });
+  });
+
+  describe("findDirectOffspring", () => {
+    it("should query offspring with other parent join", async () => {
+      const mockOffspring = [
+        {
+          id: "99999999-9999-9999-9999-999999999999",
+          tag_number: "CALF-01",
+          rfid_number: null,
+          name: "Calf One",
+          species: AnimalSpecies.COW,
+          breed: "Holstein",
+          gender: AnimalGender.FEMALE,
+          date_of_birth: new Date("2024-02-01"),
+          status: AnimalStatus.ACTIVE,
+          other_parent_id: "33333333-3333-3333-3333-333333333333",
+          other_parent_tag_number: "COW-88",
+          other_parent_name: "Bella",
+        },
+      ];
+      (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce(mockOffspring);
+
+      const result = await repository.findDirectOffspring(mockEntity.id, mockEntity.farmId);
+
+      expect(prisma.$queryRaw).toHaveBeenCalled();
+      expect(result).toEqual(mockOffspring);
     });
   });
 });

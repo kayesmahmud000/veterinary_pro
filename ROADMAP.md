@@ -95,14 +95,14 @@
 
 ### Phase 3: Farm ERP Core Engine
 > **Sprint 6: Multi-Species Livestock Registry**  
-> **Status**: 🟡 In Progress (Tasks 6.1 & 6.2 Complete)
+> **Status**: 🟢 Completed (Tasks 6.1, 6.2, 6.3, 6.4, 6.5 & 6.6 Complete)
 
 - [x] **Task 6.1**: Multi-species animal registration (`COW`, `BUFFALO`, `GOAT`, `SHEEP`, `CAMEL`, `POULTRY`, `OTHER`) with tenant isolation and pedigree validation.
 - [x] **Task 6.2**: Enforce unique ear tag / RFID numbers per tenant farm.
-- [ ] **Task 6.3**: Animal lineage graph (sire/dam pedigree traversal).
-- [ ] **Task 6.4**: Weight tracking history with automated growth curve calculation.
-- [ ] **Task 6.5**: Bulk CSV/Excel animal import via BullMQ background parser with validation error reports.
-- [ ] **Task 6.6**: Printable QR Code generation for physical barn tagging.
+- [x] **Task 6.3**: Animal lineage graph (sire/dam pedigree traversal).
+- [x] **Task 6.4**: Weight tracking history with automated growth curve calculation.
+- [x] **Task 6.5**: Bulk CSV/Excel animal import via BullMQ background parser with validation error reports.
+- [x] **Task 6.6**: Printable QR Code generation for physical barn tagging.
 
 > **Sprint 7: Daily Milk Production & Analytics**  
 > **Status**: 🔲 Pending

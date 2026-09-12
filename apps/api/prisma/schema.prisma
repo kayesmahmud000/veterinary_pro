@@ -140,6 +140,14 @@ enum ConsultationStatus {
   CANCELLED
 }
 
+enum ImportJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  PARTIALLY_COMPLETED
+  FAILED
+}
+
 // ==========================================
 // AUTH & USERS DOMAIN
 // ==========================================
@@ -174,6 +182,8 @@ model User {
   administeredVaccines VaccineRecord[]   @relation("AdministeredBy")
   recordedMilkLogs     MilkLog[]
   recordedTransactions FarmTransaction[]
+  recordedWeightLogs   AnimalWeightLog[] @relation("WeightRecordedBy")
+  uploadedImportJobs   AnimalImportJob[] @relation("ImportUploadedBy")
   auditLogs            AuditLog[]
 
   @@index([email])
@@ -226,6 +236,8 @@ model Farm {
   transactions   FarmTransaction[]
   subscriptions  Subscription[]
   consultations  Consultation[]
+  weightLogs     AnimalWeightLog[]
+  animalImportJobs AnimalImportJob[]
 
   @@index([ownerId])
   @@map("farms")
@@ -280,12 +292,15 @@ model Animal {
   vaccineRecords VaccineRecord[]
   milkLogs       MilkLog[]
   consultations  Consultation[]
+  weightLogs     AnimalWeightLog[]
 
   // Note: Active tag & RFID uniqueness enforced via PostgreSQL partial indexes:
   // CREATE UNIQUE INDEX uq_active_farm_animal_tag ON animals(farm_id, tag_number) WHERE deleted_at IS NULL;
   // CREATE UNIQUE INDEX uq_active_farm_animal_rfid ON animals(farm_id, rfid_number) WHERE deleted_at IS NULL AND rfid_number IS NOT NULL;
   @@index([farmId, tagNumber])
   @@index([farmId, rfidNumber])
+  @@index([farmId, sireId])
+  @@index([farmId, damId])
   @@index([farmId, status])
   @@index([farmId, species])
   @@index([farmId, updatedAt])
@@ -365,6 +380,55 @@ model MilkLog {
   @@index([farmId, updatedAt])
   @@index([animalId, loggedDate])
   @@map("milk_logs")
+}
+
+model AnimalWeightLog {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmId       String   @map("farm_id") @db.Uuid
+  animalId     String   @map("animal_id") @db.Uuid
+  recordedById String   @map("recorded_by_id") @db.Uuid
+  weightKg     Decimal  @map("weight_kg") @db.Decimal(6, 2)
+  recordedAt   DateTime @map("recorded_at") @db.Timestamptz(6)
+  notes        String?  @db.Text
+  syncVersion  Int      @default(1) @map("sync_version") // Optimistic concurrency & offline sync
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  farm       Farm   @relation(fields: [farmId], references: [id], onDelete: Restrict)
+  animal     Animal @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  recordedBy User   @relation("WeightRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict)
+
+  @@index([farmId, animalId, recordedAt])
+  @@index([animalId, recordedAt])
+  @@index([farmId, recordedAt])
+  @@map("animal_weight_logs")
+}
+
+model AnimalImportJob {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmId         String          @map("farm_id") @db.Uuid
+  uploadedById   String          @map("uploaded_by_id") @db.Uuid
+  fileName       String          @map("file_name") @db.VarChar(255)
+  fileSize       Int             @map("file_size")
+  fileType       String          @map("file_type") @db.VarChar(50)
+  status         ImportJobStatus @default(PENDING)
+  totalRows      Int             @default(0) @map("total_rows")
+  processedRows  Int             @default(0) @map("processed_rows")
+  successfulRows Int             @default(0) @map("successful_rows")
+  failedRows     Int             @default(0) @map("failed_rows")
+  errorReport    Json?           @map("error_report") @db.JsonB
+  filePath       String?         @map("file_path") @db.VarChar(500)
+  startedAt      DateTime?       @map("started_at") @db.Timestamptz(6)
+  completedAt    DateTime?       @map("completed_at") @db.Timestamptz(6)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  farm       Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  uploadedBy User @relation("ImportUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  @@index([farmId, createdAt(sort: Desc)])
+  @@index([farmId, status])
+  @@map("animal_import_jobs")
 }
 
 model FarmTransaction {

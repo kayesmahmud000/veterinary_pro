@@ -125,3 +125,36 @@ export enum ConsultationStatus {
   COMPLETED = "COMPLETED",
   CANCELLED = "CANCELLED",
 }
+
+export enum InbreedingRiskLevel {
+  LOW = "LOW",
+  MODERATE = "MODERATE",
+  HIGH = "HIGH",
+  CRITICAL = "CRITICAL",
+}
+
+export enum GrowthTrajectory {
+  ACCELERATING = "ACCELERATING",
+  STEADY = "STEADY",
+  SLOWING = "SLOWING",
+  WEIGHT_LOSS = "WEIGHT_LOSS",
+}
+
+export enum ImportJobStatus {
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
+  COMPLETED = "COMPLETED",
+  PARTIALLY_COMPLETED = "PARTIALLY_COMPLETED",
+  FAILED = "FAILED",
+}
+
+export enum TagBadgeLayout {
+  GRID_2X3 = "GRID_2X3",
+  GRID_2X4 = "GRID_2X4",
+  SINGLE_PER_PAGE = "SINGLE_PER_PAGE",
+}
+
+export enum TagBadgePageSize {
+  A4 = "A4",
+  LETTER = "LETTER",
+}
