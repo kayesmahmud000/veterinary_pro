@@ -50,6 +50,7 @@ describe("WatermarkProcessor", () => {
         pdfBuffer: Buffer.from("watermarked-pdf-bytes"),
         pageCount: 5,
         executionTimeMs: 120,
+        integrityHash: "A1B2C3D4E5F67890",
       }),
       getPageCount: jest.fn().mockResolvedValue(5),
     };

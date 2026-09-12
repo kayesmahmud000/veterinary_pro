@@ -119,7 +119,7 @@ export class WatermarkProcessor extends WorkerHost {
       await job.updateProgress(100);
 
       this.logger.log(
-        `Successfully watermarked [${watermarkResult.pageCount} pages] for order [${orderId}], item [${orderItemId}] -> ${destinationBucket}/${targetDestKey} (${watermarkResult.executionTimeMs}ms)`
+        `Successfully watermarked [${watermarkResult.pageCount} pages] for order [${orderId}], item [${orderItemId}] -> ${destinationBucket}/${targetDestKey} (${watermarkResult.executionTimeMs}ms, hash: ${watermarkResult.integrityHash ?? "none"})`
       );
 
       return {

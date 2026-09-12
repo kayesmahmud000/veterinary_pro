@@ -4,12 +4,17 @@ export interface WatermarkOptions {
   readonly orderId: string;
   readonly purchaseDate: string;
   readonly customNotice?: string;
+  readonly opacity?: number;
+  readonly rotationDegrees?: number;
+  readonly repeatDiagonal?: boolean;
+  readonly includeIntegrityHash?: boolean;
 }
 
 export interface WatermarkResult {
   readonly pdfBuffer: Buffer;
   readonly pageCount: number;
   readonly executionTimeMs: number;
+  readonly integrityHash?: string;
 }
 
 export interface IPdfWatermarkService {

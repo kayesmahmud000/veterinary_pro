@@ -83,10 +83,10 @@
 - [x] **Task 4.5**: Automated download token generation upon payment completion.
 
 > **Sprint 5: Dynamic Anti-Piracy Watermarking & Fulfillment**  
-> **Status**: 🟡 In Progress (Task 5.1 Complete)
+> **Status**: 🟡 In Progress (Tasks 5.1 - 5.2 Complete)
 
 - [x] **Task 5.1**: BullMQ dynamic watermarking worker using `pdf-lib` / Gotenberg engine.
-- [ ] **Task 5.2**: Burn buyer identity (Full Name, masked email, Order ID, timestamp) diagonally across pages.
+- [x] **Task 5.2**: Burn buyer identity (Full Name, masked email, Order ID, timestamp) diagonally across pages.
 - [ ] **Task 5.3**: Generate cryptographic verification QR code on watermarked PDFs.
 - [ ] **Task 5.4**: Secure time-limited download endpoint (`/api/v1/orders/:id/download`) with download counters.
 - [ ] **Task 5.5**: Transactional email dispatch (Resend / AWS SES) with presigned download links.

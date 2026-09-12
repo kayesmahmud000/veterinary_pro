@@ -5,9 +5,10 @@ import { ValidationDomainException } from "../../../common/exceptions/domain.exc
 describe("PdfWatermarkService", () => {
   let service: PdfWatermarkService;
   let samplePdfBuffer: Buffer;
+  let mixedOrientationPdfBuffer: Buffer;
 
   beforeAll(async () => {
-    // Generate a minimal valid 2-page PDF document for testing
+    // Generate a minimal valid 2-page PDF document for standard testing
     const doc = await PDFDocument.create();
     const page1 = doc.addPage([600, 800]);
     page1.drawText("Page 1 Sample Content");
@@ -15,6 +16,15 @@ describe("PdfWatermarkService", () => {
     page2.drawText("Page 2 Sample Content");
     const pdfBytes = await doc.save();
     samplePdfBuffer = Buffer.from(pdfBytes);
+
+    // Generate a mixed-orientation PDF document: Page 1 Portrait, Page 2 Landscape
+    const mixedDoc = await PDFDocument.create();
+    const portraitPage = mixedDoc.addPage([595, 842]); // A4 Portrait
+    portraitPage.drawText("A4 Portrait Clinical Protocol");
+    const landscapePage = mixedDoc.addPage([842, 595]); // A4 Landscape
+    landscapePage.drawText("A4 Landscape Livestock Dosage Spreadsheet");
+    const mixedBytes = await mixedDoc.save();
+    mixedOrientationPdfBuffer = Buffer.from(mixedBytes);
   });
 
   beforeEach(() => {
@@ -35,10 +45,72 @@ describe("PdfWatermarkService", () => {
       expect(result.pdfBuffer).toBeInstanceOf(Buffer);
       expect(result.pdfBuffer.length).toBeGreaterThan(samplePdfBuffer.length);
       expect(result.executionTimeMs).toBeGreaterThanOrEqual(0);
+      expect(result.integrityHash).toBeDefined();
+      expect(result.integrityHash).toHaveLength(16);
 
-      // Verify the modified PDF is structurally valid
+      // Verify the modified PDF is structurally valid and metadata is set
       const loadedDoc = await PDFDocument.load(result.pdfBuffer);
       expect(loadedDoc.getPageCount()).toBe(2);
+      expect(loadedDoc.getAuthor()).toContain("VETRALINK PRO");
+      expect(loadedDoc.getSubject()).toContain("Licensed to Dr. John Doe");
+    });
+
+    it("should seamlessly handle mixed orientation documents (Portrait + Landscape)", async () => {
+      const result = await service.applyWatermark(mixedOrientationPdfBuffer, {
+        buyerName: "Dr. Sarah Connor",
+        buyerEmail: "sarah@agrivet.com",
+        orderId: "ord-mixed-777",
+        purchaseDate: "2026-09-12T14:00:00Z",
+        repeatDiagonal: true,
+      });
+
+      expect(result.pageCount).toBe(2);
+      expect(result.integrityHash).toBeDefined();
+
+      const loadedDoc = await PDFDocument.load(result.pdfBuffer);
+      const pages = loadedDoc.getPages();
+      expect(pages[0]!.getSize()).toEqual({ width: 595, height: 842 });
+      expect(pages[1]!.getSize()).toEqual({ width: 842, height: 595 });
+    });
+
+    it("should accept custom opacity and rotation angle options", async () => {
+      const result = await service.applyWatermark(samplePdfBuffer, {
+        buyerName: "Dr. Marcus Brody",
+        buyerEmail: "brody@university.edu",
+        orderId: "ord-options-888",
+        purchaseDate: "2026-09-12T15:00:00Z",
+        opacity: 0.3,
+        rotationDegrees: 35,
+      });
+
+      expect(result.pageCount).toBe(2);
+      const loadedDoc = await PDFDocument.load(result.pdfBuffer);
+      expect(loadedDoc.getPageCount()).toBe(2);
+    });
+
+    it("should omit integrity hash when includeIntegrityHash is false", async () => {
+      const result = await service.applyWatermark(samplePdfBuffer, {
+        buyerName: "Test Buyer",
+        buyerEmail: "buyer@test.org",
+        orderId: "ord-no-hash",
+        purchaseDate: "2026-09-12T12:00:00Z",
+        includeIntegrityHash: false,
+      });
+
+      expect(result.integrityHash).toBeUndefined();
+    });
+
+    it("should allow disabling repeated secondary diagonal bands", async () => {
+      const result = await service.applyWatermark(samplePdfBuffer, {
+        buyerName: "Single Band Buyer",
+        buyerEmail: "single@farm.com",
+        orderId: "ord-single-band",
+        purchaseDate: "2026-09-12T12:00:00Z",
+        repeatDiagonal: false,
+      });
+
+      expect(result.pageCount).toBe(2);
+      expect(result.pdfBuffer.length).toBeGreaterThan(samplePdfBuffer.length);
     });
 
     it("should accept custom watermark notice if provided", async () => {
@@ -47,7 +119,8 @@ describe("PdfWatermarkService", () => {
         buyerEmail: "jane@vetclinic.com",
         orderId: "ord-custom-999",
         purchaseDate: "2026-09-12T15:30:00Z",
-        customNotice: "CONFIDENTIAL VETERINARY CLINICAL PROTOCOL - LICENSED TO JANE",
+        customNotice:
+          "CONFIDENTIAL VETERINARY CLINICAL PROTOCOL - LICENSED TO JANE",
       });
 
       expect(result.pageCount).toBe(2);
