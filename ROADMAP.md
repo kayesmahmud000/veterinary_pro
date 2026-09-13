@@ -123,13 +123,13 @@
 - [x] **Task 8.5**: Image attachment upload for visible lesions/symptoms via presigned S3 URLs.
 
 > **Sprint 9: Farm Financial Ledger & P&L Engine**  
-> **Status**: 🔲 Pending
+> **Status**: 🟢 Completed (Tasks 9.1, 9.2, 9.3, 9.4 & 9.5 Complete)  
 
-- [ ] Expense tracking categorizer (Feed, Veterinary Drugs, Labor, Utility, Equipment).
-- [ ] Revenue tracking (Milk sales, Livestock sales, Manure, Byproducts).
-- [ ] Real-time farm Profit & Loss (P&L) generation per custom date ranges.
-- [ ] Feed Conversion Ratio (FCR) and cost-per-liter milk computation.
-- [ ] Comprehensive Monthly Farm Performance PDF statement generator.
+- [x] **Task 9.1**: Expense tracking categorizer (Feed, Veterinary Drugs, Labor, Utility, Equipment) with category analytics breakdown, optimistic concurrency, and soft deletes.
+- [x] **Task 9.2**: Revenue tracking (Milk sales, Livestock sales, Manure, Byproducts).
+- [x] **Task 9.3**: Real-time farm Profit & Loss (P&L) generation per custom date ranges.
+- [x] **Task 9.4**: Feed Conversion Ratio (FCR) and cost-per-liter milk computation.
+- [x] **Task 9.5**: Comprehensive Monthly Farm Performance PDF statement generator.
 
 ---
 

@@ -81,8 +81,11 @@ export enum TransactionCategory {
   MEDICINE = "MEDICINE",
   LABOR = "LABOR",
   EQUIPMENT = "EQUIPMENT",
+  UTILITY = "UTILITY",
   MILK_SALES = "MILK_SALES",
   LIVESTOCK_SALES = "LIVESTOCK_SALES",
+  MANURE = "MANURE",
+  BYPRODUCTS = "BYPRODUCTS",
   OTHER = "OTHER",
 }
 
@@ -170,3 +173,18 @@ export * from "./reminder-status.enum.js";
 export * from "./health-escalation-level.enum.js";
 export * from "./health-escalation-action.enum.js";
 export * from "./health-attachment-status.enum.js";
+
+export enum ProfitLossInterval {
+  DAY = "DAY",
+  WEEK = "WEEK",
+  MONTH = "MONTH",
+  YEAR = "YEAR",
+}
+
+export enum FeedEfficiencyRating {
+  EXCELLENT = "EXCELLENT",
+  GOOD = "GOOD",
+  AVERAGE = "AVERAGE",
+  POOR = "POOR",
+  CRITICAL = "CRITICAL",
+}

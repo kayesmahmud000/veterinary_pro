@@ -15,6 +15,7 @@ import { MailModule } from "./modules/mail";
 import { AnimalsModule } from "./modules/animals";
 import { MilkLogsModule } from "./modules/milk-logs";
 import { ClinicalHealthModule } from "./modules/clinical-health";
+import { FinancialModule } from "./modules/financial";
 import { IdempotencyModule } from "./common/idempotency";
 
 @Module({
@@ -44,6 +45,7 @@ import { IdempotencyModule } from "./common/idempotency";
     AnimalsModule,
     MilkLogsModule,
     ClinicalHealthModule,
+    FinancialModule,
     ProductsModule,
     MediaModule,
     IdempotencyModule,

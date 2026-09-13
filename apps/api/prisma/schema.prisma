@@ -149,8 +149,11 @@ enum TransactionCategory {
   MEDICINE
   LABOR
   EQUIPMENT
+  UTILITY
   MILK_SALES
   LIVESTOCK_SALES
+  MANURE
+  BYPRODUCTS
   OTHER
 }
 
@@ -358,6 +361,7 @@ model Animal {
   milkAnomalies  MilkYieldAnomaly[]
   vaccineReminderLogs VaccineReminderLog[]
   healthEscalationLogs HealthIncidentEscalationLog[]
+  transactions         FarmTransaction[]
 
   // Note: Active tag & RFID uniqueness enforced via PostgreSQL partial indexes:
   // CREATE UNIQUE INDEX uq_active_farm_animal_tag ON animals(farm_id, tag_number) WHERE deleted_at IS NULL;
@@ -624,19 +628,29 @@ model FarmTransaction {
   id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   farmId        String              @map("farm_id") @db.Uuid
   recordedById  String              @map("recorded_by_id") @db.Uuid
+  animalId      String?             @map("animal_id") @db.Uuid
   type          TransactionType
   category      TransactionCategory
   amount        Decimal             @db.Decimal(12, 2)
   currency      String              @default("USD") @db.VarChar(3)
   referenceNote String?             @map("reference_note") @db.Text
+  receiptUrl    String?             @map("receipt_url") @db.Text
+  metadata      Json                @default("{}")
   txDate        DateTime            @map("transaction_date") @db.Date
+  syncVersion   Int                 @default(1) @map("sync_version")
   createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?           @map("deleted_at") @db.Timestamptz(6)
 
-  farm       Farm @relation(fields: [farmId], references: [id], onDelete: Restrict)
-  recordedBy User @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+  farm       Farm    @relation(fields: [farmId], references: [id], onDelete: Restrict)
+  recordedBy User    @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+  animal     Animal? @relation(fields: [animalId], references: [id], onDelete: SetNull)
 
   @@index([farmId, txDate])
-  @@index([farmId, category])
+  @@index([farmId, type, txDate])
+  @@index([farmId, type, category, txDate])
+  @@index([farmId, animalId])
+  @@index([farmId, deletedAt])
   @@map("farm_transactions")
 }
 
