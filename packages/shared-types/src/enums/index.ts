@@ -162,3 +162,11 @@ export enum TagBadgePageSize {
 export * from "./milk-anomaly-severity.enum.js";
 export * from "./milk-anomaly-status.enum.js";
 export * from "./milk-export-format.enum.js";
+export * from "./vaccine-record-type.enum.js";
+export * from "./preventative-schedule-status.enum.js";
+export * from "./reminder-channel.enum.js";
+export * from "./reminder-milestone.enum.js";
+export * from "./reminder-status.enum.js";
+export * from "./health-escalation-level.enum.js";
+export * from "./health-escalation-action.enum.js";
+export * from "./health-attachment-status.enum.js";

@@ -56,6 +56,8 @@ export interface IS3StorageService {
     localFilePath: string,
     contentType: string
   ): Promise<void>;
+
+  deleteObject(bucket: string, key: string): Promise<void>;
 }
 
 export const S3_STORAGE_SERVICE = "S3_STORAGE_SERVICE";

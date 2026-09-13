@@ -3,6 +3,7 @@ import {
   AbortMultipartUploadCommand,
   CompleteMultipartUploadCommand,
   CreateMultipartUploadCommand,
+  DeleteObjectCommand,
   GetObjectCommand,
   PutObjectCommand,
   S3Client,
@@ -275,6 +276,23 @@ export class S3StorageService implements IS3StorageService {
     } catch (error) {
       this.logger.error(
         `Failed to upload '${localFilePath}' to 's3://${bucket}/${key}': ${(error as Error).message}`
+      );
+      throw error;
+    }
+  }
+
+  public async deleteObject(bucket: string, key: string): Promise<void> {
+    try {
+      const command = new DeleteObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      });
+
+      await this.s3Client.send(command);
+      this.logger.log(`Successfully deleted object 's3://${bucket}/${key}'`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete S3 object 's3://${bucket}/${key}': ${(error as Error).message}`
       );
       throw error;
     }

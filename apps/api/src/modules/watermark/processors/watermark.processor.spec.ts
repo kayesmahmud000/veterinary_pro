@@ -43,6 +43,7 @@ describe("WatermarkProcessor", () => {
       abortMultipartUpload: jest.fn(),
       getPresignedPutUrl: jest.fn(),
       getPresignedGetUrl: jest.fn(),
+      deleteObject: jest.fn(),
     };
 
     mockPdfWatermarkService = {

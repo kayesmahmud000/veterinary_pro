@@ -51,6 +51,7 @@ describe("VideoTranscodeProcessor", () => {
       getPresignedGetUrl: jest.fn(),
       downloadFile: jest.fn().mockResolvedValue(undefined),
       uploadFileFromDisk: jest.fn().mockResolvedValue(undefined),
+      deleteObject: jest.fn(),
     };
 
     mockVideoTranscoder = {

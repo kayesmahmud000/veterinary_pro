@@ -19,6 +19,7 @@ describe("MediaUploadService", () => {
       getPresignedGetUrl: jest.fn(),
       downloadFile: jest.fn(),
       uploadFileFromDisk: jest.fn(),
+      deleteObject: jest.fn(),
     };
 
     envService = {

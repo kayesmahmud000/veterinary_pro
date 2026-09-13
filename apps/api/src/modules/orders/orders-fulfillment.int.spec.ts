@@ -159,6 +159,7 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
       abortMultipartUpload: jest.fn(),
       downloadFile: jest.fn(),
       uploadFileFromDisk: jest.fn(),
+      deleteObject: jest.fn(),
     };
 
     mailQueueService = {

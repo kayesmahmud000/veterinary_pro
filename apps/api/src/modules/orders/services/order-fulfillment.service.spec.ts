@@ -114,6 +114,7 @@ describe("OrderFulfillmentService", () => {
       abortMultipartUpload: jest.fn(),
       downloadFile: jest.fn(),
       uploadFileFromDisk: jest.fn(),
+      deleteObject: jest.fn(),
     };
 
     mailQueueService = {

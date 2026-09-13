@@ -114,13 +114,13 @@
 - [x] **Task 7.5**: Export milk production logs to formatted CSV and Excel spreadsheets.
 
 > **Sprint 8: Clinical Health Events, Deworming & Vaccination Schedules**  
-> **Status**: 🔲 Pending
+> **Status**: ✅ **COMPLETE (2026-09-13)**  
 
-- [ ] Clinical health incident logging (symptoms, diagnosis, treatments, costs).
-- [ ] Multi-species vaccination and deworming schedule tracker.
-- [ ] Automated BullMQ cron task: scan next due dates and send SMS/Push reminders.
-- [ ] Escalation worker for unresolved critical illnesses.
-- [ ] Image attachment upload for visible lesions/symptoms via presigned S3 URLs.
+- [x] **Task 8.1**: Clinical health incident logging (symptoms, diagnosis, treatments, costs).
+- [x] **Task 8.2**: Multi-species vaccination and deworming schedule tracker.
+- [x] **Task 8.3**: Automated BullMQ cron task: scan next due dates and send SMS/Push reminders.
+- [x] **Task 8.4**: Escalation worker for unresolved critical illnesses.
+- [x] **Task 8.5**: Image attachment upload for visible lesions/symptoms via presigned S3 URLs.
 
 > **Sprint 9: Farm Financial Ledger & P&L Engine**  
 > **Status**: 🔲 Pending

@@ -14,6 +14,7 @@ import { WatermarkModule } from "./modules/watermark";
 import { MailModule } from "./modules/mail";
 import { AnimalsModule } from "./modules/animals";
 import { MilkLogsModule } from "./modules/milk-logs";
+import { ClinicalHealthModule } from "./modules/clinical-health";
 import { IdempotencyModule } from "./common/idempotency";
 
 @Module({
@@ -42,6 +43,7 @@ import { IdempotencyModule } from "./common/idempotency";
     FarmsModule,
     AnimalsModule,
     MilkLogsModule,
+    ClinicalHealthModule,
     ProductsModule,
     MediaModule,
     IdempotencyModule,

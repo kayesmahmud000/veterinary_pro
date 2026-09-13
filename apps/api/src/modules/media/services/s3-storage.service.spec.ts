@@ -219,5 +219,23 @@ describe("S3StorageService", () => {
       }
     });
   });
+
+  describe("deleteObject", () => {
+    it("should send DeleteObjectCommand to S3", async () => {
+      mockS3Send.mockResolvedValueOnce({});
+
+      await service.deleteObject("test-bucket", "some/key.jpg");
+
+      expect(mockS3Send).toHaveBeenCalled();
+    });
+
+    it("should log and throw error if S3 delete fails", async () => {
+      mockS3Send.mockRejectedValueOnce(new Error("S3 delete failed"));
+
+      await expect(
+        service.deleteObject("test-bucket", "some/key.jpg")
+      ).rejects.toThrow("S3 delete failed");
+    });
+  });
 });
 

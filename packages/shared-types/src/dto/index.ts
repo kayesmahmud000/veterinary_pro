@@ -6,3 +6,4 @@ export * from "./watermark/index.js";
 export * from "./mail/index.js";
 export * from "./animals/index.js";
 export * from "./milk-logs/index.js";
+export * from "./clinical-health/index.js";
