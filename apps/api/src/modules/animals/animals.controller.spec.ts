@@ -22,6 +22,7 @@ import {
 } from "./services/animal-tag.service.interface";
 import { TOKEN_SERVICE } from "../auth/services/token.service.interface";
 import { FARM_MEMBER_REPOSITORY } from "../farms/repositories/farm-member.repository.interface";
+import { SUBSCRIPTION_QUOTA_SERVICE } from "../subscriptions/services/subscription-quota.service.interface";
 import { Response } from "express";
 
 describe("AnimalsController", () => {
@@ -105,6 +106,26 @@ describe("AnimalsController", () => {
         {
           provide: FARM_MEMBER_REPOSITORY,
           useValue: { findMembership: jest.fn() },
+        },
+        {
+          provide: SUBSCRIPTION_QUOTA_SERVICE,
+          useValue: {
+            checkQuota: jest.fn().mockResolvedValue({ allowed: true }),
+            assertQuotaAvailable: jest.fn().mockResolvedValue({ allowed: true }),
+            getFarmQuotaUsage: jest.fn().mockResolvedValue({
+              farmId: mockFarmId,
+              planTier: "PRO",
+              planName: "Pro Farmer",
+              isSubscriptionActive: true,
+              quotas: {},
+              features: {
+                bulkImportExport: true,
+                advancedAnalytics: true,
+                customReports: false,
+                teleVetPriority: "EXPEDITED",
+              },
+            }),
+          },
         },
         Reflector,
       ],

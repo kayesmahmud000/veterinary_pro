@@ -4,6 +4,7 @@ import { PrismaModule } from "../prisma";
 import { AuditModule } from "../audit";
 import { AuthModule } from "../auth";
 import { FarmsModule } from "../farms";
+import { SubscriptionsModule } from "../subscriptions";
 import { AnimalRepository } from "./repositories/animal.repository";
 import { ANIMAL_REPOSITORY } from "./repositories/animal.repository.interface";
 import { AnimalWeightRepository } from "./repositories/animal-weight.repository";
@@ -28,6 +29,7 @@ import { AnimalsController } from "./animals.controller";
     AuditModule,
     AuthModule,
     FarmsModule,
+    SubscriptionsModule,
     BullModule.registerQueue({
       name: ANIMAL_IMPORT_QUEUE,
     }),

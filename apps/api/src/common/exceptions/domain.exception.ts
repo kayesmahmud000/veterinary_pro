@@ -1,4 +1,5 @@
 import { HttpStatus } from "@nestjs/common";
+import { SubscriptionQuotaType, SubscriptionTier } from "@vetralink/shared-types";
 
 export abstract class DomainException extends Error {
   abstract readonly statusCode: number;
@@ -61,5 +62,25 @@ export class UnauthorizedDomainException extends DomainException {
 
   constructor(message = "Authentication is required to access this resource.") {
     super(message);
+  }
+}
+
+export interface QuotaExceededDetails {
+  quotaType: SubscriptionQuotaType;
+  currentUsage: number;
+  limit: number;
+  planTier: SubscriptionTier;
+  upgradeTier?: SubscriptionTier | null;
+}
+
+export class QuotaExceededDomainException extends DomainException {
+  readonly statusCode = HttpStatus.FORBIDDEN;
+  readonly errorCode = "QUOTA_EXCEEDED";
+
+  constructor(
+    message: string,
+    public override readonly details?: QuotaExceededDetails
+  ) {
+    super(message, details);
   }
 }

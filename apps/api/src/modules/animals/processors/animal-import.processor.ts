@@ -32,6 +32,12 @@ import {
   ITransactionManager,
   TRANSACTION_MANAGER,
 } from "../../prisma/interfaces/transaction.interface";
+import { Optional } from "@nestjs/common";
+import { SubscriptionQuotaType } from "@vetralink/shared-types";
+import {
+  ISubscriptionQuotaService,
+  SUBSCRIPTION_QUOTA_SERVICE,
+} from "../../subscriptions/services/subscription-quota.service.interface";
 import { AnimalEntity } from "../entities/animal.entity";
 import { AnimalWeightLogEntity } from "../entities/animal-weight-log.entity";
 
@@ -50,7 +56,10 @@ export class AnimalImportProcessor extends WorkerHost {
     @Inject(AUDIT_LOG_REPOSITORY)
     private readonly auditLogRepository: IAuditLogRepository,
     @Inject(TRANSACTION_MANAGER)
-    private readonly transactionManager: ITransactionManager
+    private readonly transactionManager: ITransactionManager,
+    @Inject(SUBSCRIPTION_QUOTA_SERVICE)
+    @Optional()
+    private readonly quotaService?: ISubscriptionQuotaService
   ) {
     super();
   }
@@ -117,6 +126,25 @@ export class AnimalImportProcessor extends WorkerHost {
           failCount++;
         } else {
           try {
+            if (this.quotaService) {
+              const quotaCheck = await this.quotaService.checkQuota(
+                farmId,
+                SubscriptionQuotaType.ANIMALS,
+                1
+              );
+              if (!quotaCheck.allowed) {
+                accumulatedErrors.push({
+                  row: rowNumber,
+                  tagNumber: normalized.tagNumber,
+                  field: "tagNumber",
+                  message: `Subscription animal quota exceeded on ${quotaCheck.planTier} tier (${quotaCheck.limit} max animals). Please upgrade your subscription to add more animals.`,
+                  rawData: rawRow,
+                });
+                failCount++;
+                continue;
+              }
+            }
+
             seenTagsInFile.add(normalized.tagNumber.toUpperCase());
             if (normalized.rfidNumber) {
               seenRfidsInFile.add(normalized.rfidNumber.toUpperCase());

@@ -55,6 +55,40 @@ export class FarmMemberRepository implements IFarmMemberRepository {
     return rows.map((r) => this.toEntity(r));
   }
 
+  public async findByFarmId(
+    farmId: string,
+    tx?: Prisma.TransactionClient
+  ): Promise<FarmMemberEntity[]> {
+    const client = tx ?? this.prisma;
+
+    const rows = await client.farmMember.findMany({
+      where: {
+        farmId,
+        farm: {
+          deletedAt: null,
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return rows.map((r) => this.toEntity(r));
+  }
+
+  public async countMembers(
+    farmId: string,
+    tx?: Prisma.TransactionClient
+  ): Promise<number> {
+    const client = tx ?? this.prisma;
+    return client.farmMember.count({
+      where: {
+        farmId,
+        farm: {
+          deletedAt: null,
+        },
+      },
+    });
+  }
+
   public async create(
     member: FarmMemberEntity,
     tx?: Prisma.TransactionClient

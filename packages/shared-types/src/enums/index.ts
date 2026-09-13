@@ -116,6 +116,11 @@ export enum SubscriptionStatus {
   EXPIRED = "EXPIRED",
 }
 
+export enum SubscriptionQuotaType {
+  ANIMALS = "ANIMALS",
+  STAFF = "STAFF",
+}
+
 export enum ConsultationType {
   ASYNC_TICKET = "ASYNC_TICKET",
   LIVE_VIDEO = "LIVE_VIDEO",

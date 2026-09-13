@@ -37,6 +37,10 @@ import {
   IFarmMemberRepository,
 } from "../farms/repositories/farm-member.repository.interface";
 import { FarmMemberEntity } from "../farms/entities/farm-member.entity";
+import {
+  ISubscriptionQuotaService,
+  SUBSCRIPTION_QUOTA_SERVICE,
+} from "../subscriptions/services/subscription-quota.service.interface";
 import { ResponseInterceptor } from "../../common/interceptors/response.interceptor";
 import { GlobalExceptionFilter } from "../../common/filters/global-exception.filter";
 import { EntityNotFoundException } from "../../common/exceptions/domain.exception";
@@ -47,6 +51,7 @@ describe("AnimalsController (Integration via Supertest)", () => {
   let tagService: jest.Mocked<IAnimalTagService>;
   let tokenService: jest.Mocked<ITokenService>;
   let farmMemberRepository: jest.Mocked<IFarmMemberRepository>;
+  let quotaService: jest.Mocked<ISubscriptionQuotaService>;
 
   const farmId = "11111111-1111-1111-1111-111111111111";
   const ownerUserId = "22222222-2222-2222-2222-222222222222";
@@ -159,7 +164,43 @@ describe("AnimalsController (Integration via Supertest)", () => {
         return null;
       }),
       findUserFarms: jest.fn(),
+      findByFarmId: jest.fn(),
+      countMembers: jest.fn(),
       create: jest.fn(),
+    };
+
+    quotaService = {
+      checkQuota: jest.fn().mockResolvedValue({
+        allowed: true,
+        quotaType: "ANIMALS",
+        currentUsage: 2,
+        limit: 30,
+        remaining: 28,
+        planTier: "PRO",
+        upgradeTier: "ENTERPRISE",
+      }),
+      assertQuotaAvailable: jest.fn().mockResolvedValue({
+        allowed: true,
+        quotaType: "ANIMALS",
+        currentUsage: 2,
+        limit: 30,
+        remaining: 28,
+        planTier: "PRO",
+        upgradeTier: "ENTERPRISE",
+      }),
+      getFarmQuotaUsage: jest.fn().mockResolvedValue({
+        farmId,
+        planTier: "PRO",
+        planName: "Pro Farmer",
+        isSubscriptionActive: true,
+        quotas: {},
+        features: {
+          bulkImportExport: true,
+          advancedAnalytics: true,
+          customReports: false,
+          teleVetPriority: "EXPEDITED",
+        },
+      }),
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -180,6 +221,10 @@ describe("AnimalsController (Integration via Supertest)", () => {
         {
           provide: FARM_MEMBER_REPOSITORY,
           useValue: farmMemberRepository,
+        },
+        {
+          provide: SUBSCRIPTION_QUOTA_SERVICE,
+          useValue: quotaService,
         },
       ],
     }).compile();
@@ -880,6 +925,41 @@ describe("AnimalsController (Integration via Supertest)", () => {
         });
 
       expect(res.status).toBe(400);
+    });
+  });
+
+  describe("Subscription Tier Quota Interception", () => {
+    it("should return HTTP 403 when animal quota is exceeded during registration", async () => {
+      const { QuotaExceededDomainException } = await import(
+        "../../common/exceptions/domain.exception"
+      );
+      quotaService.assertQuotaAvailable.mockRejectedValueOnce(
+        new QuotaExceededDomainException(
+          "Subscription quota exceeded: Your STARTER plan allows a maximum of 5 animals (current: 5). Please upgrade to PRO tier.",
+          {
+            quotaType: "ANIMALS" as any,
+            currentUsage: 5,
+            limit: 5,
+            planTier: "STARTER" as any,
+            upgradeTier: "PRO" as any,
+          }
+        )
+      );
+
+      const res = await request(app.getHttpServer())
+        .post("/animals")
+        .set("Authorization", "Bearer owner-token")
+        .set("x-farm-id", farmId)
+        .send({
+          tagNumber: "COW-OVER-QUOTA",
+          species: AnimalSpecies.COW,
+          gender: AnimalGender.FEMALE,
+        });
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain("Subscription quota exceeded");
+      expect(res.body.errorDetails.title).toBe("QUOTA_EXCEEDED");
     });
   });
 });

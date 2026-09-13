@@ -135,13 +135,13 @@
 
 ### Phase 4: Subscription Engine & Quota Gating
 > **Sprint 10: Subscription Plans, Tier Quotas & Enforcement**  
-> **Status**: 🔲 Pending
+> **Status**: 🟡 In Progress (Tasks 10.1, 10.2 & 10.3 Complete)
 
-- [ ] Plan configuration (`STARTER`: 5 animals, `PRO`: 30 animals, `ENTERPRISE`: Unlimited).
-- [ ] Subscription lifecycle management (`TRIALING`, `ACTIVE`, `PAST_DUE`, `CANCELED`).
-- [ ] `SubscriptionGuard`: Intercept animal registration and member invitations against tier limits.
-- [ ] Upgrade/downgrade subscription flow with prorated billing calculation.
-- [ ] Stripe Customer Portal integration for self-service payment method updates.
+- [x] **Task 10.1**: Plan configuration (`STARTER`: 5 animals, `PRO`: 30 animals, `ENTERPRISE`: Unlimited).
+- [x] **Task 10.2**: Subscription lifecycle management (`TRIALING`, `ACTIVE`, `PAST_DUE`, `CANCELED`).
+- [x] **Task 10.3**: `SubscriptionGuard`: Intercept animal registration and member invitations against tier limits.
+- [ ] **Task 10.4**: Upgrade/downgrade subscription flow with prorated billing calculation.
+- [ ] **Task 10.5**: Stripe Customer Portal integration for self-service payment method updates.
 
 > **Sprint 11: Dunning Workflows & Grace Periods**  
 > **Status**: 🔲 Pending

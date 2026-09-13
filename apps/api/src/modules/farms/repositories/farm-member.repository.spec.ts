@@ -24,6 +24,7 @@ describe("FarmMemberRepository", () => {
         findFirst: jest.fn(),
         findMany: jest.fn(),
         create: jest.fn(),
+        count: jest.fn(),
       },
     };
 
@@ -81,6 +82,40 @@ describe("FarmMemberRepository", () => {
       });
       expect(results).toHaveLength(1);
       expect(results[0]?.farmId).toBe(mockDbMember.farmId);
+    });
+  });
+
+  describe("findByFarmId()", () => {
+    it("should return all members belonging to farm", async () => {
+      (prisma.farmMember.findMany as jest.Mock).mockResolvedValue([mockDbMember]);
+
+      const results = await repository.findByFarmId(mockDbMember.farmId);
+
+      expect(prisma.farmMember.findMany).toHaveBeenCalledWith({
+        where: {
+          farmId: mockDbMember.farmId,
+          farm: { deletedAt: null },
+        },
+        orderBy: { createdAt: "asc" },
+      });
+      expect(results).toHaveLength(1);
+      expect(results[0]?.id).toBe(mockDbMember.id);
+    });
+  });
+
+  describe("countMembers()", () => {
+    it("should return member count for farm", async () => {
+      (prisma.farmMember.count as jest.Mock).mockResolvedValue(2);
+
+      const count = await repository.countMembers(mockDbMember.farmId);
+
+      expect(prisma.farmMember.count).toHaveBeenCalledWith({
+        where: {
+          farmId: mockDbMember.farmId,
+          farm: { deletedAt: null },
+        },
+      });
+      expect(count).toBe(2);
     });
   });
 

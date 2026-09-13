@@ -49,16 +49,23 @@ import {
   PaginatedAnimalsDto,
   PaginatedImportJobsDto,
   PaginatedWeightLogsDto,
+  SubscriptionQuotaType,
   TagAvailabilityResponseDto,
 } from "@vetralink/shared-types";
 import {
+  CheckQuota,
   CurrentFarm,
   CurrentUser,
   FarmRoles,
+  RequireFeature,
   ResponseMessage,
   Tenant,
 } from "../../common/decorators";
-import { JwtAuthGuard, TenantGuard } from "../../common/guards";
+import {
+  JwtAuthGuard,
+  SubscriptionQuotaGuard,
+  TenantGuard,
+} from "../../common/guards";
 import {
   ANIMALS_SERVICE,
   IAnimalsService,
@@ -81,7 +88,7 @@ import {
 
 @ApiTags("Animals")
 @Controller("animals")
-@UseGuards(JwtAuthGuard, TenantGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, SubscriptionQuotaGuard)
 @Tenant()
 @ApiBearerAuth()
 @ApiHeader({
@@ -98,6 +105,7 @@ export class AnimalsController {
   ) {}
 
   @Post()
+  @CheckQuota(SubscriptionQuotaType.ANIMALS)
   @FarmRoles(
     FarmRole.OWNER,
     FarmRole.MANAGER,
@@ -198,6 +206,8 @@ export class AnimalsController {
   }
 
   @Post("import")
+  @RequireFeature("bulkImportExport")
+  @CheckQuota(SubscriptionQuotaType.ANIMALS)
   @FarmRoles(FarmRole.OWNER, FarmRole.MANAGER)
   @HttpCode(HttpStatus.ACCEPTED)
   @UseInterceptors(FileInterceptor("file"))

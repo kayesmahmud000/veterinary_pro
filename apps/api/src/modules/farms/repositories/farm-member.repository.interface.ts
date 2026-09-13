@@ -13,6 +13,16 @@ export interface IFarmMemberRepository {
     tx?: Prisma.TransactionClient
   ): Promise<FarmMemberEntity[]>;
 
+  findByFarmId(
+    farmId: string,
+    tx?: Prisma.TransactionClient
+  ): Promise<FarmMemberEntity[]>;
+
+  countMembers(
+    farmId: string,
+    tx?: Prisma.TransactionClient
+  ): Promise<number>;
+
   create(
     member: FarmMemberEntity,
     tx?: Prisma.TransactionClient
