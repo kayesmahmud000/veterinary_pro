@@ -196,19 +196,20 @@ Before writing or modifying ANY code for a new Phase, Feature, Bugfix, or Archit
 1. **Dedicated Docs Directory**: Create `docs/features/<feature-name>/` or `docs/tasks/<task-name>/`.
 2. **`spec.md`**: Feature Overview, Current vs Proposed State, Architectural Trade-offs, Data Models & Contracts, Security & Edge Cases.
 3. **`plan.md`**: Prerequisites, Granular Atomic Checklist (`[ ]`), Verification & Acceptance Criteria.
-4. **Execution Gate**: Present summary, trade-offs, and PAUSE. Do NOT generate code until user replies "Approved" or "Proceed".
+4. **Autonomous Atomic Task Execution**: When assigned or instructed to perform a task, execute the entire task end-to-end without asking for permission midway. NEVER seek user permission to create or update any files (author Spec & Plan -> Types/DTOs -> Entities/Repositories -> Domain Logic -> Controller -> Tests & Verification).
+5. **Task Completion Gate**: Once the atomic task is verified and complete, tick off `[x]` in `ROADMAP.md`, report completion, test results, and suggested commit message, and STOP to wait for the user to tell the agent to move on to the next task.
 
 ---
 
 ## 🔬 SECTION 10: STRICT MICRO-TASK EXECUTION PROTOCOL (ONE ATOMIC TASK AT A TIME)
 
-1. NEVER bundle an entire Sprint or multiple layers into a single prompt execution.
+1. NEVER bundle multiple roadmap tasks or an entire Sprint into a single prompt execution.
 2. Every Sprint in `ROADMAP.md` must be broken into granular, sequentially numbered micro-tasks:
-   - Task X.1: Spec & Plan authoring (docs/features/<task-slug>/)
+   - Task X.1: Spec & Plan authoring (docs/features/<task-slug>/ or docs/tasks/<task-slug>/)
    - Task X.2: DTOs, Enums & Type Contracts (packages/shared-types)
    - Task X.3: Database Migration / Schema & Composite Indexes
    - Task X.4: Repository Layer & Data Access Interfaces
    - Task X.5: Domain Service & Business Logic (ACID Transactions & Validation)
    - Task X.6: Controller / API Route & Exception Filters
-   - Task X.7: Unit/Integration Tests & curl Verification
-3. STRICT GATE: Complete ONE atomic task -> Run verification/tests -> Check off `[x]` in `ROADMAP.md` -> STOP and wait for human review before touching the next task.
+   - Task X.7: Unit/Integration Tests & Verification
+3. STRICT GATE: Complete ONE atomic task autonomously -> Run verification/tests -> Check off `[x]` in `ROADMAP.md` -> Notify user of completion -> STOP and wait for the user to tell the agent to move on to the next task.

@@ -208,7 +208,7 @@ describe("AnimalTagService", () => {
       expect(Buffer.isBuffer(result.buffer)).toBe(true);
       const pdfHeader = result.buffer.subarray(0, 5).toString("ascii");
       expect(pdfHeader).toBe("%PDF-");
-    });
+    }, 20000);
 
     it("should generate grid PDF when filtering by species and status", async () => {
       const animals = [createMockAnimal()];

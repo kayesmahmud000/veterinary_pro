@@ -85,6 +85,19 @@ enum MilkSession {
   EVENING
 }
 
+enum MilkAnomalySeverity {
+  LOW
+  MEDIUM
+  CRITICAL
+}
+
+enum MilkAnomalyStatus {
+  DETECTED
+  ACKNOWLEDGED
+  RESOLVED
+  FALSE_POSITIVE
+}
+
 enum TransactionType {
   INCOME
   EXPENSE
@@ -184,6 +197,7 @@ model User {
   recordedTransactions FarmTransaction[]
   recordedWeightLogs   AnimalWeightLog[] @relation("WeightRecordedBy")
   uploadedImportJobs   AnimalImportJob[] @relation("ImportUploadedBy")
+  acknowledgedMilkAnomalies MilkYieldAnomaly[] @relation("AnomalyAcknowledgedBy")
   auditLogs            AuditLog[]
 
   @@index([email])
@@ -238,6 +252,7 @@ model Farm {
   consultations  Consultation[]
   weightLogs     AnimalWeightLog[]
   animalImportJobs AnimalImportJob[]
+  milkAnomalies  MilkYieldAnomaly[]
 
   @@index([ownerId])
   @@map("farms")
@@ -293,6 +308,7 @@ model Animal {
   milkLogs       MilkLog[]
   consultations  Consultation[]
   weightLogs     AnimalWeightLog[]
+  milkAnomalies  MilkYieldAnomaly[]
 
   // Note: Active tag & RFID uniqueness enforced via PostgreSQL partial indexes:
   // CREATE UNIQUE INDEX uq_active_farm_animal_tag ON animals(farm_id, tag_number) WHERE deleted_at IS NULL;
@@ -380,6 +396,35 @@ model MilkLog {
   @@index([farmId, updatedAt])
   @@index([animalId, loggedDate])
   @@map("milk_logs")
+}
+
+model MilkYieldAnomaly {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmId              String              @map("farm_id") @db.Uuid
+  animalId            String              @map("animal_id") @db.Uuid
+  loggedDate          DateTime            @map("logged_date") @db.Date
+  currentYieldLiters  Decimal             @map("current_yield_liters") @db.Decimal(8, 3)
+  baselineYieldLiters Decimal             @map("baseline_yield_liters") @db.Decimal(8, 3)
+  dropPercentage      Decimal             @map("drop_percentage") @db.Decimal(5, 2)
+  severity            MilkAnomalySeverity @default(LOW)
+  status              MilkAnomalyStatus   @default(DETECTED)
+  acknowledgedById    String?             @map("acknowledged_by_id") @db.Uuid
+  acknowledgedAt      DateTime?           @map("acknowledged_at") @db.Timestamptz(6)
+  resolvedAt          DateTime?           @map("resolved_at") @db.Timestamptz(6)
+  clinicalNotes       String?             @map("clinical_notes") @db.Text
+  resolutionNotes     String?             @map("resolution_notes") @db.Text
+  metadata            Json                @default("{}")
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  farm           Farm    @relation(fields: [farmId], references: [id], onDelete: Restrict)
+  animal         Animal  @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  acknowledgedBy User?   @relation("AnomalyAcknowledgedBy", fields: [acknowledgedById], references: [id], onDelete: SetNull)
+
+  @@unique([farmId, animalId, loggedDate])
+  @@index([farmId, status, loggedDate])
+  @@index([animalId, loggedDate])
+  @@map("milk_yield_anomalies")
 }
 
 model AnimalWeightLog {

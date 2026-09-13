@@ -158,3 +158,7 @@ export enum TagBadgePageSize {
   A4 = "A4",
   LETTER = "LETTER",
 }
+
+export * from "./milk-anomaly-severity.enum.js";
+export * from "./milk-anomaly-status.enum.js";
+export * from "./milk-export-format.enum.js";

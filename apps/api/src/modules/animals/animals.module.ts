@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
 import { PrismaModule } from "../prisma";
 import { AuditModule } from "../audit";
+import { AuthModule } from "../auth";
 import { FarmsModule } from "../farms";
 import { AnimalRepository } from "./repositories/animal.repository";
 import { ANIMAL_REPOSITORY } from "./repositories/animal.repository.interface";
@@ -25,6 +26,7 @@ import { AnimalsController } from "./animals.controller";
   imports: [
     PrismaModule,
     AuditModule,
+    AuthModule,
     FarmsModule,
     BullModule.registerQueue({
       name: ANIMAL_IMPORT_QUEUE,

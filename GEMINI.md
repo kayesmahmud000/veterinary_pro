@@ -40,18 +40,25 @@ This document must outline:
 
 ---
 
-### EXECUTION GATE & HUMAN-IN-THE-LOOP RULE
-1. Generate and save both `spec.md` and `plan.md` to the disk.
-2. Present a concise summary of the proposed changes, trade-offs, and why this design is superior.
-3. **STOP AND PAUSE.** Do NOT write actual application code until the user explicitly reviews and approves the spec and plan with: "Approved" or "Proceed".
-4. Once approved, execute the steps strictly following `plan.md`, ticking off `[x]` items as you finish, and update `ROADMAP.md` upon final completion.
+### AUTONOMOUS ATOMIC TASK EXECUTION PROTOCOL (NO MIDWAY PERMISSION REQUIRED)
+1. When performing a task, generate and save both `spec.md` and `plan.md` to disk under `docs/tasks/<task-name>/` or `docs/features/<feature-name>/`.
+2. Do NOT ask for user permission or pause midway while performing the task. NEVER seek user permission to create or update any files. Execute the task end-to-end autonomously:
+   - Spec & Plan authoring
+   - Shared types, DTOs & Contracts
+   - Repositories & Entities
+   - Domain Service & Business Logic
+   - Controllers & API Wiring
+   - Unit & Integration Tests verification
+3. Run verification commands and test suites (`pnpm test`, build checks).
+4. Check off `[x]` items in `plan.md` and update `ROADMAP.md` upon completion.
 
 ---
 
-### STRICT MICRO-TASK EXECUTION PROTOCOL (ONE ATOMIC TASK AT A TIME)
-1. NEVER bundle an entire Sprint or multiple architectural layers into a single code execution.
-2. Every task in ROADMAP.md must be executed atomically: Spec/Plan -> DTO/Interface -> Implementation -> Test Verification.
-3. STRICT GATE: Complete ONE atomic task -> Verify criteria -> Check off [x] in ROADMAP.md -> STOP and wait for human review before touching the next task.
+### STRICT HUMAN-IN-THE-LOOP GATE BETWEEN TASKS (ONE ATOMIC TASK AT A TIME)
+1. NEVER bundle multiple roadmap tasks or an entire sprint into a single turn.
+2. Complete ONE atomic task at a time.
+3. STRICT GATE: Once the task is 100% complete and verified, notify the user with a summary of the completed task, test results, and suggested commit message.
+4. STOP AND WAIT for the user to tell the agent to move on to the next task before starting it.
 
 ---
 

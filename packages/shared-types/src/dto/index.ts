@@ -5,3 +5,4 @@ export * from "./orders/index.js";
 export * from "./watermark/index.js";
 export * from "./mail/index.js";
 export * from "./animals/index.js";
+export * from "./milk-logs/index.js";
