@@ -121,6 +121,18 @@ export enum SubscriptionQuotaType {
   STAFF = "STAFF",
 }
 
+export enum SubscriptionBillingInterval {
+  MONTHLY = "MONTHLY",
+  ANNUAL = "ANNUAL",
+}
+
+export enum SubscriptionPlanChangeType {
+  UPGRADE = "UPGRADE",
+  DOWNGRADE = "DOWNGRADE",
+  INTERVAL_CHANGE = "INTERVAL_CHANGE",
+  NO_CHANGE = "NO_CHANGE",
+}
+
 export enum ConsultationType {
   ASYNC_TICKET = "ASYNC_TICKET",
   LIVE_VIDEO = "LIVE_VIDEO",

@@ -22,6 +22,8 @@ import {
 import {
   FarmQuotaSummaryDto,
   JwtPayload,
+  SubscriptionChangeResultDto,
+  SubscriptionProrationPreviewDto,
   SubscriptionStatus,
   UserRole,
 } from "@vetralink/shared-types";
@@ -29,7 +31,11 @@ import { CurrentUser, ResponseMessage, Roles } from "../../common/decorators";
 import { JwtAuthGuard, RolesGuard } from "../../common/guards";
 import {
   CancelSubscriptionDto,
+  ChangeSubscriptionPlanDto,
+  CreateCustomerPortalSessionDto,
   CreateTrialSubscriptionDto,
+  CustomerPortalSessionResponseDto,
+  PreviewSubscriptionPlanChangeDto,
   SubscriptionResponseDto,
   UpdateSubscriptionStatusDto,
 } from "./dto";
@@ -38,9 +44,17 @@ import {
   SUBSCRIPTION_LIFECYCLE_SERVICE,
 } from "./services/subscription-lifecycle.service.interface";
 import {
+  ISubscriptionPlanChangeService,
+  SUBSCRIPTION_PLAN_CHANGE_SERVICE,
+} from "./services/subscription-plan-change.service.interface";
+import {
   ISubscriptionQuotaService,
   SUBSCRIPTION_QUOTA_SERVICE,
 } from "./services/subscription-quota.service.interface";
+import {
+  IStripePortalService,
+  STRIPE_PORTAL_SERVICE,
+} from "./services/stripe-portal.service.interface";
 
 @ApiTags("Subscriptions")
 @Controller("subscriptions")
@@ -50,6 +64,10 @@ export class SubscriptionController {
     private readonly subService: ISubscriptionLifecycleService,
     @Inject(SUBSCRIPTION_QUOTA_SERVICE)
     private readonly quotaService: ISubscriptionQuotaService,
+    @Inject(SUBSCRIPTION_PLAN_CHANGE_SERVICE)
+    private readonly planChangeService: ISubscriptionPlanChangeService,
+    @Inject(STRIPE_PORTAL_SERVICE)
+    private readonly portalService: IStripePortalService,
   ) {}
 
   @Get("farm/:farmId/quota")
@@ -191,4 +209,102 @@ export class SubscriptionController {
       gatewaySubId: dto.gatewaySubId,
     });
   }
+
+  @Post(":id/preview-change")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Preview prorated subscription upgrade or downgrade",
+    description:
+      "Calculates unused cycle credits, target plan cost, net amount due, and verifies farm quota compliance before executing a tier change",
+  })
+  @ApiOkResponse({
+    description: "Proration preview calculated successfully",
+  })
+  @ApiUnauthorizedResponse({ description: "JWT authentication required" })
+  @ApiNotFoundResponse({ description: "Subscription or plan not found" })
+  @ResponseMessage("Proration preview calculated successfully")
+  async previewPlanChange(
+    @Param("id", new ParseUUIDPipe()) id: string,
+    @Body() dto: PreviewSubscriptionPlanChangeDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<SubscriptionProrationPreviewDto> {
+    return this.planChangeService.previewPlanChange(id, dto, user.sub);
+  }
+
+  @Post(":id/change-plan")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Execute subscription plan upgrade or downgrade",
+    description:
+      "Applies immediate tier change with prorated billing adjustments and quota validation inside an atomic transaction",
+  })
+  @ApiOkResponse({
+    description: "Subscription plan changed successfully",
+  })
+  @ApiUnauthorizedResponse({ description: "JWT authentication required" })
+  @ApiNotFoundResponse({ description: "Subscription or plan not found" })
+  @ApiForbiddenResponse({
+    description: "Quota exceeded on downgrade or unauthorized",
+  })
+  @ResponseMessage("Subscription plan changed successfully")
+  async changePlan(
+    @Param("id", new ParseUUIDPipe()) id: string,
+    @Body() dto: ChangeSubscriptionPlanDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<SubscriptionChangeResultDto> {
+    return this.planChangeService.changePlan(id, user.sub, dto);
+  }
+
+  @Post("customer-portal")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Create Stripe Customer Portal session for user",
+    description:
+      "Generates a short-lived self-service Stripe billing portal session to update payment methods, view invoices, and manage subscriptions",
+  })
+  @ApiOkResponse({
+    type: CustomerPortalSessionResponseDto,
+    description: "Stripe Customer Portal session generated successfully",
+  })
+  @ApiUnauthorizedResponse({ description: "JWT authentication required" })
+  @ApiNotFoundResponse({ description: "User or subscription not found" })
+  @ResponseMessage("Customer portal session created successfully")
+  async createCustomerPortalSession(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto?: CreateCustomerPortalSessionDto,
+  ): Promise<CustomerPortalSessionResponseDto> {
+    return this.portalService.createCustomerPortalSession(user.sub, dto);
+  }
+
+  @Post(":id/customer-portal")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Create Stripe Customer Portal session for a specific subscription",
+    description:
+      "Generates a short-lived self-service Stripe billing portal session tied to a specific subscription ID",
+  })
+  @ApiOkResponse({
+    type: CustomerPortalSessionResponseDto,
+    description: "Stripe Customer Portal session generated successfully",
+  })
+  @ApiUnauthorizedResponse({ description: "JWT authentication required" })
+  @ApiNotFoundResponse({ description: "Subscription not found" })
+  @ApiForbiddenResponse({ description: "Unauthorized access to subscription" })
+  @ResponseMessage("Customer portal session created successfully")
+  async createSubscriptionPortalSession(
+    @Param("id", new ParseUUIDPipe()) id: string,
+    @CurrentUser() user: JwtPayload,
+    @Body() dto?: CreateCustomerPortalSessionDto,
+  ): Promise<CustomerPortalSessionResponseDto> {
+    return this.portalService.createCustomerPortalSession(user.sub, {
+      ...dto,
+      subscriptionId: id,
+    });
+  }
 }
+
+

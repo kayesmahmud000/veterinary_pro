@@ -13,7 +13,17 @@ export * from "./services/subscription-lifecycle.service.interface";
 export * from "./services/subscription-lifecycle.service";
 export * from "./services/subscription-quota.service.interface";
 export * from "./services/subscription-quota.service";
+export * from "./domain/subscription-proration-calculator";
+export * from "./services/subscription-plan-change.service.interface";
+export * from "./services/subscription-plan-change.service";
+export * from "./services/stripe-portal.service.interface";
+export * from "./services/stripe-portal.service";
 export * from "./guards/subscription-quota.guard";
+export * from "./controllers/subscription-webhook.controller";
+export * from "./services/subscription-webhook.service.interface";
+export * from "./services/subscription-webhook.service";
 export * from "./subscription-plan.controller";
 export * from "./subscription.controller";
 export * from "./subscriptions.module";
+
+

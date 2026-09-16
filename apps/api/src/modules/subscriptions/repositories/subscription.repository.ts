@@ -51,8 +51,12 @@ export class SubscriptionRepository implements ISubscriptionRepository {
     return SubscriptionEntity.fromPersistence(record);
   }
 
-  async save(subscription: SubscriptionEntity): Promise<SubscriptionEntity> {
-    const record = await this.prisma.subscription.upsert({
+  async save(
+    subscription: SubscriptionEntity,
+    tx?: import("@prisma/client").Prisma.TransactionClient,
+  ): Promise<SubscriptionEntity> {
+    const client = tx ?? this.prisma;
+    const record = await client.subscription.upsert({
       where: { id: subscription.id },
       create: {
         id: subscription.id,

@@ -374,8 +374,35 @@ export class SubscriptionEntity {
     this._updatedAt = new Date();
   }
 
-  public toResponseDto(): SubscriptionResponseDto {
-    const now = new Date();
+  public changePlan(params: {
+    newPlan: SubscriptionPlanEntity;
+    newPeriodEnd: Date;
+    gatewaySubId?: string;
+    now?: Date;
+  }): void {
+    const now = params.now ?? new Date();
+    if (this.isCanceled()) {
+      throw new ValidationDomainException(
+        "Cannot change plan on a canceled or expired subscription. Create a new subscription instead.",
+      );
+    }
+    if (params.newPeriodEnd <= now) {
+      throw new ValidationDomainException("New period end date must be in the future.");
+    }
+
+    this._plan = params.newPlan;
+    this._planId = params.newPlan.id;
+    this._currentPeriodStart = now;
+    this._currentPeriodEnd = params.newPeriodEnd;
+    this._status = SubscriptionStatus.ACTIVE;
+    this._cancelAtPeriodEnd = false;
+    if (params.gatewaySubId !== undefined) {
+      this._gatewaySubId = params.gatewaySubId;
+    }
+    this._updatedAt = now;
+  }
+
+  public toResponseDto(now: Date = new Date()): SubscriptionResponseDto {
     return {
       id: this._id,
       userId: this._userId,

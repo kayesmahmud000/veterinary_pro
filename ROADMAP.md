@@ -11,7 +11,7 @@
 | **Phase 1** | Foundation, DB Migration & Auth RBAC | Sprint 1–2 | **READY / COMPLETED** |
 | **Phase 2** | LMS & Digital Assets Store (Encrypted Stream / Watermark / Pay) | Sprint 3–5 | **READY / COMPLETED** |
 | **Phase 3** | Farm ERP Core (Livestock Registry, Milk Logging, P&L, Health) | Sprint 6–9 | 🟡 In Progress |
-| **Phase 4** | Subscription Engine (Tier Gating, Quotas & Stripe Billing) | Sprint 10–11 | 🔲 Pending |
+| **Phase 4** | Subscription Engine (Tier Gating, Quotas & Stripe Billing) | Sprint 10–11 | 🟡 In Progress |
 | **Phase 5** | Tele-Veterinary Platform (Triage, WebRTC, Signed EHR Prescriptions)| Sprint 12–15 | 🔲 Pending |
 
 ---
@@ -135,21 +135,20 @@
 
 ### Phase 4: Subscription Engine & Quota Gating
 > **Sprint 10: Subscription Plans, Tier Quotas & Enforcement**  
-> **Status**: 🟡 In Progress (Tasks 10.1, 10.2 & 10.3 Complete)
-
+> **Status**: ✅ **COMPLETE**
 - [x] **Task 10.1**: Plan configuration (`STARTER`: 5 animals, `PRO`: 30 animals, `ENTERPRISE`: Unlimited).
 - [x] **Task 10.2**: Subscription lifecycle management (`TRIALING`, `ACTIVE`, `PAST_DUE`, `CANCELED`).
 - [x] **Task 10.3**: `SubscriptionGuard`: Intercept animal registration and member invitations against tier limits.
-- [ ] **Task 10.4**: Upgrade/downgrade subscription flow with prorated billing calculation.
-- [ ] **Task 10.5**: Stripe Customer Portal integration for self-service payment method updates.
+- [x] **Task 10.4**: Upgrade/downgrade subscription flow with prorated billing calculation.
+- [x] **Task 10.5**: Stripe Customer Portal integration for self-service payment method updates.
 
 > **Sprint 11: Dunning Workflows & Grace Periods**  
-> **Status**: 🔲 Pending
+> **Status**: 🟡 In Progress
 
-- [ ] Webhook handling for failed recurring subscription renewals (`invoice.payment_failed`).
-- [ ] 3-stage automated dunning retry notifications (Day 1, Day 3, Day 7).
-- [ ] Grace period mechanism: restrict to read-only access before account suspension.
-- [ ] SaaS metrics aggregator for platform admins (MRR, ARR, Churn rate, LTV).
+- [x] **Task 11.1**: Webhook handling for failed recurring subscription renewals (`invoice.payment_failed`).
+- [ ] **Task 11.2**: 3-stage automated dunning retry notifications (Day 1, Day 3, Day 7).
+- [ ] **Task 11.3**: Grace period mechanism: restrict to read-only access before account suspension.
+- [ ] **Task 11.4**: SaaS metrics aggregator for platform admins (MRR, ARR, Churn rate, LTV).
 
 ---
 

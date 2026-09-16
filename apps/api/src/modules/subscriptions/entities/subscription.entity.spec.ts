@@ -192,7 +192,7 @@ describe("SubscriptionEntity", () => {
     });
 
     it("should map to response DTO properly", () => {
-      const dto = subscription.toResponseDto();
+      const dto = subscription.toResponseDto(now);
       expect(dto.id).toBe(subscription.id);
       expect(dto.userId).toBe("user-123");
       expect(dto.status).toBe(SubscriptionStatus.TRIALING);
@@ -200,5 +200,56 @@ describe("SubscriptionEntity", () => {
       expect(dto.isActive).toBe(true);
       expect(dto.isTrial).toBe(true);
     });
+
+    it("should change plan to enterprise with new period end and activate", () => {
+      const enterprisePlan = SubscriptionPlanEntity.create({
+        id: "plan-ent",
+        name: "Enterprise",
+        tier: SubscriptionTier.ENTERPRISE,
+        priceMonthlyCents: 2900,
+        priceAnnualCents: 28900,
+        maxAnimals: -1,
+      });
+
+      const effectiveDate = new Date("2026-09-08T00:00:00.000Z");
+      const newPeriodEnd = new Date("2026-10-08T00:00:00.000Z");
+
+      subscription.changePlan({
+        newPlan: enterprisePlan,
+        newPeriodEnd,
+        gatewaySubId: "sub_gateway_upgrade",
+        now: effectiveDate,
+      });
+
+      expect(subscription.planId).toBe(enterprisePlan.id);
+      expect(subscription.plan?.tier).toBe(SubscriptionTier.ENTERPRISE);
+      expect(subscription.status).toBe(SubscriptionStatus.ACTIVE);
+      expect(subscription.currentPeriodStart).toEqual(effectiveDate);
+      expect(subscription.currentPeriodEnd).toEqual(newPeriodEnd);
+      expect(subscription.gatewaySubId).toBe("sub_gateway_upgrade");
+      expect(subscription.cancelAtPeriodEnd).toBe(false);
+    });
+
+    it("should throw when changing plan on canceled subscription", () => {
+      subscription.requestCancellation({ immediate: true, now });
+
+      const newPlan = SubscriptionPlanEntity.create({
+        id: "plan-ent",
+        name: "Enterprise",
+        tier: SubscriptionTier.ENTERPRISE,
+        priceMonthlyCents: 2900,
+        priceAnnualCents: 28900,
+        maxAnimals: -1,
+      });
+
+      expect(() =>
+        subscription.changePlan({
+          newPlan,
+          newPeriodEnd: new Date("2026-10-01T00:00:00.000Z"),
+          now,
+        }),
+      ).toThrow(ValidationDomainException);
+    });
   });
 });
+

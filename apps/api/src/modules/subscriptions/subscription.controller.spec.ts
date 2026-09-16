@@ -1,6 +1,10 @@
 import {
   FarmQuotaSummaryDto,
   JwtPayload,
+  SubscriptionBillingInterval,
+  SubscriptionChangeResultDto,
+  SubscriptionPlanChangeType,
+  SubscriptionProrationPreviewDto,
   SubscriptionQuotaType,
   SubscriptionStatus,
   SubscriptionTier,
@@ -9,13 +13,17 @@ import {
 } from "@vetralink/shared-types";
 import { SubscriptionResponseDto } from "./dto";
 import { ISubscriptionLifecycleService } from "./services/subscription-lifecycle.service.interface";
+import { ISubscriptionPlanChangeService } from "./services/subscription-plan-change.service.interface";
 import { ISubscriptionQuotaService } from "./services/subscription-quota.service.interface";
+import { IStripePortalService } from "./services/stripe-portal.service.interface";
 import { SubscriptionController } from "./subscription.controller";
 
 describe("SubscriptionController", () => {
   let controller: SubscriptionController;
   let mockService: jest.Mocked<ISubscriptionLifecycleService>;
   let mockQuotaService: jest.Mocked<ISubscriptionQuotaService>;
+  let mockPlanChangeService: jest.Mocked<ISubscriptionPlanChangeService>;
+  let mockPortalService: jest.Mocked<IStripePortalService>;
 
   const mockUser: JwtPayload = {
     sub: "user-123",
@@ -60,7 +68,21 @@ describe("SubscriptionController", () => {
       getFarmQuotaUsage: jest.fn(),
     };
 
-    controller = new SubscriptionController(mockService, mockQuotaService);
+    mockPlanChangeService = {
+      previewPlanChange: jest.fn(),
+      changePlan: jest.fn(),
+    };
+
+    mockPortalService = {
+      createCustomerPortalSession: jest.fn(),
+    };
+
+    controller = new SubscriptionController(
+      mockService,
+      mockQuotaService,
+      mockPlanChangeService,
+      mockPortalService,
+    );
   });
 
   describe("getFarmQuota()", () => {
@@ -214,4 +236,162 @@ describe("SubscriptionController", () => {
       expect(result.status).toBe(SubscriptionStatus.CANCELED);
     });
   });
+
+  describe("previewPlanChange()", () => {
+    it("should return preview from planChangeService", async () => {
+      const mockPreview: SubscriptionProrationPreviewDto = {
+        subscriptionId: "sub-123",
+        farmId: "farm-123",
+        canProceed: true,
+        quotaViolations: [],
+        proration: {
+          currentPlanTier: SubscriptionTier.PRO,
+          currentPlanName: "Pro Farmer",
+          currentInterval: SubscriptionBillingInterval.MONTHLY,
+          currentPeriodStart: "2026-09-01T00:00:00.000Z",
+          currentPeriodEnd: "2026-10-01T00:00:00.000Z",
+          targetPlanTier: SubscriptionTier.ENTERPRISE,
+          targetPlanName: "Commercial Enterprise",
+          targetInterval: SubscriptionBillingInterval.MONTHLY,
+          changeType: SubscriptionPlanChangeType.UPGRADE,
+          effectiveDate: "2026-09-10T00:00:00.000Z",
+          totalPeriodDays: 30,
+          usedDays: 9,
+          remainingDays: 21,
+          unusedRatio: 0.7,
+          currentPlanPriceCents: 900,
+          unusedCreditCents: 630,
+          targetPlanPriceCents: 2900,
+          netAmountDueCents: 2270,
+          creditBalanceCents: 0,
+        },
+      };
+
+      mockPlanChangeService.previewPlanChange.mockResolvedValue(mockPreview);
+
+      const result = await controller.previewPlanChange(
+        "sub-123",
+        {
+          targetTier: SubscriptionTier.ENTERPRISE,
+          billingInterval: SubscriptionBillingInterval.MONTHLY,
+        },
+        mockUser,
+      );
+
+      expect(mockPlanChangeService.previewPlanChange).toHaveBeenCalledWith(
+        "sub-123",
+        expect.objectContaining({
+          targetTier: SubscriptionTier.ENTERPRISE,
+        }),
+        mockUser.sub,
+      );
+      expect(result.canProceed).toBe(true);
+      expect(result.proration.netAmountDueCents).toBe(2270);
+    });
+  });
+
+  describe("changePlan()", () => {
+    it("should execute plan change via planChangeService", async () => {
+      const mockChangeResult: SubscriptionChangeResultDto = {
+        subscription: {
+          ...mockResponse,
+          planId: "plan-enterprise",
+        },
+        proration: {
+          currentPlanTier: SubscriptionTier.PRO,
+          currentPlanName: "Pro Farmer",
+          currentInterval: SubscriptionBillingInterval.MONTHLY,
+          currentPeriodStart: "2026-09-01T00:00:00.000Z",
+          currentPeriodEnd: "2026-10-01T00:00:00.000Z",
+          targetPlanTier: SubscriptionTier.ENTERPRISE,
+          targetPlanName: "Commercial Enterprise",
+          targetInterval: SubscriptionBillingInterval.MONTHLY,
+          changeType: SubscriptionPlanChangeType.UPGRADE,
+          effectiveDate: "2026-09-10T00:00:00.000Z",
+          totalPeriodDays: 30,
+          usedDays: 9,
+          remainingDays: 21,
+          unusedRatio: 0.7,
+          currentPlanPriceCents: 900,
+          unusedCreditCents: 630,
+          targetPlanPriceCents: 2900,
+          netAmountDueCents: 2270,
+          creditBalanceCents: 0,
+        },
+        transactionId: "trace-xyz",
+      };
+
+      mockPlanChangeService.changePlan.mockResolvedValue(mockChangeResult);
+
+      const result = await controller.changePlan(
+        "sub-123",
+        {
+          targetTier: SubscriptionTier.ENTERPRISE,
+          billingInterval: SubscriptionBillingInterval.MONTHLY,
+        },
+        mockUser,
+      );
+
+      expect(mockPlanChangeService.changePlan).toHaveBeenCalledWith(
+        "sub-123",
+        mockUser.sub,
+        expect.objectContaining({
+          targetTier: SubscriptionTier.ENTERPRISE,
+        }),
+      );
+      expect(result.subscription.planId).toBe("plan-enterprise");
+      expect(result.transactionId).toBe("trace-xyz");
+    });
+  });
+
+  describe("createCustomerPortalSession()", () => {
+    it("should return portal session URL from portalService for current user", async () => {
+      mockPortalService.createCustomerPortalSession.mockResolvedValue({
+        url: "https://billing.stripe.com/p/session/portal_123",
+        customerId: "cus_123",
+      });
+
+      const result = await controller.createCustomerPortalSession(mockUser, {
+        returnUrl: "https://app.vetralink.pro/settings/billing",
+      });
+
+      expect(mockPortalService.createCustomerPortalSession).toHaveBeenCalledWith(
+        mockUser.sub,
+        expect.objectContaining({
+          returnUrl: "https://app.vetralink.pro/settings/billing",
+        }),
+      );
+      expect(result.url).toBe("https://billing.stripe.com/p/session/portal_123");
+      expect(result.customerId).toBe("cus_123");
+    });
+  });
+
+  describe("createSubscriptionPortalSession()", () => {
+    it("should return portal session URL for a specific subscription ID", async () => {
+      mockPortalService.createCustomerPortalSession.mockResolvedValue({
+        url: "https://billing.stripe.com/p/session/portal_sub_123",
+        customerId: "cus_sub_123",
+      });
+
+      const result = await controller.createSubscriptionPortalSession(
+        "sub-123",
+        mockUser,
+        {
+          returnUrl: "https://app.vetralink.pro/settings/billing",
+        },
+      );
+
+      expect(mockPortalService.createCustomerPortalSession).toHaveBeenCalledWith(
+        mockUser.sub,
+        expect.objectContaining({
+          subscriptionId: "sub-123",
+          returnUrl: "https://app.vetralink.pro/settings/billing",
+        }),
+      );
+      expect(result.url).toBe("https://billing.stripe.com/p/session/portal_sub_123");
+      expect(result.customerId).toBe("cus_sub_123");
+    });
+  });
 });
+
+

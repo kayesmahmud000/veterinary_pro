@@ -6,3 +6,8 @@ export * from "./create-trial-subscription.dto";
 export * from "./cancel-subscription.dto";
 export * from "./update-subscription-status.dto";
 export * from "./subscription-response.dto";
+export * from "./preview-subscription-plan-change.dto";
+export * from "./change-subscription-plan.dto";
+export * from "./create-customer-portal-session.dto";
+export * from "./customer-portal-session-response.dto";
+
