@@ -22,6 +22,7 @@ import {
 import {
   FarmQuotaSummaryDto,
   JwtPayload,
+  SubscriptionAccessStatusDto,
   SubscriptionChangeResultDto,
   SubscriptionProrationPreviewDto,
   SubscriptionStatus,
@@ -52,6 +53,10 @@ import {
   SUBSCRIPTION_QUOTA_SERVICE,
 } from "./services/subscription-quota.service.interface";
 import {
+  ISubscriptionGracePeriodService,
+  SUBSCRIPTION_GRACE_PERIOD_SERVICE,
+} from "./services/subscription-grace-period.service.interface";
+import {
   IStripePortalService,
   STRIPE_PORTAL_SERVICE,
 } from "./services/stripe-portal.service.interface";
@@ -68,7 +73,28 @@ export class SubscriptionController {
     private readonly planChangeService: ISubscriptionPlanChangeService,
     @Inject(STRIPE_PORTAL_SERVICE)
     private readonly portalService: IStripePortalService,
+    @Inject(SUBSCRIPTION_GRACE_PERIOD_SERVICE)
+    private readonly gracePeriodService: ISubscriptionGracePeriodService,
   ) {}
+
+  @Get("farm/:farmId/access-status")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Get farm subscription access status and grace period details",
+    description:
+      "Returns current access mode (FULL_ACCESS, GRACE_PERIOD, READ_ONLY, SUSPENDED), past-due day count, remaining grace days, and banner message",
+  })
+  @ApiOkResponse({
+    description: "Farm subscription access status retrieved successfully",
+  })
+  @ApiUnauthorizedResponse({ description: "JWT authentication required" })
+  @ResponseMessage("Farm subscription access status retrieved successfully")
+  async getFarmAccessStatus(
+    @Param("farmId", ParseUUIDPipe) farmId: string,
+  ): Promise<SubscriptionAccessStatusDto> {
+    return this.gracePeriodService.getAccessStatus(farmId);
+  }
 
   @Get("farm/:farmId/quota")
   @UseGuards(JwtAuthGuard)

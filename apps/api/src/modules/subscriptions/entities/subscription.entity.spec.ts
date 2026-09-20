@@ -251,5 +251,115 @@ describe("SubscriptionEntity", () => {
       ).toThrow(ValidationDomainException);
     });
   });
+
+  describe("Access Mode & Grace Period (Task 11.3)", () => {
+    it("should return FULL_ACCESS when subscription is ACTIVE and not expired", () => {
+      const now = new Date("2026-09-15T00:00:00.000Z");
+      const sub = SubscriptionEntity.createActive({
+        userId: "user-1",
+        farmId: "farm-1",
+        planId: "plan-1",
+        periodEnd: new Date("2026-10-01T00:00:00.000Z"),
+        now,
+      });
+
+      expect(sub.getAccessMode(now)).toBe("FULL_ACCESS");
+      expect(sub.canWrite(now)).toBe(true);
+      expect(sub.canRead(now)).toBe(true);
+      expect(sub.isReadOnly(now)).toBe(false);
+      expect(sub.isSuspended(now)).toBe(false);
+    });
+
+    it("should return GRACE_PERIOD during Days 1-3 of PAST_DUE", () => {
+      const now = new Date("2026-09-20T12:00:00.000Z");
+      const sub = SubscriptionEntity.fromPersistence({
+        id: "sub-1",
+        userId: "user-1",
+        farmId: "farm-1",
+        planId: "plan-1",
+        status: SubscriptionStatus.PAST_DUE,
+        currentPeriodStart: new Date("2026-08-18T00:00:00.000Z"),
+        currentPeriodEnd: new Date("2026-09-18T00:00:00.000Z"), // 2 days past due
+        gatewaySubId: "sub_1",
+        cancelAtPeriodEnd: false,
+        createdAt: new Date("2026-08-18T00:00:00.000Z"),
+        updatedAt: new Date("2026-09-18T00:00:00.000Z"),
+      });
+
+      expect(sub.getAccessMode(now)).toBe("GRACE_PERIOD");
+      expect(sub.canWrite(now)).toBe(true);
+      expect(sub.canRead(now)).toBe(true);
+      expect(sub.isReadOnly(now)).toBe(false);
+      expect(sub.isSuspended(now)).toBe(false);
+    });
+
+    it("should return READ_ONLY during Days 4-7 of PAST_DUE", () => {
+      const now = new Date("2026-09-23T12:00:00.000Z");
+      const sub = SubscriptionEntity.fromPersistence({
+        id: "sub-1",
+        userId: "user-1",
+        farmId: "farm-1",
+        planId: "plan-1",
+        status: SubscriptionStatus.PAST_DUE,
+        currentPeriodStart: new Date("2026-08-18T00:00:00.000Z"),
+        currentPeriodEnd: new Date("2026-09-18T00:00:00.000Z"), // 5 days past due
+        gatewaySubId: "sub_1",
+        cancelAtPeriodEnd: false,
+        createdAt: new Date("2026-08-18T00:00:00.000Z"),
+        updatedAt: new Date("2026-09-18T00:00:00.000Z"),
+      });
+
+      expect(sub.getAccessMode(now)).toBe("READ_ONLY");
+      expect(sub.canWrite(now)).toBe(false);
+      expect(sub.canRead(now)).toBe(true);
+      expect(sub.isReadOnly(now)).toBe(true);
+      expect(sub.isSuspended(now)).toBe(false);
+    });
+
+    it("should return SUSPENDED after Day 7 of PAST_DUE", () => {
+      const now = new Date("2026-09-27T12:00:00.000Z");
+      const sub = SubscriptionEntity.fromPersistence({
+        id: "sub-1",
+        userId: "user-1",
+        farmId: "farm-1",
+        planId: "plan-1",
+        status: SubscriptionStatus.PAST_DUE,
+        currentPeriodStart: new Date("2026-08-18T00:00:00.000Z"),
+        currentPeriodEnd: new Date("2026-09-18T00:00:00.000Z"), // 9 days past due
+        gatewaySubId: "sub_1",
+        cancelAtPeriodEnd: false,
+        createdAt: new Date("2026-08-18T00:00:00.000Z"),
+        updatedAt: new Date("2026-09-18T00:00:00.000Z"),
+      });
+
+      expect(sub.getAccessMode(now)).toBe("SUSPENDED");
+      expect(sub.canWrite(now)).toBe(false);
+      expect(sub.canRead(now)).toBe(false);
+      expect(sub.isReadOnly(now)).toBe(false);
+      expect(sub.isSuspended(now)).toBe(true);
+    });
+
+    it("should suspend subscription and transition status to EXPIRED", () => {
+      const now = new Date("2026-09-27T12:00:00.000Z");
+      const sub = SubscriptionEntity.fromPersistence({
+        id: "sub-1",
+        userId: "user-1",
+        farmId: "farm-1",
+        planId: "plan-1",
+        status: SubscriptionStatus.PAST_DUE,
+        currentPeriodStart: new Date("2026-08-18T00:00:00.000Z"),
+        currentPeriodEnd: new Date("2026-09-18T00:00:00.000Z"),
+        gatewaySubId: "sub_1",
+        cancelAtPeriodEnd: true,
+        createdAt: new Date("2026-08-18T00:00:00.000Z"),
+        updatedAt: new Date("2026-09-18T00:00:00.000Z"),
+      });
+
+      sub.suspend(now);
+      expect(sub.status).toBe(SubscriptionStatus.EXPIRED);
+      expect(sub.cancelAtPeriodEnd).toBe(false);
+      expect(sub.updatedAt).toEqual(now);
+    });
+  });
 });
 

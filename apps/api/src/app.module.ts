@@ -17,7 +17,10 @@ import { MilkLogsModule } from "./modules/milk-logs";
 import { ClinicalHealthModule } from "./modules/clinical-health";
 import { FinancialModule } from "./modules/financial";
 import { SubscriptionsModule } from "./modules/subscriptions";
+import { ConsultationsModule } from "./modules/consultations";
 import { IdempotencyModule } from "./common/idempotency";
+
+import { SyncModule } from "./modules/sync";
 
 @Module({
   imports: [
@@ -48,12 +51,14 @@ import { IdempotencyModule } from "./common/idempotency";
     ClinicalHealthModule,
     FinancialModule,
     SubscriptionsModule,
+    ConsultationsModule,
     ProductsModule,
     MediaModule,
     IdempotencyModule,
     OrdersModule,
     WatermarkModule,
     MailModule,
+    SyncModule,
   ],
 })
 export class AppModule {}

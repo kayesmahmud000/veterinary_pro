@@ -1,6 +1,8 @@
 import {
   FarmQuotaSummaryDto,
   JwtPayload,
+  SubscriptionAccessMode,
+  SubscriptionAccessStatusDto,
   SubscriptionBillingInterval,
   SubscriptionChangeResultDto,
   SubscriptionPlanChangeType,
@@ -15,6 +17,7 @@ import { SubscriptionResponseDto } from "./dto";
 import { ISubscriptionLifecycleService } from "./services/subscription-lifecycle.service.interface";
 import { ISubscriptionPlanChangeService } from "./services/subscription-plan-change.service.interface";
 import { ISubscriptionQuotaService } from "./services/subscription-quota.service.interface";
+import { ISubscriptionGracePeriodService } from "./services/subscription-grace-period.service.interface";
 import { IStripePortalService } from "./services/stripe-portal.service.interface";
 import { SubscriptionController } from "./subscription.controller";
 
@@ -24,6 +27,7 @@ describe("SubscriptionController", () => {
   let mockQuotaService: jest.Mocked<ISubscriptionQuotaService>;
   let mockPlanChangeService: jest.Mocked<ISubscriptionPlanChangeService>;
   let mockPortalService: jest.Mocked<IStripePortalService>;
+  let mockGracePeriodService: jest.Mocked<ISubscriptionGracePeriodService>;
 
   const mockUser: JwtPayload = {
     sub: "user-123",
@@ -77,12 +81,46 @@ describe("SubscriptionController", () => {
       createCustomerPortalSession: jest.fn(),
     };
 
+    mockGracePeriodService = {
+      getAccessStatus: jest.fn(),
+      assertWriteAccess: jest.fn(),
+      assertReadAccess: jest.fn(),
+      processSuspensions: jest.fn(),
+    };
+
     controller = new SubscriptionController(
       mockService,
       mockQuotaService,
       mockPlanChangeService,
       mockPortalService,
+      mockGracePeriodService,
     );
+  });
+
+  describe("getFarmAccessStatus()", () => {
+    it("should return farm access status from grace period service", async () => {
+      const mockAccessStatus: SubscriptionAccessStatusDto = {
+        farmId: "farm-123",
+        subscriptionId: "sub-123",
+        status: SubscriptionStatus.PAST_DUE,
+        accessMode: SubscriptionAccessMode.READ_ONLY,
+        canRead: true,
+        canWrite: false,
+        daysPastDue: 5,
+        gracePeriodDaysRemaining: 2,
+        gracePeriodEnd: "2026-09-22T00:00:00.000Z",
+        suspensionDate: "2026-09-22T00:00:00.000Z",
+        message:
+          "Account is in read-only mode due to overdue payment. Please update payment method to restore write access.",
+      };
+
+      mockGracePeriodService.getAccessStatus.mockResolvedValue(mockAccessStatus);
+
+      const result = await controller.getFarmAccessStatus("farm-123");
+
+      expect(mockGracePeriodService.getAccessStatus).toHaveBeenCalledWith("farm-123");
+      expect(result).toEqual(mockAccessStatus);
+    });
   });
 
   describe("getFarmQuota()", () => {

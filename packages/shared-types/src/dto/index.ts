@@ -10,3 +10,5 @@ export * from "./clinical-health/index.js";
 export * from "./financial/index.js";
 export * from "./subscription/index.js";
 export * from "./farm/index.js";
+export * from "./consultations/index.js";
+export * from "./sync/index.js";

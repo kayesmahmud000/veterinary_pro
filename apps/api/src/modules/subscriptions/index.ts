@@ -19,11 +19,27 @@ export * from "./services/subscription-plan-change.service";
 export * from "./services/stripe-portal.service.interface";
 export * from "./services/stripe-portal.service";
 export * from "./guards/subscription-quota.guard";
+export * from "./guards/subscription-read-only.guard";
+export * from "./services/subscription-grace-period.service.interface";
+export * from "./services/subscription-grace-period.service";
 export * from "./controllers/subscription-webhook.controller";
 export * from "./services/subscription-webhook.service.interface";
 export * from "./services/subscription-webhook.service";
 export * from "./subscription-plan.controller";
 export * from "./subscription.controller";
+export * from "./entities/subscription-dunning-log.entity";
+export * from "./repositories/subscription-dunning-log.repository.interface";
+export * from "./repositories/subscription-dunning-log.repository";
+export * from "./services/subscription-dunning.service.interface";
+export * from "./services/subscription-dunning.service";
+export * from "./services/subscription-dunning-queue.service.interface";
+export * from "./services/subscription-dunning-queue.service";
+export * from "./processors/subscription-dunning.processor";
+export * from "./controllers/subscription-dunning.controller";
+export * from "./controllers/subscription-metrics.controller";
+export * from "./services/subscription-metrics.service.interface";
+export * from "./services/subscription-metrics.service";
+export * from "./templates/dunning-email.template";
 export * from "./subscriptions.module";
 
 

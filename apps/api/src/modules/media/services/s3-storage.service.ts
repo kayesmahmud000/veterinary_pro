@@ -281,6 +281,32 @@ export class S3StorageService implements IS3StorageService {
     }
   }
 
+  public async uploadBuffer(
+    bucket: string,
+    key: string,
+    buffer: Buffer,
+    contentType: string
+  ): Promise<void> {
+    try {
+      const command = new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+      });
+
+      await this.s3Client.send(command);
+      this.logger.log(
+        `Successfully uploaded buffer to 's3://${bucket}/${key}' [${contentType}]`
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to upload buffer to 's3://${bucket}/${key}': ${(error as Error).message}`
+      );
+      throw error;
+    }
+  }
+
   public async deleteObject(bucket: string, key: string): Promise<void> {
     try {
       const command = new DeleteObjectCommand({

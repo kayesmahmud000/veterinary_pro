@@ -184,6 +184,25 @@ enum SubscriptionStatus {
   EXPIRED
 }
 
+enum DunningStage {
+  DAY_1
+  DAY_3
+  DAY_7
+}
+
+enum DunningChannel {
+  EMAIL
+  SMS
+  IN_APP
+}
+
+enum DunningStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
 enum ConsultationType {
   ASYNC_TICKET
   LIVE_VIDEO
@@ -195,6 +214,86 @@ enum ConsultationStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+enum ConsultationPaymentStatus {
+  UNPAID
+  AUTHORIZED
+  CAPTURED
+  RELEASED
+  FAILED
+}
+
+enum ConsultationNotificationChannel {
+  PUSH
+  SMS
+  EMAIL
+  IN_APP
+}
+
+enum ConsultationNotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum ConsultationMessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  SYSTEM
+}
+
+enum ClinicalNoteCategory {
+  SOAP_NOTE
+  DIFFERENTIAL_DIAGNOSIS
+  INTERNAL_OBSERVATION
+  FOLLOW_UP_PLAN
+  GENERAL
+}
+
+enum PrescriptionStatus {
+  DRAFT
+  SIGNED
+  REVOKED
+}
+
+enum MedicationFormulation {
+  INJECTABLE
+  ORAL_SUSPENSION
+  BOLUS_TABLET
+  TOPICAL_SPRAY
+  INTRAMAMMARY
+  POWDER
+  EYE_DROPS
+  OTHER
+}
+
+enum MedicationRoute {
+  INTRAMUSCULAR
+  SUBCUTANEOUS
+  INTRAVENOUS
+  ORAL
+  TOPICAL
+  INTRAMAMMARY
+  OTHER
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+  HELD
+  REVERSED
+}
+
+enum ReviewModerationStatus {
+  PENDING
+  APPROVED
+  FLAGGED
+  REJECTED
 }
 
 enum ImportJobStatus {
@@ -233,6 +332,7 @@ model User {
   subscriptions        Subscription[]
   farmerConsultations  Consultation[]    @relation("FarmerConsultation")
   vetConsultations     Consultation[]    @relation("VetConsultation")
+  vetProfile           VetProfile?
   prescriptions        Prescription[]
   recordedHealthEvents HealthRecord[]    @relation("RecordedBy")
   attendedHealthEvents HealthRecord[]    @relation("AttendingVet")
@@ -245,6 +345,14 @@ model User {
   sentVaccineReminders VaccineReminderLog[]
   healthEscalationLogs HealthIncidentEscalationLog[]
   healthRecordAttachments HealthRecordAttachment[]
+  dunningLogs          SubscriptionDunningLog[]
+  consultationNotificationLogs ConsultationNotificationLog[]
+  sentConsultationMessages ConsultationMessage[] @relation("SentConsultationMessages")
+  authoredClinicalNotes ConsultationClinicalNote[] @relation("AuthoredClinicalNotes")
+  vetPayouts           ConsultationPayoutLedger[] @relation("VetPayouts")
+  authoredReviews      ConsultationReview[]      @relation("FarmerReviews")
+  receivedReviews      ConsultationReview[]      @relation("VetReviews")
+  moderatedReviews     ConsultationReview[]      @relation("ModeratedReviews")
   auditLogs            AuditLog[]
 
   @@index([email])
@@ -303,6 +411,7 @@ model Farm {
   vaccineReminderLogs VaccineReminderLog[]
   healthEscalationLogs HealthIncidentEscalationLog[]
   healthRecordAttachments HealthRecordAttachment[]
+  dunningLogs          SubscriptionDunningLog[]
 
   @@index([ownerId])
   @@map("farms")
@@ -753,10 +862,39 @@ model Subscription {
   user User             @relation(fields: [userId], references: [id], onDelete: Restrict)
   farm Farm?            @relation(fields: [farmId], references: [id], onDelete: SetNull)
   plan SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+  dunningLogs SubscriptionDunningLog[]
 
   @@index([userId, status])
   @@index([farmId])
   @@map("subscriptions")
+}
+
+model SubscriptionDunningLog {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subscriptionId   String         @map("subscription_id") @db.Uuid
+  userId           String         @map("user_id") @db.Uuid
+  farmId           String?        @map("farm_id") @db.Uuid
+  stage            DunningStage
+  channel          DunningChannel @default(EMAIL)
+  status           DunningStatus  @default(SENT)
+  recipientEmail   String         @map("recipient_email") @db.VarChar(255)
+  subject          String         @db.VarChar(255)
+  message          String         @db.Text
+  errorMessage     String?        @map("error_message") @db.Text
+  attemptCount     Int            @default(1) @map("attempt_count")
+  gatewayInvoiceId String?        @map("gateway_invoice_id") @db.VarChar(255)
+  dispatchedDate   String         @map("dispatched_date") @db.VarChar(10)
+  dispatchedAt     DateTime       @default(now()) @map("dispatched_at") @db.Timestamptz(6)
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  farm         Farm?        @relation(fields: [farmId], references: [id], onDelete: SetNull)
+
+  @@unique([subscriptionId, stage, channel, dispatchedDate], name: "unique_subscription_dunning_daily")
+  @@index([subscriptionId, stage])
+  @@index([userId, dispatchedAt])
+  @@index([farmId, dispatchedAt])
+  @@map("subscription_dunning_logs")
 }
 
 // ==========================================
@@ -773,39 +911,192 @@ model Consultation {
   mediaUrls      Json               @default("[]") @map("media_urls")
   type           ConsultationType   @default(ASYNC_TICKET)
   status         ConsultationStatus @default(SUBMITTED)
-  roomSessionId  String?            @map("room_session_id") @db.VarChar(255)
-  feeCents       Int                @default(0) @map("fee_cents")
-  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  roomSessionId      String?                   @map("room_session_id") @db.VarChar(255)
+  feeCents           Int                       @default(0) @map("fee_cents")
+  scheduledAt        DateTime?                 @map("scheduled_at") @db.Timestamptz(6)
+  assignedAt         DateTime?                 @map("assigned_at") @db.Timestamptz(6)
+  paymentStatus      ConsultationPaymentStatus @default(UNPAID) @map("payment_status")
+  paymentIntentId    String?                   @map("payment_intent_id") @db.VarChar(255)
+  paymentHeldAt      DateTime?                 @map("payment_held_at") @db.Timestamptz(6)
+  paymentCapturedAt  DateTime?                 @map("payment_captured_at") @db.Timestamptz(6)
+  paymentReleasedAt  DateTime?                 @map("payment_released_at") @db.Timestamptz(6)
+  currency           String                    @default("USD") @db.VarChar(10)
+  createdAt          DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   farmer       User          @relation("FarmerConsultation", fields: [farmerId], references: [id], onDelete: Restrict)
   vet          User?         @relation("VetConsultation", fields: [vetId], references: [id], onDelete: SetNull)
   farm         Farm          @relation(fields: [farmId], references: [id], onDelete: Restrict)
   animal       Animal?       @relation(fields: [animalId], references: [id], onDelete: SetNull)
   prescription Prescription?
+  payoutLedger ConsultationPayoutLedger?
+  review       ConsultationReview?
+  notificationLogs ConsultationNotificationLog[]
+  messages     ConsultationMessage[]
+  clinicalNotes ConsultationClinicalNote[]
 
   @@index([farmerId, status])
   @@index([vetId, status])
   @@index([farmId])
+  @@index([vetId, scheduledAt])
+  @@index([paymentStatus])
+  @@index([paymentIntentId])
   @@map("consultations")
 }
 
+model ConsultationMessage {
+  id             String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  consultationId String                  @map("consultation_id") @db.Uuid
+  senderId       String                  @map("sender_id") @db.Uuid
+  content        String                  @db.Text
+  mediaUrls      Json                    @default("[]") @map("media_urls")
+  messageType    ConsultationMessageType @default(TEXT) @map("message_type")
+  readAt         DateTime?               @map("read_at") @db.Timestamptz(6)
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("SentConsultationMessages", fields: [senderId], references: [id], onDelete: Restrict)
+
+  @@index([consultationId, createdAt])
+  @@index([senderId])
+  @@map("consultation_messages")
+}
+
+model ConsultationClinicalNote {
+  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  consultationId String               @map("consultation_id") @db.Uuid
+  authorVetId    String               @map("author_vet_id") @db.Uuid
+  title          String               @db.VarChar(200)
+  content        String               @db.Text
+  category       ClinicalNoteCategory @default(GENERAL)
+  isConfidential Boolean              @default(true) @map("is_confidential")
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  authorVet    User         @relation("AuthoredClinicalNotes", fields: [authorVetId], references: [id], onDelete: Restrict)
+
+  @@index([consultationId, createdAt])
+  @@index([authorVetId])
+  @@map("consultation_clinical_notes")
+}
+
+model VetProfile {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  licenseNumber  String?  @map("license_number") @db.VarChar(100)
+  specialties    Json     @default("[]")
+  isAvailable    Boolean  @default(true) @map("is_available")
+  maxActiveCases Int      @default(5) @map("max_active_cases")
+  workingHours   Json     @default("[]")
+  timezone       String   @default("UTC") @db.VarChar(50)
+  averageRating  Decimal  @default(0) @map("average_rating") @db.Decimal(3, 2)
+  totalReviews   Int      @default(0) @map("total_reviews")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([isAvailable])
+  @@map("vet_profiles")
+}
+
 model Prescription {
-  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  consultationId       String   @unique @map("consultation_id") @db.Uuid
-  vetId                String   @map("vet_id") @db.Uuid
-  diagnosis            String   @db.Text
-  medications          Json     // [{ name, dosage, frequency, durationDays, withdrawalDays, notes }]
-  pdfS3Key             String   @map("pdf_s3_key") @db.Text
-  digitalSignatureHash String   @map("digital_signature_hash") @db.Text
-  signedAt             DateTime @map("signed_at") @db.Timestamptz(6)
-  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  consultationId       String             @unique @map("consultation_id") @db.Uuid
+  vetId                String             @map("vet_id") @db.Uuid
+  status               PrescriptionStatus @default(DRAFT)
+  diagnosis            String             @db.Text
+  notes                String?            @db.Text
+  medications          Json               // [{ name, formulation, dosage, frequency, durationDays, route, withdrawalDaysMilk, withdrawalDaysMeat, instructions }]
+  pdfS3Key             String?            @map("pdf_s3_key") @db.Text
+  digitalSignatureHash String?            @map("digital_signature_hash") @db.Text
+  signedAt             DateTime?          @map("signed_at") @db.Timestamptz(6)
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
   vet          User         @relation(fields: [vetId], references: [id], onDelete: Restrict)
 
   @@index([vetId])
+  @@index([status])
   @@map("prescriptions")
+}
+
+model ConsultationNotificationLog {
+  id             String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  consultationId String                          @map("consultation_id") @db.Uuid
+  vetId          String                          @map("vet_id") @db.Uuid
+  channel        ConsultationNotificationChannel
+  status         ConsultationNotificationStatus  @default(SENT)
+  title          String                          @db.VarChar(255)
+  message        String                          @db.Text
+  errorMessage   String?                         @map("error_message") @db.Text
+  metadata       Json                            @default("{}")
+  readAt         DateTime?                       @map("read_at") @db.Timestamptz(6)
+  dispatchedAt   DateTime                        @default(now()) @map("dispatched_at") @db.Timestamptz(6)
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  vet          User         @relation(fields: [vetId], references: [id], onDelete: Cascade)
+
+  @@index([vetId, dispatchedAt(sort: Desc)])
+  @@index([consultationId])
+  @@index([vetId, readAt])
+  @@map("consultation_notification_logs")
+}
+
+model ConsultationPayoutLedger {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  consultationId   String       @unique @map("consultation_id") @db.Uuid
+  vetId            String       @map("vet_id") @db.Uuid
+  totalFeeCents    Int          @map("total_fee_cents")
+  platformFeeRate  Decimal      @map("platform_fee_rate") @db.Decimal(5, 4)
+  platformFeeCents Int          @map("platform_fee_cents")
+  vetPayoutCents   Int          @map("vet_payout_cents")
+  currency         String       @default("USD") @db.VarChar(10)
+  status           PayoutStatus @default(PENDING)
+  payoutBatchId    String?      @map("payout_batch_id") @db.VarChar(100)
+  payoutReference  String?      @map("payout_reference") @db.VarChar(255)
+  processedAt      DateTime?    @map("processed_at") @db.Timestamptz(6)
+  metadata         Json         @default("{}")
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Restrict)
+  vet          User         @relation("VetPayouts", fields: [vetId], references: [id], onDelete: Restrict)
+
+  @@index([vetId, status])
+  @@index([status, createdAt])
+  @@index([payoutBatchId])
+  @@map("consultation_payout_ledgers")
+}
+
+model ConsultationReview {
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  consultationId   String                 @unique @map("consultation_id") @db.Uuid
+  farmerId         String                 @map("farmer_id") @db.Uuid
+  vetId            String                 @map("vet_id") @db.Uuid
+  rating           Int
+  feedback         String?                @db.Text
+  tags             Json                   @default("[]")
+  isPublic         Boolean                @default(true) @map("is_public")
+  moderationStatus ReviewModerationStatus @default(APPROVED) @map("moderation_status")
+  moderatedById    String?                @map("moderated_by_id") @db.Uuid
+  moderatedAt      DateTime?              @map("moderated_at") @db.Timestamptz(6)
+  moderationReason String?                @map("moderation_reason") @db.Text
+  createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Restrict)
+  farmer       User         @relation("FarmerReviews", fields: [farmerId], references: [id], onDelete: Restrict)
+  vet          User         @relation("VetReviews", fields: [vetId], references: [id], onDelete: Restrict)
+  moderatedBy  User?        @relation("ModeratedReviews", fields: [moderatedById], references: [id], onDelete: SetNull)
+
+  @@index([vetId, moderationStatus, isPublic])
+  @@index([farmerId])
+  @@index([moderationStatus, createdAt])
+  @@map("consultation_reviews")
 }
 
 // ==========================================

@@ -84,3 +84,44 @@ export class QuotaExceededDomainException extends DomainException {
     super(message, details);
   }
 }
+
+export interface SubscriptionReadOnlyDetails {
+  subscriptionId: string;
+  accessMode: string;
+  daysPastDue: number;
+  gracePeriodExpiredAt?: string;
+  portalUrl?: string;
+}
+
+export class SubscriptionReadOnlyException extends DomainException {
+  readonly statusCode = HttpStatus.FORBIDDEN;
+  readonly errorCode = "SUBSCRIPTION_READ_ONLY";
+
+  constructor(
+    message = "Your subscription is past due and the grace period has expired. Your account has been restricted to read-only mode. Please update your payment method to restore write access.",
+    public override readonly details?: SubscriptionReadOnlyDetails
+  ) {
+    super(message, details);
+  }
+}
+
+export interface SubscriptionSuspendedDetails {
+  subscriptionId: string;
+  accessMode: string;
+  daysPastDue: number;
+  suspendedAt?: string;
+  portalUrl?: string;
+}
+
+export class SubscriptionSuspendedException extends DomainException {
+  readonly statusCode = HttpStatus.FORBIDDEN;
+  readonly errorCode = "SUBSCRIPTION_SUSPENDED";
+
+  constructor(
+    message = "Your subscription has been suspended due to overdue payment. Please settle your outstanding balance on the billing portal to reactivate your account.",
+    public override readonly details?: SubscriptionSuspendedDetails
+  ) {
+    super(message, details);
+  }
+}
+

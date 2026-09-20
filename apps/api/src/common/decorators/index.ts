@@ -6,3 +6,4 @@ export * from "./tenant.decorator";
 export * from "./client-meta.decorator";
 export * from "./quota.decorator";
 export * from "./feature.decorator";
+export * from "./subscription-access.decorator";

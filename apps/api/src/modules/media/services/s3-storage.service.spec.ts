@@ -220,6 +220,36 @@ describe("S3StorageService", () => {
     });
   });
 
+  describe("uploadBuffer", () => {
+    it("should upload buffer directly to S3 with PutObjectCommand", async () => {
+      mockS3Send.mockResolvedValueOnce({});
+
+      const buffer = Buffer.from("pdf-content-bytes");
+      await service.uploadBuffer(
+        "test-bucket",
+        "prescriptions/presc-1.pdf",
+        buffer,
+        "application/pdf"
+      );
+
+      expect(mockS3Send).toHaveBeenCalled();
+    });
+
+    it("should log and throw error if S3 put fails", async () => {
+      mockS3Send.mockRejectedValueOnce(new Error("S3 put buffer failed"));
+
+      const buffer = Buffer.from("pdf-content-bytes");
+      await expect(
+        service.uploadBuffer(
+          "test-bucket",
+          "prescriptions/presc-1.pdf",
+          buffer,
+          "application/pdf"
+        )
+      ).rejects.toThrow("S3 put buffer failed");
+    });
+  });
+
   describe("deleteObject", () => {
     it("should send DeleteObjectCommand to S3", async () => {
       mockS3Send.mockResolvedValueOnce({});

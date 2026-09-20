@@ -60,7 +60,11 @@ describe("SubscriptionRepository", () => {
 
       expect(mockPrisma.subscription.findUnique).toHaveBeenCalledWith({
         where: { id: mockDbRecord.id },
-        include: { plan: true },
+        include: {
+          plan: true,
+          user: { select: { id: true, name: true, email: true } },
+          farm: { select: { id: true, name: true } },
+        },
       });
       expect(result).not.toBeNull();
       expect(result?.id).toBe(mockDbRecord.id);
@@ -162,6 +166,92 @@ describe("SubscriptionRepository", () => {
         },
         include: { plan: true },
         take: 100,
+      });
+      expect(results).toHaveLength(1);
+    });
+  });
+
+  describe("findPastDueSubscriptions()", () => {
+    it("should return all subscriptions with status PAST_DUE", async () => {
+      mockPrisma.subscription.findMany.mockResolvedValue([mockDbRecord]);
+
+      const results = await repository.findPastDueSubscriptions();
+
+      expect(mockPrisma.subscription.findMany).toHaveBeenCalledWith({
+        where: {
+          status: SubscriptionStatus.PAST_DUE,
+        },
+        include: {
+          plan: true,
+          user: { select: { id: true, name: true, email: true } },
+          farm: { select: { id: true, name: true } },
+        },
+        orderBy: { updatedAt: "asc" },
+      });
+      expect(results).toHaveLength(1);
+    });
+  });
+
+  describe("findAllWithPlan()", () => {
+    it("should return all subscriptions with plan included", async () => {
+      mockPrisma.subscription.findMany.mockResolvedValue([mockDbRecord]);
+
+      const results = await repository.findAllWithPlan();
+
+      expect(mockPrisma.subscription.findMany).toHaveBeenCalledWith({
+        where: {},
+        include: {
+          plan: true,
+          user: { select: { id: true, name: true, email: true } },
+          farm: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      });
+      expect(results).toHaveLength(1);
+      expect(results[0]?.plan?.tier).toBe(SubscriptionTier.PRO);
+    });
+
+    it("should filter by asOfDate when provided", async () => {
+      const asOfDate = new Date("2026-09-15T00:00:00Z");
+      mockPrisma.subscription.findMany.mockResolvedValue([mockDbRecord]);
+
+      const results = await repository.findAllWithPlan(asOfDate);
+
+      expect(mockPrisma.subscription.findMany).toHaveBeenCalledWith({
+        where: { createdAt: { lte: asOfDate } },
+        include: {
+          plan: true,
+          user: { select: { id: true, name: true, email: true } },
+          farm: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      });
+      expect(results).toHaveLength(1);
+    });
+  });
+
+  describe("findHistoricalSubscriptions()", () => {
+    it("should query subscriptions overlapping the specified date range", async () => {
+      const start = new Date("2026-08-01T00:00:00Z");
+      const end = new Date("2026-09-01T00:00:00Z");
+      mockPrisma.subscription.findMany.mockResolvedValue([mockDbRecord]);
+
+      const results = await repository.findHistoricalSubscriptions(start, end);
+
+      expect(mockPrisma.subscription.findMany).toHaveBeenCalledWith({
+        where: {
+          createdAt: { lte: end },
+          OR: [
+            { currentPeriodEnd: { gte: start } },
+            { updatedAt: { gte: start } },
+          ],
+        },
+        include: {
+          plan: true,
+          user: { select: { id: true, name: true, email: true } },
+          farm: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: "asc" },
       });
       expect(results).toHaveLength(1);
     });

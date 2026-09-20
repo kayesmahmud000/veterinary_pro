@@ -1,4 +1,8 @@
-import { SubscriptionStatus } from "@vetralink/shared-types";
+import {
+  DunningStage,
+  SubscriptionAccessMode,
+  SubscriptionStatus,
+} from "@vetralink/shared-types";
 import { ValidationDomainException } from "../../../common/exceptions/domain.exception";
 import { SubscriptionResponseDto } from "../dto/subscription-response.dto";
 import { SubscriptionPlanEntity } from "./subscription-plan.entity";
@@ -16,6 +20,8 @@ export interface SubscriptionEntityProps {
   cancelAtPeriodEnd: boolean;
   createdAt: Date;
   updatedAt: Date;
+  user?: { id: string; name: string; email: string } | null;
+  farm?: { id: string; name: string } | null;
 }
 
 export interface CreateTrialSubscriptionProps {
@@ -52,6 +58,8 @@ export class SubscriptionEntity {
   private _cancelAtPeriodEnd: boolean;
   private readonly _createdAt: Date;
   private _updatedAt: Date;
+  private readonly _user: { id: string; name: string; email: string } | null;
+  private readonly _farm: { id: string; name: string } | null;
 
   private constructor(props: SubscriptionEntityProps) {
     this._id = props.id;
@@ -66,6 +74,8 @@ export class SubscriptionEntity {
     this._cancelAtPeriodEnd = props.cancelAtPeriodEnd;
     this._createdAt = props.createdAt;
     this._updatedAt = props.updatedAt;
+    this._user = props.user ?? null;
+    this._farm = props.farm ?? null;
   }
 
   public static createTrial(props: CreateTrialSubscriptionProps): SubscriptionEntity {
@@ -142,6 +152,8 @@ export class SubscriptionEntity {
     createdAt: Date;
     updatedAt: Date;
     plan?: any;
+    user?: any;
+    farm?: any;
   }): SubscriptionEntity {
     const planEntity = raw.plan
       ? SubscriptionPlanEntity.fromPersistence(raw.plan)
@@ -168,6 +180,10 @@ export class SubscriptionEntity {
         raw.createdAt instanceof Date ? raw.createdAt : new Date(raw.createdAt),
       updatedAt:
         raw.updatedAt instanceof Date ? raw.updatedAt : new Date(raw.updatedAt),
+      user: raw.user
+        ? { id: raw.user.id, name: raw.user.name, email: raw.user.email }
+        : null,
+      farm: raw.farm ? { id: raw.farm.id, name: raw.farm.name } : null,
     });
   }
 
@@ -220,7 +236,94 @@ export class SubscriptionEntity {
     return this._updatedAt;
   }
 
+  public get user(): { id: string; name: string; email: string } | null {
+    return this._user;
+  }
+
+  public get farm(): { id: string; name: string } | null {
+    return this._farm;
+  }
+
   // Domain Predicates
+  public calculateDunningStage(now: Date = new Date()): DunningStage | null {
+    if (this._status !== SubscriptionStatus.PAST_DUE) {
+      return null;
+    }
+
+    const msPastDue = now.getTime() - this._currentPeriodEnd.getTime();
+    const daysPastDue = Math.floor(msPastDue / (24 * 60 * 60 * 1000));
+
+    if (daysPastDue >= 7) {
+      return DunningStage.DAY_7;
+    }
+    if (daysPastDue >= 3) {
+      return DunningStage.DAY_3;
+    }
+    if (daysPastDue >= 0) {
+      return DunningStage.DAY_1;
+    }
+
+    return null;
+  }
+
+  public daysPastDue(now: Date = new Date()): number {
+    if (this._status !== SubscriptionStatus.PAST_DUE) {
+      return 0;
+    }
+    const msPastDue = now.getTime() - this._currentPeriodEnd.getTime();
+    return Math.max(0, Math.floor(msPastDue / (24 * 60 * 60 * 1000)));
+  }
+
+  public getAccessMode(now: Date = new Date()): SubscriptionAccessMode {
+    if (
+      this._status === SubscriptionStatus.ACTIVE ||
+      this._status === SubscriptionStatus.TRIALING
+    ) {
+      if (!this.isPeriodExpired(now)) {
+        return SubscriptionAccessMode.FULL_ACCESS;
+      }
+    }
+
+    if (this._status === SubscriptionStatus.PAST_DUE) {
+      const days = this.daysPastDue(now);
+      if (days <= 3) {
+        return SubscriptionAccessMode.GRACE_PERIOD;
+      }
+      if (days <= 7) {
+        return SubscriptionAccessMode.READ_ONLY;
+      }
+      return SubscriptionAccessMode.SUSPENDED;
+    }
+
+    return SubscriptionAccessMode.SUSPENDED;
+  }
+
+  public canWrite(now: Date = new Date()): boolean {
+    const mode = this.getAccessMode(now);
+    return (
+      mode === SubscriptionAccessMode.FULL_ACCESS ||
+      mode === SubscriptionAccessMode.GRACE_PERIOD
+    );
+  }
+
+  public canRead(now: Date = new Date()): boolean {
+    const mode = this.getAccessMode(now);
+    return mode !== SubscriptionAccessMode.SUSPENDED;
+  }
+
+  public isReadOnly(now: Date = new Date()): boolean {
+    return this.getAccessMode(now) === SubscriptionAccessMode.READ_ONLY;
+  }
+
+  public isSuspended(now: Date = new Date()): boolean {
+    return this.getAccessMode(now) === SubscriptionAccessMode.SUSPENDED;
+  }
+
+  public suspend(now: Date = new Date()): void {
+    this._status = SubscriptionStatus.EXPIRED;
+    this._cancelAtPeriodEnd = false;
+    this._updatedAt = now;
+  }
   public isPeriodExpired(now: Date = new Date()): boolean {
     return now.getTime() > this._currentPeriodEnd.getTime();
   }

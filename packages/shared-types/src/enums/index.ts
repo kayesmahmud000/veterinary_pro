@@ -146,6 +146,84 @@ export enum ConsultationStatus {
   CANCELLED = "CANCELLED",
 }
 
+export enum ConsultationPaymentStatus {
+  UNPAID = "UNPAID",
+  AUTHORIZED = "AUTHORIZED",
+  CAPTURED = "CAPTURED",
+  RELEASED = "RELEASED",
+  FAILED = "FAILED",
+}
+
+export enum ConsultationNotificationChannel {
+  PUSH = "PUSH",
+  SMS = "SMS",
+  EMAIL = "EMAIL",
+  IN_APP = "IN_APP",
+}
+
+export enum ConsultationNotificationStatus {
+  PENDING = "PENDING",
+  SENT = "SENT",
+  FAILED = "FAILED",
+}
+
+export enum ConsultationMessageType {
+  TEXT = "TEXT",
+  IMAGE = "IMAGE",
+  VIDEO = "VIDEO",
+  AUDIO = "AUDIO",
+  DOCUMENT = "DOCUMENT",
+  SYSTEM = "SYSTEM",
+}
+
+export enum ClinicalNoteCategory {
+  SOAP_NOTE = "SOAP_NOTE",
+  DIFFERENTIAL_DIAGNOSIS = "DIFFERENTIAL_DIAGNOSIS",
+  INTERNAL_OBSERVATION = "INTERNAL_OBSERVATION",
+  FOLLOW_UP_PLAN = "FOLLOW_UP_PLAN",
+  GENERAL = "GENERAL",
+}
+
+export enum PrescriptionStatus {
+  DRAFT = "DRAFT",
+  SIGNED = "SIGNED",
+  REVOKED = "REVOKED",
+}
+
+export enum MedicationFormulation {
+  INJECTABLE = "INJECTABLE",
+  ORAL_SUSPENSION = "ORAL_SUSPENSION",
+  BOLUS_TABLET = "BOLUS_TABLET",
+  TOPICAL_SPRAY = "TOPICAL_SPRAY",
+  INTRAMAMMARY = "INTRAMAMMARY",
+  POWDER = "POWDER",
+  EYE_DROPS = "EYE_DROPS",
+  OTHER = "OTHER",
+}
+
+export enum MedicationRoute {
+  INTRAMUSCULAR = "INTRAMUSCULAR",
+  SUBCUTANEOUS = "SUBCUTANEOUS",
+  INTRAVENOUS = "INTRAVENOUS",
+  ORAL = "ORAL",
+  TOPICAL = "TOPICAL",
+  INTRAMAMMARY = "INTRAMAMMARY",
+  OTHER = "OTHER",
+}
+
+export enum FoodSafetyRiskLevel {
+  SAFE = "SAFE",
+  MILK_WITHDRAWAL = "MILK_WITHDRAWAL",
+  MEAT_WITHDRAWAL = "MEAT_WITHDRAWAL",
+  CRITICAL_BOTH = "CRITICAL_BOTH",
+}
+
+export enum WithdrawalType {
+  MILK = "MILK",
+  MEAT = "MEAT",
+  BOTH = "BOTH",
+}
+
 export enum InbreedingRiskLevel {
   LOW = "LOW",
   MODERATE = "MODERATE",
@@ -179,6 +257,30 @@ export enum TagBadgePageSize {
   LETTER = "LETTER",
 }
 
+export enum PayoutStatus {
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
+  PAID = "PAID",
+  HELD = "HELD",
+  REVERSED = "REVERSED",
+}
+
+export enum ReviewModerationStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  FLAGGED = "FLAGGED",
+  REJECTED = "REJECTED",
+}
+
+export enum ReviewRatingTag {
+  TIMELY_RESPONSE = "TIMELY_RESPONSE",
+  ACCURATE_DIAGNOSIS = "ACCURATE_DIAGNOSIS",
+  CLEAR_COMMUNICATION = "CLEAR_COMMUNICATION",
+  COMPASSIONATE_CARE = "COMPASSIONATE_CARE",
+  PRACTICAL_ADVICE = "PRACTICAL_ADVICE",
+  EMERGENCY_READY = "EMERGENCY_READY",
+}
+
 export * from "./milk-anomaly-severity.enum.js";
 export * from "./milk-anomaly-status.enum.js";
 export * from "./milk-export-format.enum.js";
@@ -190,6 +292,10 @@ export * from "./reminder-status.enum.js";
 export * from "./health-escalation-level.enum.js";
 export * from "./health-escalation-action.enum.js";
 export * from "./health-attachment-status.enum.js";
+export * from "./dunning-stage.enum.js";
+export * from "./dunning-channel.enum.js";
+export * from "./dunning-status.enum.js";
+export * from "./subscription-access-mode.enum.js";
 
 export enum ProfitLossInterval {
   DAY = "DAY",

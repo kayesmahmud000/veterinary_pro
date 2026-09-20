@@ -98,6 +98,9 @@ describe("StripePortalService", () => {
       findByGatewaySubId: jest.fn(),
       save: jest.fn(),
       findExpiredSubscriptions: jest.fn(),
+      findPastDueSubscriptions: jest.fn(),
+      findAllWithPlan: jest.fn(),
+      findHistoricalSubscriptions: jest.fn(),
     };
 
     mockAuditLogRepo = {

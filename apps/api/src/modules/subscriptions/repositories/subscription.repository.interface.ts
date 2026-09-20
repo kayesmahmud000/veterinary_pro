@@ -13,5 +13,11 @@ export interface ISubscriptionRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<SubscriptionEntity>;
   findExpiredSubscriptions(now: Date): Promise<SubscriptionEntity[]>;
+  findPastDueSubscriptions(): Promise<SubscriptionEntity[]>;
+  findAllWithPlan(asOfDate?: Date): Promise<SubscriptionEntity[]>;
+  findHistoricalSubscriptions(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<SubscriptionEntity[]>;
 }
 

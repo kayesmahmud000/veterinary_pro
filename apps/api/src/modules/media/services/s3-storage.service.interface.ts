@@ -57,6 +57,13 @@ export interface IS3StorageService {
     contentType: string
   ): Promise<void>;
 
+  uploadBuffer?(
+    bucket: string,
+    key: string,
+    buffer: Buffer,
+    contentType: string
+  ): Promise<void>;
+
   deleteObject(bucket: string, key: string): Promise<void>;
 }
 

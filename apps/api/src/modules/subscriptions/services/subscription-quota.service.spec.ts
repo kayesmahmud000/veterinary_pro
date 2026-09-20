@@ -86,6 +86,9 @@ describe("SubscriptionQuotaService", () => {
       findByUserId: jest.fn(),
       findByGatewaySubId: jest.fn(),
       findExpiredSubscriptions: jest.fn(),
+      findPastDueSubscriptions: jest.fn(),
+      findAllWithPlan: jest.fn(),
+      findHistoricalSubscriptions: jest.fn(),
     };
 
     planRepo = {

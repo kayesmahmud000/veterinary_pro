@@ -6,6 +6,7 @@ import {
   Optional,
 } from "@nestjs/common";
 import {
+  DunningStage,
   SubscriptionStatus,
   SubscriptionWebhookResultDto,
 } from "@vetralink/shared-types";
@@ -27,6 +28,10 @@ import {
   ISubscriptionRepository,
   SUBSCRIPTION_REPOSITORY,
 } from "../repositories/subscription.repository.interface";
+import {
+  ISubscriptionDunningQueueService,
+  SUBSCRIPTION_DUNNING_QUEUE_SERVICE,
+} from "./subscription-dunning-queue.service.interface";
 import { ISubscriptionWebhookService } from "./subscription-webhook.service.interface";
 
 @Injectable()
@@ -45,6 +50,9 @@ export class SubscriptionWebhookService implements ISubscriptionWebhookService {
     @Optional()
     @Inject(IDEMPOTENCY_SERVICE)
     private readonly idempotencyService?: IIdempotencyService,
+    @Optional()
+    @Inject(SUBSCRIPTION_DUNNING_QUEUE_SERVICE)
+    private readonly dunningQueueService?: ISubscriptionDunningQueueService,
   ) {
     const apiKey = this.envService.stripeSecretKey;
     if (apiKey) {
@@ -218,6 +226,24 @@ export class SubscriptionWebhookService implements ISubscriptionWebhookService {
     this.logger.warn(
       `Subscription '${subscription.id}' marked PAST_DUE (Attempt: ${invoice.attempt_count}, Next: ${nextPaymentAttempt ?? "None"}).`,
     );
+
+    // Enqueue immediate Stage 1 (Day 1) dunning notification
+    if (this.dunningQueueService) {
+      try {
+        await this.dunningQueueService.dispatchStage({
+          subscriptionId: subscription.id,
+          stage: DunningStage.DAY_1,
+          gatewayInvoiceId: invoice.id,
+          traceId,
+        });
+      } catch (err) {
+        this.logger.warn(
+          `Failed to enqueue immediate DAY_1 dunning job for subscription [${subscription.id}]: ${
+            (err as Error).message
+          }`,
+        );
+      }
+    }
 
     return {
       received: true,

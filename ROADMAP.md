@@ -10,9 +10,9 @@
 | **Phase 0** | Workspace Bootstrap, Architectural Standard & Persistence | Sprint 0 | **READY / COMPLETED** |
 | **Phase 1** | Foundation, DB Migration & Auth RBAC | Sprint 1–2 | **READY / COMPLETED** |
 | **Phase 2** | LMS & Digital Assets Store (Encrypted Stream / Watermark / Pay) | Sprint 3–5 | **READY / COMPLETED** |
-| **Phase 3** | Farm ERP Core (Livestock Registry, Milk Logging, P&L, Health) | Sprint 6–9 | 🟡 In Progress |
-| **Phase 4** | Subscription Engine (Tier Gating, Quotas & Stripe Billing) | Sprint 10–11 | 🟡 In Progress |
-| **Phase 5** | Tele-Veterinary Platform (Triage, WebRTC, Signed EHR Prescriptions)| Sprint 12–15 | 🔲 Pending |
+| **Phase 3** | Farm ERP Core (Livestock Registry, Milk Logging, P&L, Health) | Sprint 6–9 | **READY / COMPLETED** |
+| **Phase 4** | Subscription Engine (Tier Gating, Quotas & Stripe Billing) | Sprint 10–11 | **READY / COMPLETED** |
+| **Phase 5** | Tele-Veterinary Platform (Triage, WebRTC, Signed EHR Prescriptions)| Sprint 12–15 | **READY / COMPLETED** |
 
 ---
 
@@ -143,47 +143,47 @@
 - [x] **Task 10.5**: Stripe Customer Portal integration for self-service payment method updates.
 
 > **Sprint 11: Dunning Workflows & Grace Periods**  
-> **Status**: 🟡 In Progress
+> **Status**: ✅ **COMPLETE**
 
 - [x] **Task 11.1**: Webhook handling for failed recurring subscription renewals (`invoice.payment_failed`).
-- [ ] **Task 11.2**: 3-stage automated dunning retry notifications (Day 1, Day 3, Day 7).
-- [ ] **Task 11.3**: Grace period mechanism: restrict to read-only access before account suspension.
-- [ ] **Task 11.4**: SaaS metrics aggregator for platform admins (MRR, ARR, Churn rate, LTV).
+- [x] **Task 11.2**: 3-stage automated dunning retry notifications (Day 1, Day 3, Day 7).
+- [x] **Task 11.3**: Grace period mechanism: restrict to read-only access before account suspension.
+- [x] **Task 11.4**: SaaS metrics aggregator for platform admins (MRR, ARR, Churn rate, LTV).
 
 ---
 
 ### Phase 5: Tele-Veterinary Telehealth & EHR Platform
 > **Sprint 12: Triage Intake & Case Assignment Engine**  
-> **Status**: 🔲 Pending
+> **Status**: ✅ **COMPLETE (2026-09-20)**
 
-- [ ] Farmer consultation request submission (chief complaint, affected animal, image/video uploads).
-- [ ] Triage queue dashboard for triage officers and clinic administrators.
-- [ ] Vet assignment and scheduling algorithm based on availability and specialty.
-- [ ] Pay-per-consult checkout authorization hold before session confirmation.
-- [ ] Real-time notification dispatch to assigned veterinarian.
+- [x] **Task 12.1**: Farmer consultation request submission (chief complaint, affected animal, image/video uploads).
+- [x] **Task 12.2**: Triage queue dashboard for triage officers and clinic administrators.
+- [x] **Task 12.3**: Vet assignment and scheduling algorithm based on availability and specialty.
+- [x] **Task 12.4**: Pay-per-consult checkout authorization hold before session confirmation.
+- [x] **Task 12.5**: Real-time notification dispatch to assigned veterinarian.
 
 > **Sprint 13: Clinical Portal & Real-time Consultation Room**  
-> **Status**: 🔲 Pending
+> **Status**: 🟢 Completed (2026-09-20)
 
-- [ ] Doctor clinical portal: comprehensive animal Electronic Health Record (EHR) view.
-- [ ] WebRTC 1-on-1 video room provisioning (Daily.co / LiveKit) with ephemeral security tokens.
-- [ ] WebSocket-driven real-time chat channel with media sharing.
-- [ ] Private internal clinical notes (accessible only to attending veterinarians).
+- [x] **Task 13.1**: Doctor clinical portal: comprehensive animal Electronic Health Record (EHR) view.
+- [x] **Task 13.2**: WebRTC 1-on-1 video room provisioning (Daily.co / LiveKit) with ephemeral security tokens.
+- [x] **Task 13.3**: WebSocket-driven real-time chat channel with media sharing.
+- [x] **Task 13.4**: Private internal clinical notes (accessible only to attending veterinarians).
 
 > **Sprint 14: Digitally Signed PDF Prescriptions**  
-> **Status**: 🔲 Pending
+> **Status**: ✅ Completed
 
-- [ ] Structured prescription editor (Drug name, formulation, dosage, frequency, duration, withdrawal period).
-- [ ] Food Safety compliance: automated withdrawal period alert for milk/meat consumption.
-- [ ] PKI cryptographic digital signature (RSA-SHA256) applied to prescription hash.
-- [ ] Dynamic prescription PDF generation with clinic letterhead, vet license #, and verify QR code.
-- [ ] Public cryptographic verification endpoint (`/verify/prescription/:id`).
-- [ ] Automatic append of prescription into the animal's permanent EHR record.
+- [x] **Task 14.1**: Structured prescription editor (Drug name, formulation, dosage, frequency, duration, withdrawal period).
+- [x] **Task 14.2**: Food Safety compliance: automated withdrawal period alert for milk/meat consumption.
+- [x] **Task 14.3**: PKI cryptographic digital signature (RSA-SHA256) applied to prescription hash.
+- [x] **Task 14.4**: Dynamic prescription PDF generation with clinic letterhead, vet license #, and verify QR code.
+- [x] **Task 14.5**: Public cryptographic verification endpoint (`/verify/prescription/:id`).
+- [x] **Task 14.6**: Automatic append of prescription into the animal's permanent EHR record.
 
 > **Sprint 15: Tele-Vet Settlement, Rating & Mobile App Sync**  
-> **Status**: 🔲 Pending
+> **Status**: ✅ **COMPLETE (2026-09-21)**
 
-- [ ] Vet consultation fee split & payout ledger (e.g., 80% vet / 20% platform).
-- [ ] Post-consultation rating and review pipeline.
-- [ ] Mobile offline sync engine (Flutter SQLite/WatermelonDB <-> NestJS REST sync).
-- [ ] Platform-wide security audit, load testing with k6, and production readiness sign-off.
+- [x] **Task 15.1**: Vet consultation fee split & payout ledger (e.g., 80% vet / 20% platform).
+- [x] **Task 15.2**: Post-consultation rating and review pipeline.
+- [x] **Task 15.3**: Mobile offline sync engine (Flutter SQLite/WatermelonDB <-> NestJS REST sync).
+- [x] **Task 15.4**: Platform-wide security audit, load testing with k6, and production readiness sign-off.

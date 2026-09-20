@@ -10,4 +10,5 @@ export * from "./preview-subscription-plan-change.dto";
 export * from "./change-subscription-plan.dto";
 export * from "./create-customer-portal-session.dto";
 export * from "./customer-portal-session-response.dto";
+export * from "./query-saas-metrics.dto";
 

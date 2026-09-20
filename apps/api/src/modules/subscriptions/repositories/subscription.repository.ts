@@ -11,7 +11,11 @@ export class SubscriptionRepository implements ISubscriptionRepository {
   async findById(id: string): Promise<SubscriptionEntity | null> {
     const record = await this.prisma.subscription.findUnique({
       where: { id },
-      include: { plan: true },
+      include: {
+        plan: true,
+        user: { select: { id: true, name: true, email: true } },
+        farm: { select: { id: true, name: true } },
+      },
     });
     if (!record) {
       return null;
@@ -101,6 +105,62 @@ export class SubscriptionRepository implements ISubscriptionRepository {
       },
       include: { plan: true },
       take: 100,
+    });
+
+    return records.map((r) => SubscriptionEntity.fromPersistence(r));
+  }
+
+  async findPastDueSubscriptions(): Promise<SubscriptionEntity[]> {
+    const records = await this.prisma.subscription.findMany({
+      where: {
+        status: SubscriptionStatus.PAST_DUE,
+      },
+      include: {
+        plan: true,
+        user: { select: { id: true, name: true, email: true } },
+        farm: { select: { id: true, name: true } },
+      },
+      orderBy: { updatedAt: "asc" },
+    });
+
+    return records.map((r) => SubscriptionEntity.fromPersistence(r));
+  }
+
+  async findAllWithPlan(asOfDate?: Date): Promise<SubscriptionEntity[]> {
+    const where: import("@prisma/client").Prisma.SubscriptionWhereInput =
+      asOfDate ? { createdAt: { lte: asOfDate } } : {};
+
+    const records = await this.prisma.subscription.findMany({
+      where,
+      include: {
+        plan: true,
+        user: { select: { id: true, name: true, email: true } },
+        farm: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return records.map((r) => SubscriptionEntity.fromPersistence(r));
+  }
+
+  async findHistoricalSubscriptions(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<SubscriptionEntity[]> {
+    const records = await this.prisma.subscription.findMany({
+      where: {
+        createdAt: { lte: endDate },
+        OR: [
+          { currentPeriodEnd: { gte: startDate } },
+          { updatedAt: { gte: startDate } },
+        ],
+      },
+      include: {
+        plan: true,
+        user: { select: { id: true, name: true, email: true } },
+        farm: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: "asc" },
     });
 
     return records.map((r) => SubscriptionEntity.fromPersistence(r));
