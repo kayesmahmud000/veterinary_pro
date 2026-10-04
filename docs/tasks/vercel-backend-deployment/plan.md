@@ -41,5 +41,13 @@
 - [x] Update `apps/api/vercel.json` with `includeFiles` covering `prisma/**` and `node_modules/.prisma/client/**` and `maxDuration: 30`.
 - [x] Update `apps/api/src/serverless.ts` with uncaught exception listeners and graceful fallback logging.
 - [x] Verify local build via `pnpm turbo run build --filter=@vetralink/api...`.
-- [ ] Guide user through committing and pushing changes to trigger clean Vercel deployment.
+- [x] Guide user through committing and pushing changes to trigger clean Vercel deployment.
+
+### Step 7: Resolve SyncModule Dependency Injection (`TOKEN_SERVICE`)
+- [x] Diagnose exact Vercel runtime crash: `Nest can't resolve dependencies of the JwtAuthGuard (Reflector, ?). Please make sure that the argument "TOKEN_SERVICE" at index [1] is available in the SyncModule context.`
+- [x] Scan all controllers and modules across `apps/api/src/modules` to verify guard dependencies.
+- [x] Import `AuthModule` in `apps/api/src/modules/sync/sync.module.ts`.
+- [x] Verify complete NestJS bootstrap locally via `NestFactory.create(AppModule)` (succeeded with 0 errors).
+- [ ] Guide user through committing and deploying to Vercel.
+
 
