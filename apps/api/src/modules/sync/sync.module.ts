@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { AuditModule } from "../audit";
+import { AuthModule } from "../auth";
 import { FarmsModule } from "../farms";
 import { PrismaModule } from "../prisma";
 import { SyncController } from "./controllers/sync.controller";
@@ -9,7 +10,7 @@ import { SYNC_SERVICE } from "./services/sync.service.interface";
 import { SyncService } from "./services/sync.service";
 
 @Module({
-  imports: [PrismaModule, AuditModule, FarmsModule],
+  imports: [PrismaModule, AuditModule, AuthModule, FarmsModule],
   controllers: [SyncController],
   providers: [
     {
