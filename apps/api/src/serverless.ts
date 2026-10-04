@@ -14,8 +14,8 @@ async function bootstrapServer(): Promise<Express> {
   if (!cachedServer) {
     const expressApp = express();
 
-    // Redirect root URL to interactive Swagger OpenAPI documentation
-    expressApp.get("/", (_req: Request, res: Response) => {
+    // Redirect root URL, /api, and /docs to interactive Swagger OpenAPI documentation
+    expressApp.get(["/", "/api", "/docs"], (_req: Request, res: Response) => {
       res.redirect("/api/docs");
     });
 
@@ -102,6 +102,26 @@ async function bootstrapServer(): Promise<Express> {
 }
 
 export default async function handler(req: Request, res: Response) {
-  const server = await bootstrapServer();
-  return server(req, res);
+  try {
+    const matchedPath = req.headers["x-matched-path"];
+    if (matchedPath && typeof matchedPath === "string") {
+      req.url = matchedPath;
+    }
+
+    const server = await bootstrapServer();
+    return server(req, res);
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error("❌ Vercel Serverless Function Crash:", error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        statusCode: 500,
+        message: "Serverless Function Initialization Error",
+        error: error?.message || String(error),
+        stack: error?.stack,
+      });
+    }
+  }
 }
+
