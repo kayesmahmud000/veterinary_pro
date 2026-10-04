@@ -12,7 +12,9 @@ let cachedServer: Express;
 
 async function bootstrapServer(): Promise<Express> {
   if (!cachedServer) {
-    const expressApp = express();
+    const createExpressApp =
+      typeof express === "function" ? express : (express as any).default;
+    const expressApp: Express = createExpressApp();
 
     // Redirect root URL, /api, and /docs to interactive Swagger OpenAPI documentation
     expressApp.get(["/", "/api", "/docs"], (_req: Request, res: Response) => {
