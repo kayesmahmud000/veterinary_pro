@@ -82,7 +82,11 @@ export const EnvSchema = z
   })
   .superRefine((data, ctx) => {
     // Skip strict Stripe and AWS validation on Vercel unless explicitly requested
-    if (process.env["VERCEL"] === "1" && !process.env["STRICT_PROD_INTEGRATIONS"]) {
+    const isVercel =
+      Boolean(process.env["VERCEL"]) ||
+      Boolean(process.env["NOW_REGION"]) ||
+      Boolean(process.env["VERCEL_ENV"]);
+    if (isVercel && !process.env["STRICT_PROD_INTEGRATIONS"]) {
       return;
     }
 

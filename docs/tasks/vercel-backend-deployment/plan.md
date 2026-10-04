@@ -34,3 +34,12 @@
 
 ### Step 5: End-to-End Documentation & User Process Guide
 - [x] Provide the complete step-by-step walkthrough covering database setup (Neon/Supabase), Redis setup (Upstash), Vercel dashboard project import, environment variables configuration, database migration, and live API verification via Swagger UI (`/api/docs`).
+
+### Step 6: Serverless Cold Start & FUNCTION_INVOCATION_FAILED Resolution
+- [x] Update `apps/api/api/index.js` to defer requiring compiled modules inside request lifecycle with full try-catch stack trace capture.
+- [x] Add direct `/api/ping` bypass in `api/index.js` to verify serverless invocation without heavy module initialization.
+- [x] Update `apps/api/vercel.json` with `includeFiles` covering `prisma/**` and `node_modules/.prisma/client/**` and `maxDuration: 30`.
+- [x] Update `apps/api/src/serverless.ts` with uncaught exception listeners and graceful fallback logging.
+- [x] Verify local build via `pnpm turbo run build --filter=@vetralink/api...`.
+- [ ] Guide user through committing and pushing changes to trigger clean Vercel deployment.
+
