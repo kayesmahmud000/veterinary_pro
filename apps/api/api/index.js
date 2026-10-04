@@ -20,15 +20,16 @@ module.exports = async (req, res) => {
   const matchedPath = req.headers["x-matched-path"] || "";
   const effectivePath = matchedPath || rawUrl;
 
-  // 1. Direct Ping / Health Bypass (zero dependency, returns 200 OK immediately)
+  // 1. Direct Ping & Deep Diagnostics bypass
   if (
     effectivePath === "/api/ping" ||
     effectivePath === "/ping" ||
-    rawUrl === "/api/ping" ||
-    rawUrl === "/ping" ||
-    rawUrl.includes("ping=true")
+    rawUrl.startsWith("/api/ping") ||
+    rawUrl.startsWith("/ping") ||
+    rawUrl.includes("ping") ||
+    rawUrl.includes("diagnose")
   ) {
-    return res.status(200).json({
+    const diag = {
       status: "ok",
       service: "vetralink-pro-api",
       message: "Vercel Serverless Function entry point is ACTIVE and responding!",
@@ -48,7 +49,79 @@ module.exports = async (req, res) => {
         HAS_JWT_ACCESS_SECRET: Boolean(process.env.JWT_ACCESS_SECRET),
         HAS_AES_KEY: Boolean(process.env.AES_PII_ENCRYPTION_KEY),
       },
-    });
+    };
+
+    // Deep diagnostics when ?diagnose=true or ?debug=true is present
+    if (rawUrl.includes("diagnose") || rawUrl.includes("debug")) {
+      diag.diagnostics = {};
+
+      // Test candidate paths
+      const candidates = [
+        path.resolve(__dirname, "../dist/src/serverless.js"),
+        path.resolve(__dirname, "../dist/src/serverless"),
+        path.resolve(process.cwd(), "dist/src/serverless.js"),
+        path.resolve(process.cwd(), "dist/src/serverless"),
+        path.resolve(process.cwd(), "apps/api/dist/src/serverless.js"),
+      ];
+      diag.diagnostics.candidatePaths = candidates.map((c) => ({
+        path: c,
+        exists: fs.existsSync(c),
+      }));
+
+      // Test filesystem listings
+      try {
+        diag.diagnostics.cwdFiles = fs.existsSync(process.cwd()) ? fs.readdirSync(process.cwd()) : [];
+        diag.diagnostics.dirFiles = fs.existsSync(__dirname) ? fs.readdirSync(__dirname) : [];
+        const parentDir = path.resolve(__dirname, "..");
+        diag.diagnostics.parentFiles = fs.existsSync(parentDir) ? fs.readdirSync(parentDir) : [];
+      } catch (fsErr) {
+        diag.diagnostics.fsError = fsErr.message;
+      }
+
+      // Test requiring compiled serverless module
+      try {
+        const found = candidates.find((c) => fs.existsSync(c));
+        if (found) {
+          const mod = require(found);
+          diag.diagnostics.serverlessRequireSuccess = true;
+          diag.diagnostics.serverlessExportType = typeof (mod.default || mod);
+        } else {
+          diag.diagnostics.serverlessRequireSuccess = false;
+          diag.diagnostics.serverlessError = "No candidate path exists on filesystem";
+        }
+      } catch (reqErr) {
+        diag.diagnostics.serverlessRequireSuccess = false;
+        diag.diagnostics.serverlessRequireError = {
+          message: reqErr.message,
+          code: reqErr.code,
+          stack: reqErr.stack,
+        };
+      }
+
+      // Test Prisma Client initialization
+      try {
+        const { PrismaClient } = require("@prisma/client");
+        diag.diagnostics.prismaPackageLoaded = true;
+        try {
+          const prisma = new PrismaClient();
+          diag.diagnostics.prismaClientInstantiated = true;
+        } catch (pInstErr) {
+          diag.diagnostics.prismaClientInstantiated = false;
+          diag.diagnostics.prismaInstantiationError = {
+            message: pInstErr.message,
+            stack: pInstErr.stack,
+          };
+        }
+      } catch (pReqErr) {
+        diag.diagnostics.prismaPackageLoaded = false;
+        diag.diagnostics.prismaRequireError = {
+          message: pReqErr.message,
+          stack: pReqErr.stack,
+        };
+      }
+    }
+
+    return res.status(200).json(diag);
   }
 
   // 2. Lazy module resolution with full error interception
@@ -83,7 +156,7 @@ module.exports = async (req, res) => {
           : [];
 
         console.error("❌ serverless.js not found in candidate paths:", candidates);
-        return res.status(500).json({
+        return res.status(200).json({
           success: false,
           stage: "serverless_file_resolution",
           message: "Compiled serverless.js not found on filesystem",
@@ -100,7 +173,7 @@ module.exports = async (req, res) => {
       cachedHandler = imported.default || imported;
     } catch (loadErr) {
       console.error("❌ Failed to require serverless entry module:", loadErr);
-      return res.status(500).json({
+      return res.status(200).json({
         success: false,
         stage: "module_import",
         message: "Failed to require serverless entry module",
@@ -120,7 +193,7 @@ module.exports = async (req, res) => {
   } catch (execErr) {
     console.error("❌ Vercel Serverless Handler Execution Error:", execErr);
     if (!res.headersSent) {
-      return res.status(500).json({
+      return res.status(200).json({
         success: false,
         stage: "handler_execution",
         message: "Serverless Function Handler Execution Error",

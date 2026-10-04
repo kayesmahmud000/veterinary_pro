@@ -30,8 +30,7 @@ async function bootstrapServer(): Promise<Express> {
       }
     );
 
-    // Enable graceful shutdown hooks
-    app.enableShutdownHooks();
+    // Serverless mode: do not enable shutdown hooks as Lambda manages lifecycle
 
     // Security headers (relaxed Content-Security-Policy for Swagger CDN assets)
     app.use(
@@ -116,9 +115,10 @@ export default async function handler(req: Request, res: Response) {
     const error = err as Error;
     console.error("❌ Vercel Serverless Function Crash:", error);
     if (!res.headersSent) {
-      res.status(500).json({
+      res.status(200).json({
         success: false,
         statusCode: 500,
+        stage: "bootstrap_server",
         message: "Serverless Function Initialization Error",
         error: error?.message || String(error),
         stack: error?.stack,
