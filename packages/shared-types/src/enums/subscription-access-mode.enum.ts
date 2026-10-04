@@ -1,0 +1,6 @@
+export enum SubscriptionAccessMode {
+  FULL_ACCESS = "FULL_ACCESS",
+  GRACE_PERIOD = "GRACE_PERIOD",
+  READ_ONLY = "READ_ONLY",
+  SUSPENDED = "SUSPENDED",
+}
