@@ -2,7 +2,12 @@
   "version": 2,
   "functions": {
     "api/index.js": {
-      "includeFiles": "dist/**"
+      "includeFiles": [
+        "dist/**",
+        "prisma/**",
+        "node_modules/.prisma/client/**"
+      ],
+      "maxDuration": 30
     }
   },
   "rewrites": [
