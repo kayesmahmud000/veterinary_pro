@@ -2,11 +2,7 @@
   "version": 2,
   "functions": {
     "api/index.js": {
-      "includeFiles": [
-        "dist/**",
-        "prisma/**",
-        "node_modules/.prisma/client/**"
-      ],
+      "includeFiles": "{dist/**,prisma/**,node_modules/.prisma/client/**}",
       "maxDuration": 30
     }
   },
