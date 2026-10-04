@@ -1,9 +1,20 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": [
+    "DATABASE_URL",
+    "REDIS_URL",
+    "NODE_ENV",
+    "PORT",
+    "CORS_ORIGINS",
+    "JWT_ACCESS_SECRET",
+    "JWT_REFRESH_SECRET",
+    "AES_PII_ENCRYPTION_KEY",
+    "HASH_PEPPER"
+  ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build", "^db:generate"],
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
     },
