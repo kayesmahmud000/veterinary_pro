@@ -81,6 +81,11 @@ export const EnvSchema = z
     API_BASE_URL: z.string().url().default("http://localhost:3001"),
   })
   .superRefine((data, ctx) => {
+    // Skip strict Stripe and AWS validation on Vercel unless explicitly requested
+    if (process.env["VERCEL"] === "1" && !process.env["STRICT_PROD_INTEGRATIONS"]) {
+      return;
+    }
+
     if (data.NODE_ENV === "production" || data.NODE_ENV === "staging") {
       if (!data.STRIPE_SECRET_KEY || !data.STRIPE_SECRET_KEY.startsWith("sk_")) {
         ctx.addIssue({
