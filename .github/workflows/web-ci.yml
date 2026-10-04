@@ -1,0 +1,53 @@
+name: Web Frontend CI
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - "apps/web/**"
+      - "packages/shared-types/**"
+      - "packages/ui-kit/**"
+      - "packages/tsconfig/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "turbo.json"
+      - ".github/workflows/web-ci.yml"
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      - "apps/web/**"
+      - "packages/shared-types/**"
+      - "packages/ui-kit/**"
+      - "packages/tsconfig/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "turbo.json"
+      - ".github/workflows/web-ci.yml"
+
+jobs:
+  build-and-verify:
+    name: Build Next.js Web Portal
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Shared Types
+        run: pnpm --filter @vetralink/shared-types build
+
+      - name: Build Next.js Application
+        run: pnpm --filter @vetralink/web build

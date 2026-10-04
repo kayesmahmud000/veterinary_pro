@@ -30,12 +30,16 @@ import { SyncModule } from "./modules/sync";
       inject: [EnvService],
       useFactory: (envService: EnvService) => {
         const url = new URL(envService.redisUrl);
+        const isTls = url.protocol === "rediss:";
         return {
           connection: {
             host: url.hostname,
             port: parseInt(url.port || "6379", 10),
             password: url.password ? decodeURIComponent(url.password) : undefined,
             username: url.username ? decodeURIComponent(url.username) : undefined,
+            tls: isTls ? {} : undefined,
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false,
           },
         };
       },
