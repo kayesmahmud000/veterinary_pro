@@ -283,7 +283,7 @@
       "path": "apps/web/tsconfig.json"
     },
     {
-      "path": "apps/web/src/app/page.tsx",
+      "path": "apps/web/src/app/(marketing)/page.tsx",
       "anchors": [
         "HomePage"
       ]

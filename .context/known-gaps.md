@@ -4,7 +4,7 @@ Source review baseline: **2026-10-05 / 4b1597a**. These observations are not a f
 
 | Area | Observed evidence | Consequence / next verification |
 | --- | --- | --- |
-| Client completeness | Web has only layout/home; mobile main is a text screen with an unconnected sync library | Do not call dashboards, clinical editors, auth navigation or offline product UX complete |
+| Client completeness | Web has four public information pages and navigation (2026-10-05 update), but no account/dashboard flows; mobile main is a text screen with an unconnected sync library | Do not call dashboards, clinical editors, auth navigation or offline product UX complete |
 | Schema authority | API package selects `apps/api/prisma/schema.prisma`; root schema differs | Use API schema explicitly; compare/consolidate only as a separate migration-aware task |
 | CI/test claims | API/web workflows build only; Jest has no coverage threshold; e2e config is absent | “80% enforced” and comprehensive CI test claims are unsupported; measure actual tests |
 | Lint/tooling | ESLint scripts exist without checked-in configuration/direct lint dependencies | Verify/setup tooling in a scoped task; never label skipped lint as passed |

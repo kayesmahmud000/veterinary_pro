@@ -1,19 +1,19 @@
 # Web public site and route architecture specification
 
-Status: **Proposed for review; application implementation not started**.
+Status: **Approved by the user and implemented for the first public-site batch (WEB-1A–D)**. See [plan and verification evidence](plan.md). Account/application routes remain proposed.
 Date: **2026-10-05**. Sources: current web scaffold and [product baseline](../../../vetralink_platform_specification.pdf) §1–5/§7, [blueprint](../../../vetralink_pro_blueprint.md), [web roadmap](../../../apps/web/ROADMAP.md), [API dependency register](../../../apps/api/ROADMAP.md#api-dependency-register).
 
 ## Outcome and boundaries
 
 Help a first-time visitor understand VETRALINK PRO, identify the farm management, educational content or veterinary-care journey relevant to them, and navigate to a useful next page. Establish a consistent route architecture for later account and application features. The requested deliverables are a landing-page design, route plan, implementation plan and ordered web roadmap, followed by implementation from that plan.
 
-**Confirmed from code:** `apps/web/src/app/page.tsx` is a title/description placeholder; `layout.tsx` supplies metadata and the HTML/body wrapper. No public feature pages, authentication UI, navigation or API client exist. **Proposed:** all paths below except `/`; assigning a URL does not mean a feature exists.
+**Original implementation baseline (before this feature):** `apps/web/src/app/page.tsx` was a title/description placeholder; `layout.tsx` supplies metadata and the HTML/body wrapper. At that baseline no public feature pages, authentication UI, navigation or API client existed. The first four public routes are now implemented; other routes below remain proposed. Assigning a URL does not mean a feature exists.
 
 First build: four public information pages, shared responsive navigation/footer, visual foundations, page metadata and a useful not-found screen. Subsequent milestones integrate actual accounts, catalog, pricing and role-specific workspaces. Backend contracts, schemas and mobile behavior are unchanged by the first build.
 
 ## Positioning and visual direction
 
-Working assumption pending user preference: lead with the farmer's daily work, with education and veterinary care as visible supporting pillars. Initial copy is English, matching the existing layout. Bangla/localization requires a later content decision; layouts must tolerate longer text.
+Approved working direction: lead with the farmer's daily work, with education and veterinary care as visible supporting pillars. Initial copy is English, matching the existing layout. Bangla/localization requires a later content decision; layouts must tolerate longer text.
 
 Use deep forest green, warm off-white surfaces and a restrained amber accent. Use a readable system sans-serif stack, generous but practical spacing, clear section headings and high-contrast controls. Favor a calm agricultural/clinical identity. Use existing Lucide icons and CSS illustrations; no new image, font, animation or component service is required. Any illustrative product preview is labeled “Illustrative preview”; it must not present invented data as a real farm or shipped dashboard.
 

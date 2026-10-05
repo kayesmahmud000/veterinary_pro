@@ -21,7 +21,7 @@ Keep paired specs/plans in their existing folders. There is no benefit in creati
 
 ## Active web planning
 
-The [public-site specification](features/web-public-site/spec.md) owns the proposed landing-page structure, first-build pages and future route inventory. Its [implementation plan](features/web-public-site/plan.md) covers the public-site batch only. [Web roadmap](../apps/web/ROADMAP.md#landing-page-and-routing-roadmap) owns WEB-1A–E progress. These planning documents do not mark the site, accounts or reserved routes implemented.
+The [public-site specification](features/web-public-site/spec.md) owns the implemented landing-page structure, first-build pages and proposed future route inventory. Its [implementation plan](features/web-public-site/plan.md) covers the public-site batch only. [Web roadmap](../apps/web/ROADMAP.md#landing-page-and-routing-roadmap) owns WEB-1A–E progress. WEB-1A–D public-site implementation is recorded in the plan; accounts and reserved routes remain unimplemented.
 
 ## Before starting a feature
 
@@ -52,6 +52,6 @@ Historical completed plan steps that formerly named root `ROADMAP.md` now link t
 
 ## Why this structure
 
-The existing root roadmap was predominantly API work, with shared bootstrap, sync and release history mixed in. `docs/` already groups each spec with its execution plan and has no global status index. `apps/web` contains only a home page and layout. Moving the tracker without a root entry point would lose coordination and mislead old references; keeping two full root/API trackers would duplicate status. The chosen structure keeps a small root index, one API history/readiness owner, one web status/dependency owner and this authority guide. No application directories or existing spec/plan folders are moved.
+The existing root roadmap was predominantly API work, with shared bootstrap, sync and release history mixed in. `docs/` already groups each spec with its execution plan and has no global status index. At the roadmap-separation baseline, `apps/web` contained only a home page and layout; the public site was implemented afterward. Moving the tracker without a root entry point would lose coordination and mislead old references; keeping two full root/API trackers would duplicate status. The chosen structure keeps a small root index, one API history/readiness owner, one web status/dependency owner and this authority guide. No application directories or existing spec/plan folders are moved.
 
 Reconsider separate mobile tracking only when a mobile delivery task needs it. Recovering the former structure is a documentation-only reversal; no runtime or database migration is involved.

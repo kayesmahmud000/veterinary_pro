@@ -1,10 +1,13 @@
-﻿import type { Metadata } from "next";
-
+import type { Metadata } from "next";
+import "./globals.css";
 export const metadata: Metadata = {
-  title: "VETRALINK PRO — Farm SaaS ERP, LMS & Tele-Veterinary",
-  description: "Enterprise multi-tenant AgTech platform",
+  title: {
+    default: "Vetralink Pro — Connected care for your farm",
+    template: "%s | Vetralink Pro",
+  },
+  description:
+    "Discover connected livestock records, practical learning and veterinary care with Vetralink Pro.",
 };
-
 export default function RootLayout({
   children,
 }: {
