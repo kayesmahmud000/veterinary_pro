@@ -37,7 +37,7 @@
 
 - [x] **Step 5: Documentation & Roadmap Sign-off**
   - Mark checklist items in `plan.md` complete.
-  - Mark Task 14.6 in `ROADMAP.md` complete, completing Sprint 14!
+  - Mark Task 14.6 in [backend roadmap](../../../apps/api/ROADMAP.md) complete, completing Sprint 14!
   - Present summary, test results, and suggested commit message at human-in-the-loop gate.
 
 ---

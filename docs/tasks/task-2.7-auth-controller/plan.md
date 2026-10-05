@@ -72,8 +72,8 @@
 ### Step 6: Verification & Sprint 2 Completion
 - [x] Run test suite: `pnpm --filter @vetralink/api test`.
 - [x] Run build: `pnpm --filter @vetralink/api build`.
-- [x] Check off all tasks in this plan and mark Task 2.7 complete in `ROADMAP.md`.
-- [x] Mark Sprint 2 as Complete (`🟢 Complete`) in `ROADMAP.md`.
+- [x] Check off all tasks in this plan and mark Task 2.7 complete in [backend roadmap](../../../apps/api/ROADMAP.md).
+- [x] Mark Sprint 2 as Complete (`🟢 Complete`) in [backend roadmap](../../../apps/api/ROADMAP.md).
 
 ---
 

@@ -62,7 +62,7 @@
 ### Step 7: Verification & Roadmap Update
 - [x] Run test suite: `pnpm --filter @vetralink/api test src/modules/orders src/common/idempotency`.
 - [x] Run build: `pnpm --filter @vetralink/api build`.
-- [x] Update `ROADMAP.md` checking off Task 4.4.
+- [x] Update [backend roadmap](../../../apps/api/ROADMAP.md) checking off Task 4.4.
 
 ---
 

@@ -56,7 +56,7 @@
 - [x] **Step 7: Verification & Test Suite Execution**
   - Run test suite (`pnpm --filter api test -- src/modules/consultations`).
   - Run full build check (`pnpm --filter api build`).
-  - Check off `[x]` items in `plan.md` and update `ROADMAP.md`.
+  - Check off `[x]` items in `plan.md` and update [backend roadmap](../../../apps/api/ROADMAP.md).
 
 ---
 

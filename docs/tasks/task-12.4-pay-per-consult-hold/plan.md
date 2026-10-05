@@ -70,6 +70,6 @@
 
 ### 9. Documentation & Human-in-the-Loop Gate
 - [x] Mark checklist items complete in this `plan.md`.
-- [x] Mark Task 12.4 complete in `ROADMAP.md`.
+- [x] Mark Task 12.4 complete in [backend roadmap](../../../apps/api/ROADMAP.md).
 - [x] Present completion summary, test results, and suggested conventional commit message.
 - [x] STOP and wait for human confirmation.

@@ -75,7 +75,7 @@
   ```bash
   pnpm --filter @vetralink/api build
   ```
-- [x] Check off Task 6.1 in `ROADMAP.md` and present conventional commit message.
+- [x] Check off Task 6.1 in [backend roadmap](../../../apps/api/ROADMAP.md) and present conventional commit message.
 
 ---
 

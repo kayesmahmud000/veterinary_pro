@@ -71,4 +71,4 @@
 - [x] Run unit tests for all financial module components (40/40 passed)
 - [x] Run full test suite (`pnpm --filter @vetralink/api test` - 121/121 test suites passed, 1116 tests passed)
 - [x] Run build checks (`pnpm build` - all 3 packages built successfully)
-- [x] Check off all tasks in `plan.md` and update `ROADMAP.md`
+- [x] Check off all tasks in `plan.md` and update [backend roadmap](../../../apps/api/ROADMAP.md)

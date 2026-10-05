@@ -54,3 +54,16 @@ Manual scenario walkthroughs checked that a frontend feature with a new API sele
 - Re-review reconciled historical optional-role wording through the explicit decision amendment, checked both lifecycle descriptions against the canonical self-review sequence, and preserved lightweight work, review-only scope and truthful evidence limits.
 
 No application tests/builds, external services or deployments were needed or run for this documentation change. Structural validation does not establish runtime behavior, future agent compliance or production certification.
+
+
+## Roadmap separation — 2026-10-05
+
+Documentation-only plan: inspect root/spec/plan/context references and actual API/web source; preserve the original sprint history under `apps/api`; retain a root coordination index; add a source-grounded web backlog and documentation authority guide; update affected links and context routing; validate links, source anchors, history preservation and scope. Source baseline: `d5d311b` (clean working tree before this task).
+
+Decision and trade-offs are recorded in [docs/README.md](../docs/README.md#why-this-structure). Acceptance: API/web progress have separate owners, shared specs remain paired with plans, web dependencies point to API contracts/readiness, historical completion does not imply client or production readiness, and no application code changes. Architecture/technical-writing and reviewer/QA perspectives were applied sequentially by the same agent.
+
+Investigation confirmed the web layout/home scaffold, backend-only scope of dashboard/editor task names, missing farm creation/discovery routes, product requirements beyond the checked sprint history, mock provider bindings and differing historical phase/quota descriptions. New API-B and WEB groups are open work/scope reconciliation, not completed features. Existing spec before/after baselines and historical evidence are preserved; authority notes distinguish them from current status.
+
+Validation: `python3 .context/scripts/validate.py` passed (48 context Markdown documents, 257 local links, 71 source entries). A read-only Python review of all repository Markdown plus `.antigravityrules` checked 220 documents and 453 local links/heading targets with zero failures. Git comparison confirmed the original roadmap is preserved verbatim except relative link relocation, and existing task documents changed only their roadmap references. `git diff --check` passed; tracked/untracked file inspection confirmed documentation-only scope. No application builds, tests or live provider checks were run.
+
+Final self-review corrected the subscription-default source pointer to shared constants and checked the requirement hierarchy, mixed-scope history, API/web dependency ownership, retained historical reference routing and absence of invented web completion. Remaining API/provider/product gaps are explicitly open in the new trackers; no runtime readiness is asserted. Re-run the context validator and a repository-wide link review when moving documentation.

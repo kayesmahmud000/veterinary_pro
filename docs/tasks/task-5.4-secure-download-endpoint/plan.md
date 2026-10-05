@@ -76,7 +76,7 @@
   ```bash
   pnpm --filter @vetralink/api build
   ```
-- [x] Update `ROADMAP.md` ticking off Task 5.4.
+- [x] Update [backend roadmap](../../../apps/api/ROADMAP.md) ticking off Task 5.4.
 - [x] Suggest conventional git commit message.
 
 ---

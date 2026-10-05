@@ -45,7 +45,7 @@
 - [x] `6.2`: Add unit tests for bulk endpoint in `milk-logs.controller.spec.ts`.
 - [x] `6.3`: Add repository unit tests for bulk queries in `milk-log.repository.spec.ts`.
 - [x] `6.4`: Run test suite (`pnpm --filter @vetralink/api test`) and build verification.
-- [x] `6.5`: Check off items in `plan.md` and update `ROADMAP.md`.
+- [x] `6.5`: Check off items in `plan.md` and update [backend roadmap](../../../apps/api/ROADMAP.md).
 
 ---
 

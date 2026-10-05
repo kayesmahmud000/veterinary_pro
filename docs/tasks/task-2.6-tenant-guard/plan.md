@@ -73,7 +73,7 @@
 ### Step 6: Verification & Acceptance Testing
 - [x] Run full test suite: `pnpm --filter @vetralink/api test`.
 - [x] Run build: `pnpm --filter @vetralink/api build`.
-- [x] Update `ROADMAP.md` checking off Task 2.6.
+- [x] Update [backend roadmap](../../../apps/api/ROADMAP.md) checking off Task 2.6.
 
 ---
 

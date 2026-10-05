@@ -68,7 +68,7 @@
 ### Step 7: Verification & Acceptance Testing
 - [x] Run Jest unit tests across the entire monorepo (`pnpm --filter @vetralink/api test`).
 - [x] Verify zero TypeScript errors (`pnpm --filter @vetralink/api build`).
-- [x] Update `ROADMAP.md` marking Task 2.3 as complete (`[x]`).
+- [x] Update [backend roadmap](../../../apps/api/ROADMAP.md) marking Task 2.3 as complete (`[x]`).
 
 ---
 

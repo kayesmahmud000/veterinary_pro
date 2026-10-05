@@ -42,7 +42,7 @@
 - [x] **Step 5: Unit & Integration Test Verification**
   - Run full test suite for subscriptions module (`pnpm test -- src/modules/subscriptions`).
   - Verify build integrity (`pnpm --filter api build`).
-  - Mark checklist items complete in `plan.md` and update `ROADMAP.md`.
+  - Mark checklist items complete in `plan.md` and update [backend roadmap](../../../apps/api/ROADMAP.md).
 
 ---
 

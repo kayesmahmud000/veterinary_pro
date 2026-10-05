@@ -3,6 +3,8 @@
 > **Source Document:** `vetralink_platform_specification.pdf` (Version 1.0 Production Blueprint)  
 > **Target Market:** SME Dairy, Cattle, Goat & Poultry Farmers, Agropreneurs, and Veterinary Specialists.
 
+> Historical product summary: [documentation authority](docs/README.md#historical-documents-and-conflicts) reconciles its original schedule and quota examples with current task specifications. Section 4 is not the live delivery tracker; use the [project roadmap](ROADMAP.md).
+
 ---
 
 ## 1. Executive Overview & Value Proposition

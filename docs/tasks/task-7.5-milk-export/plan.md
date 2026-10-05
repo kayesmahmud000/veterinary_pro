@@ -64,4 +64,4 @@
 - [x] Run `pnpm --filter @vetralink/api test src/modules/milk-logs`.
 - [x] Run full test suite: `pnpm --filter @vetralink/api test`.
 - [x] Run TypeScript compilation: `pnpm --filter @vetralink/api build`.
-- [x] Check off items in `plan.md` and mark Task 7.5 as complete in `ROADMAP.md`.
+- [x] Check off items in `plan.md` and mark Task 7.5 as complete in [backend roadmap](../../../apps/api/ROADMAP.md).

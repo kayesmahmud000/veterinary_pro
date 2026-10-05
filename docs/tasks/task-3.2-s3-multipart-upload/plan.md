@@ -81,7 +81,7 @@
 - [x] Wire `MediaModule` into `apps/api/src/app.module.ts`.
 - [x] Run full test suite: `pnpm --filter @vetralink/api test`.
 - [x] Run build: `pnpm --filter @vetralink/api build`.
-- [x] Update `ROADMAP.md` checking off Task 3.2.
+- [x] Update [backend roadmap](../../../apps/api/ROADMAP.md) checking off Task 3.2.
 
 ---
 

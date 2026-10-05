@@ -76,4 +76,4 @@
 - [x] Unit tests for `MilkLogsController` anomaly endpoints.
 - [x] Run full test suite: `pnpm --filter @vetralink/api test`.
 - [x] Run TypeScript compilation: `pnpm --filter @vetralink/api build`.
-- [x] Check off items in `plan.md` and mark Task 7.4 as complete in `ROADMAP.md`.
+- [x] Check off items in `plan.md` and mark Task 7.4 as complete in [backend roadmap](../../../apps/api/ROADMAP.md).

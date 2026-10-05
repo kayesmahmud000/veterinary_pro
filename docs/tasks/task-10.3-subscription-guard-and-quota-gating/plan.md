@@ -60,5 +60,5 @@
 - [x] Run farms test suites: `pnpm --filter @vetralink/api test -- src/modules/farms`.
 - [x] Run entire API test suite: `pnpm --filter @vetralink/api test`.
 - [x] Run monorepo build: `pnpm build`.
-- [x] Update `ROADMAP.md` (check off Task 10.3) and `plan.md`.
+- [x] Update [backend roadmap](../../../apps/api/ROADMAP.md) (check off Task 10.3) and `plan.md`.
 - [x] Provide completion summary with suggested conventional commit message and stop at human-in-the-loop gate.
