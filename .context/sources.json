@@ -1,0 +1,378 @@
+{
+  "baseline_date": "2026-10-05",
+  "baseline_revision": "4b1597a",
+  "purpose": "Curated source anchors for context drift detection; no runtime certification.",
+  "sources": [
+    {
+      "path": "package.json",
+      "anchors": [
+        "pnpm@10.18.3",
+        "turbo run build"
+      ]
+    },
+    {
+      "path": "pnpm-workspace.yaml"
+    },
+    {
+      "path": "pnpm-lock.yaml"
+    },
+    {
+      "path": ".editorconfig"
+    },
+    {
+      "path": "ARCHITECTURE.md"
+    },
+    {
+      "path": "ROADMAP.md"
+    },
+    {
+      "path": "vetralink_pro_blueprint.md"
+    },
+    {
+      "path": "vetralink_platform_specification.pdf"
+    },
+    {
+      "path": "apps/api/package.json",
+      "anchors": [
+        "prisma/schema.prisma",
+        "test:e2e"
+      ]
+    },
+    {
+      "path": "apps/api/tsconfig.json",
+      "anchors": [
+        "strictNullChecks",
+        "noImplicitAny"
+      ]
+    },
+    {
+      "path": "apps/api/src/main.ts",
+      "anchors": [
+        "rawBody: true",
+        "api/v1",
+        "enableShutdownHooks"
+      ]
+    },
+    {
+      "path": "apps/api/src/serverless.ts",
+      "anchors": [
+        "bootstrapServer",
+        "contentSecurityPolicy: false",
+        "res.status(200)"
+      ]
+    },
+    {
+      "path": "apps/api/api/index.js",
+      "anchors": [
+        "candidatePaths",
+        "stack:"
+      ]
+    },
+    {
+      "path": "apps/api/vercel.json",
+      "anchors": [
+        "maxDuration"
+      ]
+    },
+    {
+      "path": "apps/api/src/app.module.ts",
+      "anchors": [
+        "SyncModule",
+        "BullModule.forRootAsync"
+      ]
+    },
+    {
+      "path": "apps/api/src/config/env.schema.ts",
+      "anchors": [
+        "EnvSchema",
+        "STRICT_PROD_INTEGRATIONS",
+        "z.coerce.boolean()"
+      ]
+    },
+    {
+      "path": "apps/api/src/config/env.service.ts",
+      "anchors": [
+        "EnvService"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/guards/tenant.guard.ts",
+      "anchors": [
+        "TenantGuard",
+        "resolveFarmId"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/guards/roles.guard.ts",
+      "anchors": [
+        "RolesGuard"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/guards/jwt-auth.guard.ts",
+      "anchors": [
+        "JwtAuthGuard"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/interceptors/response.interceptor.ts",
+      "anchors": [
+        "ResponseInterceptor"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/filters/global-exception.filter.ts",
+      "anchors": [
+        "GlobalExceptionFilter"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/crypto/pii-crypto.service.ts",
+      "anchors": [
+        "PiiCryptoService"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/crypto/pki-crypto.service.ts",
+      "anchors": [
+        "PkiCryptoService",
+        "generateKeyPairSync",
+        "RSA_PRIVATE_KEY"
+      ]
+    },
+    {
+      "path": "apps/api/src/common/idempotency"
+    },
+    {
+      "path": "apps/api/src/modules/auth/auth.module.ts",
+      "anchors": [
+        "AuthModule"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/auth/services/auth.service.ts",
+      "anchors": [
+        "AuthService"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/auth/services/token.service.ts",
+      "anchors": [
+        "TokenService",
+        "randomBytes(40)",
+        "sha256"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/auth/services/bcrypt-password-hasher.service.ts",
+      "anchors": [
+        "saltRounds = 12"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/animals/services/animals.service.ts",
+      "anchors": [
+        "AnimalsService",
+        "transactionManager.run"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/animals/repositories/animal.repository.ts",
+      "anchors": [
+        "AnimalRepository"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/animals/animals.int.spec.ts",
+      "anchors": [
+        "jest.Mocked<IAnimalsService>"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/prisma/interfaces/transaction.interface.ts",
+      "anchors": [
+        "ITransactionManager",
+        "TRANSACTION_MANAGER"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/prisma/prisma.service.ts",
+      "anchors": [
+        "PrismaService"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/consultations/consultations.module.ts",
+      "anchors": [
+        "MockPushNotificationProvider",
+        "MockSmsNotificationProvider"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/consultations/gateways/consultation-chat.gateway.ts",
+      "anchors": [
+        "ConsultationChatGateway"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/orders/orders.module.ts",
+      "anchors": [
+        "MockPaymentGatewayService"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/mail/mail.module.ts",
+      "anchors": [
+        "MockMailProvider"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/health/health.controller.ts",
+      "anchors": [
+        "checkReadiness",
+        "checkLiveness"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/sync/controllers/sync.controller.ts",
+      "anchors": [
+        "SyncController"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/sync/services/sync.service.ts",
+      "anchors": [
+        "assertFarmAccess",
+        "OFFLINE_SYNC_PUSHED"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/sync/repositories/sync.repository.ts",
+      "anchors": [
+        "applyPushMutations",
+        "pullFarmDeltas"
+      ]
+    },
+    {
+      "path": "apps/api/prisma/schema.prisma",
+      "anchors": [
+        "model Animal",
+        "model Prescription",
+        "model AuditLog"
+      ]
+    },
+    {
+      "path": "apps/api/prisma/migrations"
+    },
+    {
+      "path": "prisma/schema.prisma"
+    },
+    {
+      "path": "apps/web/package.json"
+    },
+    {
+      "path": "apps/web/tsconfig.json"
+    },
+    {
+      "path": "apps/web/src/app/page.tsx",
+      "anchors": [
+        "HomePage"
+      ]
+    },
+    {
+      "path": "apps/web/src/app/layout.tsx",
+      "anchors": [
+        "RootLayout"
+      ]
+    },
+    {
+      "path": "apps/mobile/lib/main.dart",
+      "anchors": [
+        "VetralinkApp"
+      ]
+    },
+    {
+      "path": "apps/mobile/pubspec.yaml",
+      "anchors": [
+        "flutter_bloc",
+        "sqflite",
+        "dio"
+      ]
+    },
+    {
+      "path": "apps/mobile/lib/core/sync/offline_database.dart",
+      "anchors": [
+        "OfflineDatabase",
+        "version: 1"
+      ]
+    },
+    {
+      "path": "apps/mobile/lib/core/sync/offline_sync_engine.dart",
+      "anchors": [
+        "OfflineSyncEngine",
+        "synchronize"
+      ]
+    },
+    {
+      "path": "apps/mobile/lib/core/sync/sync_client.dart",
+      "anchors": [
+        "SyncClient"
+      ]
+    },
+    {
+      "path": "apps/mobile/lib/core/sync/sync_models.dart",
+      "anchors": [
+        "SyncPushResponse"
+      ]
+    },
+    {
+      "path": "apps/mobile/test/sync/sync_models_test.dart"
+    },
+    {
+      "path": "packages/shared-types/package.json",
+      "anchors": [
+        "tsup"
+      ]
+    },
+    {
+      "path": "packages/shared-types/src/contracts/api-response.contract.ts",
+      "anchors": [
+        "ApiResponse"
+      ]
+    },
+    {
+      "path": "packages/shared-types/src/index.ts"
+    },
+    {
+      "path": "infrastructure/docker-compose.yml",
+      "anchors": [
+        "postgres:16-alpine",
+        "redis:7-alpine"
+      ]
+    },
+    {
+      "path": "infrastructure/load-testing"
+    },
+    {
+      "path": ".github/workflows/api-ci.yml"
+    },
+    {
+      "path": ".github/workflows/web-ci.yml"
+    },
+    {
+      "path": ".github/workflows/mobile-ci.yml"
+    },
+    {
+      "path": "docs/guides/docker-guide.md"
+    },
+    {
+      "path": "docs/tasks/task-15.3-mobile-offline-sync-engine/spec.md"
+    },
+    {
+      "path": "docs/tasks/task-15.4-security-audit-load-testing-readiness/readiness-report.md"
+    },
+    {
+      "path": "docs/tasks/vercel-backend-deployment/plan.md"
+    }
+  ]
+}

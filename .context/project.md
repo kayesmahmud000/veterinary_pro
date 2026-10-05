@@ -1,0 +1,36 @@
+# Project overview
+
+VETRALINK PRO serves farm owners and staff, veterinarians, platform administrators and digital-content buyers. Product intent combines livestock ERP, educational video/eBook/tool sales, and tele-veterinary consultations. Rural connectivity, farm isolation, financial accuracy and durable clinical history are central constraints. Product sources: [product blueprint](../vetralink_pro_blueprint.md), [platform specification](../vetralink_platform_specification.pdf), [ARCHITECTURE.md](../ARCHITECTURE.md); task-level requirements live in [docs](../docs/). See the [existing-document index](README.md#existing-project-documents) for the roadmap, agent rules and supporting guides.
+
+## Actual stack
+
+Versions below are manifest major versions/ranges, not a claim about the newest upstream release. Resolve exact installed versions from lockfiles.
+
+| Area | Present implementation |
+| --- | --- |
+| Workspace | pnpm `10.18.3`, Turborepo 2, Node engine `>=20`; CI uses Node 20 |
+| API | NestJS 10 on Express 4, TypeScript 5, Prisma 5; class-validator DTOs and Zod environment parsing |
+| Database | PostgreSQL 16 in local Compose; Redis 7 for BullMQ and Redis-backed mechanisms |
+| Web | Next.js 14 App Router, React 18; Tailwind 3 dependency, Lucide, clsx, tailwind-merge |
+| Mobile | Flutter/Dart (`>=3.0.0 <4.0.0`), Dio, sqflite, uuid; flutter_bloc dependency |
+| Shared contracts | `@vetralink/shared-types`, tsup emits CJS, ESM and declarations |
+| Integrations | S3-compatible storage/MinIO, Stripe, regional MFS handler, CloudFront signing, Daily provider, mail providers |
+| Tests | API Jest/ts-jest and Supertest; Flutter sync-model tests; k6 load scripts |
+
+## Repository map
+
+- `apps/api/src/app.module.ts`: modular monolith composition and Redis queue connection.
+- `apps/api/src/main.ts`, `src/serverless.ts`, `api/index.js`: separate persistent and serverless entry paths.
+- `apps/api/src/modules/`: domain modules; `common/`: guards, envelopes, crypto, idempotency; `config/`: environment schema/service.
+- `apps/api/prisma/`: active Prisma schema and migration lineage selected by API package configuration.
+- `prisma/`: a second, differing schema/migration tree; do not target implicitly.
+- `apps/web/src/app/`: root layout and placeholder home page only.
+- `apps/mobile/lib/`: placeholder app and standalone `core/sync/` implementation.
+- `packages/shared-types/`: shared interfaces, response contracts, DTOs and enums; no shared UI package exists.
+- `infrastructure/`: local backing services and load scripts, not a full production application deployment.
+- `.github/workflows/`: API/web build workflows and Flutter test/APK workflow.
+- `docs/features/`, `docs/tasks/`, `docs/guides/`: existing design, implementation and operational history.
+
+## Product status
+
+Backend features have substantial source and test coverage in the repository, but this context does not certify every path. There is no implemented web dashboard, web authentication/client store, or feature navigation tree. Mobile BLoC screens, login and sync wiring are not present in `main.dart`. “Doctor portal,” “triage dashboard” and “prescription editor” task names frequently refer to backend capabilities, not completed client screens. Read [known gaps](known-gaps.md) before estimating or shipping work.

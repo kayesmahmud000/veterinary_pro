@@ -1,3 +1,11 @@
+# Current shared context
+
+Read `.context/README.md` and `.context/agent-instructions.md` first. They are the canonical repository guide and take precedence over conflicting historical instructions below. Retained safeguards, task scope, spec/plan workflow and known implementation gaps are documented there. Host instructions, active user instructions and permissions still take precedence.
+
+The following content is retained as historical guidance; implementation and readiness claims must be checked against the current context and source.
+
+---
+
 # AGENT AUTO-BOOTSTRAP & SPEC-DRIVEN EXECUTION INSTRUCTIONS (READ ON EVERY SESSION)
 
 At the beginning of ANY interaction, conversation, or task:
