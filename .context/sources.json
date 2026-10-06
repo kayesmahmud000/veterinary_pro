@@ -295,6 +295,29 @@
       ]
     },
     {
+      "path": "apps/web/src/lib/i18n/locale.ts",
+      "anchors": [
+        "DEFAULT_LOCALE",
+        "resolveLocale",
+        "formatNumber"
+      ]
+    },
+    {
+      "path": "apps/web/src/lib/i18n/server.ts",
+      "anchors": [
+        "getLocalization",
+        "cookies"
+      ]
+    },
+    {
+      "path": "apps/web/src/lib/i18n/actions.ts",
+      "anchors": [
+        "changeLocale",
+        "httpOnly",
+        "redirect"
+      ]
+    },
+    {
       "path": "apps/mobile/lib/main.dart",
       "anchors": [
         "VetralinkApp"

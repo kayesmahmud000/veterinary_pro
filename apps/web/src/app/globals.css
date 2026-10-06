@@ -14,7 +14,8 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family:
+    Arial, Helvetica, "Nirmala UI", "Noto Sans Bengali", Vrinda, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 a {
@@ -98,6 +99,47 @@ p {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+}
+.language-switcher {
+  display: flex;
+  flex-shrink: 0;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+.language-switcher button {
+  min-height: 44px;
+  min-width: 44px;
+  border: 0;
+  border-radius: 5px;
+  padding: 6px 9px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+.language-switcher button[aria-pressed="true"] {
+  background: var(--green);
+  color: white;
+}
+html[lang="bn"] body {
+  font-family: "Nirmala UI", "Noto Sans Bengali", Vrinda, Arial, sans-serif;
+}
+html[lang="bn"] h1,
+html[lang="bn"] h2,
+html[lang="bn"] h3,
+html[lang="bn"] .eyebrow {
+  letter-spacing: normal;
+  line-height: 1.45;
+}
+html[lang="bn"] .eyebrow {
+  font-size: 0.85rem;
+}
+html[lang="bn"] .desktop-nav,
+html[lang="bn"] .button,
+html[lang="bn"] .text-link,
+html[lang="bn"] .footer-top nav a {
+  font-size: 0.95rem;
 }
 .brand {
   display: inline-flex;
@@ -292,6 +334,9 @@ p {
   .desktop-nav {
     gap: 20px;
   }
+  .header-inner {
+    gap: 16px;
+  }
   .header-cta {
     display: none;
   }
@@ -302,6 +347,7 @@ p {
   }
   .header-inner {
     height: 76px;
+    gap: 8px;
   }
   .desktop-nav {
     display: none;
@@ -310,7 +356,12 @@ p {
     display: block;
   }
   .brand {
-    font-size: 1.45rem;
+    font-size: 1.25rem;
+    margin-right: auto;
+  }
+  .language-switcher button {
+    padding-inline: 6px;
+    font-size: 0.75rem;
   }
   .footer-top {
     flex-direction: column;

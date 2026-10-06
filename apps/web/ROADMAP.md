@@ -1,6 +1,6 @@
 # VETRALINK PRO — Web Roadmap
 
-Reviewed **2026-10-05**, source baseline **d5d311b**. [Project coordination](../../ROADMAP.md) · [Documentation authority](../../docs/README.md) · [Backend roadmap and API readiness](../api/ROADMAP.md#api-dependency-register).
+Reviewed **2026-10-06**, source baseline **c07395b** plus the current localization change. [Project coordination](../../ROADMAP.md) · [Documentation authority](../../docs/README.md) · [Backend roadmap and API readiness](../api/ROADMAP.md#api-dependency-register).
 
 ## Actual baseline
 
@@ -8,6 +8,18 @@ Reviewed **2026-10-05**, source baseline **d5d311b**. [Project coordination](../
 
 - [x] **WEB-0 — Workspace scaffold:** original Next.js workspace foundation; historical evidence remains in [Sprint 0 plan](../../docs/features/sprint-0-bootstrap/plan.md).
 - No application API client, auth/session UI, dashboard or browser offline implementation exists. WEB-1E and WEB-2–12 remain unstarted.
+
+## Bangla-default bilingual delivery requirement
+
+**Required behavior (user requirement, 2026-10-05):** the entire website supports Bangla (`bn`) and English (`en`), with Bangla on a fresh visit. This supersedes the original English-first public-site copy decision. [Localization specification](../../docs/tasks/web-localization/spec.md) owns locale selection, persistence, translation and formatting contracts; [localization plan](../../docs/tasks/web-localization/plan.md) owns execution and verification.
+
+| ID | Deliverable | Status / evidence |
+| --- | --- | --- |
+| **WEB-L1** | Bangla-default locale resolution, persistent বাংলা / English selection, complete public-page/shell/404 translations, localized metadata and accessible Bangla typography | Complete, 2026-10-06; production build, HTTP/native-form checks, both-language browser/keyboard/zoom checks and screenshot review recorded in the localization plan |
+| **WEB-L2** | Bilingual acceptance in each future WEB-1E and WEB-2–11 feature: forms, validation, loading/empty/error/permission/offline states, API enum/error presentation and locale-aware numbers/dates/currency | Required for each owning milestone; application features remain not started |
+| **WEB-L3** | Both-language integrated browser, responsive, keyboard, persistence and release checks | Public-site checks belong to WEB-L1; application/release checks remain part of WEB-12 |
+
+Every new web spec/plan must reuse the locale/message boundary, supply complete Bangla and English copy and verify both languages before its milestone is complete. Keep canonical identifiers and API values unchanged; translate their presentation. Date/time displays must declare the timezone (normally `Asia/Dhaka`), and financial/clinical displays retain explicit currency and units. No application/backend feature is authorized solely by this requirement.
 
 ## Landing page and routing roadmap
 
@@ -48,6 +60,6 @@ The API IDs refer to the single [backend dependency register](../api/ROADMAP.md#
 
 ## Selecting the next work
 
-WEB-1A–D public site is implemented. Next, when authorized, start WEB-1E's API session contract review; resolve WEB-2/API-B1 early so farm journeys do not accumulate an onboarding blocker. Public catalog work can proceed independently of farm onboarding. Then select an authorized vertical feature and split these groups into small implementation tasks in its plan. This ordering is a proposal; it does not declare application work started or authorize automatically implementing the entire backlog.
+WEB-1A–D public site and WEB-L1 Bangla-default localization are implemented. Next, when authorized, start WEB-1E's API session contract review; resolve WEB-2/API-B1 early so farm journeys do not accumulate an onboarding blocker. Public catalog work can proceed independently of farm onboarding. Then select an authorized vertical feature and split these groups into small implementation tasks in its plan. Every selected feature must meet WEB-L2; WEB-12 includes WEB-L3 in both languages. This ordering is a proposal; it does not declare application work started or authorize automatically implementing the entire backlog.
 
 For a dependency handoff, the web plan links its API ID and any API-B gap. Backend adds verified contract/provider evidence to the owning plan and updates its register. Web then records integrated acceptance evidence and updates only its own status. Keep mock UI progress distinct from functional completion; an unavailable optional provider need not block unrelated pages.

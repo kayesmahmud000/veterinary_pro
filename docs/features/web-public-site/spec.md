@@ -13,7 +13,7 @@ First build: four public information pages, shared responsive navigation/footer,
 
 ## Positioning and visual direction
 
-Approved working direction: lead with the farmer's daily work, with education and veterinary care as visible supporting pillars. Initial copy is English, matching the existing layout. Bangla/localization requires a later content decision; layouts must tolerate longer text.
+Approved working direction: lead with the farmer's daily work, with education and veterinary care as visible supporting pillars. The original first build used English. **Superseded by the user's 2026-10-05 requirement:** the website must support Bangla and English with Bangla as the default. The [localization specification](../../tasks/web-localization/spec.md) owns this contract and its [plan](../../tasks/web-localization/plan.md) records implementation and fresh evidence; retain the original first-build evidence as history.
 
 Use deep forest green, warm off-white surfaces and a restrained amber accent. Use a readable system sans-serif stack, generous but practical spacing, clear section headings and high-contrast controls. Favor a calm agricultural/clinical identity. Use existing Lucide icons and CSS illustrations; no new image, font, animation or component service is required. Any illustrative product preview is labeled “Illustrative preview”; it must not present invented data as a real farm or shipped dashboard.
 
@@ -78,7 +78,7 @@ Keep `src/app/layout.tsx` as the shared root document and import `src/app/global
 
 Implement the three public overview routes beneath `(marketing)`. Future `(auth)` and `(workspace)` groups can supply distinct shells when their implementation begins. The root `not-found.tsx` uses the public shell explicitly because unknown paths are not guaranteed to render inside the marketing layout.
 
-Default to Server Components. Limit client state to a mobile-menu component: toggle button with accessible name, `aria-expanded` and `aria-controls`; closed items leave the focus order; Escape closes and returns focus to the toggle; selecting a link closes the menu. Use a non-modal disclosure menu, native anchors/Next Link and native `<details>` for FAQs. A desktop breakpoint must not leave duplicate focusable navigation exposed.
+Default to Server Components. Locale is resolved per request with a persistent language-selection form as specified in the localization task; the current public URLs remain unchanged. Limit client state to a mobile-menu component: toggle button with accessible name, `aria-expanded` and `aria-controls`; closed items leave the focus order; Escape closes and returns focus to the toggle; selecting a link closes the menu. Use a non-modal disclosure menu, native anchors/Next Link and native `<details>` for FAQs. A desktop breakpoint must not leave duplicate focusable navigation exposed.
 
 ## Acceptance criteria
 

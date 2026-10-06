@@ -16,6 +16,41 @@
 }
 .heroCopy h1 span {
   color: #67805a;
+  display: block;
+}
+.heroGrid > *,
+.workflowGrid > *,
+.faq > * {
+  min-width: 0;
+}
+:global(html[lang="bn"]) .heroCopy h1,
+:global(html[lang="bn"]) .overviewHero h1 {
+  line-height: 1.4;
+  letter-spacing: normal;
+}
+:global(html[lang="bn"]) .visualTop,
+:global(html[lang="bn"]) .visualBottom {
+  font-size: 0.72rem;
+  letter-spacing: normal;
+  line-height: 1.6;
+}
+:global(html[lang="bn"]) .noteCard strong {
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+:global(html[lang="bn"]) .noteCard small {
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+.noteCard {
+  max-width: calc(100% - 28px);
+}
+.sectionHeading h2 {
+  max-width: 650px;
+}
+.sectionHeading > p {
+  max-width: 300px;
+  flex-shrink: 0;
 }
 .heroCopy > p {
   max-width: 430px;
@@ -539,7 +574,7 @@
     justify-self: center;
   }
   .visualTop {
-    top: 40px;
+    top: 64px;
   }
   .sectionHeading {
     display: block;

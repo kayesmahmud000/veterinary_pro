@@ -11,7 +11,7 @@
 ## Global constraints
 
 - First build includes `/`, `/farm-management`, `/learning`, `/veterinary-care` and unmatched-route recovery only.
-- Initial copy is English. All product claims must follow the specification and actual readiness.
+- Original first-build copy was English. The user's later Bangla-default bilingual requirement supersedes this choice; see the [localization specification](../../tasks/web-localization/spec.md) and [execution plan](../../tasks/web-localization/plan.md). Evidence below remains the original public-site history. All product claims must follow the specification and actual readiness.
 - No dead links, fabricated metrics/testimonials, fake signup/payment forms or unimplemented-route navigation.
 - No changes to API, database, mobile, shared contracts or Git history.
 - Prefer Server Components; isolate the mobile-menu state. Existing dependencies are sufficient.

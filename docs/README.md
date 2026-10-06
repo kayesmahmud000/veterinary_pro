@@ -23,6 +23,8 @@ Keep paired specs/plans in their existing folders. There is no benefit in creati
 
 The [public-site specification](features/web-public-site/spec.md) owns the implemented landing-page structure, first-build pages and proposed future route inventory. Its [implementation plan](features/web-public-site/plan.md) covers the public-site batch only. [Web roadmap](../apps/web/ROADMAP.md#landing-page-and-routing-roadmap) owns WEB-1A–E progress. WEB-1A–D public-site implementation is recorded in the plan; accounts and reserved routes remain unimplemented.
 
+The user's 2026-10-05 requirement supersedes English-first delivery: Bangla is the default and English is selectable. The [localization specification](tasks/web-localization/spec.md) and [plan](tasks/web-localization/plan.md) own the language contract/evidence; WEB-L1–3 in the web roadmap track current-site delivery and bilingual acceptance for future features.
+
 ## Before starting a feature
 
 1. Read [.context](../.context/README.md), [root roadmap](../ROADMAP.md), then the relevant API/web roadmap. Use the [domain map](../.context/features/README.md) to locate existing numbered task specs/plans.

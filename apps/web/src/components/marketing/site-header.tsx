@@ -1,13 +1,17 @@
 import Link from "next/link";
 import { Sprout, ArrowUpRight } from "lucide-react";
-import { PUBLIC_NAV_ITEMS } from "@/lib/public-navigation";
+import { getPublicNavItems } from "@/lib/public-navigation";
+import { getLocalization } from "@/lib/i18n/server";
 import { MobileNavigation } from "./mobile-navigation";
+import { LanguageSwitcher } from "./language-switcher";
 
 export function SiteHeader() {
+  const { locale, messages } = getLocalization();
+  const items = getPublicNavItems(messages);
   return (
     <header className="site-header">
       <div className="container header-inner">
-        <Link href="/" className="brand" aria-label="Vetralink Pro home">
+        <Link href="/" className="brand" aria-label={messages.navigation.home}>
           <span className="brand-mark">
             <Sprout aria-hidden="true" />
           </span>
@@ -15,8 +19,8 @@ export function SiteHeader() {
             vetralink<span className="brand-pro">PRO</span>
           </span>
         </Link>
-        <nav className="desktop-nav" aria-label="Main navigation">
-          {PUBLIC_NAV_ITEMS.map((item) => (
+        <nav className="desktop-nav" aria-label={messages.navigation.main}>
+          {items.map((item) => (
             <Link href={item.href} key={item.href}>
               {item.label}
             </Link>
@@ -26,9 +30,14 @@ export function SiteHeader() {
           className="button button-small header-cta"
           href="/farm-management"
         >
-          Explore farm tools <ArrowUpRight size={16} aria-hidden="true" />
+          {messages.actions.farmTools}{" "}
+          <ArrowUpRight size={16} aria-hidden="true" />
         </Link>
-        <MobileNavigation items={PUBLIC_NAV_ITEMS} />
+        <LanguageSwitcher
+          locale={locale}
+          label={messages.navigation.language}
+        />
+        <MobileNavigation items={items} labels={messages.navigation} />
       </div>
     </header>
   );

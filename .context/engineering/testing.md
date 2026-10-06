@@ -24,7 +24,7 @@ Install runs lifecycle scripts, including Prisma generation. Runtime tests need 
 | Cross-cutting auth/guards/envelopes | Focused negative-case suites, `pnpm --filter @vetralink/api test --runInBand`, API build |
 | Shared contracts | Shared-types build, API/web builds, affected serialization and Flutter tests |
 | Prisma schema | `pnpm --filter @vetralink/api exec prisma validate`, generate/build, repository and migration tests against disposable PostgreSQL |
-| Web | `pnpm --filter @vetralink/web build`, browser interaction/responsive/accessibility checks |
+| Web | `pnpm --filter @vetralink/web build`, browser interaction/responsive/accessibility checks in Bangla and English; `pnpm --filter @vetralink/web test:localization` against a local production server on port 3100 |
 | Flutter | From `apps/mobile`: `flutter pub get`, `flutter analyze`, `flutter test`; device smoke tests for changed flows |
 | Infrastructure | `docker compose --env-file infrastructure/.env.docker -f infrastructure/docker-compose.yml config --quiet` after local env setup; targeted runtime smoke tests |
 | Context/docs only | `python3 .context/scripts/validate.py`, `git diff --check`, manual source/claim review |
@@ -42,5 +42,7 @@ API `test:e2e` references absent `apps/api/test/jest-e2e.json`. API lint invokes
 Load scripts in `infrastructure/load-testing/` cover auth, ERP, tele-vet and sync. Read their environment inputs, fixtures and thresholds before running. Use an authorized isolated target and synthetic data; retain actual k6 outputs and host/data/concurrency details. Staged scripts and thresholds are not measured performance results.
 
 ## Completion evidence
+
+Added 2026-10-06: the web `test:localization` smoke script verifies the existing public routes against a local production server (default `http://localhost:3100`), including default/invalid locale, metadata, native selection forms, cookie persistence, visitor isolation and return-URL validation. Pass a different local origin as a script argument when needed. Run with `NODE_ENV=production` for production build/start. Avoid building into the same `.next` directory while a dev server uses it; use an isolated temporary copy for runtime verification. This script does not replace rendered browser, cross-browser or application integration checks.
 
 Record exact commands, working directory, result, applicable environment and skipped/blocked checks. A build proves compilation only. Changes to migrations, money, cross-tenant access, offline conflict resolution or clinical persistence need stronger evidence than mocks. Do not repair unrelated tooling as a hidden addition to an otherwise scoped task.

@@ -24,7 +24,7 @@ Versions below are manifest major versions/ranges, not a claim about the newest 
 - `apps/api/src/modules/`: domain modules; `common/`: guards, envelopes, crypto, idempotency; `config/`: environment schema/service.
 - `apps/api/prisma/`: active Prisma schema and migration lineage selected by API package configuration.
 - `prisma/`: a second, differing schema/migration tree; do not target implicitly.
-- `apps/web/src/app/`: root layout, four public marketing pages and 404 recovery; shared navigation/marketing components live in `src/components/marketing/` (updated 2026-10-05).
+- `apps/web/src/app/`: root layout, four public marketing pages and 404 recovery; shared navigation/marketing components live in `src/components/marketing/`. `src/lib/i18n/` supplies Bangla-default/English content, request locale resolution, a persistent selection action and localized metadata/numbers (updated 2026-10-06).
 - `apps/mobile/lib/`: placeholder app and standalone `core/sync/` implementation.
 - `packages/shared-types/`: shared interfaces, response contracts, DTOs and enums; no shared UI package exists.
 - `infrastructure/`: local backing services and load scripts, not a full production application deployment.

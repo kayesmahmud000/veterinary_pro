@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { LandingSections } from "@/components/marketing/landing-sections";
-export const metadata: Metadata = {
-  title: "Vetralink Pro — Connected care for your farm",
-  description:
-    "A clearer picture of your farm. Explore connected livestock management, practical learning and veterinary care.",
-};
+import { getLocalization } from "@/lib/i18n/server";
+export function generateMetadata(): Metadata {
+  const { messages } = getLocalization();
+  return {
+    title: { absolute: messages.metadata.homeTitle },
+    description: messages.metadata.homeDescription,
+  };
+}
 export default function HomePage() {
   return (
     <main id="main-content">

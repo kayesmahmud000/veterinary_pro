@@ -1,20 +1,24 @@
 import type { Metadata } from "next";
+import { getLocalization } from "@/lib/i18n/server";
 import "./globals.css";
-export const metadata: Metadata = {
-  title: {
-    default: "Vetralink Pro — Connected care for your farm",
-    template: "%s | Vetralink Pro",
-  },
-  description:
-    "Discover connected livestock records, practical learning and veterinary care with Vetralink Pro.",
-};
+export function generateMetadata(): Metadata {
+  const { messages } = getLocalization();
+  return {
+    title: {
+      default: messages.metadata.siteTitle,
+      template: "%s | Vetralink Pro",
+    },
+    description: messages.metadata.siteDescription,
+  };
+}
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { locale } = getLocalization();
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body>{children}</body>
     </html>
   );

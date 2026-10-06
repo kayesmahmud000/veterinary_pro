@@ -4,7 +4,9 @@ UI work requires the applicable [Frontend/Web/UI/Mobile Engineer](../roles/front
 
 Audience: farm staff entering records in barns, owners reviewing finance, veterinarians examining history and prescribing, buyers accessing educational content. Favor readable forms, clear units, farm/animal identity and safe recovery on slow networks. Do not transplant the reference project's travel branding, luxurious spacing, animations or component libraries.
 
-Existing UI is minimal: web inline styles and Flutter Material 3 teal seed. No mature design-token system, dashboard navigation or established form/state library exists. Define a small consistent approach in the first relevant feature spec; reuse it as real components emerge. Do not add a UI framework merely to satisfy a checklist.
+Existing web UI has a small global CSS token set and scoped public marketing styles; Flutter uses a Material 3 teal seed. No dashboard navigation or established application form/state library exists. Reuse existing public foundations when applicable and define missing application patterns in the owning feature spec. Do not add a UI framework merely to satisfy a checklist.
+
+Web content must support Bangla and English with Bangla as the default. Reuse `apps/web/src/lib/i18n/` for copy, locale selection and number presentation; translate assistive labels and every form/loading/error/offline state as features are introduced. Keep API identifiers and stored values stable. The [localization spec](../../docs/tasks/web-localization/spec.md) owns the contract, and the web roadmap requires both-language acceptance for each future milestone.
 
 Every data flow needs loading, empty, success, validation, permission-denied and recoverable-error states. Offline workflows must show pending/synced/conflicted status without promising a server save before acknowledgement. Preserve entered data on timeouts; avoid duplicate financial/clinical submissions and misleading optimistic success. Make farm switching and selected animal conspicuous.
 

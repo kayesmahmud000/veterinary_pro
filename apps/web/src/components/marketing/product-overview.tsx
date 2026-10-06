@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowUpRight, Info } from "lucide-react";
-import { PUBLIC_NAV_ITEMS } from "@/lib/public-navigation";
+import { getPublicNavItems } from "@/lib/public-navigation";
+import { getLocalization } from "@/lib/i18n/server";
+import { formatNumber } from "@/lib/i18n/locale";
 import styles from "./marketing.module.css";
 export function ProductOverview({
   title,
@@ -11,19 +13,26 @@ export function ProductOverview({
   intro: string;
   sections: readonly { title: string; body: string }[];
 }) {
+  const { locale, messages } = getLocalization();
+  const items = getPublicNavItems(messages);
   return (
     <main id="main-content" className="container">
       <section className={styles.overviewHero}>
         <div className="eyebrow">
-          <span className="status-dot" /> THE VETRALINK APPROACH
+          <span className="status-dot" /> {messages.overview.eyebrow}
         </div>
         <h1>{title}</h1>
         <p>{intro}</p>
       </section>
-      <section className={styles.overviewGrid} aria-label="Product approach">
+      <section
+        className={styles.overviewGrid}
+        aria-label={messages.overview.sections}
+      >
         {sections.map((section, i) => (
           <article className={styles.overviewCard} key={section.title}>
-            <span>0{i + 1}</span>
+            <span>
+              {formatNumber(i + 1, locale, { minimumIntegerDigits: 2 })}
+            </span>
             <h2>{section.title}</h2>
             <p>{section.body}</p>
           </article>
@@ -32,16 +41,18 @@ export function ProductOverview({
       <aside className={styles.availability}>
         <Info size={20} aria-hidden="true" />
         <p>
-          <strong>Explore the vision.</strong> This page introduces the product
-          approach. Account access, operational tools, purchases and
-          consultation booking are not available on this public website yet.
+          <strong>{messages.overview.availabilityTitle}</strong>{" "}
+          {messages.overview.availabilityBody}
         </p>
       </aside>
-      <nav aria-label="Explore the platform" className={styles.overviewLinks}>
+      <nav
+        aria-label={messages.overview.explore}
+        className={styles.overviewLinks}
+      >
         <Link href="/" className="text-link">
-          Back to home <ArrowUpRight size={16} aria-hidden="true" />
+          {messages.actions.home} <ArrowUpRight size={16} aria-hidden="true" />
         </Link>
-        {PUBLIC_NAV_ITEMS.map((item) => (
+        {items.map((item) => (
           <Link href={item.href} className="text-link" key={item.href}>
             {item.label}
             <ArrowUpRight size={16} aria-hidden="true" />
