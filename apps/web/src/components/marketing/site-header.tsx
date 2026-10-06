@@ -4,12 +4,13 @@ import { getPublicNavItems } from "@/lib/public-navigation";
 import { getLocalization } from "@/lib/i18n/server";
 import { MobileNavigation } from "./mobile-navigation";
 import { LanguageSwitcher } from "./language-switcher";
+import { HeaderSurface } from "./header-surface";
 
 export function SiteHeader() {
   const { locale, messages } = getLocalization();
   const items = getPublicNavItems(messages);
   return (
-    <header className="site-header">
+    <HeaderSurface>
       <div className="container header-inner">
         <Link href="/" className="brand" aria-label={messages.navigation.home}>
           <span className="brand-mark">
@@ -39,6 +40,6 @@ export function SiteHeader() {
         />
         <MobileNavigation items={items} labels={messages.navigation} />
       </div>
-    </header>
+    </HeaderSurface>
   );
 }

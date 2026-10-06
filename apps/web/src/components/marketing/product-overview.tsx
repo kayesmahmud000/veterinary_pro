@@ -1,17 +1,22 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ArrowUpRight, Info } from "lucide-react";
 import { getPublicNavItems } from "@/lib/public-navigation";
 import { getLocalization } from "@/lib/i18n/server";
-import { formatNumber } from "@/lib/i18n/locale";
+import { FeatureExplorer } from "./interactive-discovery";
 import styles from "./marketing.module.css";
 export function ProductOverview({
   title,
   intro,
   sections,
+  kind,
+  children,
 }: {
   title: string;
   intro: string;
   sections: readonly { title: string; body: string }[];
+  kind: "farm" | "learning" | "veterinary";
+  children?: ReactNode;
 }) {
   const { locale, messages } = getLocalization();
   const items = getPublicNavItems(messages);
@@ -24,20 +29,13 @@ export function ProductOverview({
         <h1>{title}</h1>
         <p>{intro}</p>
       </section>
-      <section
-        className={styles.overviewGrid}
-        aria-label={messages.overview.sections}
-      >
-        {sections.map((section, i) => (
-          <article className={styles.overviewCard} key={section.title}>
-            <span>
-              {formatNumber(i + 1, locale, { minimumIntegerDigits: 2 })}
-            </span>
-            <h2>{section.title}</h2>
-            <p>{section.body}</p>
-          </article>
-        ))}
-      </section>
+      {children}
+      <FeatureExplorer
+        sections={sections}
+        kind={kind}
+        copy={messages.interactive.features}
+        locale={locale}
+      />
       <aside className={styles.availability}>
         <Info size={20} aria-hidden="true" />
         <p>

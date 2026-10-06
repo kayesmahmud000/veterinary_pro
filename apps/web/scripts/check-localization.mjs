@@ -15,6 +15,26 @@ const routes = [
   ],
   ["/learning", "ব্যবহারিক জ্ঞান।", "Practical knowledge."],
   ["/veterinary-care", "পুরো ইতিহাস বোঝা", "Care starts with understanding"],
+  [
+    "/learning/animal-records",
+    "প্রতিটি প্রাণীর রেকর্ডে একই পরিচয় রাখুন",
+    "Give every animal a consistent record",
+  ],
+  [
+    "/learning/daily-milk-log",
+    "দৈনিক দুধের লগ আরও পরিষ্কার রাখুন",
+    "Build a clearer daily milk log",
+  ],
+  [
+    "/learning/farm-finances",
+    "আয় ও ব্যয়ের হিসাব সহজে খুঁজে পাওয়ার মতো রাখুন",
+    "Keep income and expenses easy to trace",
+  ],
+  [
+    "/learning/localization-test-missing",
+    "পাতাটি পাওয়া যায়নি।",
+    "Page not found.",
+  ],
   ["/localization-test-missing", "পাতাটি পাওয়া যায়নি।", "Page not found."],
 ];
 
@@ -184,6 +204,70 @@ for (const returnTo of [
     "Unsafe return URLs fall back to home",
   );
 }
+// Verify real catalog filters, locale isolation and downloadable empty sheets.
+for (const locale of ["bn", "en"]) {
+  for (const [query, expected] of [
+    ["", 3],
+    ["?topic=records", 1],
+    ["?topic=milk", 1],
+    ["?topic=finances", 1],
+    ["?topic=unknown", 3],
+    ["?topic=milk&topic=records", 3],
+  ]) {
+    const { html } = await request(
+      `/learning${query}`,
+      `vetralink-locale=${locale}`,
+    );
+    const cards =
+      html.match(
+        /<a[^>]*href="\/learning\/(?:animal-records|daily-milk-log|farm-finances)"/g,
+      ) ?? [];
+    assert.equal(cards.length, expected, `Catalog filter ${query} (${locale})`);
+    if (expected === 1)
+      assert.ok(
+        html.includes('aria-current="true"'),
+        "Selected topic is identified",
+      );
+  }
+  for (const [slug, columns] of [
+    ["daily-milk-log", 7],
+    ["farm-finances", 9],
+  ]) {
+    const response = await fetch(new URL(`/learning/${slug}/template`, base), {
+      headers: { Cookie: `vetralink-locale=${locale}` },
+    });
+    assert.equal(response.status, 200);
+    assert.match(
+      response.headers.get("content-type"),
+      /text\/csv; charset=utf-8/,
+    );
+    assert.equal(
+      response.headers.get("content-disposition"),
+      `attachment; filename="vetralink-${slug}.csv"`,
+    );
+    assert.match(response.headers.get("cache-control"), /private, no-store/);
+    assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    assert.deepEqual(
+      [...bytes.slice(0, 3)],
+      [239, 187, 191],
+      "UTF-8 BOM for spreadsheet compatibility",
+    );
+    const rows = new TextDecoder().decode(bytes).split("\r\n");
+    assert.equal(
+      /[\u0980-\u09ff]/u.test(rows[0]),
+      locale === "bn",
+      "Localized CSV headers",
+    );
+    assert.equal(rows[0].split(",").length, columns);
+    assert.equal(rows[1], ",".repeat(columns - 1), "Only an empty data row");
+    assert.equal(rows[2], "");
+  }
+}
+for (const slug of ["animal-records", "missing-template"]) {
+  const response = await fetch(new URL(`/learning/${slug}/template`, base));
+  assert.equal(response.status, 404, "No invented templates");
+}
 console.log(
-  "Passed: 20 localized GETs, 15 native language-form submissions, reload persistence, concurrent locale isolation and 5 unsafe return-URL checks.",
+  `Passed: ${routes.length * 4} localized GETs, ${routes.length * 3} native language-form submissions, reload persistence, concurrent locale isolation, 5 unsafe return-URL checks, 12 catalog filters, 4 localized CSV downloads and 2 missing-template checks.`,
 );

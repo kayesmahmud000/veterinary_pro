@@ -12,5 +12,5 @@ export function generateMetadata(): Metadata {
 
 export default function VeterinaryCarePage() {
   const { messages } = getLocalization();
-  return <ProductOverview {...messages.pages.veterinary} />;
+  return <ProductOverview kind="veterinary" {...messages.pages.veterinary} />;
 }

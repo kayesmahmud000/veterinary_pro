@@ -8,6 +8,8 @@
 **Tech stack:** Existing Next.js 14, React 18, TypeScript and Lucide; global CSS and CSS Modules. No new production dependency, external font service or API integration.
 **Spec:** [Public site and route architecture](spec.md).
 
+**Follow-up:** the user-authorized [interactive public-site task](../../tasks/web-interactive-public-site/spec.md) adds localized client previews and a local milk calculator in October 2026. Its [plan](../../tasks/web-interactive-public-site/plan.md) owns the new behavior and verification; the original delivery evidence below remains historical.
+
 ## Global constraints
 
 - First build includes `/`, `/farm-management`, `/learning`, `/veterinary-care` and unmatched-route recovery only.

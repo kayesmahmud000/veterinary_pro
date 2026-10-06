@@ -1,4 +1,9 @@
+import { showcaseEn } from "./showcase";
+import { resourcesEn } from "./resources";
+
 export const en = {
+  showcase: showcaseEn,
+  resources: resourcesEn,
   metadata: {
     siteTitle: "Vetralink Pro — Connected care for your farm",
     siteDescription:
@@ -78,7 +83,7 @@ export const en = {
         },
         {
           title: "Grow your knowledge.",
-          body: "Explore the vision for practical courses, veterinary guides and tools for everyday decisions.",
+          body: "Start with free record-keeping guides and templates, and explore the plan for practical courses.",
           action: "Learning & resources",
         },
         {
@@ -116,7 +121,7 @@ export const en = {
     learning: {
       eyebrow: "LEARN WITH PURPOSE",
       title: "A little knowledge. A better next decision.",
-      body: "Discover the thinking behind practical courses, downloadable guides and tools for life on the farm.",
+      body: "Read a free record-keeping guide, download a blank template and explore the plan for practical courses.",
     },
     veterinary: {
       eyebrow: "CARE THAT SEES THE WHOLE STORY",
@@ -135,7 +140,7 @@ export const en = {
         {
           question: "What can I explore on this website?",
           answer:
-            "You can learn about the farm management, learning and veterinary-care areas. Account access, purchases and consultation booking are not available on this public site yet.",
+            "Try the sample farm demo, read free record-keeping guides and download blank CSV templates. You can also explore our product approach. Account access, purchases and consultation booking are not available on this public site yet.",
         },
         {
           question: "Which animals is the platform designed to support?",
@@ -153,6 +158,180 @@ export const en = {
       eyebrow: "YOUR FARM. A MORE CONNECTED FUTURE.",
       title: "Start with the bigger picture.",
       body: "Explore how records, knowledge and care can work together.",
+    },
+  },
+  interactive: {
+    hero: {
+      label: "What brings you here?",
+      demo: "Try the farm demo",
+      carousel: "photo slider",
+      carouselLabel: "Farm stories",
+      slide: "slide",
+      slideNavigation: "Choose a farm story",
+      goToSlide: "Go to slide",
+      previousSlide: "Previous slide",
+      nextSlide: "Next slide",
+      pauseSlideshow: "Pause slideshow",
+      playSlideshow: "Play slideshow",
+      goals: [
+        {
+          label: "Manage my farm",
+          body: "Follow animal records, everyday milk production and farm finances. Start with a hands-on example of a more connected farm.",
+          action: "Explore farm management",
+          previewTitle: "A farm, told one animal at a time.",
+          previewBody: "Animals, daily care and the people behind it.",
+          imageAlt: "A black-and-white cow standing in a pasture with its herd",
+          noteTitle: "Every animal, a story",
+          noteBody: "Identity and records in one place",
+          careTitle: "A clearer everyday",
+          careBody: "Turn daily entries into context",
+        },
+        {
+          label: "Learn something useful",
+          body: "Read free record-keeping guides and download blank templates. Explore the plan for courses and a connected learning library.",
+          action: "Explore learning",
+          previewTitle: "Good ideas grow in good company.",
+          previewBody: "Practical knowledge for everyday farm life.",
+          imageAlt: "Two brown-and-white goats looking toward the camera",
+          noteTitle: "Practical learning",
+          noteBody: "Courses, guides and planning tools",
+          careTitle: "Knowledge that stays close",
+          careBody: "Free guides, ready to read now",
+        },
+        {
+          label: "Understand veterinary care",
+          body: "See how animal history, thoughtful intake and clinical documentation can connect a farm with veterinary care.",
+          action: "Explore veterinary care",
+          previewTitle: "Care begins with a gentle touch.",
+          previewBody: "A little more context for every animal.",
+          imageAlt: "A person gently placing a hand on a cow's head",
+          noteTitle: "A connected history",
+          noteBody: "Records with an animal's story",
+          careTitle: "A better conversation",
+          careBody: "Explore the planned care journey",
+        },
+      ],
+    },
+    demo: {
+      eyebrow: "A LITTLE PREVIEW. A BIGGER PICTURE.",
+      title: "Take a look inside.",
+      body: "Switch views, select an animal or try your own milk figures. This sample stays in your browser.",
+      badge: "Interactive demo",
+      sample: "Sample farm · fictional data",
+      tabsLabel: "Sample workspace views",
+      tabs: ["Animals", "Milk planner", "Finances"],
+      reset: "Reset example",
+      localNote: "Demo only. Nothing is saved or sent to a farm account.",
+      animalLabel: "Choose a sample animal",
+      animals: [
+        {
+          name: "Shapla",
+          species: "Dairy cow",
+          detail: "Example animal profile",
+        },
+        {
+          name: "Megh",
+          species: "Buffalo",
+          detail: "Example animal profile",
+        },
+      ],
+      profileTitle: "A record with a story",
+      tag: "Animal ID",
+      species: "Species",
+      dailyMilk: "Example daily milk",
+      recordList: "Connected records",
+      records: ["Animal identity", "Milk entries", "Weight history"],
+      milkTitle: "What could your milk output look like?",
+      milkBody:
+        "Enter a daily amount and a price to explore a simple projection.",
+      quantity: "Daily milk (liters)",
+      price: "Price per liter (BDT)",
+      period: "Projection period",
+      days: "days",
+      liters: "liters",
+      total: "Projected milk",
+      value: "Projected milk value",
+      assumption:
+        "Assumes the same output and price every day. This is an estimate, not a production forecast.",
+      chart: "Projected milk by period",
+      chartUnit: "liters per period",
+      day: "Day",
+      week: "Week",
+      financeTitle: "See where the numbers connect.",
+      financeBody:
+        "Milk value uses your planner figures. Costs below are fictional examples for the selected period.",
+      income: "Projected milk value",
+      cost: "Example expenses",
+      balance: "Illustrative balance",
+      expenses: ["Feed", "Farm supplies", "Other expenses"],
+      financeNote:
+        "Balance = projected milk value − example expenses. It is not a farm profit report.",
+      invalidQuantity: "Enter 0–10,000 liters using a valid number.",
+      invalidPrice: "Enter a price from 0–10,000 BDT using a valid number.",
+      invalidResult:
+        "Correct the highlighted figures in the milk planner to see your projection.",
+      edit: "Edit milk figures",
+      explore: "Explore the farm approach",
+    },
+    workflow: {
+      label: "Explore the connected steps",
+      hint: "Select a step to see how the story connects.",
+      sample: "Illustrative record",
+      recordTitles: [
+        "Animal profile",
+        "Daily milk entry",
+        "Farm overview",
+        "Care context",
+      ],
+      recordLabels: [
+        ["Animal ID", "Species", "Linked records"],
+        ["Animal ID", "Daily amount", "Linked record"],
+        ["Record sources", "View", "Purpose"],
+        ["Start with", "Add context", "Next step"],
+      ],
+      recordValues: [
+        ["VL-001", "Dairy cow", "Identity · weight · milk"],
+        ["VL-001", "18 liters", "Milk production"],
+        ["Daily entries", "Production + finances", "Understand trends"],
+        ["Animal history", "Farmer's concern", "Veterinary conversation"],
+      ],
+      note: "An example of the product approach; no record is created.",
+    },
+    faq: {
+      search: "Search questions",
+      placeholder: "Try farm, phone or demo",
+      results: "questions found",
+      empty: "No matching questions. Try another word or clear your search.",
+      clear: "Clear search",
+      demoQuestion: "Can I use the demo for my actual farm?",
+      demoAnswer:
+        "The interactive preview uses fictional animal and expense data. The milk planner is a local estimate using the figures you enter. It does not save records, send data or connect to a farm account.",
+    },
+    features: {
+      label: "Choose a feature to explore",
+      detail: "In focus",
+      hint: "Select a topic to take a closer look.",
+      demo: "Try the interactive farm demo",
+      highlights: {
+        farm: [
+          ["Animal identity and lineage", "Weight records over time"],
+          ["Daily and herd milk logs", "Health and vaccination history"],
+          ["Expenses and revenue", "Production and financial reports"],
+        ],
+        learning: [
+          ["Planned video courses", "Discovery by topic"],
+          ["Planned guides and eBooks", "Practical spreadsheet tools"],
+          ["Planned buyer library", "Authorized access after purchase"],
+        ],
+        veterinary: [
+          ["Animal-specific concerns", "Images and history for context"],
+          ["Relevant farm records", "Private attending-vet notes"],
+          [
+            "Structured clinical documentation",
+            "Prescription verification approach",
+          ],
+        ],
+      },
     },
   },
   pages: {
@@ -181,10 +360,10 @@ export const en = {
     learning: {
       metadataTitle: "Learning and resources",
       metadataDescription:
-        "Discover the vision for practical farming courses, digital guides and downloadable tools in Vetralink Pro.",
+        "Read free farm record-keeping guides, download blank CSV templates and explore Vetralink Pro's learning plans.",
       title: "Practical knowledge. For life on the farm.",
       intro:
-        "Explore a learning experience designed to bring educational courses, useful guides and farm planning tools into the same ecosystem as your everyday work.",
+        "Start with free guides and blank templates for everyday records. Explore our longer-term plans for courses and a connected learning library.",
       sections: [
         {
           title: "Learn with context",

@@ -28,7 +28,7 @@ export function LanguageSwitcher({
         lang="bn"
         aria-pressed={locale === "bn"}
       >
-        বাংলা
+        বাং
       </button>
       <button
         type="submit"
@@ -37,7 +37,7 @@ export function LanguageSwitcher({
         lang="en"
         aria-pressed={locale === "en"}
       >
-        English
+        ENG
       </button>
     </form>
   );

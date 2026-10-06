@@ -12,5 +12,5 @@ export function generateMetadata(): Metadata {
 
 export default function FarmManagementPage() {
   const { messages } = getLocalization();
-  return <ProductOverview {...messages.pages.farm} />;
+  return <ProductOverview kind="farm" {...messages.pages.farm} />;
 }

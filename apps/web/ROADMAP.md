@@ -1,12 +1,14 @@
 # VETRALINK PRO — Web Roadmap
 
-Reviewed **2026-10-06**, source baseline **c07395b** plus the current localization change. [Project coordination](../../ROADMAP.md) · [Documentation authority](../../docs/README.md) · [Backend roadmap and API readiness](../api/ROADMAP.md#api-dependency-register).
+Reviewed **2026-10-07**, source baseline **c07395b** plus public localization and interactivity changes. [Project coordination](../../ROADMAP.md) · [Documentation authority](../../docs/README.md) · [Backend roadmap and API readiness](../api/ROADMAP.md#api-dependency-register).
 
 ## Actual baseline
 
 **Confirmed from code (2026-10-05 update):** [root layout](src/app/layout.tsx), [marketing home](src/app/%28marketing%29/page.tsx), three public overview pages, responsive navigation/footer and 404 recovery are implemented. The [public-site plan](../../docs/features/web-public-site/plan.md) records build and browser evidence. Public pages are informational; they do not provide account, purchasing, booking or farm-operation flows.
 
 - [x] **WEB-0 — Workspace scaffold:** original Next.js workspace foundation; historical evidence remains in [Sprint 0 plan](../../docs/features/sprint-0-bootstrap/plan.md).
+- [x] **WEB-P1 — Interactive public discovery:** bilingual goal selector, fictional sample workspace with local milk estimates, clickable workflow/service features and searchable FAQ. See [specification](../../docs/tasks/web-interactive-public-site/spec.md) / [verification plan](../../docs/tasks/web-interactive-public-site/plan.md). This is public-preview functionality; operational application milestones remain unchanged.
+- [x] **WEB-P2 — Product showcase and free learning:** original product preview/service illustrations, species discovery, three bilingual record guides, URL topic filters and two blank CSV templates. See [specification](../../docs/tasks/web-product-showcase/spec.md) / [verification](../../docs/tasks/web-product-showcase/plan.md). Free guides are available; paid catalog, accounts and operational services remain pending.
 - No application API client, auth/session UI, dashboard or browser offline implementation exists. WEB-1E and WEB-2–12 remain unstarted.
 
 ## Bangla-default bilingual delivery requirement
