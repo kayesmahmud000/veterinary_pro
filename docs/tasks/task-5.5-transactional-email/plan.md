@@ -79,7 +79,7 @@
   ```bash
   pnpm --filter @vetralink/api build
   ```
-- [x] Check off Task 5.5 and mark Sprint 5 as `✅ COMPLETE` in `ROADMAP.md`.
+- [x] Check off Task 5.5 and mark Sprint 5 as `✅ COMPLETE` in [backend roadmap](../../../apps/api/ROADMAP.md).
 - [x] Suggest conventional git commit message.
 
 ---

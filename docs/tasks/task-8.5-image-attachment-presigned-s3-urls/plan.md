@@ -63,4 +63,4 @@
 - [x] Run full test suite for `api` package (`pnpm --filter @vetralink/api test`).
 - [x] Run Turborepo monorepo build (`pnpm build`).
 - [x] Update `plan.md` checklist items.
-- [x] Update `ROADMAP.md` (mark Task 8.5 complete, completing Sprint 8).
+- [x] Update [backend roadmap](../../../apps/api/ROADMAP.md) (mark Task 8.5 complete, completing Sprint 8).

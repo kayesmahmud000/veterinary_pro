@@ -66,4 +66,4 @@
 ### Step 7: Verification & Acceptance Testing
 - [x] Run full test suites (`pnpm --filter @vetralink/api test`)
 - [x] Run monorepo build (`pnpm build`)
-- [x] Update `plan.md` and `ROADMAP.md`
+- [x] Update `plan.md` and [backend roadmap](../../../apps/api/ROADMAP.md)

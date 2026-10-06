@@ -2,6 +2,8 @@
 # Version: 1.0.0 | Last Updated: 2026-09-05
 # Status: PRODUCTION SPECIFICATION & LIVING ARCHITECTURAL BLUEPRINT
 
+> This is architecture/design intent, not proof of implementation or production readiness. See [current architecture](.context/architecture/system.md), [known gaps](.context/known-gaps.md) and [documentation authority](docs/README.md). Progress belongs to the [API](apps/api/ROADMAP.md) and [web](apps/web/ROADMAP.md) roadmaps.
+
 ---
 
 ## 1. SYSTEM OVERVIEW & ARCHITECTURAL PRINCIPLES
@@ -76,7 +78,7 @@ graph TD
 vetralink-pro/
 ├── .antigravityrules                 # Non-negotiable agent engineering rules
 ├── ARCHITECTURE.md                   # This system design & architectural specification
-├── ROADMAP.md                        # Phased implementation & sprint tracking
+├── ROADMAP.md                        # Project coordination; app roadmaps own progress
 ├── pnpm-workspace.yaml               # Workspace definitions
 ├── turbo.json                        # Pipeline caching and build matrix
 ├── package.json

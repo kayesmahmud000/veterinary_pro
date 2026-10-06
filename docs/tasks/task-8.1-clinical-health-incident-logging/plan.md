@@ -65,4 +65,4 @@
 ### Step 7: Verification & Acceptance Testing
 - [x] Execute Jest test suites across the monorepo (`pnpm --filter @vetralink/api test` - 100/100 suites passed, 932 tests passed)
 - [x] Run build checks (`pnpm build` - all 3 packages built successfully)
-- [x] Mark checklist items complete in `plan.md` and update `ROADMAP.md`
+- [x] Mark checklist items complete in `plan.md` and update [backend roadmap](../../../apps/api/ROADMAP.md)

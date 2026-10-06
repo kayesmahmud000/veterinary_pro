@@ -61,4 +61,4 @@
 - [x] Run subscription tests: `pnpm --filter @vetralink/api test -- src/modules/subscriptions`.
 - [x] Run full API test suite: `pnpm --filter @vetralink/api test`.
 - [x] Run monorepo build: `pnpm build`.
-- [x] Check off all tasks in `plan.md` and update `ROADMAP.md`.
+- [x] Check off all tasks in `plan.md` and update [backend roadmap](../../../apps/api/ROADMAP.md).

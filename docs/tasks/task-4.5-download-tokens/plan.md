@@ -69,7 +69,7 @@
 ### Step 7: Verification & Acceptance
 - [x] Run test suite: `pnpm --filter @vetralink/api test src/modules/orders`.
 - [x] Run build: `pnpm --filter @vetralink/api build`.
-- [x] Check off Task 4.5 in `ROADMAP.md`.
+- [x] Check off Task 4.5 in [backend roadmap](../../../apps/api/ROADMAP.md).
 
 ---
 

@@ -18,7 +18,8 @@ These original documents remain part of the context. Read the relevant ones alon
 
 | Document | Purpose and when to read |
 | --- | --- |
-| [ROADMAP.md](../ROADMAP.md) | Milestones and task tracking; consult for work tied to a roadmap item and verify completion claims against code/tests |
+| [ROADMAP.md](../ROADMAP.md) | Project coordination; follow the [API roadmap](../apps/api/ROADMAP.md) or [web roadmap](../apps/web/ROADMAP.md) for owned progress and dependencies |
+| [Documentation guide](../docs/README.md) | Specification/plan/roadmap authority, historical phase reconciliation and update rules |
 | [ARCHITECTURE.md](../ARCHITECTURE.md) | Original architecture, data model and integration intent; compare with [current architecture](architecture/system.md) and [known gaps](known-gaps.md) |
 | [Product blueprint](../vetralink_pro_blueprint.md) | Product scope, target capabilities and commercial planning |
 | [Platform specification PDF](../vetralink_platform_specification.pdf) | Detailed product requirements and audience context |
@@ -47,6 +48,6 @@ These original documents remain part of the context. Read the relevant ones alon
 
 ## Ownership and evidence
 
-`.context` owns concise current context and reusable rules. `docs/` owns task-specific specs, plans and evidence; do not duplicate those histories here. `ROADMAP.md` owns milestone tracking. Manifests, source, migrations and tests establish implemented behavior. Existing architecture/blueprint documents describe product intent and may include unimplemented topology. See [known gaps](known-gaps.md) for reconciliations.
+`.context` owns concise current context and reusable rules. `docs/` owns task-specific specs, plans and evidence; do not duplicate those histories here. The API and web roadmaps own their workstream progress; root `ROADMAP.md` owns navigation/coordination. The documentation guide defines shared requirement authority. Manifests, source, migrations and tests establish implemented behavior. Existing architecture/blueprint documents describe product intent and may include unimplemented topology. See [known gaps](known-gaps.md) for reconciliations.
 
 Each substantive update must distinguish **observed implementation**, **required behavior**, and **proposed work**. Classify material claims as **Confirmed from code**, **Confirmed from documentation**, **Observed behavior**, **Likely behavior**, **Assumption** or **Unknown** using the [evidence standard](engineering/evidence.md). Recheck source when it changes; this snapshot cannot replace investigation. No external skills are installed or required by this directory.

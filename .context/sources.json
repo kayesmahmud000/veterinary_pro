@@ -26,6 +26,15 @@
       "path": "ROADMAP.md"
     },
     {
+      "path": "apps/api/ROADMAP.md"
+    },
+    {
+      "path": "apps/web/ROADMAP.md"
+    },
+    {
+      "path": "docs/README.md"
+    },
+    {
       "path": "vetralink_pro_blueprint.md"
     },
     {
@@ -274,7 +283,7 @@
       "path": "apps/web/tsconfig.json"
     },
     {
-      "path": "apps/web/src/app/page.tsx",
+      "path": "apps/web/src/app/(marketing)/page.tsx",
       "anchors": [
         "HomePage"
       ]

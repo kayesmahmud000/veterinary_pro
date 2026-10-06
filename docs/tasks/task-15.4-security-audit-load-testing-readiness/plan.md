@@ -48,7 +48,7 @@
     - Security audit verification checklist results.
     - Load test benchmark results and capacity estimates.
     - Production deployment and configuration guidelines.
-  - Update `ROADMAP.md` marking Task 15.4 complete `[x]`.
+  - Update [backend roadmap](../../../apps/api/ROADMAP.md) marking Task 15.4 complete `[x]`.
   - Check off all items in `plan.md`.
   - Report completion with summary, test results, and suggested commit message at human-in-the-loop gate.
 

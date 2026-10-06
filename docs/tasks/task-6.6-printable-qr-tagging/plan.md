@@ -82,7 +82,7 @@
   ```bash
   pnpm --filter @vetralink/api build
   ```
-- [x] Update `ROADMAP.md` marking Task 6.6 as completed (`[x]`).
+- [x] Update [backend roadmap](../../../apps/api/ROADMAP.md) marking Task 6.6 as completed (`[x]`).
 - [x] Suggest conventional commit message.
 
 ---

@@ -1,3 +1,5 @@
+> Roadmap routing (2026-10-05): root [ROADMAP.md](ROADMAP.md) is the coordination index. Update progress in [apps/api/ROADMAP.md](apps/api/ROADMAP.md) or [apps/web/ROADMAP.md](apps/web/ROADMAP.md), following [documentation authority](docs/README.md). Legacy references below to checking off roadmap tasks mean the owning workstream tracker.
+
 # Current shared context
 
 Read `.context/README.md` and `.context/agent-instructions.md` first. They are the canonical repository guide and take precedence over conflicting historical instructions below. Retained safeguards, task scope, spec/plan workflow and known implementation gaps are documented there. Host instructions, active user instructions and permissions still take precedence.

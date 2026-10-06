@@ -67,7 +67,7 @@
 
 - [x] **Step 6: Documentation & Roadmap Sign-off**
   - Check off items in `plan.md`.
-  - Update `ROADMAP.md` marking Task 15.2 complete.
+  - Update [backend roadmap](../../../apps/api/ROADMAP.md) marking Task 15.2 complete.
   - Present summary, test results, and suggested commit message at human-in-the-loop gate.
 
 ---

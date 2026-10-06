@@ -53,7 +53,7 @@
 - [x] **Step 6: Unit & Integration Tests Verification**
   - Run full test suite for subscriptions module (`pnpm test -- src/modules/subscriptions`).
   - Verify acceptance criteria.
-  - Mark checklist items complete in `plan.md` and update `ROADMAP.md`.
+  - Mark checklist items complete in `plan.md` and update [backend roadmap](../../../apps/api/ROADMAP.md).
 
 ---
 

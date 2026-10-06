@@ -62,7 +62,7 @@
 ### Step 7: Verification & Roadmap Update
 - [x] Run test suite: `pnpm --filter @vetralink/api test src/modules/orders`.
 - [x] Run build: `pnpm --filter @vetralink/api build`.
-- [x] Update `ROADMAP.md` checking off Task 4.3.
+- [x] Update [backend roadmap](../../../apps/api/ROADMAP.md) checking off Task 4.3.
 
 ---
 

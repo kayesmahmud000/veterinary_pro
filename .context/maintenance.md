@@ -4,7 +4,7 @@ Documentation/context work uses [Senior Technical Writer/Architect](roles/docume
 
 ## Update triggers and ownership
 
-The person/agent changing behavior owns the corresponding context update in the same task. Reviewers verify claims against source. Use `.context` for current cross-cutting knowledge, `docs/tasks/<slug>/` or `docs/features/<slug>/` for acceptance criteria and execution evidence, and `ROADMAP.md` for actual milestone changes. Do not mark an unrelated roadmap feature complete during maintenance.
+The person/agent changing behavior owns the corresponding context update in the same task. Reviewers verify claims against source. Use `.context` for current cross-cutting knowledge, `docs/tasks/<slug>/` or `docs/features/<slug>/` for acceptance criteria and execution evidence, and the owning `apps/api/ROADMAP.md` or `apps/web/ROADMAP.md` for actual progress changes. Root `ROADMAP.md` coordinates the workstreams; [docs/README.md](../docs/README.md) defines authority and dependency handoffs. Do not mark an unrelated roadmap feature complete during maintenance.
 
 | Changed surface | Update |
 | --- | --- |

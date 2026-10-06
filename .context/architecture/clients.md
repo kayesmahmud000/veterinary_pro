@@ -2,13 +2,13 @@
 
 Client work uses the applicable [senior client engineer](../roles/frontend-ui.md) with [UI/UX Designer and UI Reviewer](../roles/ui-ux.md). Use the [UI workflow](../workflows/ui-change.md); the implementation facts below constrain design choices and must not be replaced by generic assumptions.
 
-## Web: scaffold, not a complete portal
+## Web: public site implemented; account and application UI pending
 
-`apps/web/src/app/layout.tsx` defines metadata and `<html lang="en">`; `page.tsx` renders a simple title/description with inline styles. These are the only application UI source files at the baseline. There is no implemented API client, authentication state, router guard, global client store, reusable component library or feature route group.
+Updated 2026-10-05 after the public-site implementation. `apps/web/src/app/layout.tsx` owns the root document and global CSS. `(marketing)/layout.tsx` owns public navigation/footer; `(marketing)/page.tsx` and the farm-management, learning and veterinary-care routes render static product content. Root `not-found.tsx` provides 404 recovery. Shared marketing components use CSS Modules, Lucide icons and a small client mobile-menu component; the remaining page composition is server rendered.
 
-Next.js App Router supplies file-based routing. Keep server components by default and introduce client components only for interactive behavior. `apps/web/tsconfig.json` enables strict checking and `@/*` → `src/*`. Tailwind is declared in the package but a stylesheet/configured design system is not present. Do not describe React Query, Zustand, Axios, Firebase, DaisyUI or Radix as installed architecture.
+Public pages have no API dependency. There is no implemented auth/session flow, API client, global client store, dashboard, private feature navigation or browser offline storage. Do not infer operational farm tools from the public overview pages. Route inventory and implementation evidence live in [public-site spec](../../docs/features/web-public-site/spec.md) and [plan](../../docs/features/web-public-site/plan.md); the [web roadmap](../../apps/web/ROADMAP.md) owns progress.
 
-For a new UI feature, document the actual contract, token/session handling, cache isolation, environment config and user flow in its spec before introducing dependencies. Never cache private tenant data as public data. A UI guard complements server authorization; it cannot replace it.
+Next.js App Router supplies routing, with strict TypeScript and `@/*` → `src/*`. The implementation uses global CSS tokens and scoped marketing styles; Tailwind is declared but not configured as the design system. For future account/data features specify session handling, cache isolation, API errors and tenant permissions before adding dependencies. Never treat client navigation as server authorization.
 
 ## Mobile: scaffold plus offline library
 

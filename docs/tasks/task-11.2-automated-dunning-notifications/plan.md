@@ -49,7 +49,7 @@
 - [x] **Step 8: Unit & Integration Tests Verification**
   - Write test suites for `SubscriptionDunningService`, `SubscriptionDunningQueueService`, `SubscriptionDunningController`, and `SubscriptionDunningProcessor`.
   - Run `pnpm test` across the monorepo to verify full pass.
-  - Mark checklist items complete in `plan.md` and update `ROADMAP.md`.
+  - Mark checklist items complete in `plan.md` and update [backend roadmap](../../../apps/api/ROADMAP.md).
 
 ---
 

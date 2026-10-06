@@ -75,7 +75,7 @@
   - Run API build: `pnpm --filter @vetralink/api build`.
 
 - [x] **Step 5: Documentation & Roadmap Sign-off**
-  - Update `ROADMAP.md` marking Task 15.3 `[x]`.
+  - Update [backend roadmap](../../../apps/api/ROADMAP.md) marking Task 15.3 `[x]`.
   - Check off all items in `plan.md`.
   - Report completion with summary, test results, and suggested commit message at human-in-the-loop gate.
 

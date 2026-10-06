@@ -73,7 +73,7 @@
 
 - [x] **Step 6: Documentation & Roadmap Update**
   - Check off items in `plan.md`.
-  - Update `ROADMAP.md` marking Task 15.1 complete.
+  - Update [backend roadmap](../../../apps/api/ROADMAP.md) marking Task 15.1 complete.
   - Provide summary, test results, and suggested commit message at human-in-the-loop gate.
 
 ---
