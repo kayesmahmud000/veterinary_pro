@@ -15,6 +15,8 @@ export interface AuthTokensDto {
  * Explicitly strips password hashes and raw encryption details.
  */
 export interface AuthUserSummary {
+  readonly roleVersion?: number;
+  readonly farmerOnboardingRequired?: boolean;
   readonly id: string;
   readonly email: string;
   readonly name: string;
@@ -30,6 +32,8 @@ export interface AuthUserSummary {
  * Decoded JWT access token claims contract.
  */
 export interface JwtPayload {
+  readonly authorizationVersion?: number;
+  readonly farmerOnboardingRequired?: boolean;
   readonly sub: string; // User UUID
   readonly email: string;
   readonly role: UserRole;

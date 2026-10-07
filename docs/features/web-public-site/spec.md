@@ -22,7 +22,7 @@ Alternatives considered: a single long page is quickest but provides weak destin
 ## Landing page at `/`
 
 | Order | Section | Content and action |
-| --- | --- | --- |
+| ----- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | Header | VETRALINK PRO home link, Farm management, Learning, Veterinary care; primary action “Explore farm tools” → `/farm-management`. |
 | 2 | Hero | Proposed heading: “A clearer picture of your farm. Better care for every animal.” Supporting copy explains connected records, learning and veterinary care. Primary action → `/farm-management`; secondary “Explore learning” → `/learning`. |
 | 3 | Product pillars | Three short, specific descriptions linking to the three pillar pages. Explain what each area is intended to help with; avoid claiming unavailable workflows are live. |
@@ -37,7 +37,7 @@ Do not advertise sign-in, registration, purchases, subscription signup or bookin
 ## First-build page contracts
 
 | URL | Purpose / page content | Valid next actions | API dependency |
-| --- | --- | --- | --- |
+| ------------------ | --------------------------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------- |
 | `/` | Landing page described above | Three pillar pages and in-page FAQ | None |
 | `/farm-management` | Explain animal records, milk/health tracking, financial overview and their connected workflow | Home, learning and veterinary-care pages | None; no operational forms |
 | `/learning` | Explain intended courses, eBooks and tools, purchase-to-library journey | Home and other pillar pages | None; actual catalog is a later route |
@@ -51,15 +51,15 @@ All four pages have distinct titles/descriptions and one main heading. Static pu
 These are proposed canonical URLs, not instructions to scaffold empty pages. Create each only in its owning milestone; do not expose reserved destinations in navigation. `[farmId]`, `[animalId]`, `[id]` and `[slug]` denote dynamic route segments, not literal links.
 
 | Family / proposed URLs | Audience and purpose | Owning web milestone / API dependency |
-| --- | --- | --- |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
 | `/`, `/farm-management`, `/learning`, `/veterinary-care` | Public discovery and product explanation | WEB-1A–D; no API |
 | `/catalog`, `/catalog/[slug]` | Public course/eBook/tool discovery and detail | WEB-5; API-STORE |
 | `/pricing` | Public live plan comparison | WEB-6; API-BILLING |
-| `/login`, `/register` | Account entry, with safe internal return navigation | WEB-1E; API-AUTH |
-| `/account`, `/account/orders`, `/account/orders/[id]`, `/account/library` | Authenticated account summary, own purchases and entitlements | WEB-1E / WEB-5; API-AUTH / API-STORE |
+| Sign in / sign up / account modals on the current public URL                                                                                                | User requirement 2026-10-07 supersedes separate `/login` and `/register` pages; see [modal auth spec](../../tasks/web-auth-modals/spec.md) | WEB-1E; API-AUTH                                                   |
+| `/account/orders`, `/account/orders/[id]`, `/account/library`                                                                                               | Future authenticated purchases and entitlements; current account summary uses the modal                                                    | WEB-5; API-AUTH / API-STORE                                        |
 | `/checkout/[id]` | Authenticated product checkout using the backend product identifier; server determines price and payment state | WEB-5; API-STORE; detailed payment route/session contract required |
-| `/app`, `/app/farms/new` | Authorized farm selection and self-service onboarding | WEB-2; API-FARM; blocked by API-B1 |
-| `/app/farms/[farmId]`, `/app/farms/[farmId]/members` | Selected-farm overview and supported membership actions | WEB-2; API-FARM / API-BILLING |
+| `/account/farm-onboarding`, `/farm` | Mandatory FARMER setup, authorized farm summary and member actions | Implemented WEB-2/API-B1; [evidence](../role-request-approval/operations.md) |
+| `/account/role-requests`, `/admin/role-requests`, `/admin/administrative-access` | Professional applications/review and restricted privilege management | Implemented [role/onboarding feature](../role-request-approval/spec.md) |
 | `/app/farms/[farmId]/animals`, `/app/farms/[farmId]/animals/new`, `/app/farms/[farmId]/animals/[animalId]` | Registry, registration, detail, pedigree and weights | WEB-3; API-ANIMAL |
 | `/app/farms/[farmId]/milk`, `/app/farms/[farmId]/health`, `/app/farms/[farmId]/vaccinations`, `/app/farms/[farmId]/finances`, `/app/farms/[farmId]/reports` | Farm records, schedules and reporting | WEB-4; API-MILK / API-HEALTH / API-FINANCE |
 | `/app/farms/[farmId]/billing` | Farm subscription, quota, access status and billing portal | WEB-6; API-BILLING |
@@ -76,7 +76,7 @@ Authentication and role names must follow [shared enums](../../../packages/share
 
 Keep `src/app/layout.tsx` as the shared root document and import `src/app/globals.css`. Move the placeholder home to `src/app/(marketing)/page.tsx` when replacing it; do not leave two routes owning `/`. A `(marketing)/layout.tsx` supplies public header/footer without wrapping future private workspaces. Next.js route groups do not appear in URLs.
 
-Implement the three public overview routes beneath `(marketing)`. Future `(auth)` and `(workspace)` groups can supply distinct shells when their implementation begins. The root `not-found.tsx` uses the public shell explicitly because unknown paths are not guaranteed to render inside the marketing layout.
+Implement the three public overview routes beneath `(marketing)`. The later modal auth requirement supersedes a separate `(auth)` group. The implemented `(workspace)` group supplies farmer/account/review/access shells. The root `not-found.tsx` uses the public shell explicitly because unknown paths are not guaranteed to render inside the marketing layout.
 
 Default to Server Components. Locale is resolved per request with a persistent language-selection form as specified in the localization task; the current public URLs remain unchanged. Limit client state to a mobile-menu component: toggle button with accessible name, `aria-expanded` and `aria-controls`; closed items leave the focus order; Escape closes and returns focus to the toggle; selecting a link closes the menu. Use a non-modal disclosure menu, native anchors/Next Link and native `<details>` for FAQs. A desktop breakpoint must not leave duplicate focusable navigation exposed.
 

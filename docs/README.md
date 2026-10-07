@@ -21,7 +21,7 @@ Keep paired specs/plans in their existing folders. There is no benefit in creati
 
 ## Active web planning
 
-The [public-site specification](features/web-public-site/spec.md) owns the implemented landing-page structure, first-build pages and proposed future route inventory. Its [implementation plan](features/web-public-site/plan.md) covers the public-site batch only. [Web roadmap](../apps/web/ROADMAP.md#landing-page-and-routing-roadmap) owns WEB-1A–E progress. WEB-1A–D public-site implementation is recorded in the plan; accounts and reserved routes remain unimplemented.
+The [public-site specification](features/web-public-site/spec.md) owns the implemented landing-page structure, first-build pages and proposed future route inventory. Its [implementation plan](features/web-public-site/plan.md) covers the public-site batch only. [Web roadmap](../apps/web/ROADMAP.md#landing-page-and-routing-roadmap) owns WEB-1A–E progress. WEB-1A–D public-site implementation is recorded in the plan; modal accounts and farmer/role workspaces were subsequently implemented; other reserved operational routes remain pending.
 
 The user's 2026-10-05 requirement supersedes English-first delivery: Bangla is the default and English is selectable. The [localization specification](tasks/web-localization/spec.md) and [plan](tasks/web-localization/plan.md) own the language contract/evidence; WEB-L1–3 in the web roadmap track current-site delivery and bilingual acceptance for future features.
 
@@ -57,3 +57,5 @@ Historical completed plan steps that formerly named root `ROADMAP.md` now link t
 The existing root roadmap was predominantly API work, with shared bootstrap, sync and release history mixed in. `docs/` already groups each spec with its execution plan and has no global status index. At the roadmap-separation baseline, `apps/web` contained only a home page and layout; the public site was implemented afterward. Moving the tracker without a root entry point would lose coordination and mislead old references; keeping two full root/API trackers would duplicate status. The chosen structure keeps a small root index, one API history/readiness owner, one web status/dependency owner and this authority guide. No application directories or existing spec/plan folders are moved.
 
 Reconsider separate mobile tracking only when a mobile delivery task needs it. Recovering the former structure is a documentation-only reversal; no runtime or database migration is involved.
+
+The [six-role/onboarding specification](features/role-request-approval/spec.md), [backend plan](features/role-request-approval/backend-plan.md), [frontend plan](features/role-request-approval/frontend-plan.md) and [local verification/runbook](features/role-request-approval/operations.md) own the 2026-10-07 default LEARNER, FARMER setup/member access, professional review and restricted administrative changes. The earlier five-role investigation is explicitly historical.

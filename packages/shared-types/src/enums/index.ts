@@ -1,9 +1,27 @@
 export enum UserRole {
+  LEARNER = "LEARNER",
   SUPER_ADMIN = "SUPER_ADMIN",
   ADMIN = "ADMIN",
   VET = "VET",
   FARMER = "FARMER",
   BUYER = "BUYER",
+}
+
+export const PUBLIC_REGISTRATION_ROLES = [
+  UserRole.LEARNER,
+  UserRole.FARMER,
+  UserRole.VET,
+  UserRole.BUYER,
+] as const;
+export enum ProfessionalRole {
+  FARMER = "FARMER",
+  VET = "VET",
+  BUYER = "BUYER",
+}
+export enum RoleRequestStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
 }
 
 export enum UserStatus {

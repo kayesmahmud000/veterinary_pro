@@ -24,7 +24,7 @@ flowchart LR
 - Controllers handle transport, DTOs, decorators and delegation. Some are at module root; larger modules use `controllers/`. Match the target module rather than moving files for uniformity.
 - Services implement use cases with injected interface tokens; entities capture domain state and behavior. Interfaces and tokens commonly share `*.interface.ts` files.
 - Repositories own Prisma queries, tenant filters, ORM/domain mapping and persistence error translation. Avoid leaking ORM objects as public contracts.
-- Nest modules bind tokens with `useClass`, `useExisting` or provider factories, and import required modules. Inspect imports/exports when introducing guards: `JwtAuthGuard` needs `TOKEN_SERVICE` from auth.
+- Nest modules bind tokens with `useClass`, `useExisting` or provider factories, and import required modules. Inspect imports/exports when introducing guards: `JwtAuthGuard` needs `TOKEN_SERVICE` and exported `CurrentIdentityService` from auth.
 - `packages/shared-types/src/index.ts` and its barrels export contracts consumed by API/web; Dart models require explicit synchronization.
 
 Concrete reference: `modules/animals/animals.controller.ts` → `services/animals.service.ts` (`AnimalsService`) → `repositories/animal.repository.interface.ts` / `animal.repository.ts` (`AnimalRepository`) → `entities/animal.entity.ts`. `AnimalsService.registerAnimal` uses `ITransactionManager.run` and passes the same transaction to persistence and `AuditLogRepository.record`.
@@ -38,3 +38,5 @@ Concrete reference: `modules/animals/animals.controller.ts` → `services/animal
 `PrismaService` connects with bounded retry, logs slow queries and disconnects on module destruction. A configured `DATABASE_REPLICA_URL` is not evidence that read routing exists. Logging currently uses Nest `Logger`, not the Pino integration described in older rules.
 
 For bootstrap differences, worker/runtime constraints and external provider behavior, see [operations](../operations/runtime.md). For decisions and their trade-offs, see [decision records](../decisions/README.md).
+
+Updated 2026-10-07: professional requests/administration/farmer onboarding use audited Prisma transactions and shared Zod validation. HTTP and chat recipient/event authorization resolve current-primary role/status/session versions. An independent role-notifications worker owns durable outbox/recipient queue delivery; it is not started by HTTP/serverless. [Feature architecture and local evidence](../../docs/features/role-request-approval/backend-plan.md) describe the implemented boundaries; [runbook](../../docs/features/role-request-approval/operations.md) records release/real-provider limits.

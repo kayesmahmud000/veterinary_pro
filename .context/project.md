@@ -7,7 +7,7 @@ VETRALINK PRO serves farm owners and staff, veterinarians, platform administrato
 Versions below are manifest major versions/ranges, not a claim about the newest upstream release. Resolve exact installed versions from lockfiles.
 
 | Area | Present implementation |
-| --- | --- |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- |
 | Workspace | pnpm `10.18.3`, Turborepo 2, Node engine `>=20`; CI uses Node 20 |
 | API | NestJS 10 on Express 4, TypeScript 5, Prisma 5; class-validator DTOs and Zod environment parsing |
 | Database | PostgreSQL 16 in local Compose; Redis 7 for BullMQ and Redis-backed mechanisms |
@@ -33,4 +33,6 @@ Versions below are manifest major versions/ranges, not a claim about the newest 
 
 ## Product status
 
-Backend features have substantial source and test coverage in the repository, but this context does not certify every path. There is no implemented web dashboard, web authentication/client store, or feature navigation tree. Mobile BLoC screens, login and sync wiring are not present in `main.dart`. “Doctor portal,” “triage dashboard” and “prescription editor” task names frequently refer to backend capabilities, not completed client screens. Read [known gaps](known-gaps.md) before estimating or shipping work.
+Backend features have substantial source and test coverage in the repository, but this context does not certify every path. Web modal authentication and a scoped session provider/boundary were added on 2026-10-07; [the auth plan](../docs/tasks/web-auth-modals/plan.md) distinguishes local verification from live backend acceptance. Farmer setup/member workspace and professional application/review/access navigation exist; operational livestock/clinical/commerce dashboards remain pending. Mobile BLoC screens, login and sync wiring are not present in `main.dart`. “Doctor portal,” “triage dashboard” and “prescription editor” task names frequently refer to backend capabilities, not completed client screens. Read [known gaps](known-gaps.md) before estimating or shipping work.
+
+Updated 2026-10-07: the six platform roles include default LEARNER; public signup also accepts FARMER/VET/BUYER. New FARMER accounts must complete atomic create/confirm onboarding before operational farm access. Shared Zod and protected modal/workspace boundaries are implemented; reviewed professional upgrades and SUPER-only administrative changes use audited transactions/versioned current-primary authorization. [Feature evidence and deployment limits](../docs/features/role-request-approval/operations.md) cover isolated PostgreSQL/Redis tests and mock mail without production migration.
