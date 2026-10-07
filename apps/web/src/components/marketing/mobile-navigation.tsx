@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import type { PublicNavItem } from "@/lib/public-navigation";
+import { AuthControls } from "@/components/auth/auth-controls";
 
 export function MobileNavigation({
   items,
@@ -46,6 +47,7 @@ export function MobileNavigation({
             {item.label}
           </Link>
         ))}
+        <AuthControls mobile onOpen={() => setOpen(false)} />
       </nav>
     </div>
   );

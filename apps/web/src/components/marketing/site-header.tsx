@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Sprout, ArrowUpRight } from "lucide-react";
+import { Sprout } from "lucide-react";
+import { AuthControls } from "@/components/auth/auth-controls";
 import { getPublicNavItems } from "@/lib/public-navigation";
 import { getLocalization } from "@/lib/i18n/server";
 import { MobileNavigation } from "./mobile-navigation";
@@ -27,13 +28,7 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <Link
-          className="button button-small header-cta"
-          href="/farm-management"
-        >
-          {messages.actions.farmTools}{" "}
-          <ArrowUpRight size={16} aria-hidden="true" />
-        </Link>
+        <AuthControls />
         <LanguageSwitcher
           locale={locale}
           label={messages.navigation.language}

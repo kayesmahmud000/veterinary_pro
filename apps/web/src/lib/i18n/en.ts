@@ -1,7 +1,9 @@
 import { showcaseEn } from "./showcase";
 import { resourcesEn } from "./resources";
+import { authEn } from "./auth";
 
 export const en = {
+  auth: authEn,
   showcase: showcaseEn,
   resources: resourcesEn,
   metadata: {
@@ -43,7 +45,7 @@ export const en = {
     explore: "Explore the platform",
     availabilityTitle: "Explore the vision.",
     availabilityBody:
-      "This page introduces the product approach. Account access, operational tools, purchases and consultation booking are not available on this public website yet.",
+      "This page introduces the product approach. You can create an account or sign in from the menu. Operational tools, purchases and consultation booking are planned.",
   },
   notFound: {
     title: "Page not found",
@@ -140,7 +142,7 @@ export const en = {
         {
           question: "What can I explore on this website?",
           answer:
-            "Try the sample farm demo, read free record-keeping guides and download blank CSV templates. You can also explore our product approach. Account access, purchases and consultation booking are not available on this public site yet.",
+            "Try the sample farm demo, read free record-keeping guides and download blank CSV templates. Create an account or sign in from the menu. Purchases and consultation booking are planned.",
         },
         {
           question: "Which animals is the platform designed to support?",
