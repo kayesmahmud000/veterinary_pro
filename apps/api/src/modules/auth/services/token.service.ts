@@ -1,15 +1,15 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as crypto from "crypto";
+import { z } from "zod";
 import {
   AuthTokensDto,
   JwtPayload,
+  UserRole,
+  UserStatus,
 } from "@vetralink/shared-types";
 import { EnvService } from "../../../config/env.service";
-import {
-  GenerateTokensParams,
-  ITokenService,
-} from "./token.service.interface";
+import { GenerateTokensParams, ITokenService } from "./token.service.interface";
 import { UnauthorizedDomainException } from "../../../common/exceptions/domain.exception";
 
 @Injectable()
@@ -18,15 +18,16 @@ export class TokenService implements ITokenService {
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly envService: EnvService
+    private readonly envService: EnvService,
   ) {}
 
   public async generateTokens(
-    params: GenerateTokensParams
+    params: GenerateTokensParams,
   ): Promise<AuthTokensDto> {
     const jti = crypto.randomUUID();
     const payload: JwtPayload = {
       sub: params.userId,
+      authorizationVersion: params.authorizationVersion ?? 0,
       email: params.email,
       role: params.role,
       status: params.status,
@@ -37,7 +38,7 @@ export class TokenService implements ITokenService {
     const accessToken = await this.generateAccessToken(payload);
     const refreshToken = this.generateRefreshToken();
     const expiresIn = this.parseDurationToSeconds(
-      this.envService.jwtAccessExpiration
+      this.envService.jwtAccessExpiration,
     );
 
     return {
@@ -49,10 +50,13 @@ export class TokenService implements ITokenService {
   }
 
   public async generateAccessToken(payload: JwtPayload): Promise<string> {
-    return this.jwtService.signAsync(payload as unknown as Record<string, unknown>, {
-      secret: this.envService.jwtAccessSecret,
-      expiresIn: this.envService.jwtAccessExpiration,
-    });
+    return this.jwtService.signAsync(
+      payload as unknown as Record<string, unknown>,
+      {
+        secret: this.envService.jwtAccessSecret,
+        expiresIn: this.envService.jwtAccessExpiration,
+      },
+    );
   }
 
   public generateRefreshToken(): string {
@@ -72,18 +76,28 @@ export class TokenService implements ITokenService {
       const decoded = await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret: this.envService.jwtAccessSecret,
       });
-      return decoded;
+      return z
+        .object({
+          sub: z.string().uuid(),
+          email: z.string().email(),
+          role: z.nativeEnum(UserRole),
+          status: z.nativeEnum(UserStatus),
+          authorizationVersion: z.number().int().nonnegative().optional(),
+          activeFarmId: z.string().uuid().optional(),
+          jti: z.string().uuid(),
+          iat: z.number().int().nonnegative(),
+          exp: z.number().int().positive(),
+        })
+        .parse(decoded);
     } catch (error) {
-      this.logger.debug(
-        `JWT verification failed: ${(error as Error).message}`
-      );
+      this.logger.debug(`JWT verification failed: ${(error as Error).message}`);
       throw new UnauthorizedDomainException("Invalid or expired access token.");
     }
   }
 
   public getRefreshTokenExpiresAt(): Date {
     const durationMs = this.parseDurationToMs(
-      this.envService.jwtRefreshExpiration
+      this.envService.jwtRefreshExpiration,
     );
     return new Date(Date.now() + durationMs);
   }

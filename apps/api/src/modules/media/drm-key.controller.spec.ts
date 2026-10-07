@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Response, Request } from "express";
 import { UserRole, UserStatus } from "@vetralink/shared-types";
@@ -69,6 +70,11 @@ describe("DrmKeyController (Unit)", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [DrmKeyController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         { provide: DRM_KEY_SERVICE, useValue: drmKeyService },
         { provide: DRM_TOKEN_SERVICE, useValue: drmTokenService },
         { provide: ENTITLEMENT_SERVICE, useValue: entitlementService },
@@ -99,17 +105,17 @@ describe("DrmKeyController (Unit)", () => {
       const response = await controller.generatePlaybackToken(
         mockUser,
         { productId },
-        mockReq
+        mockReq,
       );
 
       expect(entitlementService.checkEntitlement).toHaveBeenCalledWith(
         mockUser.sub,
         mockUser.role,
-        productId
+        productId,
       );
       expect(response.playbackToken).toBe("signed-playback-jwt");
       expect(response.keyUrl).toBe(
-        "https://api.vetralink.pro/api/v1/media/drm/key/signed-playback-jwt"
+        "https://api.vetralink.pro/api/v1/media/drm/key/signed-playback-jwt",
       );
       expect(response.expiresInSeconds).toBe(600);
     });
@@ -119,7 +125,7 @@ describe("DrmKeyController (Unit)", () => {
       entitlementService.checkEntitlement.mockResolvedValue(false);
 
       await expect(
-        controller.generatePlaybackToken(mockUser, { productId }, mockReq)
+        controller.generatePlaybackToken(mockUser, { productId }, mockReq),
       ).rejects.toThrow(ForbiddenOperationException);
 
       expect(drmTokenService.generatePlaybackToken).not.toHaveBeenCalled();
@@ -146,16 +152,16 @@ describe("DrmKeyController (Unit)", () => {
 
       expect(drmTokenService.verifyPlaybackToken).toHaveBeenCalledWith(token);
       expect(drmKeyService.deriveKey).toHaveBeenCalledWith(
-        "prod-1111-1111-1111-111111111111"
+        "prod-1111-1111-1111-111111111111",
       );
       expect(res.setHeader).toHaveBeenCalledWith(
         "Content-Type",
-        "application/octet-stream"
+        "application/octet-stream",
       );
       expect(res.setHeader).toHaveBeenCalledWith("Content-Length", "16");
       expect(res.setHeader).toHaveBeenCalledWith(
         "Cache-Control",
-        "private, no-cache, no-store, must-revalidate"
+        "private, no-cache, no-store, must-revalidate",
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.end).toHaveBeenCalledWith(dummyKey);
@@ -186,9 +192,9 @@ describe("DrmKeyController (Unit)", () => {
     it("should throw UnauthorizedDomainException when token query param is missing", async () => {
       const res = createMockResponse();
 
-      await expect(controller.getKeyByQueryParam(undefined, res)).rejects.toThrow(
-        UnauthorizedDomainException
-      );
+      await expect(
+        controller.getKeyByQueryParam(undefined, res),
+      ).rejects.toThrow(UnauthorizedDomainException);
     });
   });
 

@@ -1,297 +1,217 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import {
-  AuthUserSummary,
   LoginRequestDto,
   LoginResponseDto,
   RefreshTokenResponseDto,
   RegisterRequestDto,
   RegisterResponseDto,
+  PUBLIC_REGISTRATION_ROLES,
   UserRole,
+  registerSchema,
 } from "@vetralink/shared-types";
+import { randomUUID } from "crypto";
+import { ClientMetadata, IAuthService } from "./auth.service.interface";
 import {
-  ClientMetadata,
-  IAuthService,
-} from "./auth.service.interface";
-import {
-  IUserRepository,
   USER_REPOSITORY,
+  IUserRepository,
 } from "../../users/repositories/user.repository.interface";
 import {
-  IRefreshTokenRepository,
   REFRESH_TOKEN_REPOSITORY,
+  IRefreshTokenRepository,
 } from "../repositories/refresh-token.repository.interface";
+import { PASSWORD_HASHER, IPasswordHasher } from "./password-hasher.interface";
+import { TOKEN_SERVICE, ITokenService } from "./token.service.interface";
 import {
-  IPasswordHasher,
-  PASSWORD_HASHER,
-} from "./password-hasher.interface";
-import {
-  ITokenService,
-  TOKEN_SERVICE,
-} from "./token.service.interface";
-import {
-  ITransactionManager,
   TRANSACTION_MANAGER,
+  ITransactionManager,
 } from "../../prisma/interfaces/transaction.interface";
+import {
+  AUDIT_LOG_REPOSITORY,
+  IAuditLogRepository,
+} from "../../audit/repositories/audit-log.repository.interface";
 import { PiiCryptoService } from "../../../common/crypto/pii-crypto.service";
 import { UserEntity } from "../../users/entities/user.entity";
 import { RefreshTokenEntity } from "../entities/refresh-token.entity";
+import { toAuthUserSummary } from "../../users/auth-user-summary";
 import {
   EntityConflictException,
   ForbiddenOperationException,
   UnauthorizedDomainException,
+  ValidationDomainException,
 } from "../../../common/exceptions/domain.exception";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class AuthService implements IAuthService {
-  private readonly logger = new Logger(AuthService.name);
-
   constructor(
-    @Inject(USER_REPOSITORY)
-    private readonly userRepository: IUserRepository,
+    @Inject(USER_REPOSITORY) private readonly users: IUserRepository,
     @Inject(REFRESH_TOKEN_REPOSITORY)
-    private readonly refreshTokenRepository: IRefreshTokenRepository,
-    @Inject(PASSWORD_HASHER)
-    private readonly passwordHasher: IPasswordHasher,
-    @Inject(TOKEN_SERVICE)
-    private readonly tokenService: ITokenService,
+    private readonly refreshTokens: IRefreshTokenRepository,
+    @Inject(PASSWORD_HASHER) private readonly passwords: IPasswordHasher,
+    @Inject(TOKEN_SERVICE) private readonly tokens: ITokenService,
     @Inject(TRANSACTION_MANAGER)
-    private readonly transactionManager: ITransactionManager,
-    private readonly piiCryptoService: PiiCryptoService
+    private readonly transactions: ITransactionManager,
+    private readonly pii: PiiCryptoService,
+    @Inject(AUDIT_LOG_REPOSITORY) private readonly audit: IAuditLogRepository,
   ) {}
-
   public async register(
     dto: RegisterRequestDto,
-    meta?: ClientMetadata
+    meta?: ClientMetadata,
   ): Promise<RegisterResponseDto> {
-    const requestedRole = dto.role ?? UserRole.FARMER;
-
-    if (
-      requestedRole === UserRole.SUPER_ADMIN ||
-      requestedRole === UserRole.ADMIN
-    ) {
+    const role = dto.role ?? UserRole.LEARNER;
+    if (!(PUBLIC_REGISTRATION_ROLES as readonly UserRole[]).includes(role))
       throw new ForbiddenOperationException(
-        "Registration for administrative roles is prohibited."
+        "Registration for this role is prohibited.",
       );
-    }
-
-    const emailExists = await this.userRepository.existsByEmail(dto.email);
-    if (emailExists) {
+    const parsed = registerSchema.safeParse(dto);
+    if (!parsed.success)
+      throw new ValidationDomainException(
+        "Invalid registration fields.",
+        parsed.error.issues.map((i) => ({
+          field: i.path.join("."),
+          message: i.message,
+        })),
+      );
+    const input = parsed.data;
+    if (await this.users.existsByEmail(input.email))
       throw new EntityConflictException(
-        `User with email '${dto.email}' already exists.`,
-        "email"
+        "Email is already registered.",
+        "email",
       );
-    }
-
-    let phoneHash: string | null = null;
-    if (dto.phone) {
-      phoneHash = this.piiCryptoService.hashPhone(dto.phone);
-      const phoneExists = await this.userRepository.existsByPhoneHash(
-        phoneHash
+    const phoneHash = input.phone ? this.pii.hashPhone(input.phone) : null;
+    if (phoneHash && (await this.users.existsByPhoneHash(phoneHash)))
+      throw new EntityConflictException(
+        "Phone is already registered.",
+        "phone",
       );
-      if (phoneExists) {
-        throw new EntityConflictException(
-          "User with this phone number already exists.",
-          "phone"
-        );
-      }
-    }
-
-    const passwordHash = await this.passwordHasher.hash(dto.password);
-
     const user = UserEntity.create({
-      email: dto.email,
-      name: dto.name,
-      passwordHash,
-      role: requestedRole,
-      phone: dto.phone,
+      email: input.email,
+      name: input.name,
+      passwordHash: await this.passwords.hash(input.password),
+      role,
+      phone: input.phone,
       phoneHash,
     });
-
-    const tokens = await this.tokenService.generateTokens({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      status: user.status,
+    const tokens = await this.transactions.run(async (tx) => {
+      await this.users.create(user, tx);
+      const pair = await this.createSession(user, tx, meta);
+      await this.audit.record(
+        {
+          userId: user.id,
+          action: "USER_REGISTERED",
+          entityType: "User",
+          entityId: user.id,
+          newValues: { role },
+          traceId: randomUUID(),
+          ipAddress: meta?.ipAddress,
+        },
+        tx,
+      );
+      return pair;
     });
-
-    const tokenHash = this.tokenService.hashRefreshToken(tokens.refreshToken);
-    const refreshTokenEntity = RefreshTokenEntity.create({
-      userId: user.id,
-      tokenHash,
-      expiresAt: this.tokenService.getRefreshTokenExpiresAt(),
-      ipAddress: meta?.ipAddress,
-      userAgent: meta?.userAgent,
-    });
-
-    await this.transactionManager.run(async (tx) => {
-      await this.userRepository.create(user, tx);
-      await this.refreshTokenRepository.create(refreshTokenEntity, tx);
-    });
-
-    this.logger.log(`New user registered [${user.email}] with role ${user.role}`);
-
-    return {
-      user: this.toAuthUserSummary(user),
-      tokens,
-    };
+    return { user: toAuthUserSummary(user), tokens };
   }
-
   public async login(
     dto: LoginRequestDto,
-    meta?: ClientMetadata
+    meta?: ClientMetadata,
   ): Promise<LoginResponseDto> {
-    let user: UserEntity | null = null;
-
-    if (dto.email) {
-      user = await this.userRepository.findByEmail(dto.email);
-    } else if (dto.phone) {
-      const phoneHash = this.piiCryptoService.hashPhone(dto.phone);
-      user = await this.userRepository.findByPhoneHash(phoneHash);
-    }
-
-    if (!user) {
+    const found = dto.email
+      ? await this.users.findByEmail(dto.email)
+      : dto.phone
+        ? await this.users.findByPhoneHash(this.pii.hashPhone(dto.phone))
+        : null;
+    if (!found || found.isDeleted())
       throw new UnauthorizedDomainException("Invalid email or password.");
-    }
-
-    if (user.isSuspended()) {
+    if (found.isSuspended())
       throw new ForbiddenOperationException("Account has been suspended.");
-    }
-
-    if (user.isDeleted()) {
+    if (!(await this.passwords.compare(dto.password, found.passwordHash)))
       throw new UnauthorizedDomainException("Invalid email or password.");
-    }
-
-    const isPasswordValid = await this.passwordHasher.compare(
-      dto.password,
-      user.passwordHash
-    );
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedDomainException("Invalid email or password.");
-    }
-
-    user.recordLogin();
-
-    const tokens = await this.tokenService.generateTokens({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      status: user.status,
+    return this.transactions.run(async (tx) => {
+      const user = await this.users.lockById(found.id, tx);
+      if (
+        !user ||
+        user.isDeleted() ||
+        user.isSuspended() ||
+        user.passwordHash !== found.passwordHash
+      )
+        throw new UnauthorizedDomainException(
+          "User session is no longer active.",
+        );
+      await this.users.recordLogin(user.id, tx);
+      return {
+        user: toAuthUserSummary(user),
+        tokens: await this.createSession(user, tx, meta),
+      };
     });
-
-    const tokenHash = this.tokenService.hashRefreshToken(tokens.refreshToken);
-    const refreshTokenEntity = RefreshTokenEntity.create({
-      userId: user.id,
-      tokenHash,
-      expiresAt: this.tokenService.getRefreshTokenExpiresAt(),
-      ipAddress: meta?.ipAddress,
-      userAgent: meta?.userAgent,
-    });
-
-    await this.transactionManager.run(async (tx) => {
-      await this.userRepository.update(user, tx);
-      await this.refreshTokenRepository.create(refreshTokenEntity, tx);
-    });
-
-    this.logger.log(`User logged in [${user.email}]`);
-
-    return {
-      user: this.toAuthUserSummary(user),
-      tokens,
-    };
   }
-
   public async refreshToken(
-    refreshToken: string,
-    meta?: ClientMetadata
+    rawToken: string,
+    meta?: ClientMetadata,
   ): Promise<RefreshTokenResponseDto> {
-    if (!refreshToken || refreshToken.trim().length === 0) {
+    if (!rawToken?.trim())
       throw new UnauthorizedDomainException("Refresh token cannot be empty.");
-    }
-
-    const tokenHash = this.tokenService.hashRefreshToken(refreshToken);
-    const existingToken =
-      await this.refreshTokenRepository.findByTokenHash(tokenHash);
-
-    if (!existingToken) {
-      throw new UnauthorizedDomainException("Invalid refresh token.");
-    }
-
-    // Refresh Token Reuse Detection
-    if (existingToken.isRevoked()) {
-      this.logger.warn(
-        `Refresh token reuse detected for user ${existingToken.userId}. Revoking all sessions.`
-      );
-      await this.refreshTokenRepository.revokeAllForUser(existingToken.userId);
+    const hash = this.tokens.hashRefreshToken(rawToken);
+    const found = await this.refreshTokens.findByTokenHash(hash);
+    if (!found) throw new UnauthorizedDomainException("Invalid refresh token.");
+    const result = await this.transactions.run(async (tx) => {
+      const user = await this.users.lockById(found.userId, tx);
+      const current = await this.refreshTokens.lockByTokenHash(hash, tx);
+      if (!user || user.isDeleted() || user.isSuspended() || !current)
+        throw new UnauthorizedDomainException(
+          "User session is no longer active.",
+        );
+      if (current.isRevoked()) {
+        await this.refreshTokens.revokeAllForUser(user.id, new Date(), tx);
+        await this.users.invalidateSessions(user.id, tx);
+        return null;
+      }
+      if (current.isExpired())
+        throw new UnauthorizedDomainException("Refresh token has expired.");
+      await this.refreshTokens.revoke(current.id, new Date(), tx);
+      return { tokens: await this.createSession(user, tx, meta) };
+    });
+    if (!result)
       throw new UnauthorizedDomainException(
-        "Refresh token reuse detected. All sessions have been revoked."
+        "Refresh token reuse detected. All sessions have been revoked.",
       );
-    }
-
-    if (existingToken.isExpired()) {
-      throw new UnauthorizedDomainException("Refresh token has expired.");
-    }
-
-    const user = await this.userRepository.findById(existingToken.userId);
-    if (!user || user.isSuspended() || user.isDeleted()) {
-      throw new UnauthorizedDomainException("User session is no longer active.");
-    }
-
-    const newTokens = await this.tokenService.generateTokens({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      status: user.status,
-    });
-
-    const newTokenHash = this.tokenService.hashRefreshToken(
-      newTokens.refreshToken
-    );
-
-    const newRefreshTokenEntity = RefreshTokenEntity.create({
-      userId: user.id,
-      tokenHash: newTokenHash,
-      expiresAt: this.tokenService.getRefreshTokenExpiresAt(),
-      ipAddress: meta?.ipAddress,
-      userAgent: meta?.userAgent,
-    });
-
-    await this.transactionManager.run(async (tx) => {
-      await this.refreshTokenRepository.revoke(existingToken.id, new Date(), tx);
-      await this.refreshTokenRepository.create(newRefreshTokenEntity, tx);
-    });
-
-    return {
-      tokens: newTokens,
-    };
+    return result;
   }
-
-  public async logout(refreshToken: string): Promise<void> {
-    if (!refreshToken || refreshToken.trim().length === 0) {
-      return;
-    }
-    const tokenHash = this.tokenService.hashRefreshToken(refreshToken);
-    await this.refreshTokenRepository.revokeByTokenHash(tokenHash);
+  public async logout(rawToken: string): Promise<void> {
+    if (rawToken?.trim())
+      await this.refreshTokens.revokeByTokenHash(
+        this.tokens.hashRefreshToken(rawToken),
+      );
   }
-
   public async logoutAll(userId: string): Promise<void> {
-    if (!userId || userId.trim().length === 0) {
-      return;
-    }
-    await this.refreshTokenRepository.revokeAllForUser(userId);
+    if (!userId?.trim()) return;
+    await this.transactions.run(async (tx) => {
+      await this.users.lockById(userId, tx);
+      await this.users.invalidateSessions(userId, tx);
+      await this.refreshTokens.revokeAllForUser(userId, new Date(), tx);
+    });
   }
-
-  private toAuthUserSummary(user: UserEntity): AuthUserSummary {
-    return {
-      id: user.id,
+  private async createSession(
+    user: UserEntity,
+    tx: Prisma.TransactionClient,
+    meta?: ClientMetadata,
+  ) {
+    const pair = await this.tokens.generateTokens({
+      userId: user.id,
       email: user.email,
-      name: user.name,
       role: user.role,
       status: user.status,
-      isEmailVerified: user.isEmailVerified,
-      maskedPhone: user.maskPhone(),
-      avatarUrl: user.avatarUrl,
-      createdAt: user.createdAt.toISOString(),
-    };
+      authorizationVersion: user.authorizationVersion,
+    });
+    await this.refreshTokens.create(
+      RefreshTokenEntity.create({
+        userId: user.id,
+        tokenHash: this.tokens.hashRefreshToken(pair.refreshToken),
+        expiresAt: this.tokens.getRefreshTokenExpiresAt(),
+        ipAddress: meta?.ipAddress,
+        userAgent: meta?.userAgent,
+      }),
+      tx,
+    );
+    return pair;
   }
 }

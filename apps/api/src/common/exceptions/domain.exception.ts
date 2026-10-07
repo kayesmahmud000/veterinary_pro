@@ -1,11 +1,17 @@
 import { HttpStatus } from "@nestjs/common";
-import { SubscriptionQuotaType, SubscriptionTier } from "@vetralink/shared-types";
+import {
+  SubscriptionQuotaType,
+  SubscriptionTier,
+} from "@vetralink/shared-types";
 
 export abstract class DomainException extends Error {
   abstract readonly statusCode: number;
   abstract readonly errorCode: string;
 
-  constructor(message: string, public readonly details?: unknown) {
+  constructor(
+    message: string,
+    public readonly details?: unknown,
+  ) {
     super(message);
     this.name = this.constructor.name;
     Object.setPrototypeOf(this, new.target.prototype);
@@ -21,8 +27,18 @@ export class EntityNotFoundException extends DomainException {
     super(
       identifier
         ? `${entityName} with identifier '${identifier}' was not found.`
-        : `${entityName} was not found.`
+        : `${entityName} was not found.`,
     );
+  }
+}
+
+export class WorkflowException extends DomainException {
+  constructor(
+    public readonly errorCode: string,
+    message: string,
+    public readonly statusCode: number = 409,
+  ) {
+    super(message);
   }
 }
 
@@ -30,7 +46,10 @@ export class EntityConflictException extends DomainException {
   readonly statusCode = HttpStatus.CONFLICT;
   readonly errorCode = "ENTITY_CONFLICT";
 
-  constructor(message: string, public readonly conflictField?: string) {
+  constructor(
+    message: string,
+    public readonly conflictField?: string,
+  ) {
     super(message);
   }
 }
@@ -41,7 +60,10 @@ export class ValidationDomainException extends DomainException {
 
   constructor(
     message: string,
-    public readonly validationErrors?: Array<{ field: string; message: string }>
+    public readonly validationErrors?: Array<{
+      field: string;
+      message: string;
+    }>,
   ) {
     super(message);
   }
@@ -51,7 +73,9 @@ export class ForbiddenOperationException extends DomainException {
   readonly statusCode = HttpStatus.FORBIDDEN;
   readonly errorCode = "FORBIDDEN_OPERATION";
 
-  constructor(message = "You do not have permission to perform this operation.") {
+  constructor(
+    message = "You do not have permission to perform this operation.",
+  ) {
     super(message);
   }
 }
@@ -79,7 +103,7 @@ export class QuotaExceededDomainException extends DomainException {
 
   constructor(
     message: string,
-    public override readonly details?: QuotaExceededDetails
+    public override readonly details?: QuotaExceededDetails,
   ) {
     super(message, details);
   }
@@ -99,7 +123,7 @@ export class SubscriptionReadOnlyException extends DomainException {
 
   constructor(
     message = "Your subscription is past due and the grace period has expired. Your account has been restricted to read-only mode. Please update your payment method to restore write access.",
-    public override readonly details?: SubscriptionReadOnlyDetails
+    public override readonly details?: SubscriptionReadOnlyDetails,
   ) {
     super(message, details);
   }
@@ -119,9 +143,8 @@ export class SubscriptionSuspendedException extends DomainException {
 
   constructor(
     message = "Your subscription has been suspended due to overdue payment. Please settle your outstanding balance on the billing portal to reactivate your account.",
-    public override readonly details?: SubscriptionSuspendedDetails
+    public override readonly details?: SubscriptionSuspendedDetails,
   ) {
     super(message, details);
   }
 }
-

@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
 import {
@@ -87,6 +88,11 @@ describe("VaccineScheduleController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [VaccineScheduleController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: VACCINE_SCHEDULE_SERVICE,
           useValue: service,
@@ -107,7 +113,9 @@ describe("VaccineScheduleController", () => {
       ],
     }).compile();
 
-    controller = module.get<VaccineScheduleController>(VaccineScheduleController);
+    controller = module.get<VaccineScheduleController>(
+      VaccineScheduleController,
+    );
   });
 
   describe("recordAdministration", () => {
@@ -126,14 +134,14 @@ describe("VaccineScheduleController", () => {
         farmId,
         mockUser,
         dto,
-        "trace-123"
+        "trace-123",
       );
 
       expect(service.recordAdministration).toHaveBeenCalledWith(
         farmId,
         mockUser.sub,
         dto,
-        "trace-123"
+        "trace-123",
       );
       expect(result).toEqual(mockRecordResponse);
     });
@@ -196,7 +204,9 @@ describe("VaccineScheduleController", () => {
 
       const result = controller.getSpeciesProtocols(AnimalSpecies.COW);
 
-      expect(service.getSpeciesProtocols).toHaveBeenCalledWith(AnimalSpecies.COW);
+      expect(service.getSpeciesProtocols).toHaveBeenCalledWith(
+        AnimalSpecies.COW,
+      );
       expect(result).toEqual(protocolsResult);
     });
   });
@@ -219,13 +229,13 @@ describe("VaccineScheduleController", () => {
         details: [],
       };
       notificationService.processFarmDueReminders.mockResolvedValueOnce(
-        scanResult
+        scanResult,
       );
 
       const result = await controller.triggerReminderScan(
         farmId,
         dto,
-        "trace-scan"
+        "trace-scan",
       );
 
       expect(notificationService.processFarmDueReminders).toHaveBeenCalledWith(
@@ -233,7 +243,7 @@ describe("VaccineScheduleController", () => {
         expect.any(Date),
         7,
         false,
-        "trace-scan"
+        "trace-scan",
       );
       expect(result).toEqual(scanResult);
     });
@@ -256,7 +266,7 @@ describe("VaccineScheduleController", () => {
 
       expect(notificationService.listReminderLogs).toHaveBeenCalledWith(
         farmId,
-        query
+        query,
       );
       expect(result).toEqual(logsResult);
     });
@@ -266,12 +276,16 @@ describe("VaccineScheduleController", () => {
     it("should delegate to service.getRecordById", async () => {
       service.getRecordById.mockResolvedValueOnce(mockRecordResponse);
 
-      const result = await controller.getRecordById(farmId, recordId, "2026-09-02");
+      const result = await controller.getRecordById(
+        farmId,
+        recordId,
+        "2026-09-02",
+      );
 
       expect(service.getRecordById).toHaveBeenCalledWith(
         recordId,
         farmId,
-        "2026-09-02"
+        "2026-09-02",
       );
       expect(result).toEqual(mockRecordResponse);
     });
@@ -291,7 +305,7 @@ describe("VaccineScheduleController", () => {
         mockUser,
         recordId,
         dto,
-        "trace-456"
+        "trace-456",
       );
 
       expect(service.updateRecord).toHaveBeenCalledWith(
@@ -299,7 +313,7 @@ describe("VaccineScheduleController", () => {
         farmId,
         mockUser.sub,
         dto,
-        "trace-456"
+        "trace-456",
       );
       expect(result).toEqual(updatedResponse);
     });
@@ -315,7 +329,7 @@ describe("VaccineScheduleController", () => {
         recordId,
         farmId,
         mockUser.sub,
-        "trace-789"
+        "trace-789",
       );
     });
   });

@@ -18,7 +18,7 @@ describe("JwtAuthGuard", () => {
   };
 
   const createMockContext = (
-    headers: Record<string, string> = {}
+    headers: Record<string, string> = {},
   ): { context: ExecutionContext; request: any } => {
     const request = {
       headers,
@@ -45,7 +45,9 @@ describe("JwtAuthGuard", () => {
       verifyAccessToken: jest.fn(),
     } as unknown as jest.Mocked<ITokenService>;
 
-    guard = new JwtAuthGuard(reflector, tokenService);
+    guard = new JwtAuthGuard(reflector, tokenService, {
+      resolve: jest.fn(async (claims) => claims),
+    } as any);
   });
 
   it("should allow public routes without token validation", async () => {
@@ -63,7 +65,7 @@ describe("JwtAuthGuard", () => {
     const { context } = createMockContext({});
 
     await expect(guard.canActivate(context)).rejects.toThrow(
-      UnauthorizedDomainException
+      UnauthorizedDomainException,
     );
   });
 
@@ -74,7 +76,7 @@ describe("JwtAuthGuard", () => {
     });
 
     await expect(guard.canActivate(context)).rejects.toThrow(
-      UnauthorizedDomainException
+      UnauthorizedDomainException,
     );
   });
 
@@ -90,7 +92,7 @@ describe("JwtAuthGuard", () => {
 
     expect(result).toBe(true);
     expect(tokenService.verifyAccessToken).toHaveBeenCalledWith(
-      "valid.jwt.token"
+      "valid.jwt.token",
     );
     expect(request.user).toEqual(mockPayload);
   });
@@ -98,7 +100,7 @@ describe("JwtAuthGuard", () => {
   it("should throw UnauthorizedDomainException when token verification fails", async () => {
     reflector.getAllAndOverride.mockReturnValue(false);
     tokenService.verifyAccessToken.mockRejectedValueOnce(
-      new UnauthorizedDomainException("Invalid token")
+      new UnauthorizedDomainException("Invalid token"),
     );
 
     const { context } = createMockContext({
@@ -106,7 +108,7 @@ describe("JwtAuthGuard", () => {
     });
 
     await expect(guard.canActivate(context)).rejects.toThrow(
-      UnauthorizedDomainException
+      UnauthorizedDomainException,
     );
   });
 });

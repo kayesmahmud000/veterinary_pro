@@ -1,5 +1,9 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
+import {
+  Inject,
+  Injectable,
+  OnModuleDestroy,
+  OnModuleInit,
+} from "@nestjs/common";
 import {
   ConnectedSocket,
   MessageBody,
@@ -17,7 +21,16 @@ import {
   UserRole,
 } from "@vetralink/shared-types";
 import { Server, Socket } from "socket.io";
-import { PrismaService } from "../../prisma/prisma.service";
+import { z } from "zod";
+import {
+  TOKEN_SERVICE,
+  ITokenService,
+} from "../../auth/services/token.service.interface";
+import { CurrentIdentityService } from "../../auth/services/current-identity.service";
+import {
+  FARM_MEMBER_REPOSITORY,
+  IFarmMemberRepository,
+} from "../../farms/repositories/farm-member.repository.interface";
 import {
   CONSULTATION_REPOSITORY,
   IConsultationRepository,
@@ -29,123 +42,162 @@ import {
 
 @WebSocketGateway({
   namespace: "/consultations",
-  cors: {
-    origin: "*",
-    credentials: true,
-  },
+  cors: { origin: "*", credentials: true },
 })
 @Injectable()
 export class ConsultationChatGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    OnModuleInit,
+    OnModuleDestroy
 {
-  private readonly logger = new Logger(ConsultationChatGateway.name);
-
-  @WebSocketServer()
-  public server!: Server;
-
+  @WebSocketServer() public server!: Server;
+  private timer?: ReturnType<typeof setInterval>;
   constructor(
-    private readonly jwtService: JwtService,
+    @Inject(TOKEN_SERVICE) private readonly tokens: ITokenService,
     @Inject(CONSULTATION_CHAT_SERVICE)
-    private readonly chatService: IConsultationChatService,
+    private readonly chat: IConsultationChatService,
     @Inject(CONSULTATION_REPOSITORY)
-    private readonly consultationRepo: IConsultationRepository,
-    private readonly prisma: PrismaService,
+    private readonly consultations: IConsultationRepository,
+    @Inject(FARM_MEMBER_REPOSITORY)
+    private readonly members: IFarmMemberRepository,
+    private readonly identities: CurrentIdentityService,
   ) {}
 
-  public async handleConnection(client: Socket): Promise<void> {
+  onModuleInit() {
+    this.timer = setInterval(() => {
+      void this.expireSessions();
+    }, 5000);
+    this.timer.unref();
+  }
+  onModuleDestroy() {
+    if (this.timer) clearInterval(this.timer);
+  }
+  private allowed(user: JwtPayload) {
+    return (
+      [
+        UserRole.FARMER,
+        UserRole.VET,
+        UserRole.ADMIN,
+        UserRole.SUPER_ADMIN,
+      ].includes(user.role) &&
+      !(user.role === UserRole.FARMER && user.farmerOnboardingRequired)
+    );
+  }
+  private async current(client: any): Promise<JwtPayload | null> {
     try {
-      const token = this.extractToken(client);
-      if (!token) {
-        this.logger.warn(
-          `WebSocket connection rejected: No auth token provided (${client.id})`,
-        );
-        client.emit("error", {
-          message: "Unauthorized: Missing authentication token",
-        });
-        client.disconnect(true);
-        return;
-      }
-
-      const payload: JwtPayload = await this.jwtService.verifyAsync(token);
-      client.data.user = payload;
-      this.logger.log(
-        `WebSocket client connected: ${client.id} (user: ${payload.sub}, role: ${payload.role})`,
-      );
-    } catch (err) {
-      this.logger.warn(
-        `WebSocket connection rejected: Invalid token (${client.id}): ${(err as Error).message}`,
-      );
+      if (!client.data?.user) throw new Error("Missing session");
+      const user = await this.identities.resolve(client.data.user);
+      if (!this.allowed(user)) throw new Error("Forbidden");
+      client.data.user = user;
+      return user;
+    } catch {
       client.emit("error", {
-        message: "Unauthorized: Invalid or expired token",
+        code: "AUTHORIZATION_CHANGED",
+        message: "Session changed. Reconnect after signing in.",
+      });
+      client.disconnect(true);
+      return null;
+    }
+  }
+  async handleConnection(client: Socket): Promise<void> {
+    try {
+      const header =
+        client.handshake.auth?.token || client.handshake.headers?.authorization;
+      if (typeof header !== "string" || !header)
+        throw new Error("Missing token");
+      client.data.user = await this.tokens.verifyAccessToken(
+        header.replace(/^Bearer\s+/i, "").trim(),
+      );
+      await this.current(client);
+    } catch {
+      client.emit("error", {
+        code: "UNAUTHORIZED",
+        message: "Invalid or expired token.",
       });
       client.disconnect(true);
     }
   }
-
-  public handleDisconnect(client: Socket): void {
-    const user = client.data?.user as JwtPayload | undefined;
-    this.logger.log(
-      `WebSocket client disconnected: ${client.id}${user ? ` (user: ${user.sub})` : ""}`,
-    );
+  handleDisconnect(_client: Socket): void {}
+  private async access(id: string, user: JwtPayload): Promise<boolean> {
+    if (!z.string().uuid().safeParse(id).success || !this.allowed(user))
+      return false;
+    const consultation = await this.consultations.findById(id);
+    if (!consultation) return false;
+    if (
+      [UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(user.role) ||
+      consultation.vetId === user.sub ||
+      consultation.farmerId === user.sub
+    )
+      return true;
+    return !!(await this.members.findMembership(consultation.farmId, user.sub));
   }
-
-  @SubscribeMessage("join_room")
-  public async handleJoinRoom(
+  private async participant(
+    client: Socket,
+    id: string,
+  ): Promise<JwtPayload | null> {
+    const user = await this.current(client);
+    if (!user) return null;
+    if (!(await this.access(id, user))) {
+      client.emit("error", {
+        code: "FORBIDDEN",
+        message: "Not a consultation participant.",
+      });
+      return null;
+    }
+    return user;
+  }
+  // Check every recipient against the primary database before emitting, including passive sockets.
+  // This also works across Socket.IO adapters and does not depend on a Redis invalidation event arriving.
+  private async emit(
+    id: string,
+    event: string,
+    payload: unknown,
+    excludeId?: string,
+  ): Promise<void> {
+    if (!this.server) return;
+    for (const client of await this.server
+      .in(`consultation:${id}`)
+      .fetchSockets()) {
+      if (client.id === excludeId) continue;
+      const user = await this.current(client);
+      if (user && (await this.access(id, user))) client.emit(event, payload);
+      else if (user) await client.leave(`consultation:${id}`);
+    }
+  }
+  private async expireSessions() {
+    if (!this.server) return;
+    try {
+      for (const client of await this.server.fetchSockets())
+        await this.current(client);
+    } catch {
+      /* A later emission still fails closed. */
+    }
+  }
+  @SubscribeMessage("join_room") async handleJoinRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { consultationId: string },
-  ): Promise<void> {
-    const user = client.data?.user as JwtPayload | undefined;
-    if (!user) {
-      client.emit("error", { message: "Unauthorized" });
-      return;
-    }
-
-    const isAuthorized = await this.validateConsultationAccess(
-      payload.consultationId,
-      user,
-    );
-    if (!isAuthorized) {
-      client.emit("error", {
-        message: "Forbidden: Not a participant in this consultation",
-      });
-      return;
-    }
-
-    const roomName = `consultation:${payload.consultationId}`;
-    await client.join(roomName);
-
-    this.server.to(roomName).emit("user_joined", {
+  ) {
+    const user = await this.participant(client, payload?.consultationId);
+    if (!user) return;
+    await client.join(`consultation:${payload.consultationId}`);
+    await this.emit(payload.consultationId, "user_joined", {
       userId: user.sub,
       role: user.role,
     });
-
-    this.logger.log(
-      `User '${user.sub}' joined chat room '${roomName}' via socket '${client.id}'`,
-    );
   }
-
-  @SubscribeMessage("leave_room")
-  public async handleLeaveRoom(
+  @SubscribeMessage("leave_room") async handleLeaveRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { consultationId: string },
-  ): Promise<void> {
-    const user = client.data?.user as JwtPayload | undefined;
-    const roomName = `consultation:${payload.consultationId}`;
-
-    await client.leave(roomName);
-
-    if (user) {
-      this.server.to(roomName).emit("user_left", {
-        userId: user.sub,
-      });
-      this.logger.log(
-        `User '${user.sub}' left chat room '${roomName}' via socket '${client.id}'`,
-      );
-    }
+  ) {
+    const user = await this.current(client);
+    if (!user || !z.string().uuid().safeParse(payload?.consultationId).success)
+      return;
+    await client.leave(`consultation:${payload.consultationId}`);
+    await this.emit(payload.consultationId, "user_left", { userId: user.sub });
   }
-
-  @SubscribeMessage("send_message")
-  public async handleSendMessage(
+  @SubscribeMessage("send_message") async handleSendMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody()
     payload: {
@@ -154,15 +206,11 @@ export class ConsultationChatGateway
       mediaUrls?: ChatMediaAttachment[];
       messageType?: ConsultationMessageType;
     },
-  ): Promise<void> {
-    const user = client.data?.user as JwtPayload | undefined;
-    if (!user) {
-      client.emit("error", { message: "Unauthorized" });
-      return;
-    }
-
+  ) {
+    const user = await this.participant(client, payload?.consultationId);
+    if (!user) return;
     try {
-      const message = await this.chatService.sendMessage(
+      const message = await this.chat.sendMessage(
         payload.consultationId,
         user,
         {
@@ -171,115 +219,47 @@ export class ConsultationChatGateway
           messageType: payload.messageType,
         },
       );
-
-      const roomName = `consultation:${payload.consultationId}`;
-      this.server.to(roomName).emit("new_message", message);
-    } catch (err) {
-      client.emit("error", {
-        message: (err as Error).message || "Failed to send message",
-      });
+      await this.emit(payload.consultationId, "new_message", message);
+    } catch {
+      client.emit("error", { message: "Failed to send message." });
     }
   }
-
-  @SubscribeMessage("typing_indicator")
-  public handleTyping(
+  @SubscribeMessage("typing_indicator") async handleTyping(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { consultationId: string; isTyping: boolean },
-  ): void {
-    const user = client.data?.user as JwtPayload | undefined;
-    if (!user) return;
-
-    const roomName = `consultation:${payload.consultationId}`;
-    client.to(roomName).emit("user_typing", {
-      userId: user.sub,
-      isTyping: payload.isTyping,
-    });
+  ) {
+    const user = await this.participant(client, payload?.consultationId);
+    if (!user || typeof payload.isTyping !== "boolean") return;
+    await this.emit(
+      payload.consultationId,
+      "user_typing",
+      { userId: user.sub, isTyping: payload.isTyping },
+      client.id,
+    );
   }
-
-  @SubscribeMessage("mark_as_read")
-  public async handleMarkAsRead(
+  @SubscribeMessage("mark_as_read") async handleMarkAsRead(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { consultationId: string; messageIds: string[] },
-  ): Promise<void> {
-    const user = client.data?.user as JwtPayload | undefined;
-    if (!user) {
-      client.emit("error", { message: "Unauthorized" });
-      return;
-    }
-
+  ) {
+    const user = await this.participant(client, payload?.consultationId);
+    if (!user) return;
     try {
-      await this.chatService.markMessagesRead(payload.consultationId, user, {
+      await this.chat.markMessagesRead(payload.consultationId, user, {
         messageIds: payload.messageIds,
       });
-
-      const roomName = `consultation:${payload.consultationId}`;
-      this.server.to(roomName).emit("messages_read", {
+      await this.emit(payload.consultationId, "messages_read", {
         userId: user.sub,
         readAt: new Date().toISOString(),
         messageIds: payload.messageIds,
       });
-    } catch (err) {
-      client.emit("error", {
-        message: (err as Error).message || "Failed to mark messages as read",
-      });
+    } catch {
+      client.emit("error", { message: "Failed to mark messages as read." });
     }
   }
-
-  public broadcastMessage(
+  async broadcastMessage(
     consultationId: string,
     message: ConsultationMessageDto,
-  ): void {
-    if (this.server) {
-      this.server
-        .to(`consultation:${consultationId}`)
-        .emit("new_message", message);
-    }
-  }
-
-  private extractToken(client: Socket): string | null {
-    const authHeader =
-      client.handshake.auth?.token ||
-      client.handshake.headers?.authorization ||
-      client.handshake.query?.token;
-
-    if (!authHeader || typeof authHeader !== "string") {
-      return null;
-    }
-
-    if (authHeader.startsWith("Bearer ")) {
-      return authHeader.substring(7).trim();
-    }
-
-    return authHeader.trim();
-  }
-
-  private async validateConsultationAccess(
-    consultationId: string,
-    user: JwtPayload,
-  ): Promise<boolean> {
-    const consultation = await this.consultationRepo.findById(consultationId);
-    if (!consultation) {
-      return false;
-    }
-
-    if (
-      user.role === UserRole.ADMIN ||
-      user.role === UserRole.SUPER_ADMIN ||
-      consultation.vetId === user.sub ||
-      consultation.farmerId === user.sub
-    ) {
-      return true;
-    }
-
-    const membership = await this.prisma.farmMember.findUnique({
-      where: {
-        farmId_userId: {
-          farmId: consultation.farmId,
-          userId: user.sub,
-        },
-      },
-    });
-
-    return !!membership;
+  ): Promise<void> {
+    await this.emit(consultationId, "new_message", message);
   }
 }

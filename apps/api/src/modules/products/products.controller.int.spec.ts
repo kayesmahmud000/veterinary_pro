@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
@@ -36,7 +37,8 @@ describe("ProductsController (Integration via Supertest)", () => {
     title: "Bovine Mastitis Protocol",
     slug: "bovine-mastitis-protocol",
     type: ProductType.VIDEO_COURSE,
-    description: "Detailed video clinical protocol on dairy cow mastitis management.",
+    description:
+      "Detailed video clinical protocol on dairy cow mastitis management.",
     priceCents: 5000,
     discountPriceCents: 4000,
     effectivePriceCents: 4000,
@@ -91,6 +93,11 @@ describe("ProductsController (Integration via Supertest)", () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [ProductsController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: PRODUCTS_SERVICE,
           useValue: productsService,
@@ -110,7 +117,7 @@ describe("ProductsController (Integration via Supertest)", () => {
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
-      })
+      }),
     );
     app.useGlobalInterceptors(new ResponseInterceptor(reflector));
     app.useGlobalFilters(new GlobalExceptionFilter());
@@ -171,7 +178,7 @@ describe("ProductsController (Integration via Supertest)", () => {
 
       const response = await request(app.getHttpServer())
         .get(
-          "/products/search?q=mastitis&type=VIDEO_COURSE&minPriceCents=1000&maxPriceCents=8000&sortBy=price_asc"
+          "/products/search?q=mastitis&type=VIDEO_COURSE&minPriceCents=1000&maxPriceCents=8000&sortBy=price_asc",
         )
         .expect(200);
 
@@ -190,7 +197,7 @@ describe("ProductsController (Integration via Supertest)", () => {
           minPriceCents: 1000,
           maxPriceCents: 8000,
           sortBy: "price_asc",
-        })
+        }),
       );
     });
   });
@@ -202,7 +209,8 @@ describe("ProductsController (Integration via Supertest)", () => {
         .send({
           title: "Bovine Mastitis Protocol",
           type: "VIDEO_COURSE",
-          description: "Detailed video clinical protocol on dairy cow mastitis management.",
+          description:
+            "Detailed video clinical protocol on dairy cow mastitis management.",
           priceCents: 5000,
           contentS3Key: "courses/mastitis-v1/master.mp4",
         })
@@ -216,7 +224,8 @@ describe("ProductsController (Integration via Supertest)", () => {
         .send({
           title: "Bovine Mastitis Protocol",
           type: "VIDEO_COURSE",
-          description: "Detailed video clinical protocol on dairy cow mastitis management.",
+          description:
+            "Detailed video clinical protocol on dairy cow mastitis management.",
           priceCents: 5000,
           contentS3Key: "courses/mastitis-v1/master.mp4",
         })
@@ -250,7 +259,8 @@ describe("ProductsController (Integration via Supertest)", () => {
         .send({
           title: "Bovine Mastitis Protocol",
           type: "VIDEO_COURSE",
-          description: "Detailed video clinical protocol on dairy cow mastitis management.",
+          description:
+            "Detailed video clinical protocol on dairy cow mastitis management.",
           priceCents: 5000,
           discountPriceCents: 4000,
           contentS3Key: "courses/mastitis-v1/master.mp4",

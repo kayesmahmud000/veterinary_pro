@@ -65,7 +65,7 @@ describe("TokenService", () => {
         expect.objectContaining({
           secret: envService.jwtAccessSecret,
           expiresIn: "15m",
-        })
+        }),
       );
     });
   });
@@ -92,7 +92,9 @@ describe("TokenService", () => {
         email: mockParams.email,
         role: mockParams.role,
         status: mockParams.status,
-        jti: "test-jti",
+        jti: "550e8400-e29b-41d4-a716-446655440000",
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 900,
       };
       (jwtService.verifyAsync as jest.Mock).mockResolvedValue(expectedPayload);
 
@@ -105,11 +107,11 @@ describe("TokenService", () => {
 
     it("should throw UnauthorizedDomainException when verification fails", async () => {
       (jwtService.verifyAsync as jest.Mock).mockRejectedValue(
-        new Error("jwt expired")
+        new Error("jwt expired"),
       );
 
       await expect(
-        service.verifyAccessToken("expired.jwt.token")
+        service.verifyAccessToken("expired.jwt.token"),
       ).rejects.toThrow(UnauthorizedDomainException);
     });
   });

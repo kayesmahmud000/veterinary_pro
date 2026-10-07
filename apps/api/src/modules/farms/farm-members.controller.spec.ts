@@ -28,9 +28,13 @@ describe("FarmMembersController", () => {
       mockService.addMember.mockResolvedValue(mockResult);
 
       const dto = { userId: "user-1", role: FarmRole.HERDSMAN };
-      const result = await controller.addMember("farm-1", dto);
+      const result = await controller.addMember("farm-1", dto, {
+        sub: "owner-1",
+      } as any);
 
-      expect(mockService.addMember).toHaveBeenCalledWith("farm-1", dto);
+      expect(mockService.addMember).toHaveBeenCalledWith("farm-1", dto, {
+        sub: "owner-1",
+      });
       expect(result).toEqual(mockResult);
     });
   });

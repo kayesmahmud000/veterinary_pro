@@ -59,17 +59,17 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
     private readonly envService: EnvService,
     @Optional()
     @Inject(MAIL_QUEUE_SERVICE)
-    private readonly mailQueueService?: IMailQueueService
+    private readonly mailQueueService?: IMailQueueService,
   ) {}
 
   public async fulfillOrder(
     orderId: string,
     gatewayTxId?: string,
     tx?: Prisma.TransactionClient,
-    traceId?: string
+    traceId?: string,
   ): Promise<OrderEntity> {
     const runInTransaction = async (
-      activeTx: Prisma.TransactionClient
+      activeTx: Prisma.TransactionClient,
     ): Promise<OrderEntity> => {
       const order = await this.orderRepository.findById(orderId, activeTx);
       if (!order) {
@@ -79,7 +79,7 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
       // Idempotency: if already COMPLETED, avoid regenerating existing tokens
       if (order.status === OrderStatus.COMPLETED) {
         this.logger.log(
-          `Order ${orderId} is already COMPLETED. Skipping token re-issuance.`
+          `Order ${orderId} is already COMPLETED. Skipping token re-issuance.`,
         );
         return order;
       }
@@ -95,14 +95,14 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
         orderId,
         OrderStatus.COMPLETED,
         gatewayTxId,
-        activeTx
+        activeTx,
       );
 
       // Persist newly generated download tokens
       await this.orderRepository.updateItemDownloadTokens(
         orderId,
         tokens,
-        activeTx
+        activeTx,
       );
 
       // Record immutable audit log
@@ -120,11 +120,11 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
           },
           traceId: activeTraceId,
         },
-        activeTx
+        activeTx,
       );
 
       this.logger.log(
-        `Order ${orderId} fulfilled successfully with ${tokens.length} download tokens generated.`
+        `Order ${orderId} fulfilled successfully with ${tokens.length} download tokens generated.`,
       );
 
       const updated = await this.orderRepository.findById(orderId, activeTx);
@@ -134,24 +134,26 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
     const fulfilledOrder = tx
       ? await runInTransaction(tx)
       : await this.transactionManager.run((activeTx) =>
-          runInTransaction(activeTx)
+          runInTransaction(activeTx),
         );
 
     // Asynchronously dispatch delivery email if mail queue service is configured
     if (this.mailQueueService) {
       try {
-        const userInfo = await this.orderRepository.findOrderUser(fulfilledOrder.userId);
+        const userInfo = await this.orderRepository.findOrderUser(
+          fulfilledOrder.userId,
+        );
         if (userInfo?.email) {
           await this.mailQueueService.enqueueOrderDeliveryEmail(
             orderId,
             userInfo.email,
             userInfo.name,
-            traceId
+            traceId,
           );
         }
       } catch (err: unknown) {
         this.logger.warn(
-          `Failed to enqueue delivery email for fulfilled order [${orderId}]: ${(err as Error).message}`
+          `Failed to enqueue delivery email for fulfilled order [${orderId}]: ${(err as Error).message}`,
         );
       }
     }
@@ -162,28 +164,31 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
   public async getOrderDownloadTokens(
     orderId: string,
     userId: string,
-    userRole: string
+    userRole: string,
   ): Promise<OrderDownloadTokensResponseDto> {
     const order = await this.orderRepository.findById(orderId);
     if (!order) {
       throw new EntityNotFoundException("Order", orderId);
     }
 
-    if (order.userId !== userId && userRole !== UserRole.ADMIN) {
+    if (
+      order.userId !== userId &&
+      ![UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(userRole as UserRole)
+    ) {
       this.logger.warn(
-        `User ${userId} unauthorized to access download tokens for order ${orderId}`
+        `User ${userId} unauthorized to access download tokens for order ${orderId}`,
       );
       throw new ForbiddenOperationException(
-        "You are not authorized to view download tokens for this order."
+        "You are not authorized to view download tokens for this order.",
       );
     }
 
     if (order.status !== OrderStatus.COMPLETED) {
       this.logger.warn(
-        `Attempted to fetch tokens for uncompleted order ${orderId} [Status: ${order.status}]`
+        `Attempted to fetch tokens for uncompleted order ${orderId} [Status: ${order.status}]`,
       );
       throw new ValidationDomainException(
-        `Download tokens are only available for completed orders. Current status: ${order.status}`
+        `Download tokens are only available for completed orders. Current status: ${order.status}`,
       );
     }
 
@@ -212,7 +217,7 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
   }
 
   public async validateDownloadToken(
-    downloadToken: string
+    downloadToken: string,
   ): Promise<DownloadTokenValidationResult> {
     if (!downloadToken || downloadToken.trim() === "") {
       return { isValid: false, reason: "Download token is required." };
@@ -259,12 +264,12 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
 
   public async recordDownload(
     downloadToken: string,
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
   ): Promise<void> {
     const validation = await this.validateDownloadToken(downloadToken);
     if (!validation.isValid || !validation.itemId) {
       throw new ValidationDomainException(
-        validation.reason ?? "Invalid download token."
+        validation.reason ?? "Invalid download token.",
       );
     }
 
@@ -277,7 +282,7 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
     userId: string,
     userRole: string,
     traceId?: string,
-    ipAddress?: string
+    ipAddress?: string,
   ): Promise<SecureDownloadResponseDto> {
     const order = await this.orderRepository.findById(orderId);
     if (!order) {
@@ -288,26 +293,26 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
       userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN;
     if (!isAdmin && order.userId !== userId) {
       throw new ForbiddenOperationException(
-        "You are not authorized to download assets from this order."
+        "You are not authorized to download assets from this order.",
       );
     }
 
     if (order.status !== OrderStatus.COMPLETED) {
       throw new ValidationDomainException(
-        `Cannot download assets: order is in '${order.status}' status, not settled.`
+        `Cannot download assets: order is in '${order.status}' status, not settled.`,
       );
     }
 
     const validation = await this.validateDownloadToken(downloadToken);
     if (!validation.isValid || !validation.itemId) {
       throw new ValidationDomainException(
-        validation.reason ?? "Invalid download token."
+        validation.reason ?? "Invalid download token.",
       );
     }
 
     if (validation.orderId !== orderId) {
       throw new ValidationDomainException(
-        "Provided download token does not belong to this order."
+        "Provided download token does not belong to this order.",
       );
     }
 
@@ -327,12 +332,12 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
     const downloadUrl = await this.s3Storage.getPresignedGetUrl(
       targetBucket,
       targetKey,
-      expiresInSeconds
+      expiresInSeconds,
     );
 
     // Atomically increment download counter
     const updatedItem = await this.orderRepository.incrementDownloadCount(
-      validation.itemId
+      validation.itemId,
     );
 
     // Record audit log
@@ -354,12 +359,12 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
     });
 
     this.logger.log(
-      `Issued secure download URL for order [${orderId}], item [${validation.itemId}] -> User [${userId}] (Attempt ${updatedItem.downloadCount}/${MAX_DOWNLOADS_PER_ITEM})`
+      `Issued secure download URL for order [${orderId}], item [${validation.itemId}] -> User [${userId}] (Attempt ${updatedItem.downloadCount}/${MAX_DOWNLOADS_PER_ITEM})`,
     );
 
     const remainingDownloads = Math.max(
       0,
-      MAX_DOWNLOADS_PER_ITEM - updatedItem.downloadCount
+      MAX_DOWNLOADS_PER_ITEM - updatedItem.downloadCount,
     );
 
     return {
@@ -383,7 +388,7 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
     orderId: string,
     userId: string,
     userRole: string,
-    traceId?: string
+    traceId?: string,
   ): Promise<{ enqueued: boolean; orderId: string }> {
     const order = await this.orderRepository.findById(orderId);
     if (!order) {
@@ -394,26 +399,26 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
       userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN;
     if (!isAdmin && order.userId !== userId) {
       throw new ForbiddenOperationException(
-        "You are not authorized to resend delivery emails for this order."
+        "You are not authorized to resend delivery emails for this order.",
       );
     }
 
     if (order.status !== OrderStatus.COMPLETED) {
       throw new ValidationDomainException(
-        `Cannot resend email: order is in '${order.status}' status, not completed.`
+        `Cannot resend email: order is in '${order.status}' status, not completed.`,
       );
     }
 
     if (!this.mailQueueService) {
       throw new ValidationDomainException(
-        "Mail queue service is currently unavailable."
+        "Mail queue service is currently unavailable.",
       );
     }
 
     const userInfo = await this.orderRepository.findOrderUser(order.userId);
     if (!userInfo?.email) {
       throw new ValidationDomainException(
-        "No email address found for the user associated with this order."
+        "No email address found for the user associated with this order.",
       );
     }
 
@@ -421,11 +426,11 @@ export class OrderFulfillmentService implements IOrderFulfillmentService {
       orderId,
       userInfo.email,
       userInfo.name,
-      traceId
+      traceId,
     );
 
     this.logger.log(
-      `Re-enqueued delivery email for order [${orderId}] -> <${userInfo.email}>`
+      `Re-enqueued delivery email for order [${orderId}] -> <${userInfo.email}>`,
     );
 
     return { enqueued: true, orderId };

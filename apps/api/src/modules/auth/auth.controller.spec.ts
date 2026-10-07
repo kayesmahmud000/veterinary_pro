@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "./services/current-identity.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { UserRole, UserStatus } from "@vetralink/shared-types";
 import { AuthController } from "./auth.controller";
@@ -52,6 +53,8 @@ describe("AuthController", () => {
     maskedPhone: mockUserEntity.maskPhone(),
     avatarUrl: mockUserEntity.avatarUrl,
     createdAt: mockUserEntity.createdAt.toISOString(),
+    roleVersion: mockUserEntity.roleVersion,
+    farmerOnboardingRequired: mockUserEntity.farmerOnboardingRequired,
   };
 
   beforeEach(async () => {
@@ -77,6 +80,11 @@ describe("AuthController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: AUTH_SERVICE,
           useValue: authService,
@@ -103,7 +111,7 @@ describe("AuthController", () => {
         email: "farmer@vetralink.com",
         password: "SecurePassword123!",
         name: "John Farmer",
-        role: UserRole.FARMER,
+        role: UserRole.FARMER as const,
       };
 
       authService.register.mockResolvedValueOnce({
@@ -122,7 +130,7 @@ describe("AuthController", () => {
 
     it("should propagate EntityConflictException if email exists", async () => {
       authService.register.mockRejectedValueOnce(
-        new EntityConflictException("Email already exists", "email")
+        new EntityConflictException("Email already exists", "email"),
       );
 
       await expect(
@@ -132,14 +140,14 @@ describe("AuthController", () => {
             password: "SecurePassword123!",
             name: "John Farmer",
           },
-          mockMeta
-        )
+          mockMeta,
+        ),
       ).rejects.toThrow(EntityConflictException);
     });
 
     it("should propagate ForbiddenOperationException if registering admin role", async () => {
       authService.register.mockRejectedValueOnce(
-        new ForbiddenOperationException("Administrative roles prohibited")
+        new ForbiddenOperationException("Administrative roles prohibited"),
       );
 
       await expect(
@@ -148,10 +156,10 @@ describe("AuthController", () => {
             email: "admin@vetralink.com",
             password: "SecurePassword123!",
             name: "Bad Actor",
-            role: UserRole.SUPER_ADMIN,
+            role: UserRole.SUPER_ADMIN as any,
           },
-          mockMeta
-        )
+          mockMeta,
+        ),
       ).rejects.toThrow(ForbiddenOperationException);
     });
   });
@@ -179,14 +187,14 @@ describe("AuthController", () => {
 
     it("should propagate UnauthorizedDomainException on bad credentials", async () => {
       authService.login.mockRejectedValueOnce(
-        new UnauthorizedDomainException("Invalid email or password.")
+        new UnauthorizedDomainException("Invalid email or password."),
       );
 
       await expect(
         controller.login(
           { email: "farmer@vetralink.com", password: "wrong" },
-          mockMeta
-        )
+          mockMeta,
+        ),
       ).rejects.toThrow(UnauthorizedDomainException);
     });
   });
@@ -203,18 +211,18 @@ describe("AuthController", () => {
 
       expect(authService.refreshToken).toHaveBeenCalledWith(
         dto.refreshToken,
-        mockMeta
+        mockMeta,
       );
       expect(result).toEqual({ tokens: mockTokens });
     });
 
     it("should propagate UnauthorizedDomainException when token reuse breach occurs", async () => {
       authService.refreshToken.mockRejectedValueOnce(
-        new UnauthorizedDomainException("Refresh token reuse detected.")
+        new UnauthorizedDomainException("Refresh token reuse detected."),
       );
 
       await expect(
-        controller.refresh({ refreshToken: "reused.token" }, mockMeta)
+        controller.refresh({ refreshToken: "reused.token" }, mockMeta),
       ).rejects.toThrow(UnauthorizedDomainException);
     });
   });
@@ -270,7 +278,7 @@ describe("AuthController", () => {
       userRepository.findById.mockResolvedValueOnce(null);
 
       await expect(controller.getProfile(jwtUser)).rejects.toThrow(
-        UnauthorizedDomainException
+        UnauthorizedDomainException,
       );
     });
 
@@ -286,7 +294,7 @@ describe("AuthController", () => {
       userRepository.findById.mockResolvedValueOnce(suspendedUser);
 
       await expect(controller.getProfile(jwtUser)).rejects.toThrow(
-        UnauthorizedDomainException
+        UnauthorizedDomainException,
       );
     });
 
@@ -302,7 +310,7 @@ describe("AuthController", () => {
       userRepository.findById.mockResolvedValueOnce(deletedUser);
 
       await expect(controller.getProfile(jwtUser)).rejects.toThrow(
-        UnauthorizedDomainException
+        UnauthorizedDomainException,
       );
     });
   });

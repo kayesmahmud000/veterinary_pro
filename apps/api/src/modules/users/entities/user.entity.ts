@@ -2,6 +2,10 @@ import { UserRole, UserStatus } from "@vetralink/shared-types";
 import { ValidationDomainException } from "../../../common/exceptions/domain.exception";
 
 export interface UserEntityProps {
+  roleVersion?: number;
+  authorizationVersion?: number;
+  previousNonAdministrativeRole?: UserRole | null;
+  farmerOnboardingRequired?: boolean;
   id: string;
   email: string;
   phone: string | null;
@@ -19,6 +23,7 @@ export interface UserEntityProps {
 }
 
 export interface CreateUserProps {
+  farmerOnboardingRequired?: boolean;
   id?: string;
   email: string;
   phone?: string | null;
@@ -39,6 +44,10 @@ export class UserEntity {
   private _passwordHash: string;
   private _name: string;
   private _role: UserRole;
+  private _roleVersion: number;
+  private _authorizationVersion: number;
+  private _previousNonAdministrativeRole: UserRole | null;
+  private _farmerOnboardingRequired: boolean;
   private _status: UserStatus;
   private _avatarUrl: string | null;
   private _isEmailVerified: boolean;
@@ -55,6 +64,11 @@ export class UserEntity {
     this._passwordHash = props.passwordHash;
     this._name = props.name.trim();
     this._role = props.role;
+    this._roleVersion = props.roleVersion ?? 0;
+    this._authorizationVersion = props.authorizationVersion ?? 0;
+    this._previousNonAdministrativeRole =
+      props.previousNonAdministrativeRole ?? null;
+    this._farmerOnboardingRequired = props.farmerOnboardingRequired ?? false;
     this._status = props.status;
     this._avatarUrl = props.avatarUrl;
     this._isEmailVerified = props.isEmailVerified;
@@ -67,11 +81,15 @@ export class UserEntity {
   }
 
   private validate(): void {
+    if (!Object.values(UserRole).includes(this._role))
+      throw new ValidationDomainException("Unknown user role.");
     if (!this._id || this._id.trim().length === 0) {
       throw new ValidationDomainException("User id cannot be empty.");
     }
     if (!this._email || !this._email.includes("@")) {
-      throw new ValidationDomainException("User email must be a valid email address.");
+      throw new ValidationDomainException(
+        "User email must be a valid email address.",
+      );
     }
     if (!this._name || this._name.trim().length === 0) {
       throw new ValidationDomainException("User name cannot be empty.");
@@ -90,7 +108,9 @@ export class UserEntity {
       phoneHash: props.phoneHash ?? null,
       passwordHash: props.passwordHash,
       name: props.name,
-      role: props.role ?? UserRole.FARMER,
+      role: props.role ?? UserRole.LEARNER,
+      farmerOnboardingRequired:
+        props.farmerOnboardingRequired ?? props.role === UserRole.FARMER,
       status: props.status ?? UserStatus.ACTIVE,
       avatarUrl: props.avatarUrl ?? null,
       isEmailVerified: props.isEmailVerified ?? false,
@@ -139,6 +159,32 @@ export class UserEntity {
 
   public get status(): UserStatus {
     return this._status;
+  }
+  public get roleVersion(): number {
+    return this._roleVersion;
+  }
+  public get authorizationVersion(): number {
+    return this._authorizationVersion;
+  }
+  public get previousNonAdministrativeRole(): UserRole | null {
+    return this._previousNonAdministrativeRole;
+  }
+  public get farmerOnboardingRequired(): boolean {
+    return this._farmerOnboardingRequired;
+  }
+
+  public changeRole(role: UserRole): void {
+    if (!Object.values(UserRole).includes(role))
+      throw new ValidationDomainException("Unknown user role.");
+    const administrative = [UserRole.ADMIN, UserRole.SUPER_ADMIN];
+    if (administrative.includes(role) && !administrative.includes(this._role))
+      this._previousNonAdministrativeRole = this._role;
+    if (role === UserRole.FARMER && this._role === UserRole.LEARNER)
+      this._farmerOnboardingRequired = true;
+    this._role = role;
+    this._roleVersion++;
+    this._authorizationVersion++;
+    this._updatedAt = new Date();
   }
 
   public get avatarUrl(): string | null {
@@ -262,7 +308,9 @@ export class UserEntity {
       return clean;
     }
     const lastFour = clean.slice(-4);
-    const prefix = clean.startsWith("+") ? clean.slice(0, 4) : clean.slice(0, 2);
+    const prefix = clean.startsWith("+")
+      ? clean.slice(0, 4)
+      : clean.slice(0, 2);
     return `${prefix} •••• ${lastFour}`;
   }
 
@@ -270,7 +318,9 @@ export class UserEntity {
    * Safe serialization for external presentation.
    * Strips passwordHash and ciphertext to prevent accidental leakage.
    */
-  public toSafeObject(): Omit<UserEntityProps, "passwordHash"> & { maskedPhone: string | null } {
+  public toSafeObject(): Omit<UserEntityProps, "passwordHash"> & {
+    maskedPhone: string | null;
+  } {
     return {
       id: this._id,
       email: this._email,

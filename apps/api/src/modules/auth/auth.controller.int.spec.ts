@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "./services/current-identity.service";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
@@ -93,6 +94,11 @@ describe("AuthController (Integration via Supertest)", () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: AUTH_SERVICE,
           useValue: authService,
@@ -116,7 +122,7 @@ describe("AuthController (Integration via Supertest)", () => {
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
-      })
+      }),
     );
     app.useGlobalInterceptors(new ResponseInterceptor(reflector));
     app.useGlobalFilters(new GlobalExceptionFilter());
@@ -180,10 +186,7 @@ describe("AuthController (Integration via Supertest)", () => {
 
     it("should return 409 when email is already registered", async () => {
       authService.register.mockRejectedValueOnce(
-        new EntityConflictException(
-          "User with email already exists",
-          "email"
-        )
+        new EntityConflictException("User with email already exists", "email"),
       );
 
       const response = await request(app.getHttpServer())
@@ -229,7 +232,7 @@ describe("AuthController (Integration via Supertest)", () => {
 
     it("should return 401 when invalid credentials provided", async () => {
       authService.login.mockRejectedValueOnce(
-        new UnauthorizedDomainException("Invalid email or password.")
+        new UnauthorizedDomainException("Invalid email or password."),
       );
 
       const response = await request(app.getHttpServer())

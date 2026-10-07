@@ -1,6 +1,12 @@
-import { AuthTokensDto, JwtPayload, UserRole, UserStatus } from "@vetralink/shared-types";
+import {
+  AuthTokensDto,
+  JwtPayload,
+  UserRole,
+  UserStatus,
+} from "@vetralink/shared-types";
 
 export interface GenerateTokensParams {
+  authorizationVersion?: number;
   userId: string;
   email: string;
   role: UserRole;

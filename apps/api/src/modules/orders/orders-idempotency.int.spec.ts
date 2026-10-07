@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
@@ -110,7 +111,11 @@ describe("Orders Idempotency Engine (Supertest & Service Integration)", () => {
     };
 
     transactionManager = {
-      run: jest.fn().mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => cb({})),
+      run: jest
+        .fn()
+        .mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) =>
+          cb({}),
+        ),
     };
 
     auditLogRepository = {
@@ -131,6 +136,11 @@ describe("Orders Idempotency Engine (Supertest & Service Integration)", () => {
       imports: [IdempotencyModule],
       controllers: [OrdersController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: CHECKOUT_SERVICE,
           useValue: checkoutService,
@@ -168,14 +178,15 @@ describe("Orders Idempotency Engine (Supertest & Service Integration)", () => {
         whitelist: true,
         transform: true,
         forbidNonWhitelisted: true,
-      })
+      }),
     );
     app.useGlobalInterceptors(new ResponseInterceptor(reflector));
     app.useGlobalFilters(new GlobalExceptionFilter());
 
     await app.init();
 
-    stripeWebhookService = moduleFixture.get<StripeWebhookService>(StripeWebhookService);
+    stripeWebhookService =
+      moduleFixture.get<StripeWebhookService>(StripeWebhookService);
     mfsWebhookService = moduleFixture.get<MfsWebhookService>(MfsWebhookService);
   });
 
@@ -283,8 +294,14 @@ describe("Orders Idempotency Engine (Supertest & Service Integration)", () => {
 
     it("should pass through normally when no idempotency key header is supplied", async () => {
       checkoutService.checkout
-        .mockResolvedValueOnce({ ...sampleCheckoutResponse, orderId: "order-no-key-1" })
-        .mockResolvedValueOnce({ ...sampleCheckoutResponse, orderId: "order-no-key-2" });
+        .mockResolvedValueOnce({
+          ...sampleCheckoutResponse,
+          orderId: "order-no-key-1",
+        })
+        .mockResolvedValueOnce({
+          ...sampleCheckoutResponse,
+          orderId: "order-no-key-2",
+        });
 
       const payload = {
         items: [{ productId: "44444444-4444-4444-8444-444444444444" }],
@@ -337,13 +354,19 @@ describe("Orders Idempotency Engine (Supertest & Service Integration)", () => {
       const rawBuffer = Buffer.from(JSON.stringify(eventPayload), "utf-8");
 
       // First webhook delivery
-      const result1 = await stripeWebhookService.processWebhook(rawBuffer, "test-sig");
+      const result1 = await stripeWebhookService.processWebhook(
+        rawBuffer,
+        "test-sig",
+      );
       expect(result1.status).toBe("processed");
       expect(result1.orderId).toBe("order-stripe-webhook-dedup");
       expect(transactionManager.run).toHaveBeenCalledTimes(1);
 
       // Second identical webhook delivery
-      const result2 = await stripeWebhookService.processWebhook(rawBuffer, "test-sig");
+      const result2 = await stripeWebhookService.processWebhook(
+        rawBuffer,
+        "test-sig",
+      );
       expect(result2.status).toBe("processed");
       expect(result2.orderId).toBe("order-stripe-webhook-dedup");
       // Critical check: transactionManager.run was NOT called again because response was cached!
@@ -370,17 +393,26 @@ describe("Orders Idempotency Engine (Supertest & Service Integration)", () => {
         currency: "BDT",
         status: "VALID" as const,
         signature: "test_mfs_valid_signature",
-        rawPayload: { paymentID: "mfs_val_dedup_1", trxID: "TRX_MFS_DEDUP_001" },
+        rawPayload: {
+          paymentID: "mfs_val_dedup_1",
+          trxID: "TRX_MFS_DEDUP_001",
+        },
       };
 
       // First IPN delivery
-      const result1 = await mfsWebhookService.processIpn(ipnPayload, "test_mfs_valid_signature");
+      const result1 = await mfsWebhookService.processIpn(
+        ipnPayload,
+        "test_mfs_valid_signature",
+      );
       expect(result1.status).toBe("processed");
       expect(result1.orderId).toBe("order-mfs-webhook-dedup");
       expect(transactionManager.run).toHaveBeenCalledTimes(1);
 
       // Second duplicate IPN delivery
-      const result2 = await mfsWebhookService.processIpn(ipnPayload, "test_mfs_valid_signature");
+      const result2 = await mfsWebhookService.processIpn(
+        ipnPayload,
+        "test_mfs_valid_signature",
+      );
       expect(result2.status).toBe("processed");
       expect(result2.orderId).toBe("order-mfs-webhook-dedup");
       // Transaction was NOT run again!

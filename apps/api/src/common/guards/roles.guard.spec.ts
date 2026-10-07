@@ -12,7 +12,7 @@ describe("RolesGuard", () => {
   let reflector: jest.Mocked<Reflector>;
 
   const createMockContext = (
-    user?: Partial<JwtPayload>
+    user?: Partial<JwtPayload>,
   ): { context: ExecutionContext } => {
     const request = {
       user: user
@@ -80,7 +80,7 @@ describe("RolesGuard", () => {
     const { context } = createMockContext(undefined);
 
     expect(() => guard.canActivate(context)).toThrow(
-      UnauthorizedDomainException
+      UnauthorizedDomainException,
     );
   });
 
@@ -97,11 +97,11 @@ describe("RolesGuard", () => {
     });
 
     expect(() => guard.canActivate(context)).toThrow(
-      ForbiddenOperationException
+      ForbiddenOperationException,
     );
   });
 
-  it("should grant bypass to SUPER_ADMIN regardless of required roles", () => {
+  it("requires SUPER_ADMIN to be explicitly listed by a route", () => {
     reflector.getAllAndOverride.mockImplementation((key) => {
       if (key === "isPublic") return false;
       if (key === "roles") return [UserRole.VET];
@@ -112,8 +112,9 @@ describe("RolesGuard", () => {
       role: UserRole.SUPER_ADMIN,
     });
 
-    const result = guard.canActivate(context);
-    expect(result).toBe(true);
+    expect(() => guard.canActivate(context)).toThrow(
+      ForbiddenOperationException,
+    );
   });
 
   it("should allow access when user possesses one of the required roles", () => {
@@ -143,7 +144,7 @@ describe("RolesGuard", () => {
     });
 
     expect(() => guard.canActivate(context)).toThrow(
-      ForbiddenOperationException
+      ForbiddenOperationException,
     );
   });
 });

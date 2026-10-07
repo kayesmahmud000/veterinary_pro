@@ -8,6 +8,8 @@
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "worker:role-notifications": "node dist/role-notifications.worker.js",
+    "admin:bootstrap": "ts-node src/scripts/bootstrap-super-admin.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "test": "jest",
     "test:watch": "jest --watch",

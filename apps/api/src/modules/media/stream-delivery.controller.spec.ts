@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Request, Response } from "express";
 import { UserRole, UserStatus } from "@vetralink/shared-types";
@@ -54,6 +55,11 @@ describe("StreamDeliveryController (Unit)", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [StreamDeliveryController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         { provide: STREAM_DELIVERY_SERVICE, useValue: streamDeliveryService },
         {
           provide: TOKEN_SERVICE,
@@ -76,7 +82,7 @@ describe("StreamDeliveryController (Unit)", () => {
         mockUser.role,
         dto.productId,
         "api.vetralink.pro",
-        "https"
+        "https",
       );
 
       expect(response.productId).toBe(dto.productId);
@@ -106,7 +112,7 @@ describe("StreamDeliveryController (Unit)", () => {
           secure: true,
           sameSite: "none",
           path: `/hls/${productId}`,
-        })
+        }),
       );
       expect(res.cookie).toHaveBeenCalledWith(
         "CloudFront-Signature",
@@ -115,7 +121,7 @@ describe("StreamDeliveryController (Unit)", () => {
           httpOnly: true,
           secure: true,
           sameSite: "none",
-        })
+        }),
       );
       expect(res.cookie).toHaveBeenCalledWith(
         "CloudFront-Key-Pair-Id",
@@ -124,12 +130,12 @@ describe("StreamDeliveryController (Unit)", () => {
           httpOnly: true,
           secure: true,
           sameSite: "none",
-        })
+        }),
       );
 
       expect(res.redirect).toHaveBeenCalledWith(
         302,
-        mockSessionResult.streamUrl
+        mockSessionResult.streamUrl,
       );
     });
   });

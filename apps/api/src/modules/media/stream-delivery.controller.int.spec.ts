@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
@@ -43,8 +44,10 @@ describe("StreamDeliveryController (Integration via Supertest)", () => {
 
   const mockSessionResult: StreamSessionResult = {
     productId: validProductId,
-    streamUrl: "https://cdn.vetralink.pro/hls/test/master.m3u8?Policy=custom-policy-data",
-    drmKeyUrl: "http://localhost:3001/api/v1/media/drm/key/drm-playback-token-xyz",
+    streamUrl:
+      "https://cdn.vetralink.pro/hls/test/master.m3u8?Policy=custom-policy-data",
+    drmKeyUrl:
+      "http://localhost:3001/api/v1/media/drm/key/drm-playback-token-xyz",
     cookies: {
       policy: "custom-policy-cookie",
       signature: "signature-cookie",
@@ -74,6 +77,11 @@ describe("StreamDeliveryController (Integration via Supertest)", () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       controllers: [StreamDeliveryController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         { provide: STREAM_DELIVERY_SERVICE, useValue: streamDeliveryService },
         { provide: TOKEN_SERVICE, useValue: tokenService },
       ],
@@ -89,7 +97,7 @@ describe("StreamDeliveryController (Integration via Supertest)", () => {
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
-      })
+      }),
     );
 
     await app.init();
@@ -127,7 +135,7 @@ describe("StreamDeliveryController (Integration via Supertest)", () => {
 
     it("should return 403 Forbidden if user is not entitled", async () => {
       streamDeliveryService.createPlaybackSession.mockRejectedValue(
-        new ForbiddenOperationException("Entitlement verification failed")
+        new ForbiddenOperationException("Entitlement verification failed"),
       );
 
       const res = await request(app.getHttpServer())
@@ -142,7 +150,7 @@ describe("StreamDeliveryController (Integration via Supertest)", () => {
 
     it("should return 200 OK with streamUrl and signed cookies when entitled", async () => {
       streamDeliveryService.createPlaybackSession.mockResolvedValue(
-        mockSessionResult
+        mockSessionResult,
       );
 
       const res = await request(app.getHttpServer())
@@ -167,7 +175,7 @@ describe("StreamDeliveryController (Integration via Supertest)", () => {
   describe("GET /media/stream/:productId/manifest", () => {
     it("should return 401 Unauthorized if no bearer token is supplied", async () => {
       const res = await request(app.getHttpServer()).get(
-        `/media/stream/${validProductId}/manifest`
+        `/media/stream/${validProductId}/manifest`,
       );
 
       expect(res.status).toBe(401);
@@ -183,7 +191,7 @@ describe("StreamDeliveryController (Integration via Supertest)", () => {
 
     it("should return 302 Found and set signed cookies when entitled", async () => {
       streamDeliveryService.createPlaybackSession.mockResolvedValue(
-        mockSessionResult
+        mockSessionResult,
       );
 
       const res = await request(app.getHttpServer())
@@ -197,9 +205,15 @@ describe("StreamDeliveryController (Integration via Supertest)", () => {
       expect(setCookieHeaders).toBeDefined();
 
       const combinedCookies = setCookieHeaders.join("; ");
-      expect(combinedCookies).toContain("CloudFront-Policy=custom-policy-cookie");
-      expect(combinedCookies).toContain("CloudFront-Signature=signature-cookie");
-      expect(combinedCookies).toContain("CloudFront-Key-Pair-Id=K2JC3XQRI3UW74");
+      expect(combinedCookies).toContain(
+        "CloudFront-Policy=custom-policy-cookie",
+      );
+      expect(combinedCookies).toContain(
+        "CloudFront-Signature=signature-cookie",
+      );
+      expect(combinedCookies).toContain(
+        "CloudFront-Key-Pair-Id=K2JC3XQRI3UW74",
+      );
     });
   });
 });

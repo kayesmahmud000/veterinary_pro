@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import {
   AnimalSpecies,
@@ -61,6 +62,11 @@ describe("FinancialExpenseController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FinancialExpenseController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: FARM_EXPENSE_SERVICE,
           useValue: mockService,
@@ -78,7 +84,7 @@ describe("FinancialExpenseController", () => {
     }).compile();
 
     controller = module.get<FinancialExpenseController>(
-      FinancialExpenseController
+      FinancialExpenseController,
     );
     expenseService = module.get(FARM_EXPENSE_SERVICE);
   });
@@ -97,14 +103,14 @@ describe("FinancialExpenseController", () => {
       farmId,
       mockUser,
       dto,
-      "trace-1"
+      "trace-1",
     );
 
     expect(expenseService.recordExpense).toHaveBeenCalledWith(
       farmId,
       userId,
       dto,
-      "trace-1"
+      "trace-1",
     );
     expect(result).toEqual(mockExpenseDto);
   });
@@ -141,7 +147,7 @@ describe("FinancialExpenseController", () => {
 
     expect(expenseService.getExpenseSummary).toHaveBeenCalledWith(
       farmId,
-      query
+      query,
     );
     expect(result.totalExpense).toBe(750);
   });
@@ -176,7 +182,7 @@ describe("FinancialExpenseController", () => {
 
     expect(expenseService.getExpenseById).toHaveBeenCalledWith(
       farmId,
-      expenseId
+      expenseId,
     );
     expect(result.id).toBe(expenseId);
   });
@@ -191,7 +197,7 @@ describe("FinancialExpenseController", () => {
       mockUser,
       expenseId,
       updateBody,
-      "trace-2"
+      "trace-2",
     );
 
     expect(expenseService.updateExpense).toHaveBeenCalledWith(
@@ -199,7 +205,7 @@ describe("FinancialExpenseController", () => {
       expenseId,
       userId,
       updateBody,
-      "trace-2"
+      "trace-2",
     );
     expect(result.amount).toBe(800.0);
     expect(result.syncVersion).toBe(2);
@@ -214,7 +220,7 @@ describe("FinancialExpenseController", () => {
       farmId,
       expenseId,
       userId,
-      "trace-3"
+      "trace-3",
     );
   });
 });

@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
 import {
@@ -93,6 +94,11 @@ describe("ClinicalHealthController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ClinicalHealthController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: CLINICAL_HEALTH_SERVICE,
           useValue: service,
@@ -135,14 +141,14 @@ describe("ClinicalHealthController", () => {
         farmId,
         mockUser,
         dto,
-        "trace-123"
+        "trace-123",
       );
 
       expect(service.createIncident).toHaveBeenCalledWith(
         farmId,
         mockUser.sub,
         dto,
-        "trace-123"
+        "trace-123",
       );
       expect(result).toEqual(mockIncidentResponse);
     });
@@ -194,7 +200,7 @@ describe("ClinicalHealthController", () => {
         mockUser,
         incidentId,
         dto,
-        "trace-456"
+        "trace-456",
       );
 
       expect(service.updateIncident).toHaveBeenCalledWith(
@@ -202,7 +208,7 @@ describe("ClinicalHealthController", () => {
         farmId,
         mockUser.sub,
         dto,
-        "trace-456"
+        "trace-456",
       );
       expect(result).toEqual(updatedResponse);
     });
@@ -229,7 +235,7 @@ describe("ClinicalHealthController", () => {
         mockUser,
         incidentId,
         dto,
-        "trace-789"
+        "trace-789",
       );
 
       expect(service.resolveIncident).toHaveBeenCalledWith(
@@ -237,7 +243,7 @@ describe("ClinicalHealthController", () => {
         farmId,
         mockUser.sub,
         dto,
-        "trace-789"
+        "trace-789",
       );
       expect(result).toEqual(resolvedResponse);
     });
@@ -247,13 +253,18 @@ describe("ClinicalHealthController", () => {
     it("should delegate to service.deleteIncident", async () => {
       service.deleteIncident.mockResolvedValueOnce();
 
-      await controller.deleteIncident(farmId, mockUser, incidentId, "trace-000");
+      await controller.deleteIncident(
+        farmId,
+        mockUser,
+        incidentId,
+        "trace-000",
+      );
 
       expect(service.deleteIncident).toHaveBeenCalledWith(
         incidentId,
         farmId,
         mockUser.sub,
-        "trace-000"
+        "trace-000",
       );
     });
   });
@@ -274,15 +285,21 @@ describe("ClinicalHealthController", () => {
         escalationsFailed: 0,
         details: [],
       };
-      escalationService.processFarmEscalations.mockResolvedValueOnce(mockScanResult);
+      escalationService.processFarmEscalations.mockResolvedValueOnce(
+        mockScanResult,
+      );
 
-      const result = await controller.triggerEscalationScan(farmId, dto, "trace-scan");
+      const result = await controller.triggerEscalationScan(
+        farmId,
+        dto,
+        "trace-scan",
+      );
 
       expect(escalationService.processFarmEscalations).toHaveBeenCalledWith(
         farmId,
         expect.any(Date),
         false,
-        "trace-scan"
+        "trace-scan",
       );
       expect(result).toEqual(mockScanResult);
     });
@@ -295,11 +312,16 @@ describe("ClinicalHealthController", () => {
         items: [],
         meta: { page: 1, pageSize: 10, total: 0, totalPages: 0 },
       };
-      escalationService.listEscalationLogs.mockResolvedValueOnce(mockLogsResult);
+      escalationService.listEscalationLogs.mockResolvedValueOnce(
+        mockLogsResult,
+      );
 
       const result = await controller.listEscalationLogs(farmId, query);
 
-      expect(escalationService.listEscalationLogs).toHaveBeenCalledWith(farmId, query);
+      expect(escalationService.listEscalationLogs).toHaveBeenCalledWith(
+        farmId,
+        query,
+      );
       expect(result).toEqual(mockLogsResult);
     });
   });
@@ -310,7 +332,9 @@ describe("ClinicalHealthController", () => {
 
       const result = await controller.listActiveEscalations(farmId);
 
-      expect(escalationService.listActiveEscalations).toHaveBeenCalledWith(farmId);
+      expect(escalationService.listActiveEscalations).toHaveBeenCalledWith(
+        farmId,
+      );
       expect(result).toEqual([]);
     });
   });
@@ -331,19 +355,22 @@ describe("ClinicalHealthController", () => {
         expiresInSeconds: 900,
       };
       attachmentService.generateUploadPresignedUrl.mockResolvedValueOnce(
-        mockPresigned
+        mockPresigned,
       );
 
       const result = await controller.requestAttachmentUploadUrl(
         farmId,
         mockUser,
         incidentId,
-        dto
+        dto,
       );
 
-      expect(
-        attachmentService.generateUploadPresignedUrl
-      ).toHaveBeenCalledWith(farmId, incidentId, mockUser.sub, dto);
+      expect(attachmentService.generateUploadPresignedUrl).toHaveBeenCalledWith(
+        farmId,
+        incidentId,
+        mockUser.sub,
+        dto,
+      );
       expect(result).toEqual(mockPresigned);
     });
 
@@ -371,14 +398,14 @@ describe("ClinicalHealthController", () => {
         farmId,
         incidentId,
         attachmentId,
-        dto
+        dto,
       );
 
       expect(attachmentService.confirmUpload).toHaveBeenCalledWith(
         farmId,
         incidentId,
         attachmentId,
-        dto
+        dto,
       );
       expect(result).toEqual(mockResponse);
     });
@@ -390,7 +417,7 @@ describe("ClinicalHealthController", () => {
 
       expect(attachmentService.listAttachments).toHaveBeenCalledWith(
         farmId,
-        incidentId
+        incidentId,
       );
       expect(result).toEqual([]);
     });
@@ -413,19 +440,19 @@ describe("ClinicalHealthController", () => {
         updatedAt: new Date().toISOString(),
       };
       attachmentService.getAttachmentViewUrl.mockResolvedValueOnce(
-        mockResponse
+        mockResponse,
       );
 
       const result = await controller.getAttachmentViewUrl(
         farmId,
         incidentId,
-        attachmentId
+        attachmentId,
       );
 
       expect(attachmentService.getAttachmentViewUrl).toHaveBeenCalledWith(
         farmId,
         incidentId,
-        attachmentId
+        attachmentId,
       );
       expect(result).toEqual(mockResponse);
     });
@@ -438,7 +465,7 @@ describe("ClinicalHealthController", () => {
         mockUser,
         incidentId,
         attachmentId,
-        "trace-del"
+        "trace-del",
       );
 
       expect(attachmentService.deleteAttachment).toHaveBeenCalledWith(
@@ -446,7 +473,7 @@ describe("ClinicalHealthController", () => {
         incidentId,
         attachmentId,
         mockUser.sub,
-        "trace-del"
+        "trace-del",
       );
     });
   });

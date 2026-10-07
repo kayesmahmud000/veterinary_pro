@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
 import {
@@ -60,6 +61,11 @@ describe("FinancialRevenueController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FinancialRevenueController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: FARM_REVENUE_SERVICE,
           useValue: mockService,
@@ -77,7 +83,7 @@ describe("FinancialRevenueController", () => {
     }).compile();
 
     controller = module.get<FinancialRevenueController>(
-      FinancialRevenueController
+      FinancialRevenueController,
     );
     revenueService = module.get(FARM_REVENUE_SERVICE);
   });
@@ -96,14 +102,14 @@ describe("FinancialRevenueController", () => {
       farmId,
       mockUser,
       dto,
-      "trace-1"
+      "trace-1",
     );
 
     expect(revenueService.recordRevenue).toHaveBeenCalledWith(
       farmId,
       userId,
       dto,
-      "trace-1"
+      "trace-1",
     );
     expect(result).toEqual(mockRevenueDto);
   });
@@ -140,7 +146,7 @@ describe("FinancialRevenueController", () => {
 
     expect(revenueService.getRevenueSummary).toHaveBeenCalledWith(
       farmId,
-      query
+      query,
     );
     expect(result.totalRevenue).toBe(4500);
   });
@@ -175,7 +181,7 @@ describe("FinancialRevenueController", () => {
 
     expect(revenueService.getRevenueById).toHaveBeenCalledWith(
       farmId,
-      revenueId
+      revenueId,
     );
     expect(result.id).toBe(revenueId);
   });
@@ -190,7 +196,7 @@ describe("FinancialRevenueController", () => {
       mockUser,
       revenueId,
       updateBody,
-      "trace-2"
+      "trace-2",
     );
 
     expect(revenueService.updateRevenue).toHaveBeenCalledWith(
@@ -198,7 +204,7 @@ describe("FinancialRevenueController", () => {
       revenueId,
       userId,
       updateBody,
-      "trace-2"
+      "trace-2",
     );
     expect(result.amount).toBe(4800.0);
     expect(result.syncVersion).toBe(2);
@@ -213,7 +219,7 @@ describe("FinancialRevenueController", () => {
       farmId,
       revenueId,
       userId,
-      "trace-3"
+      "trace-3",
     );
   });
 });

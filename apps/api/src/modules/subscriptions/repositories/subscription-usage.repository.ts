@@ -4,9 +4,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { ISubscriptionUsageRepository } from "./subscription-usage.repository.interface";
 
 @Injectable()
-export class SubscriptionUsageRepository
-  implements ISubscriptionUsageRepository
-{
+export class SubscriptionUsageRepository implements ISubscriptionUsageRepository {
   private readonly logger = new Logger(SubscriptionUsageRepository.name);
 
   constructor(private readonly prisma: PrismaService) {}
@@ -32,6 +30,7 @@ export class SubscriptionUsageRepository
     return client.farmMember.count({
       where: {
         farmId,
+        NOT: { user: { ownedFarms: { some: { id: farmId } } } },
       },
     });
   }

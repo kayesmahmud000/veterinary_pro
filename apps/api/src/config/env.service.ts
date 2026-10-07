@@ -41,6 +41,15 @@ export interface IEnvService {
 
 @Injectable()
 export class EnvService implements IEnvService {
+  get authLegacyClaimsUntil(): number {
+    const value = this.configService.get("AUTH_LEGACY_CLAIMS_UNTIL", {
+      infer: true,
+    });
+    return value ? Date.parse(value) : 0;
+  }
+  get webBaseUrl(): string {
+    return this.configService.get("WEB_BASE_URL", { infer: true });
+  }
   constructor(private readonly configService: ConfigService<EnvConfig, true>) {}
 
   get nodeEnv(): string {
@@ -164,11 +173,15 @@ export class EnvService implements IEnvService {
   }
 
   get drmTokenExpirationSeconds(): number {
-    return this.configService.get("DRM_TOKEN_EXPIRATION_SECONDS", { infer: true });
+    return this.configService.get("DRM_TOKEN_EXPIRATION_SECONDS", {
+      infer: true,
+    });
   }
 
   get cloudfrontDistributionDomain(): string | undefined {
-    return this.configService.get("CLOUDFRONT_DISTRIBUTION_DOMAIN", { infer: true });
+    return this.configService.get("CLOUDFRONT_DISTRIBUTION_DOMAIN", {
+      infer: true,
+    });
   }
 
   get cloudfrontKeyPairId(): string | undefined {
@@ -180,7 +193,9 @@ export class EnvService implements IEnvService {
   }
 
   get cloudfrontUrlExpirationSeconds(): number {
-    return this.configService.get("CLOUDFRONT_URL_EXPIRATION_SECONDS", { infer: true });
+    return this.configService.get("CLOUDFRONT_URL_EXPIRATION_SECONDS", {
+      infer: true,
+    });
   }
 
   get emailProvider(): "resend" | "ses" | "mock" {

@@ -1,5 +1,11 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Test, TestingModule } from "@nestjs/testing";
-import { ProductType, SubscriptionTier, UserRole, UserStatus } from "@vetralink/shared-types";
+import {
+  ProductType,
+  SubscriptionTier,
+  UserRole,
+  UserStatus,
+} from "@vetralink/shared-types";
 import { ProductsController } from "./products.controller";
 import {
   IProductsService,
@@ -24,7 +30,8 @@ describe("ProductsController", () => {
     title: "Bovine Mastitis Protocol",
     slug: "bovine-mastitis-protocol",
     type: ProductType.VIDEO_COURSE,
-    description: "Detailed video clinical protocol on dairy cow mastitis management.",
+    description:
+      "Detailed video clinical protocol on dairy cow mastitis management.",
     priceCents: 5000,
     discountPriceCents: 4000,
     effectivePriceCents: 4000,
@@ -52,6 +59,11 @@ describe("ProductsController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ProductsController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: PRODUCTS_SERVICE,
           useValue: productsService,
@@ -74,7 +86,8 @@ describe("ProductsController", () => {
       const dto = {
         title: "Bovine Mastitis Protocol",
         type: ProductType.VIDEO_COURSE,
-        description: "Detailed video clinical protocol on dairy cow mastitis management.",
+        description:
+          "Detailed video clinical protocol on dairy cow mastitis management.",
         priceCents: 5000,
         contentS3Key: "courses/mastitis-v1/master.mp4",
       };
@@ -82,13 +95,13 @@ describe("ProductsController", () => {
       const result = await controller.createProduct(
         dto,
         mockAdminUser,
-        "trace-123"
+        "trace-123",
       );
 
       expect(productsService.createProduct).toHaveBeenCalledWith(
         dto,
         mockAdminUser.sub,
-        "trace-123"
+        "trace-123",
       );
       expect(result).toEqual(mockProductResponse);
     });
@@ -120,7 +133,7 @@ describe("ProductsController", () => {
       expect(result.items.length).toBe(1);
       expect(productsService.listProducts).toHaveBeenCalledWith(
         { page: 1, limit: 20 },
-        false
+        false,
       );
     });
   });
@@ -164,7 +177,7 @@ describe("ProductsController", () => {
       expect(productsService.getProductById).toHaveBeenCalledWith(
         mockProductResponse.id,
         false,
-        false
+        false,
       );
     });
   });
@@ -172,11 +185,11 @@ describe("ProductsController", () => {
   describe("getProductBySlug", () => {
     it("should return product by slug", async () => {
       productsService.getProductBySlug.mockResolvedValueOnce(
-        mockProductResponse
+        mockProductResponse,
       );
 
       const result = await controller.getProductBySlug(
-        mockProductResponse.slug
+        mockProductResponse.slug,
       );
       expect(result.slug).toBe(mockProductResponse.slug);
     });
@@ -193,14 +206,14 @@ describe("ProductsController", () => {
         mockProductResponse.id,
         { priceCents: 6000 },
         mockAdminUser,
-        "trace-456"
+        "trace-456",
       );
 
       expect(productsService.updateProduct).toHaveBeenCalledWith(
         mockProductResponse.id,
         { priceCents: 6000 },
         mockAdminUser.sub,
-        "trace-456"
+        "trace-456",
       );
       expect(result.priceCents).toBe(6000);
     });
@@ -213,13 +226,13 @@ describe("ProductsController", () => {
       const result = await controller.deleteProduct(
         mockProductResponse.id,
         mockAdminUser,
-        "trace-789"
+        "trace-789",
       );
 
       expect(productsService.deleteProduct).toHaveBeenCalledWith(
         mockProductResponse.id,
         mockAdminUser.sub,
-        "trace-789"
+        "trace-789",
       );
       expect(result).toBeNull();
     });

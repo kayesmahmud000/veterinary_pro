@@ -1,14 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsEmail,
-  IsEnum,
+  IsIn,
   IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
   MinLength,
 } from "class-validator";
-import { RegisterRequestDto, UserRole } from "@vetralink/shared-types";
+import {
+  PUBLIC_REGISTRATION_ROLES,
+  RegisterRequestDto,
+  UserRole,
+} from "@vetralink/shared-types";
 
 export class RegisterDto implements RegisterRequestDto {
   @ApiProperty({
@@ -42,15 +46,16 @@ export class RegisterDto implements RegisterRequestDto {
   public readonly name!: string;
 
   @ApiPropertyOptional({
-    enum: UserRole,
-    default: UserRole.FARMER,
-    description: "Requested role for the user (FARMER, VET, BUYER)",
+    enum: [...PUBLIC_REGISTRATION_ROLES],
+    default: UserRole.LEARNER,
+    description:
+      "LEARNER (default), FARMER, VET or BUYER; administrative roles are prohibited",
   })
   @IsOptional()
-  @IsEnum(UserRole, {
-    message: "Role must be a valid UserRole (FARMER, VET, BUYER)",
+  @IsIn(PUBLIC_REGISTRATION_ROLES, {
+    message: "Role must be LEARNER, FARMER, VET or BUYER",
   })
-  public readonly role?: UserRole;
+  public readonly role?: RegisterRequestDto["role"];
 
   @ApiPropertyOptional({
     example: "+12345678901",

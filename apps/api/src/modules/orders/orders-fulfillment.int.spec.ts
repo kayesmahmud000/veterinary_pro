@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
@@ -136,7 +137,11 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
     };
 
     transactionManager = {
-      run: jest.fn().mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => cb({})),
+      run: jest
+        .fn()
+        .mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) =>
+          cb({}),
+        ),
     };
 
     auditLogRepository = {
@@ -150,7 +155,7 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
       getPresignedGetUrl: jest
         .fn()
         .mockResolvedValue(
-          "https://s3.amazonaws.com/test-deliveries/watermarked/sample-order/item.pdf?sig=test"
+          "https://s3.amazonaws.com/test-deliveries/watermarked/sample-order/item.pdf?sig=test",
         ),
       getPresignedPutUrl: jest.fn(),
       createMultipartUpload: jest.fn(),
@@ -204,6 +209,11 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
         MfsWebhookController,
       ],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: ORDER_REPOSITORY,
           useValue: orderRepository,
@@ -262,7 +272,7 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
         whitelist: true,
         transform: true,
         forbidNonWhitelisted: true,
-      })
+      }),
     );
     app.useGlobalInterceptors(new ResponseInterceptor(reflector));
     app.useGlobalFilters(new GlobalExceptionFilter());
@@ -270,7 +280,7 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
     await app.init();
 
     fulfillmentService = moduleFixture.get<IOrderFulfillmentService>(
-      ORDER_FULFILLMENT_SERVICE
+      ORDER_FULFILLMENT_SERVICE,
     );
   });
 
@@ -311,7 +321,9 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
 
       expect(res.status).toBe(422);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain("Download tokens are only available for completed orders");
+      expect(res.body.message).toContain(
+        "Download tokens are only available for completed orders",
+      );
     });
 
     it("should reject token retrieval by unauthorized customer with HTTP 403 Forbidden", async () => {
@@ -375,7 +387,7 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
         sampleOrderId,
         OrderStatus.COMPLETED,
         "pi_test_tx_123",
-        expect.anything()
+        expect.anything(),
       );
       expect(orderRepository.updateItemDownloadTokens).toHaveBeenCalledWith(
         sampleOrderId,
@@ -385,14 +397,14 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
             downloadToken: expect.any(String),
           }),
         ],
-        expect.anything()
+        expect.anything(),
       );
       expect(auditLogRepository.record).toHaveBeenCalledWith(
         expect.objectContaining({
           action: "ORDER_FULFILLED",
           entityId: sampleOrderId,
         }),
-        expect.anything()
+        expect.anything(),
       );
     });
   });
@@ -407,7 +419,8 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
         productType: "EBOOK",
       });
 
-      const validation = await fulfillmentService.validateDownloadToken(sampleToken);
+      const validation =
+        await fulfillmentService.validateDownloadToken(sampleToken);
 
       expect(validation.isValid).toBe(true);
       expect(validation.orderId).toBe(sampleOrderId);
@@ -424,7 +437,8 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
         productType: "EBOOK",
       });
 
-      const validation = await fulfillmentService.validateDownloadToken(sampleToken);
+      const validation =
+        await fulfillmentService.validateDownloadToken(sampleToken);
 
       expect(validation.isValid).toBe(false);
       expect(validation.reason).toContain("Maximum download limit reached");
@@ -439,14 +453,14 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
         productType: "EBOOK",
       });
       orderRepository.incrementDownloadCount.mockResolvedValueOnce(
-        completedOrder.items[0]!
+        completedOrder.items[0]!,
       );
 
       await fulfillmentService.recordDownload(sampleToken);
 
       expect(orderRepository.incrementDownloadCount).toHaveBeenCalledWith(
         sampleItemId,
-        undefined
+        undefined,
       );
     });
   });
@@ -512,7 +526,9 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
       orderRepository.incrementDownloadCount.mockResolvedValueOnce(updatedItem);
 
       const res = await request(app.getHttpServer())
-        .get(`/orders/${sampleOrderId}/download?token=${sampleToken}&redirect=true`)
+        .get(
+          `/orders/${sampleOrderId}/download?token=${sampleToken}&redirect=true`,
+        )
         .set("Authorization", "Bearer customer-token");
 
       expect(res.status).toBe(302);
@@ -611,7 +627,7 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
         sampleOrderId,
         customerUser.email,
         "Customer Farmer",
-        "test-trace-123"
+        "test-trace-123",
       );
     });
 
@@ -635,7 +651,9 @@ describe("Order Fulfillment & Download Tokens (Integration via Supertest)", () =
         .set("Authorization", "Bearer customer-token");
 
       expect(res.status).toBe(422);
-      expect(res.body.message).toContain("Cannot resend email: order is in 'PENDING' status");
+      expect(res.body.message).toContain(
+        "Cannot resend email: order is in 'PENDING' status",
+      );
     });
   });
 });

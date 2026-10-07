@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { OrderStatus, UserRole, UserStatus } from "@vetralink/shared-types";
 import { OrdersController } from "./orders.controller";
@@ -87,6 +88,11 @@ describe("OrdersController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [OrdersController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: CHECKOUT_SERVICE,
           useValue: checkoutService,
@@ -127,7 +133,7 @@ describe("OrdersController", () => {
         mockUser,
         dto,
         "trace-uuid-123",
-        "127.0.0.1"
+        "127.0.0.1",
       );
 
       expect(checkoutService.checkout).toHaveBeenCalledWith(
@@ -135,7 +141,7 @@ describe("OrdersController", () => {
         dto,
         mockUser.email,
         "trace-uuid-123",
-        "127.0.0.1"
+        "127.0.0.1",
       );
       expect(result).toEqual(mockCheckoutResponse);
     });
@@ -153,7 +159,7 @@ describe("OrdersController", () => {
       expect(checkoutService.getUserOrders).toHaveBeenCalledWith(
         mockUser.sub,
         1,
-        10
+        10,
       );
       expect(result.orders).toHaveLength(1);
       expect(result.total).toBe(1);
@@ -164,12 +170,15 @@ describe("OrdersController", () => {
     it("should call getOrderById with isAdmin=false for regular user", async () => {
       checkoutService.getOrderById.mockResolvedValueOnce(mockOrderDetail);
 
-      const result = await controller.getOrderById(mockUser, mockOrderDetail.id);
+      const result = await controller.getOrderById(
+        mockUser,
+        mockOrderDetail.id,
+      );
 
       expect(checkoutService.getOrderById).toHaveBeenCalledWith(
         mockOrderDetail.id,
         mockUser.sub,
-        false
+        false,
       );
       expect(result).toEqual(mockOrderDetail);
     });
@@ -177,12 +186,15 @@ describe("OrdersController", () => {
     it("should call getOrderById with isAdmin=true for admin user", async () => {
       checkoutService.getOrderById.mockResolvedValueOnce(mockOrderDetail);
 
-      const result = await controller.getOrderById(mockAdmin, mockOrderDetail.id);
+      const result = await controller.getOrderById(
+        mockAdmin,
+        mockOrderDetail.id,
+      );
 
       expect(checkoutService.getOrderById).toHaveBeenCalledWith(
         mockOrderDetail.id,
         mockAdmin.sub,
-        true
+        true,
       );
       expect(result).toEqual(mockOrderDetail);
     });
@@ -219,13 +231,15 @@ describe("OrdersController", () => {
           mockRes,
           undefined,
           undefined,
-          undefined
-        )
+          undefined,
+        ),
       ).rejects.toThrow("Query parameter 'token' is required.");
     });
 
     it("should invoke fulfillmentService.getSecureDownloadUrl and send json response dto", async () => {
-      fulfillmentService.getSecureDownloadUrl.mockResolvedValueOnce(mockDownloadDto);
+      fulfillmentService.getSecureDownloadUrl.mockResolvedValueOnce(
+        mockDownloadDto,
+      );
       const mockRes = {
         redirect: jest.fn(),
         setHeader: jest.fn(),
@@ -240,7 +254,7 @@ describe("OrdersController", () => {
         mockRes,
         undefined,
         "trace-123",
-        "127.0.0.1"
+        "127.0.0.1",
       );
 
       expect(fulfillmentService.getSecureDownloadUrl).toHaveBeenCalledWith(
@@ -249,19 +263,21 @@ describe("OrdersController", () => {
         mockUser.sub,
         mockUser.role,
         "trace-123",
-        "127.0.0.1"
+        "127.0.0.1",
       );
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
           data: mockDownloadDto,
-        })
+        }),
       );
     });
 
     it("should issue redirect to presigned download URL when redirect=true", async () => {
-      fulfillmentService.getSecureDownloadUrl.mockResolvedValueOnce(mockDownloadDto);
+      fulfillmentService.getSecureDownloadUrl.mockResolvedValueOnce(
+        mockDownloadDto,
+      );
       const mockRes = {
         redirect: jest.fn(),
         setHeader: jest.fn(),
@@ -276,12 +292,12 @@ describe("OrdersController", () => {
         mockRes,
         "true",
         "trace-123",
-        "127.0.0.1"
+        "127.0.0.1",
       );
 
       expect(mockRes.redirect).toHaveBeenCalledWith(
         302,
-        mockDownloadDto.downloadUrl
+        mockDownloadDto.downloadUrl,
       );
     });
   });
@@ -296,14 +312,14 @@ describe("OrdersController", () => {
       const result = await controller.resendOrderEmail(
         mockUser,
         mockOrderDetail.id,
-        "trace-123"
+        "trace-123",
       );
 
       expect(fulfillmentService.resendOrderDeliveryEmail).toHaveBeenCalledWith(
         mockOrderDetail.id,
         mockUser.sub,
         mockUser.role,
-        "trace-123"
+        "trace-123",
       );
       expect(result).toEqual({ enqueued: true, orderId: mockOrderDetail.id });
     });

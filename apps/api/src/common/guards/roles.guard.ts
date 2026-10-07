@@ -1,8 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-} from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { JwtPayload, UserRole, UserStatus } from "@vetralink/shared-types";
 import { ROLES_KEY } from "../decorators/roles.decorator";
@@ -28,7 +24,7 @@ export class RolesGuard implements CanActivate {
 
     const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
       ROLES_KEY,
-      [context.getHandler(), context.getClass()]
+      [context.getHandler(), context.getClass()],
     );
 
     if (!requiredRoles || requiredRoles.length === 0) {
@@ -40,7 +36,7 @@ export class RolesGuard implements CanActivate {
 
     if (!user) {
       throw new UnauthorizedDomainException(
-        "Authentication is required to access this resource."
+        "Authentication is required to access this resource.",
       );
     }
 
@@ -48,15 +44,10 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenOperationException("Account has been suspended.");
     }
 
-    // SUPER_ADMIN has platform-wide superuser bypass
-    if (user.role === UserRole.SUPER_ADMIN) {
-      return true;
-    }
-
     const hasRole = requiredRoles.includes(user.role);
     if (!hasRole) {
       throw new ForbiddenOperationException(
-        `Insufficient role permissions. Required: [${requiredRoles.join(", ")}], Provided: '${user.role}'`
+        `Insufficient role permissions. Required: [${requiredRoles.join(", ")}], Provided: '${user.role}'`,
       );
     }
 
