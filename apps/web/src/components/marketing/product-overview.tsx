@@ -1,10 +1,12 @@
+import { cn } from "@/lib/ui/cn";
+import siteStyles from "@/lib/ui/site.styles";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowUpRight, Info } from "lucide-react";
 import { getPublicNavItems } from "@/lib/public-navigation";
 import { getLocalization } from "@/lib/i18n/server";
 import { FeatureExplorer } from "./interactive-discovery";
-import styles from "./marketing.module.css";
+import styles from "./marketing.styles";
 export function ProductOverview({
   title,
   intro,
@@ -21,10 +23,10 @@ export function ProductOverview({
   const { locale, messages } = getLocalization();
   const items = getPublicNavItems(messages);
   return (
-    <main id="main-content" className="container">
-      <section className={styles.overviewHero}>
-        <div className="eyebrow">
-          <span className="status-dot" /> {messages.overview.eyebrow}
+    <main id="main-content" className={cn(siteStyles["container"])}>
+      <section className={cn(styles.overviewHero)}>
+        <div className={cn(siteStyles["eyebrow"])}>
+          <span className={cn(siteStyles["status-dot"])} /> {messages.overview.eyebrow}
         </div>
         <h1>{title}</h1>
         <p>{intro}</p>
@@ -36,7 +38,7 @@ export function ProductOverview({
         copy={messages.interactive.features}
         locale={locale}
       />
-      <aside className={styles.availability}>
+      <aside className={cn(styles.availability)}>
         <Info size={20} aria-hidden="true" />
         <p>
           <strong>{messages.overview.availabilityTitle}</strong>{" "}
@@ -45,13 +47,13 @@ export function ProductOverview({
       </aside>
       <nav
         aria-label={messages.overview.explore}
-        className={styles.overviewLinks}
+        className={cn(styles.overviewLinks)}
       >
-        <Link href="/" className="text-link">
+        <Link href="/" className={cn(siteStyles["text-link"])}>
           {messages.actions.home} <ArrowUpRight size={16} aria-hidden="true" />
         </Link>
         {items.map((item) => (
-          <Link href={item.href} className="text-link" key={item.href}>
+          <Link href={item.href} className={cn(siteStyles["text-link"])} key={item.href}>
             {item.label}
             <ArrowUpRight size={16} aria-hidden="true" />
           </Link>

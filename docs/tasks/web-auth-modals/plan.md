@@ -45,3 +45,15 @@ No migrations, Git staging/commit/push or deployment. Suggested human-managed co
 ## Subsequent role/onboarding integration, 2026-10-07
 
 The [shared role/onboarding plan](../../features/role-request-approval/plan.md) supersedes the earlier three-role/default-FARMER contract and backend concurrency follow-up. Auth remains modal-based, defaults LEARNER, permits professional signup and resumes mandatory FARMER setup. Shared Zod and live versioned primary identity are integrated. Eight auth boundary tests and the bilingual modal/public regression passed again; real isolated PostgreSQL/Redis/API browser signup, application approval/session refresh, FARMER setup, members and privilege revocation also passed. See [runbook](../../features/role-request-approval/operations.md). The earlier no-migrations/controlled-upstream-only statements are historical; new additive migrations were rehearsed only on an isolated empty database. No deployed database or real mail-provider acceptance is claimed.
+
+## Header alignment follow-up — 2026-10-07
+
+Grouped the language selector and desktop auth actions at the right edge of the public header. Existing responsive behavior is preserved: desktop auth actions are hidden at mobile widths and remain available inside the mobile menu.
+
+**Observed locally:** `pnpm --filter @vetralink/web check:styles` passed. On the running local web app, the grouped controls share the header's right edge at 1440, 1024 and 800px; there is no horizontal overflow at those widths or at 375 and 320px. At 375px, opening the mobile menu showed both sign-in and sign-up actions. This is a local dev-server observation, not production-browser certification.
+
+## Signup layout follow-up — 2026-10-07
+
+Widened the registration dialog on larger screens, placed signup fields in a two-column grid from 640px upward, and kept a single column below that breakpoint. Replaced the public-role radio cards with a localized native select; the permitted role set and default LEARNER value are unchanged.
+
+**Observed locally:** the signup grid rendered two columns at 1440px and 768px, and one at 375px and 320px. The dialog and page had no horizontal overflow at any checked width. The dropdown exposed exactly the four public roles and selected VET successfully. Auth-boundary tests still passed (8 tests); the standalone production Chrome auth harness has not been run with this UI change.

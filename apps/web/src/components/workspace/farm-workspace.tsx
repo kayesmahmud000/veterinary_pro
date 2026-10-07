@@ -1,4 +1,5 @@
 "use client";
+import { cn } from "@/lib/ui/cn";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -26,7 +27,7 @@ import {
   validate,
   type Issues,
 } from "./workspace-ui";
-import styles from "./workspace.module.css";
+import styles from "./workspace.styles";
 export function FarmOnboarding({
   locale,
   t,
@@ -137,7 +138,7 @@ export function FarmOnboarding({
     return (
       <>
         <Notice code={status.code} t={t} />
-        <button className={styles.secondary} onClick={status.reload}>
+        <button className={cn(styles.secondary)} onClick={status.reload}>
           {t.retry}
         </button>
       </>
@@ -146,22 +147,22 @@ export function FarmOnboarding({
     return (
       <>
         <Notice text={t.farmReady} t={t} />
-        <Link className={styles.primary} href="/farm">
+        <Link className={cn(styles.primary)} href="/farm">
           {t.farmTitle}
         </Link>
       </>
     );
   return (
     <>
-      <p className={styles.intro}>{t.setupBody}</p>
+      <p className={cn(styles.intro)}>{t.setupBody}</p>
       <Notice code={code} t={t} />
       <form
         onSubmit={submit}
         noValidate
-        className={styles.card}
+        className={cn(styles.card)}
         aria-busy={pending}
       >
-        <fieldset className={styles.formFields} disabled={pending}>
+        <fieldset className={cn(styles.formFields)} disabled={pending}>
           <Field name="setup-mode" label={t.setupMode}>
             <select
               id="setup-mode"
@@ -188,7 +189,7 @@ export function FarmOnboarding({
                 locale={locale}
                 t={t}
               />
-              <div className={`${styles.grid} ${styles.actions}`}>
+              <div className={cn(styles.grid, styles.actions)}>
                 {(["gpsLat", "gpsLng"] as const).map((name) => (
                   <Field
                     key={name}
@@ -217,7 +218,7 @@ export function FarmOnboarding({
             <Notice text={t.noMembership} t={t} />
           ) : (
             <>
-              <div className={styles.actions}>
+              <div className={cn(styles.actions)}>
                 <Field name="farmId" label={t.selectFarm} error={issues.farmId}>
                   <select
                     id="farmId"
@@ -237,7 +238,7 @@ export function FarmOnboarding({
                   </select>
                 </Field>
               </div>
-              <label className={styles.checkbox}>
+              <label className={cn(styles.checkbox)}>
                 <input
                   id="confirmed"
                   type="checkbox"
@@ -250,13 +251,13 @@ export function FarmOnboarding({
                 {t.confirmMembership}
               </label>
               {issues.confirmed && (
-                <small className={styles.fieldError}>{issues.confirmed}</small>
+                <small className={cn(styles.fieldError)}>{issues.confirmed}</small>
               )}
             </>
           )}
-          <div className={styles.actions}>
+          <div className={cn(styles.actions)}>
             <button
-              className={styles.primary}
+              className={cn(styles.primary)}
               type="submit"
               disabled={
                 pending || (mode === "join" && !status.data?.farms.length)
@@ -265,7 +266,7 @@ export function FarmOnboarding({
               {pending ? t.saving : t.finishSetup}
             </button>
             <button
-              className={styles.secondary}
+              className={cn(styles.secondary)}
               type="button"
               onClick={status.reload}
             >
@@ -331,7 +332,7 @@ export function FarmDashboard({ t }: { t: WorkspaceMessages }) {
     return (
       <>
         <Notice code={farms.code} t={t} />
-        <button className={styles.secondary} onClick={farms.reload}>
+        <button className={cn(styles.secondary)} onClick={farms.reload}>
           {t.retry}
         </button>
       </>
@@ -360,9 +361,9 @@ export function FarmDashboard({ t }: { t: WorkspaceMessages }) {
       </Field>
       {farm && (
         <>
-          <section className={styles.card}>
+          <section className={cn(styles.card)}>
             <h2>{farm.name}</h2>
-            <dl className={styles.details}>
+            <dl className={cn(styles.details)}>
               {(
                 [
                   ["farmType", farm.farmType],
@@ -378,13 +379,13 @@ export function FarmDashboard({ t }: { t: WorkspaceMessages }) {
               ))}
             </dl>
           </section>
-          <section className={styles.card}>
+          <section className={cn(styles.card)}>
             <h2>{t.membersTitle}</h2>
             <Notice code={members.code} t={t} />
             {members.loading ? (
               <p>{t.loading}</p>
             ) : (
-              <ul className={styles.list}>
+              <ul className={cn(styles.list)}>
                 {members.data?.items.map((member) => (
                   <li key={member.id}>
                     <div>
@@ -395,7 +396,7 @@ export function FarmDashboard({ t }: { t: WorkspaceMessages }) {
                             : t.memberAccount)}
                       </strong>
                     </div>
-                    <span className={styles.badge}>
+                    <span className={cn(styles.badge)}>
                       {option(t, member.role)}
                     </span>
                   </li>
@@ -403,7 +404,7 @@ export function FarmDashboard({ t }: { t: WorkspaceMessages }) {
               </ul>
             )}
             <button
-              className={styles.secondary}
+              className={cn(styles.secondary)}
               type="button"
               onClick={members.reload}
             >
@@ -412,7 +413,7 @@ export function FarmDashboard({ t }: { t: WorkspaceMessages }) {
           </section>
           {[FarmRole.OWNER, FarmRole.MANAGER].includes(farm.role) && (
             <form
-              className={styles.card}
+              className={cn(styles.card)}
               onSubmit={add}
               noValidate
               aria-busy={pending}
@@ -421,8 +422,8 @@ export function FarmDashboard({ t }: { t: WorkspaceMessages }) {
               <p>{t.memberHint}</p>
               <p>{t.staffHint}</p>
               <Notice code={code} text={success ? t.added : undefined} t={t} />
-              <fieldset className={styles.formFields} disabled={pending}>
-                <div className={styles.grid}>
+              <fieldset className={cn(styles.formFields)} disabled={pending}>
+                <div className={cn(styles.grid)}>
                   <Field
                     name="email"
                     label={t.memberEmail}
@@ -465,8 +466,8 @@ export function FarmDashboard({ t }: { t: WorkspaceMessages }) {
                     </select>
                   </Field>
                 </div>
-                <div className={styles.actions}>
-                  <button className={styles.primary} disabled={pending}>
+                <div className={cn(styles.actions)}>
+                  <button className={cn(styles.primary)} disabled={pending}>
                     {pending ? t.saving : t.addMember}
                   </button>
                 </div>

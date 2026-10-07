@@ -1,10 +1,11 @@
 "use client";
+import { cn } from "@/lib/ui/cn";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { z } from "zod";
 import { workspaceRequest } from "@/lib/workspace/client";
 import type { Question, WorkspaceResult } from "@/lib/workspace/contracts";
 import type { WorkspaceMessages } from "@/lib/i18n/workspace";
-import styles from "./workspace.module.css";
+import styles from "./workspace.styles";
 export type Issues = Record<string, string>;
 export function useRemote<T>(
   path: string | null,
@@ -49,7 +50,7 @@ export function Notice({
   if (!code && !text) return null;
   return (
     <div
-      className={code ? styles.error : styles.notice}
+      className={cn(code ? styles.error : styles.notice)}
       role={code ? "alert" : "status"}
     >
       {text ?? (t.errors as Record<string, string>)[code!] ?? t.errors.DEFAULT}
@@ -70,12 +71,12 @@ export function Field({
   children: ReactNode;
 }) {
   return (
-    <div className={styles.field}>
+    <div className={cn(styles.field)}>
       <label htmlFor={name}>{label}</label>
       {children}
       {hint && <small id={`${name}-hint`}>{hint}</small>}
       {error && (
-        <small className={styles.fieldError} id={`${name}-error`}>
+        <small className={cn(styles.fieldError)} id={`${name}-error`}>
           {error}
         </small>
       )}
@@ -119,7 +120,7 @@ export function QuestionFields({
   t: WorkspaceMessages;
 }) {
   return (
-    <div className={styles.grid}>
+    <div className={cn(styles.grid)}>
       {fields.map((field) => {
         const props = {
           id: field.key,
@@ -137,7 +138,7 @@ export function QuestionFields({
             <fieldset
               key={field.key}
               id={field.key}
-              className={styles.choices}
+              className={cn(styles.choices)}
               tabIndex={-1}
               aria-describedby={
                 issues[field.key] ? `${field.key}-error` : undefined
@@ -168,7 +169,7 @@ export function QuestionFields({
                 </label>
               ))}
               {issues[field.key] && (
-                <small id={`${field.key}-error`} className={styles.fieldError}>
+                <small id={`${field.key}-error`} className={cn(styles.fieldError)}>
                   {issues[field.key]}
                 </small>
               )}
@@ -176,8 +177,8 @@ export function QuestionFields({
           );
         if (field.type === "consent")
           return (
-            <div key={field.key} className={styles.full}>
-              <label className={styles.checkbox}>
+            <div key={field.key} className={cn(styles.full)}>
+              <label className={cn(styles.checkbox)}>
                 <input
                   {...props}
                   type="checkbox"
@@ -187,7 +188,7 @@ export function QuestionFields({
                 {label}
               </label>
               {issues[field.key] && (
-                <small className={styles.fieldError} id={`${field.key}-error`}>
+                <small className={cn(styles.fieldError)} id={`${field.key}-error`}>
                   {issues[field.key]}
                 </small>
               )}
@@ -266,7 +267,7 @@ export function Answers({
   t: WorkspaceMessages;
 }) {
   return (
-    <dl className={styles.details}>
+    <dl className={cn(styles.details)}>
       {Object.entries(answers).map(([key, value]) => (
         <div key={key}>
           <dt>{(t.fields as Record<string, string>)[key] ?? key}</dt>
@@ -312,7 +313,7 @@ export function Confirmation({
   return (
     <dialog
       ref={dialog}
-      className={styles.confirmation}
+      className={cn(styles.confirmation)}
       aria-labelledby="workspace-confirm-title"
       onCancel={(event) => {
         event.preventDefault();
@@ -321,9 +322,9 @@ export function Confirmation({
     >
       <h2 id="workspace-confirm-title">{title}</h2>
       {children}
-      <div className={styles.actions}>
+      <div className={cn(styles.actions)}>
         <button
-          className={styles.primary}
+          className={cn(styles.primary)}
           type="button"
           disabled={pending}
           onClick={confirm}
@@ -331,7 +332,7 @@ export function Confirmation({
           {pending ? t.saving : t.confirm}
         </button>
         <button
-          className={styles.secondary}
+          className={cn(styles.secondary)}
           type="button"
           disabled={pending}
           onClick={cancel}

@@ -1,5 +1,7 @@
+import { cn } from "@/lib/ui/cn";
+import siteStyles from "@/lib/ui/site.styles";
 import Link from "next/link";
-import { Sprout } from "lucide-react";
+import { SiteBrand } from "@/components/brand/site-brand";
 import { AuthControls } from "@/components/auth/auth-controls";
 import { getPublicNavItems } from "@/lib/public-navigation";
 import { getLocalization } from "@/lib/i18n/server";
@@ -12,27 +14,22 @@ export function SiteHeader() {
   const items = getPublicNavItems(messages);
   return (
     <HeaderSurface>
-      <div className="container header-inner">
-        <Link href="/" className="brand" aria-label={messages.navigation.home}>
-          <span className="brand-mark">
-            <Sprout aria-hidden="true" />
-          </span>
-          <span>
-            vetralink<span className="brand-pro">PRO</span>
-          </span>
-        </Link>
-        <nav className="desktop-nav" aria-label={messages.navigation.main}>
+      <div className={cn(siteStyles["container"], siteStyles["header-inner"])}>
+        <SiteBrand homeLabel={messages.navigation.home} />
+        <nav className={cn(siteStyles["desktop-nav"])} aria-label={messages.navigation.main}>
           {items.map((item) => (
             <Link href={item.href} key={item.href}>
               {item.label}
             </Link>
           ))}
         </nav>
-        <AuthControls />
-        <LanguageSwitcher
-          locale={locale}
-          label={messages.navigation.language}
-        />
+        <div className="flex shrink-0 items-center gap-3 max-[1000.01px]:gap-2">
+          <LanguageSwitcher
+            locale={locale}
+            label={messages.navigation.language}
+          />
+          <AuthControls />
+        </div>
         <MobileNavigation items={items} labels={messages.navigation} />
       </div>
     </HeaderSurface>

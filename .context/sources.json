@@ -405,6 +405,18 @@
     },
     {
       "path": "docs/tasks/vercel-backend-deployment/plan.md"
+    },
+    {
+      "path": "apps/web/tailwind.config.ts"
+    },
+    {
+      "path": "apps/web/postcss.config.js"
+    },
+    {
+      "path": "apps/web/src/lib/ui/site.styles.ts"
+    },
+    {
+      "path": "apps/web/scripts/check-styles.mjs"
     }
   ]
 }

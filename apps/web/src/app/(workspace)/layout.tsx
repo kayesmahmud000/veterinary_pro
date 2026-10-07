@@ -1,3 +1,5 @@
+import { cn } from "@/lib/ui/cn";
+import siteStyles from "@/lib/ui/site.styles";
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { getLocalization } from "@/lib/i18n/server";
@@ -11,7 +13,7 @@ export default function WorkspaceLayout({
   const { messages } = getLocalization();
   return (
     <>
-      <a className="skip-link" href="#main-content">
+      <a className={cn(siteStyles["skip-link"])} href="#main-content">
         {messages.navigation.skip}
       </a>
       <SiteHeader />

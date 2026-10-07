@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/ui/cn";
+import siteStyles from "@/lib/ui/site.styles";
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
@@ -21,7 +23,7 @@ export function HeaderSurface({ children }: { children: ReactNode }) {
 
   return (
     <header
-      className={`site-header${overlay ? " site-header--overlay" : ""}${scrolled ? " is-scrolled" : ""}`}
+      className={cn(siteStyles["site-header"], overlay && siteStyles["site-header--overlay"], scrolled && "is-scrolled")}
     >
       {children}
     </header>

@@ -106,7 +106,7 @@ for (const [path] of routes) {
       locale === "en" ? "vetralink-locale=bn" : "vetralink-locale=en";
     const { html } = await request(path, initialCookie);
     const form = html.match(
-      /<form[^>]*class="language-switcher"[^>]*>([\s\S]*?)<\/form>/,
+      /<form[^>]*class="language-switcher(?:\s[^"]*)?"[^>]*>([\s\S]*?)<\/form>/,
     )?.[1];
     assert.ok(form, "Language form must be server-rendered");
     const action = form.match(/name="(\$ACTION_ID_[^"]+)"/)?.[1];
@@ -136,7 +136,7 @@ for (const [path] of routes) {
     const cookie = response.headers.get("set-cookie");
     if (locale === "unsupported") {
       assert.ok(
-        rendered.includes('<html lang="en">'),
+        /<html[^>]*lang="en"/.test(rendered),
         "Invalid selection retains the locale",
       );
       assert.equal(
@@ -163,7 +163,7 @@ for (const [path] of routes) {
       assert.match(cookie, /Secure/i, "Production preference cookie is secure");
       const refreshed = await request(path, cookie.split(";")[0]);
       assert.ok(
-        refreshed.html.includes(`<html lang="${locale}">`),
+        new RegExp(`<html[^>]*lang="${locale}"`).test(refreshed.html),
         "Redirect/reload reads the selected locale",
       );
     }
@@ -243,7 +243,7 @@ for (const locale of ["bn", "en"]) {
     );
     assert.equal(
       response.headers.get("content-disposition"),
-      `attachment; filename="vetralink-${slug}.csv"`,
+      `attachment; filename="khamar-school-${slug}.csv"`,
     );
     assert.match(response.headers.get("cache-control"), /private, no-store/);
     assert.equal(response.headers.get("x-content-type-options"), "nosniff");

@@ -1,5 +1,8 @@
+import { cn } from "@/lib/ui/cn";
+import siteStyles from "@/lib/ui/site.styles";
 import Link from "next/link";
-import { Sprout, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { SiteBrand } from "@/components/brand/site-brand";
 import { getPublicNavItems } from "@/lib/public-navigation";
 import { getLocalization } from "@/lib/i18n/server";
 import { formatNumber } from "@/lib/i18n/locale";
@@ -11,17 +14,10 @@ export function SiteFooter() {
     year: "numeric",
   });
   return (
-    <footer className="site-footer">
-      <div className="container footer-top">
+    <footer className={cn(siteStyles["site-footer"])}>
+      <div className={cn(siteStyles["container"], siteStyles["footer-top"])}>
         <div>
-          <Link
-            className="brand"
-            href="/"
-            aria-label={messages.navigation.home}
-          >
-            <Sprout aria-hidden="true" /> vetralink
-            <span className="brand-pro">PRO</span>
-          </Link>
+          <SiteBrand homeLabel={messages.navigation.home} />
           <p>
             {messages.footer.knowledge}
             <br />
@@ -37,10 +33,10 @@ export function SiteFooter() {
           ))}
         </nav>
       </div>
-      <div className="container footer-bottom">
+      <div className={cn(siteStyles["container"], siteStyles["footer-bottom"])}>
         <span>
           © {formatNumber(Number(year), locale, { useGrouping: false })}{" "}
-          Vetralink Pro
+          Khamar School
         </span>
         <span>{messages.footer.people}</span>
       </div>

@@ -11,7 +11,7 @@ Versions below are manifest major versions/ranges, not a claim about the newest 
 | Workspace | pnpm `10.18.3`, Turborepo 2, Node engine `>=20`; CI uses Node 20 |
 | API | NestJS 10 on Express 4, TypeScript 5, Prisma 5; class-validator DTOs and Zod environment parsing |
 | Database | PostgreSQL 16 in local Compose; Redis 7 for BullMQ and Redis-backed mechanisms |
-| Web | Next.js 14 App Router, React 18; Tailwind 3 dependency, Lucide, clsx, tailwind-merge |
+| Web | Next.js 14 App Router, React 18; configured Tailwind 3 utilities, Lucide, clsx, tailwind-merge |
 | Mobile | Flutter/Dart (`>=3.0.0 <4.0.0`), Dio, sqflite, uuid; flutter_bloc dependency |
 | Shared contracts | `@vetralink/shared-types`, tsup emits CJS, ESM and declarations |
 | Integrations | S3-compatible storage/MinIO, Stripe, regional MFS handler, CloudFront signing, Daily provider, mail providers |

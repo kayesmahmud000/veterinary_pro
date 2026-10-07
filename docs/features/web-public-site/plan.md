@@ -103,9 +103,7 @@ Commands run from repository root. Use non-production resources only. The curren
 
 Suggested future implementation commit: `feat(web): add public landing pages and navigation`.
 
-
 Planning review (2026-10-05): AC1–AC7 map to Tasks 1–4; route scope distinguishes public content from later authenticated features; first-build navigation has only planned first-build destinations. This was the pre-implementation review; the user subsequently approved the plan. The execution evidence below supersedes the planning-only state.
-
 
 ## Execution ledger and final evidence — 2026-10-05
 
@@ -125,3 +123,9 @@ Baseline commit: `e15151c` on `dev-fontend`. Tasks 1–4 implemented in the appr
 - Task 4: updated roadmap, client architecture/project/gap notes and source manifest for the moved home route. Context validation and `git diff --check` passed. API, database, mobile and shared source contracts are unchanged.
 
 Remaining scope: real login/registration/session handling (WEB-1E), data integrations and private workspaces have not started. This acceptance covers the informational public site, not production integration or release certification.
+
+## Shared container width follow-up — 2026-10-07
+
+Updated the shared public-site container to use `w-11/12` with the existing 1200px cap and 1280px cap from 1600px upward. This applies consistently to the header, footer, content sections, guides, overview pages and not-found shell.
+
+**Observed locally:** all 12 rendered `.container` elements use the shared width; the header measured exactly 11/12 of the document layout width below the caps at 1024, 800, 375 and 320px, and matched the caps at 1440 and 1920px. No horizontal overflow was observed. The running local app was used; production build was not run alongside its dev server.

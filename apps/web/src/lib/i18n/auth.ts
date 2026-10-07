@@ -7,7 +7,7 @@ export const authEn = {
   retry: "Try again",
   signOut: "Sign out",
   signingOut: "Signing out…",
-  eyebrow: "YOUR VETRALINK ACCOUNT",
+  eyebrow: "YOUR KHAMAR SCHOOL ACCOUNT",
   loginTitle: "Welcome back.",
   registerTitle: "Let's get you started.",
   loginBody: "Sign in with the email you used to create your account.",
@@ -20,7 +20,7 @@ export const authEn = {
   phoneHint: "Include your country code, for example +880.",
   passwordHint: "Use 8–128 characters.",
   confirmation: "Confirm password",
-  role: "How will you use Vetralink?",
+  role: "How will you use Khamar School?",
   roles: {
     LEARNER: "Learner (default)",
     FARMER: "Farmer / farm owner",
@@ -34,7 +34,7 @@ export const authEn = {
   submittingLogin: "Signing in…",
   submittingRegister: "Creating account…",
   create: "Create account",
-  noAccount: "New to Vetralink?",
+  noAccount: "New to Khamar School?",
   hasAccount: "Already have an account?",
   accountTitle: "You're signed in.",
   loginSuccess: "Signed in successfully.",
@@ -65,7 +65,7 @@ export const authEn = {
     invalid_credentials:
       "The email or password is incorrect. Please try again.",
     suspended:
-      "This account is suspended. Contact the Vetralink team for help.",
+      "This account is suspended. Contact the Khamar School team for help.",
     conflict_email:
       "This email already has an account. Sign in with it instead.",
     conflict_phone:
@@ -94,7 +94,7 @@ export const authBn: AuthMessages = {
   retry: "আবার চেষ্টা করুন",
   signOut: "সাইন আউট",
   signingOut: "সাইন আউট হচ্ছে…",
-  eyebrow: "আপনার ভেট্রালিংক অ্যাকাউন্ট",
+  eyebrow: "আপনার খামার স্কুল অ্যাকাউন্ট",
   loginTitle: "আবার স্বাগতম।",
   registerTitle: "চলুন, শুরু করি।",
   loginBody: "অ্যাকাউন্ট খোলার সময় ব্যবহার করা ইমেইল দিয়ে সাইন ইন করুন।",
@@ -106,7 +106,7 @@ export const authBn: AuthMessages = {
   phoneHint: "দেশের কোডসহ লিখুন, যেমন +880।",
   passwordHint: "৮–১২৮ অক্ষর ব্যবহার করুন।",
   confirmation: "পাসওয়ার্ড আবার লিখুন",
-  role: "ভেট্রালিংক কীভাবে ব্যবহার করবেন?",
+  role: "খামার স্কুল কীভাবে ব্যবহার করবেন?",
   roles: {
     LEARNER: "শিক্ষার্থী (ডিফল্ট)",
     FARMER: "খামারি / খামারের মালিক",
@@ -120,7 +120,7 @@ export const authBn: AuthMessages = {
   submittingLogin: "সাইন ইন হচ্ছে…",
   submittingRegister: "অ্যাকাউন্ট তৈরি হচ্ছে…",
   create: "অ্যাকাউন্ট তৈরি করুন",
-  noAccount: "ভেট্রালিংকে নতুন?",
+  noAccount: "খামার স্কুলে নতুন?",
   hasAccount: "আগেই অ্যাকাউন্ট আছে?",
   accountTitle: "আপনি সাইন ইন করেছেন।",
   loginSuccess: "সফলভাবে সাইন ইন হয়েছে।",
@@ -150,7 +150,7 @@ export const authBn: AuthMessages = {
     validation: "আপনার তথ্য দেখে আবার চেষ্টা করুন।",
     invalid_credentials: "ইমেইল বা পাসওয়ার্ড সঠিক নয়। আবার চেষ্টা করুন।",
     suspended:
-      "এই অ্যাকাউন্ট স্থগিত আছে। সহায়তার জন্য ভেট্রালিংক দলের সঙ্গে যোগাযোগ করুন।",
+      "এই অ্যাকাউন্ট স্থগিত আছে। সহায়তার জন্য খামার স্কুল দলের সঙ্গে যোগাযোগ করুন।",
     conflict_email: "এই ইমেইলে অ্যাকাউন্ট আছে। সেটি দিয়ে সাইন ইন করুন।",
     conflict_phone:
       "এই ফোন নম্বর আগেই নিবন্ধিত। অন্য নম্বর দিন অথবা সাইন ইন করুন।",

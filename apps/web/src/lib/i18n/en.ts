@@ -7,10 +7,10 @@ export const en = {
   showcase: showcaseEn,
   resources: resourcesEn,
   metadata: {
-    siteTitle: "Vetralink Pro — Connected care for your farm",
+    siteTitle: "Khamar School — Connected care for your farm",
     siteDescription:
-      "Discover connected livestock records, practical learning and veterinary care with Vetralink Pro.",
-    homeTitle: "Vetralink Pro — Connected care for your farm",
+      "Discover connected livestock records, practical learning and veterinary care with Khamar School.",
+    homeTitle: "Khamar School — Connected care for your farm",
     homeDescription:
       "A clearer picture of your farm. Explore connected livestock management, practical learning and veterinary care.",
   },
@@ -23,7 +23,7 @@ export const en = {
     footer: "Footer navigation",
     open: "Open navigation",
     close: "Close navigation",
-    home: "Vetralink Pro home",
+    home: "Khamar School home",
     skip: "Skip to content",
     language: "Website language",
   },
@@ -40,7 +40,7 @@ export const en = {
     people: "Built around the people who care for animals.",
   },
   overview: {
-    eyebrow: "THE VETRALINK APPROACH",
+    eyebrow: "THE KHAMAR SCHOOL APPROACH",
     sections: "Product approach",
     explore: "Explore the platform",
     availabilityTitle: "Explore the vision.",
@@ -51,7 +51,7 @@ export const en = {
     title: "Page not found",
     eyebrow: "A LITTLE OFF THE PATH",
     heading: "Page not found.",
-    body: "This page may have moved, or the address may be incorrect. Head back to explore the Vetralink approach.",
+    body: "This page may have moved, or the address may be incorrect. Head back to explore the Khamar School approach.",
   },
   landing: {
     hero: {
@@ -135,7 +135,7 @@ export const en = {
       title: "Your questions, answered.",
       items: [
         {
-          question: "Who is Vetralink Pro for?",
+          question: "Who is Khamar School for?",
           answer:
             "The platform is designed for farm owners and staff, veterinarians, and people learning about livestock farming. Its product vision brings farm records, educational resources and veterinary care together.",
         },
@@ -340,7 +340,7 @@ export const en = {
     farm: {
       metadataTitle: "Farm management",
       metadataDescription:
-        "Explore the Vetralink approach to connected animal records, milk production, health tracking and farm finances.",
+        "Explore the Khamar School approach to connected animal records, milk production, health tracking and farm finances.",
       title: "Every animal. Every day. One clearer picture.",
       intro:
         "Farm management starts with knowing what happened, when it happened and which animal it belongs to. Explore an approach that connects everyday records with your farm’s bigger picture.",
@@ -362,7 +362,7 @@ export const en = {
     learning: {
       metadataTitle: "Learning and resources",
       metadataDescription:
-        "Read free farm record-keeping guides, download blank CSV templates and explore Vetralink Pro's learning plans.",
+        "Read free farm record-keeping guides, download blank CSV templates and explore Khamar School's learning plans.",
       title: "Practical knowledge. For life on the farm.",
       intro:
         "Start with free guides and blank templates for everyday records. Explore our longer-term plans for courses and a connected learning library.",
@@ -387,7 +387,7 @@ export const en = {
         "Explore veterinary consultations connected to animal history, clinical notes and signed prescriptions.",
       title: "Care starts with understanding the whole story.",
       intro:
-        "An animal’s history matters. Vetralink’s veterinary-care approach connects consultation intake, farm records and clinical documentation so each conversation has better context.",
+        "An animal’s history matters. Khamar School’s veterinary-care approach connects consultation intake, farm records and clinical documentation so each conversation has better context.",
       sections: [
         {
           title: "Start with the right context",

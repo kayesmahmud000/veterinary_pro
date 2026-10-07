@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/ui/cn";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,7 +10,6 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  Sprout,
   X,
 } from "lucide-react";
 import {
@@ -20,7 +20,8 @@ import {
   type FieldErrors,
 } from "@/lib/auth/contracts";
 import { useAuth } from "./auth-provider";
-import styles from "./auth.module.css";
+import styles from "./auth.styles";
+import { BrandLogo } from "@/components/brand/site-brand";
 
 export function AuthDialog() {
   const router = useRouter();
@@ -57,11 +58,11 @@ export function AuthDialog() {
     const element = dialog.current;
     const opener =
       document.activeElement instanceof HTMLElement &&
-      document.activeElement !== document.body
+        document.activeElement !== document.body
         ? document.activeElement
         : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const wasScrollLocked = document.body.classList.contains("overflow-hidden");
+    document.body.classList.add("overflow-hidden");
     element?.showModal();
     element?.querySelector<HTMLInputElement>("input")?.focus();
     // Disabled fields can move focus out of the dialog. Capture Escape before
@@ -73,7 +74,7 @@ export function AuthDialog() {
     return () => {
       document.removeEventListener("keydown", preventPendingEscape, true);
       element?.close();
-      document.body.style.overflow = previousOverflow;
+      if (!wasScrollLocked) document.body.classList.remove("overflow-hidden");
       if (opener?.isConnected && opener.getClientRects().length) opener.focus();
       else
         Array.from(
@@ -113,7 +114,7 @@ export function AuthDialog() {
     if (Object.keys(validation.fields).length || !validation.payload) {
       const field = Object.keys(validation.fields)[0];
       form.current
-        ?.querySelector<HTMLInputElement>(`[name="${field}"]`)
+        ?.querySelector<HTMLElement>(`[name="${field}"]`)
         ?.focus();
       return;
     }
@@ -169,12 +170,10 @@ export function AuthDialog() {
     const issue = fields[field];
     const isPassword = field === "password" || field === "confirmation";
     return (
-      <div className={styles.field}>
+      <div className={cn(styles.field, "auth-field")}>
         <label htmlFor={`auth-${field}`}>{label}</label>
         <div
-          className={
-            isPassword && field === "password" ? styles.password : undefined
-          }
+          className={cn(isPassword && field === "password" ? styles.password : undefined)}
         >
           <input
             id={`auth-${field}`}
@@ -210,7 +209,7 @@ export function AuthDialog() {
           {field === "password" && (
             <button
               type="button"
-              className={styles.eye}
+              className={cn(styles.eye)}
               aria-label={showPassword ? t.hidePassword : t.showPassword}
               aria-pressed={showPassword}
               onClick={() => setShowPassword(!showPassword)}
@@ -224,12 +223,12 @@ export function AuthDialog() {
           )}
         </div>
         {issue && (
-          <span id={`auth-${field}-error`} className={styles.fieldError}>
+          <span id={`auth-${field}-error`} className={cn(styles.fieldError)}>
             {t.fields[issue]}
           </span>
         )}
         {hint && (
-          <span id={`auth-${field}-hint`} className={styles.hint}>
+          <span id={`auth-${field}-hint`} className={cn(styles.hint)}>
             {hint}
           </span>
         )}
@@ -241,7 +240,10 @@ export function AuthDialog() {
   return (
     <dialog
       ref={dialog}
-      className={styles.dialog}
+      className={cn(
+        styles.dialog,
+        mode === "register" ? styles.registerDialog : undefined,
+      )}
       aria-labelledby="auth-title"
       aria-describedby="auth-description"
       onCancel={(event) => {
@@ -261,20 +263,18 @@ export function AuthDialog() {
         }
       }}
     >
-      <div className={styles.content}>
+      <div className={cn(styles.content)}>
         <button
           type="button"
-          className={styles.close}
+          className={cn(styles.close)}
           onClick={close}
           disabled={pending}
           aria-label={t.close}
         >
           <X size={20} aria-hidden="true" />
         </button>
-        <div className={styles.mark}>
-          <Sprout aria-hidden="true" size={25} />
-        </div>
-        <div className={styles.eyebrow}>{t.eyebrow}</div>
+        <BrandLogo className="mb-5" />
+        <div className={cn(styles.eyebrow)}>{t.eyebrow}</div>
         <h2
           id="auth-title"
           data-account-title={user ? "" : undefined}
@@ -286,7 +286,7 @@ export function AuthDialog() {
               ? t.registerTitle
               : t.loginTitle}
         </h2>
-        <p id="auth-description" className={styles.description}>
+        <p id="auth-description" className={cn(styles.description)}>
           {user
             ? t.accountNote
             : mode === "register"
@@ -294,7 +294,7 @@ export function AuthDialog() {
               : t.loginBody}
         </p>
         {success && user && (
-          <div className={styles.success} role="status">
+          <div className={cn(styles.success)} role="status">
             <CheckCircle2 size={20} aria-hidden="true" />
             {success}
           </div>
@@ -302,7 +302,7 @@ export function AuthDialog() {
         {visibleError && (
           <div
             ref={feedback}
-            className={styles.error}
+            className={cn(styles.error)}
             role="alert"
             tabIndex={-1}
           >
@@ -310,7 +310,7 @@ export function AuthDialog() {
             {user && (
               <button
                 type="button"
-                className={styles.inlineButton}
+                className={cn(styles.inlineButton)}
                 disabled={pending}
                 onClick={() => {
                   setError(undefined);
@@ -324,7 +324,7 @@ export function AuthDialog() {
         )}
         {user ? (
           <>
-            <div className={styles.profile}>
+            <div className={cn(styles.profile)}>
               <strong>{user.name}</strong>
               <dl>
                 <div>
@@ -342,12 +342,12 @@ export function AuthDialog() {
                   </div>
                 )}
               </dl>
-              <span className={styles.hint}>
+              <span className={cn(styles.hint)}>
                 {user.isEmailVerified ? t.verified : t.unverified}
               </span>
             </div>
-            <p className={styles.sessionNote}>{t.sessionNote}</p>
-            <div className={styles.accountLinks}>
+            <p className={cn(styles.sessionNote)}>{t.sessionNote}</p>
+            <div className={cn(styles.accountLinks)}>
               <Link href="/account/role-requests" onClick={close}>
                 {t.applications}
               </Link>
@@ -383,7 +383,7 @@ export function AuthDialog() {
             </div>
             <button
               type="button"
-              className={styles.primary}
+              className={cn(styles.primary)}
               disabled={pending}
               onClick={close}
             >
@@ -392,7 +392,7 @@ export function AuthDialog() {
             </button>
             <button
               type="button"
-              className={styles.signOut}
+              className={cn(styles.signOut)}
               disabled={pending}
               onClick={() => void logout()}
             >
@@ -402,58 +402,62 @@ export function AuthDialog() {
         ) : (
           <>
             <form ref={form} onSubmit={submit} noValidate aria-busy={pending}>
-              <fieldset disabled={pending} className={styles.formFields}>
-                {mode === "register" && input("name", t.name)}
-                {input("email", t.email, "email")}
-                {mode === "register" &&
-                  input("phone", t.phone, "tel", t.phoneHint)}
-                {input(
-                  "password",
-                  t.password,
-                  "password",
-                  mode === "register" ? t.passwordHint : undefined,
-                )}
+              <fieldset disabled={pending} className={cn(styles.formFields)}>
                 {mode === "register" && (
-                  <>
+                  <div
+                    id="auth-register-fields"
+                    className={cn(styles.registerFields)}
+                  >
+                    {input("name", t.name)}
+                    {input("email", t.email, "email")}
+                    {input("phone", t.phone, "tel", t.phoneHint)}
+                    {input("password", t.password, "password", t.passwordHint)}
                     {input("confirmation", t.confirmation, "password")}
-                    <fieldset className={styles.roles}>
-                      <legend>{t.role}</legend>
-                      {PUBLIC_ROLES.map((role) => (
-                        <label
-                          key={role}
-                          className={
-                            values.role === role
-                              ? styles.selectedRole
-                              : undefined
-                          }
-                        >
-                          <input
-                            type="radio"
-                            name="role"
-                            value={role}
-                            checked={values.role === role}
-                            onChange={() => change("role", role)}
-                          />
-                          {t.roles[role]}
-                        </label>
-                      ))}
+                    <div className={cn(styles.field, "auth-field")}>
+                      <label htmlFor="auth-role">{t.role}</label>
+                      <select
+                        id="auth-role"
+                        name="role"
+                        value={values.role}
+                        onChange={(event) => change("role", event.target.value)}
+                        aria-invalid={fields.role ? true : undefined}
+                        aria-describedby={
+                          fields.role ? "auth-role-error" : undefined
+                        }
+                        required
+                      >
+                        {PUBLIC_ROLES.map((role) => (
+                          <option key={role} value={role}>
+                            {t.roles[role]}
+                          </option>
+                        ))}
+                      </select>
                       {fields.role && (
-                        <span className={styles.fieldError}>
+                        <span
+                          id="auth-role-error"
+                          className={cn(styles.fieldError)}
+                        >
                           {t.fields.role}
                         </span>
                       )}
-                    </fieldset>
+                    </div>
+                  </div>
+                )}
+                {mode !== "register" && (
+                  <>
+                    {input("email", t.email, "email")}
+                    {input("password", t.password, "password")}
                   </>
                 )}
                 <button
                   type="submit"
-                  className={styles.primary}
+                  className={cn(styles.primary)}
                   disabled={pending}
                 >
                   {pending ? (
                     <>
                       <Loader2
-                        className={styles.spinner}
+                        className={cn(styles.spinner)}
                         size={18}
                         aria-hidden="true"
                       />
@@ -469,7 +473,7 @@ export function AuthDialog() {
                   )}
                 </button>
               </fieldset>
-              <span className={styles.srOnly} role="status">
+              <span className={cn(styles.srOnly)} role="status">
                 {pending
                   ? mode === "register"
                     ? t.submittingRegister
@@ -477,7 +481,7 @@ export function AuthDialog() {
                   : ""}
               </span>
             </form>
-            <div className={styles.switch}>
+            <div className={cn(styles.switch)}>
               {mode === "register" ? t.hasAccount : t.noAccount}{" "}
               <button type="button" onClick={switchMode} disabled={pending}>
                 {mode === "register" ? t.signIn : t.signUp}

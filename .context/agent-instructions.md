@@ -16,6 +16,10 @@ Complete the requested scope, not the next roadmap item by default. Root `ROADMA
 
 Retain the repository's human-managed Git rule: agents must not run `git add`, `git commit`, `git merge`, or `git push` unless the user explicitly changes that policy. Read-only Git inspection is appropriate. Suggest a commit message at completion. Do not infer a branching strategy from the reference project or CI branch filters.
 
+## Mandatory web styling policy
+
+All agents working in `apps/web` must use Tailwind CSS utilities. Follow [UI rules](engineering/ui.md): no handwritten CSS selectors, CSS Modules, Sass, styled-jsx/CSS-in-JS, authored inline `style` props or DOM `.style` mutations. The only stylesheet is the root Tailwind layer entry; theme configuration and native SVG presentation attributes are allowed. Reuse `src/lib/ui/` and adjacent static `*.styles.ts` utility compositions; keep class names complete and discoverable by Tailwind. Run `pnpm --filter @vetralink/web check:styles` and the relevant web checks before completion. The production build enforces this policy.
+
 ## Before changing code
 
 1. State the intended result and acceptance criteria. Resolve material ambiguities; infer routine choices from source and the request.

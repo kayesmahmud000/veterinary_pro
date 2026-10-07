@@ -50,11 +50,12 @@ Frontend/Web/UI/UX, API/Security, Tech Lead, Code Reviewer/QA and UI Reviewer pe
 
 ## Acceptance
 
-1. Header exposes working sign in/sign up at desktop and 320px; no auth page navigation.
+1. Header exposes working sign in/sign up at desktop and 320px; on desktop, language selection sits beside the auth actions at the right edge; no auth page navigation.
 2. Forms produce exact allowed API payloads; validation, duplicate accounts, wrong credentials, suspended users, offline/timeout and retry remain understandable in both locales.
 3. Successful signup/login shows the real account summary on the current URL, except incomplete FARMER accounts immediately resume /account/farm-onboarding. The [role/onboarding feature](../../features/role-request-approval/spec.md) owns this required redirect.
 4. HttpOnly session persists across navigation/reload; refresh rotates once and logout revokes/clears the session. Tokens never enter browser JSON, JS storage, markup or logs.
 5. Keyboard focus, Escape/backdrop, focus restoration, scroll, 44px targets and narrow/zoom layout are checked in rendered Chrome in both locales.
 6. Meaningful server-boundary/session tests, backend auth baseline tests, shared/web build and public localization regression pass. Separate a controlled mock upstream from real database/backend evidence.
+7. Signup fields use two columns at widths of 640px and above and one column below; the public role choice is a localized dropdown containing only the permitted registration roles.
 
 Updated 2026-10-07: all six roles, shared Zod, default LEARNER/professional signup, farmer setup redirect and protected application/review/access links are implemented. [Real isolated verification and release limits](../../features/role-request-approval/operations.md) supplement the original controlled-upstream auth evidence.

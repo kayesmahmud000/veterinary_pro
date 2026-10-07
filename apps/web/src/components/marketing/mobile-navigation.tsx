@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/ui/cn";
+import siteStyles from "@/lib/ui/site.styles";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
@@ -23,7 +25,7 @@ export function MobileNavigation({
   }, []);
   return (
     <div
-      className="mobile-navigation"
+      className={cn(siteStyles["mobile-navigation"])}
       onKeyDown={(event) => {
         if (event.key === "Escape" && open) {
           setOpen(false);
@@ -33,7 +35,7 @@ export function MobileNavigation({
     >
       <button
         ref={button}
-        className="menu-toggle"
+        className={cn(siteStyles["menu-toggle"])}
         aria-label={open ? labels.close : labels.open}
         aria-expanded={open}
         aria-controls="mobile-menu"

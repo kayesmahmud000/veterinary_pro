@@ -1,3 +1,5 @@
+import { cn } from "@/lib/ui/cn";
+import siteStyles from "@/lib/ui/site.styles";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { SiteHeader } from "@/components/marketing/site-header";
@@ -8,17 +10,17 @@ export default function NotFound() {
   const { locale, messages } = getLocalization();
   return (
     <>
-      <a className="skip-link" href="#main-content">
+      <a className={cn(siteStyles["skip-link"])} href="#main-content">
         {messages.navigation.skip}
       </a>
       <SiteHeader />
-      <main id="main-content" className="container not-found">
-        <div className="eyebrow">
+      <main id="main-content" className={cn(siteStyles["container"], siteStyles["not-found"])}>
+        <div className={cn(siteStyles["eyebrow"])}>
           {formatNumber(404, locale)} / {messages.notFound.eyebrow}
         </div>
         <h1>{messages.notFound.heading}</h1>
         <p>{messages.notFound.body}</p>
-        <Link className="button" href="/">
+        <Link className={cn(siteStyles["button"])} href="/">
           <ArrowLeft size={18} aria-hidden="true" /> {messages.actions.home}
         </Link>
       </main>

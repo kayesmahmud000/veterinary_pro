@@ -13,7 +13,7 @@ export const resourcesEn = {
   related: "Keep learning",
   template: "Download blank CSV template",
   templateNote:
-    "UTF-8 CSV · opens in spreadsheet apps · no data is sent to Vetralink",
+    "UTF-8 CSV · opens in spreadsheet apps · no data is sent to Khamar School",
   available:
     "Available now: free guides and blank record templates. Courses, purchases and account tools are planned.",
   count: "guides",
@@ -126,7 +126,7 @@ export const resourcesBn: typeof resourcesEn = {
   related: "আরও শিখুন",
   template: "খালি CSV টেমপ্লেট ডাউনলোড করুন",
   templateNote:
-    "UTF-8 CSV · স্প্রেডশিট অ্যাপে খুলুন · ভেট্রালিংকে কোনো তথ্য পাঠানো হয় না",
+    "UTF-8 CSV · স্প্রেডশিট অ্যাপে খুলুন · খামার স্কুলে কোনো তথ্য পাঠানো হয় না",
   available:
     "এখনই পাওয়া যাচ্ছে: বিনামূল্যের গাইড ও খালি রেকর্ড টেমপ্লেট। কোর্স, কেনাকাটা ও অ্যাকাউন্টের সরঞ্জাম পরিকল্পনায় রয়েছে।",
   count: "টি গাইড",

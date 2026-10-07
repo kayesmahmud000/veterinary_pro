@@ -1,8 +1,9 @@
 "use client";
 
+import { cn } from "@/lib/ui/cn";
 import { UserRound } from "lucide-react";
 import { useAuth } from "./auth-provider";
-import styles from "./auth.module.css";
+import styles from "./auth.styles";
 
 export function AuthControls({
   mobile = false,
@@ -17,11 +18,11 @@ export function AuthControls({
     open(mode);
   }
   return (
-    <div className={mobile ? styles.mobileControls : styles.controls}>
+    <div className={cn(mobile ? styles.mobileControls : styles.controls)}>
       <button
         type="button"
         data-auth-trigger
-        className={styles.headerSignIn}
+        className={cn(styles.headerSignIn)}
         disabled={checking}
         aria-haspopup="dialog"
         aria-label={checking ? t.checking : user ? t.account : t.signIn}
@@ -33,7 +34,7 @@ export function AuthControls({
       {!user && (
         <button
           type="button"
-          className={styles.headerSignUp}
+          className={cn(styles.headerSignUp)}
           disabled={checking}
           aria-haspopup="dialog"
           onClick={() => show("register")}

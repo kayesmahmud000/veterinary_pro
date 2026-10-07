@@ -1,3 +1,5 @@
+import { cn } from "@/lib/ui/cn";
+import siteStyles from "@/lib/ui/site.styles";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -10,7 +12,7 @@ import {
 import type { Messages } from "@/lib/i18n/en";
 import { formatNumber, type Locale } from "@/lib/i18n/locale";
 import { guideDefinitions, readingMinutes } from "@/lib/learning-guides";
-import ui from "./showcase.module.css";
+import ui from "./showcase.styles";
 
 export function ResourceCatalog({
   copy,
@@ -31,17 +33,17 @@ export function ResourceCatalog({
     .filter((guide) => !activeTopic || guide.topic === activeTopic);
   const icons = [ClipboardList, Milk, Wallet];
   return (
-    <section className={ui.resources} id="guides">
-      <div className={ui.sectionHeading}>
+    <section className={cn(ui.resources)} id="guides">
+      <div className={cn(ui.sectionHeading)}>
         <div>
-          <div className="eyebrow">{copy.eyebrow}</div>
+          <div className={cn(siteStyles["eyebrow"])}>{copy.eyebrow}</div>
           <h2>{copy.title}</h2>
         </div>
         <p>{copy.body}</p>
       </div>
       {!embedded && (
         <>
-          <nav className={ui.topicFilters} aria-label={copy.filter}>
+          <nav className={cn(ui.topicFilters)} aria-label={copy.filter}>
             <Link
               href="/learning#guides"
               aria-current={!activeTopic ? "true" : undefined}
@@ -58,12 +60,12 @@ export function ResourceCatalog({
               </Link>
             ))}
           </nav>
-          <p className={ui.catalogCount}>
+          <p className={cn(ui.catalogCount)}>
             {formatNumber(guides.length, locale)} {copy.count}
           </p>
         </>
       )}
-      <div className={ui.resourceGrid}>
+      <div className={cn(ui.resourceGrid)}>
         {guides.map((guide) => {
           const article = copy.articles[guide.index];
           const Icon = icons[guide.index];
@@ -71,14 +73,14 @@ export function ResourceCatalog({
             <Link
               key={guide.slug}
               href={`/learning/${guide.slug}`}
-              className={ui.resourceCard}
+              className={cn(ui.resourceCard)}
             >
-              <div className={`${ui.resourceArt} ${ui[`art${guide.index}`]}`}>
+              <div className={cn(ui.resourceArt, [ui.art0, ui.art1, ui.art2][guide.index])}>
                 <Icon size={52} strokeWidth={1.25} aria-hidden="true" />
                 <span>{copy.topics[guide.index]}</span>
               </div>
-              <div className={ui.resourceContent}>
-                <div className={ui.resourceMeta}>
+              <div className={cn(ui.resourceContent)}>
+                <div className={cn(ui.resourceMeta)}>
                   <span>{copy.format}</span>
                   <span>
                     {formatNumber(readingMinutes(article), locale)} {copy.time}
@@ -86,7 +88,7 @@ export function ResourceCatalog({
                 </div>
                 <h3>{article.title}</h3>
                 <p>{article.description}</p>
-                <span className={ui.resourceAction}>
+                <span className={cn(ui.resourceAction)}>
                   {copy.read}
                   <ArrowUpRight size={18} aria-hidden="true" />
                 </span>
@@ -96,13 +98,13 @@ export function ResourceCatalog({
         })}
       </div>
       {embedded ? (
-        <Link className={`text-link ${ui.catalogMore}`} href="/learning#guides">
+        <Link className={cn(siteStyles["text-link"], ui.catalogMore)} href="/learning#guides">
           <BookOpen size={18} aria-hidden="true" />
           {copy.browse}
           <ArrowRight size={18} aria-hidden="true" />
         </Link>
       ) : (
-        <p className={ui.catalogNote}>{copy.available}</p>
+        <p className={cn(ui.catalogNote)}>{copy.available}</p>
       )}
     </section>
   );

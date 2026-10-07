@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/ui/cn";
+import siteStyles from "@/lib/ui/site.styles";
 import { useId, useState } from "react";
 import Link from "next/link";
 import {
@@ -17,7 +19,8 @@ import {
   projectMilk,
   type ProjectionDays,
 } from "@/lib/milk-projection";
-import ui from "./interactive.module.css";
+import ui from "./interactive.styles";
+import { BrandLogo } from "@/components/brand/site-brand";
 
 const icons = [Sprout, Milk, Wallet];
 
@@ -61,33 +64,31 @@ export function FarmDemo({
   return (
     <section
       id="farm-demo"
-      className={ui.demoSection}
+      className={cn(ui.demoSection)}
       aria-labelledby={`${id}-title`}
     >
-      <div className="container">
-        <div className={ui.demoHeading}>
+      <div className={cn(siteStyles["container"])}>
+        <div className={cn(ui.demoHeading)}>
           <div>
-            <div className="eyebrow">{copy.eyebrow}</div>
+            <div className={cn(siteStyles["eyebrow"])}>{copy.eyebrow}</div>
             <h2 id={`${id}-title`}>{copy.title}</h2>
           </div>
           <p>{copy.body}</p>
         </div>
-        <div className={ui.workspace}>
-          <div className={ui.workspaceTop}>
+        <div className={cn(ui.workspace)}>
+          <div className={cn(ui.workspaceTop)}>
             <div>
-              <span className={ui.demoMark}>
-                <Sprout size={22} aria-hidden="true" />
-              </span>
+              <BrandLogo className="h-11 w-11" />
               <div>
-                <strong>Vetralink Pro</strong>
+                <strong>Khamar School</strong>
                 <span>{copy.sample}</span>
               </div>
             </div>
-            <span className={ui.badge}>{copy.badge}</span>
+            <span className={cn(ui.badge)}>{copy.badge}</span>
           </div>
-          <div className={ui.workspaceToolbar}>
+          <div className={cn(ui.workspaceToolbar)}>
             <div
-              className={ui.demoTabs}
+              className={cn(ui.demoTabs)}
               role="group"
               aria-label={copy.tabsLabel}
             >
@@ -107,18 +108,18 @@ export function FarmDemo({
                 );
               })}
             </div>
-            <button type="button" className={ui.reset} onClick={reset}>
+            <button type="button" className={cn(ui.reset)} onClick={reset}>
               <RotateCcw size={15} aria-hidden="true" />
               <span>{copy.reset}</span>
             </button>
           </div>
-          <div id={`${id}-panel`} className={ui.demoPanel}>
+          <div id={`${id}-panel`} className={cn(ui.demoPanel)}>
             {view === 0 && (
-              <div className={ui.animalView}>
+              <div className={cn(ui.animalView)}>
                 <div>
                   <h3>{copy.animalLabel}</h3>
                   <div
-                    className={ui.animalChoices}
+                    className={cn(ui.animalChoices)}
                     role="group"
                     aria-label={copy.animalLabel}
                   >
@@ -130,7 +131,7 @@ export function FarmDemo({
                         aria-controls={`${id}-animal`}
                         onClick={() => setAnimal(index)}
                       >
-                        <span className={ui.animalAvatar}>
+                        <span className={cn(ui.animalAvatar)}>
                           <Sprout size={26} aria-hidden="true" />
                         </span>
                         <span>
@@ -143,13 +144,13 @@ export function FarmDemo({
                       </button>
                     ))}
                   </div>
-                  <p className={ui.helper}>{copy.localNote}</p>
+                  <p className={cn(ui.helper)}>{copy.localNote}</p>
                 </div>
-                <article className={ui.animalProfile} id={`${id}-animal`}>
-                  <span className={ui.badge}>{selectedAnimal.detail}</span>
+                <article className={cn(ui.animalProfile)} id={`${id}-animal`}>
+                  <span className={cn(ui.badge)}>{selectedAnimal.detail}</span>
                   <h3>{selectedAnimal.name}</h3>
                   <p>{copy.profileTitle}</p>
-                  <dl className={ui.profileData}>
+                  <dl className={cn(ui.profileData)}>
                     <div>
                       <dt>{copy.tag}</dt>
                       <dd>VL-00{animal + 1}</dd>
@@ -166,7 +167,7 @@ export function FarmDemo({
                     </div>
                   </dl>
                   <h4>{copy.recordList}</h4>
-                  <ul className={ui.checkList}>
+                  <ul className={cn(ui.checkList)}>
                     {copy.records.map((label) => (
                       <li key={label}>
                         <Check size={16} aria-hidden="true" />
@@ -178,14 +179,14 @@ export function FarmDemo({
               </div>
             )}
             {view === 1 && (
-              <div className={ui.milkView}>
+              <div className={cn(ui.milkView)}>
                 <div>
                   <h3>{copy.milkTitle}</h3>
                   <p>{copy.milkBody}</p>
-                  <div className={ui.plannerFields}>
+                  <div className={cn(ui.plannerFields)}>
                     <div>
                       <label
-                        className={ui.inputLabel}
+                        className={cn(ui.inputLabel)}
                         htmlFor={`${id}-quantity`}
                       >
                         {copy.quantity}
@@ -205,14 +206,14 @@ export function FarmDemo({
                       {daily === null && (
                         <p
                           id={`${id}-quantity-error`}
-                          className={ui.fieldError}
+                          className={cn(ui.fieldError)}
                         >
                           {copy.invalidQuantity}
                         </p>
                       )}
                     </div>
                     <div>
-                      <label className={ui.inputLabel} htmlFor={`${id}-price`}>
+                      <label className={cn(ui.inputLabel)} htmlFor={`${id}-price`}>
                         {copy.price}
                       </label>
                       <input
@@ -228,15 +229,15 @@ export function FarmDemo({
                         }
                       />
                       {rate === null && (
-                        <p id={`${id}-price-error`} className={ui.fieldError}>
+                        <p id={`${id}-price-error`} className={cn(ui.fieldError)}>
                           {copy.invalidPrice}
                         </p>
                       )}
                     </div>
                   </div>
-                  <div className={ui.inputLabel}>{copy.period}</div>
+                  <div className={cn(ui.inputLabel)}>{copy.period}</div>
                   <div
-                    className={ui.periodChoices}
+                    className={cn(ui.periodChoices)}
                     role="group"
                     aria-label={copy.period}
                   >
@@ -251,12 +252,12 @@ export function FarmDemo({
                       </button>
                     ))}
                   </div>
-                  <p className={ui.helper}>{copy.assumption}</p>
+                  <p className={cn(ui.helper)}>{copy.assumption}</p>
                 </div>
-                <div className={ui.projection}>
+                <div className={cn(ui.projection)}>
                   <div role="status">
                     {projection ? (
-                      <dl className={ui.metrics}>
+                      <dl className={cn(ui.metrics)}>
                         <div>
                           <dt>
                             {copy.total} · {number(days)} {copy.days}
@@ -272,27 +273,27 @@ export function FarmDemo({
                         </div>
                       </dl>
                     ) : (
-                      <p className={ui.fieldError}>{copy.invalidResult}</p>
+                      <p className={cn(ui.fieldError)}>{copy.invalidResult}</p>
                     )}
                   </div>
                   {projection && (
                     <figure
-                      className={ui.chart}
+                      className={cn(ui.chart)}
                       aria-label={`${copy.chart}: ${number(projection.liters)} ${copy.liters}, ${number(days)} ${copy.days}`}
                     >
                       <figcaption>
                         {copy.chart}
                         <span>{copy.chartUnit}</span>
                       </figcaption>
-                      <div className={ui.bars} aria-hidden="true">
+                      <div className={cn(ui.bars)} aria-hidden="true">
                         {spans.map((span, index) => (
-                          <div className={ui.barColumn} key={index}>
+                          <div className={cn(ui.barColumn)} key={index}>
                             <span>{number((daily ?? 0) * span)}</span>
                             <div
-                              className={ui.bar}
-                              style={{
-                                height: `${daily === 0 ? 0 : (span / Math.max(...spans)) * 90}px`,
-                              }}
+                              className={cn(
+                                ui.bar,
+                                daily === 0 ? "h-0" : days === 30 && span === 7 ? "h-[70px]" : "h-[90px]",
+                              )}
                             />
                             <small>
                               {days === 7
@@ -309,14 +310,14 @@ export function FarmDemo({
             )}
             {view === 2 && (
               <div>
-                <div className={ui.financeHeading}>
+                <div className={cn(ui.financeHeading)}>
                   <div>
                     <h3>{copy.financeTitle}</h3>
                     <p>{copy.financeBody}</p>
                   </div>
                   <button
                     type="button"
-                    className={ui.inlineButton}
+                    className={cn(ui.inlineButton)}
                     onClick={() => setView(1)}
                   >
                     {copy.edit}
@@ -325,7 +326,7 @@ export function FarmDemo({
                 </div>
                 {projection ? (
                   <>
-                    <dl className={ui.financeMetrics}>
+                    <dl className={cn(ui.financeMetrics)}>
                       <div>
                         <dt>
                           {copy.income} · {number(days)} {copy.days}
@@ -341,7 +342,7 @@ export function FarmDemo({
                         <dd>{money(projection.value - expenses)}</dd>
                       </div>
                     </dl>
-                    <dl className={ui.expenseList}>
+                    <dl className={cn(ui.expenseList)}>
                       {copy.expenses.map((label, index) => (
                         <div key={label}>
                           <dt>{label}</dt>
@@ -349,22 +350,22 @@ export function FarmDemo({
                         </div>
                       ))}
                     </dl>
-                    <p className={ui.helper}>{copy.financeNote}</p>
+                    <p className={cn(ui.helper)}>{copy.financeNote}</p>
                   </>
                 ) : (
-                  <p className={ui.fieldError} role="status">
+                  <p className={cn(ui.fieldError)} role="status">
                     {copy.invalidResult}
                   </p>
                 )}
               </div>
             )}
           </div>
-          <div className={ui.workspaceFoot}>
+          <div className={cn(ui.workspaceFoot)}>
             <p>
-              <span className="status-dot" />
+              <span className={cn(siteStyles["status-dot"])} />
               {copy.localNote}
             </p>
-            <Link className="text-link" href="/farm-management">
+            <Link className={cn(siteStyles["text-link"])} href="/farm-management">
               {copy.explore}
               <ArrowUpRight size={16} aria-hidden="true" />
             </Link>

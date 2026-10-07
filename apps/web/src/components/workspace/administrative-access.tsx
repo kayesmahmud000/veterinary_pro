@@ -1,4 +1,5 @@
 "use client";
+import { cn } from "@/lib/ui/cn";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { z } from "zod";
 import {
@@ -23,7 +24,7 @@ import {
   validate,
   type Issues,
 } from "./workspace-ui";
-import styles from "./workspace.module.css";
+import styles from "./workspace.styles";
 export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
   const auth = useAuth(),
     [search, setSearch] = useState(""),
@@ -122,9 +123,9 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
         : t.removePrivilege;
   return (
     <>
-      <p className={styles.intro}>{t.accessBody}</p>
+      <p className={cn(styles.intro)}>{t.accessBody}</p>
       <Notice code={code} text={success ? t.accessChanged : undefined} t={t} />
-      <form className={styles.card} onSubmit={lookup} noValidate>
+      <form className={cn(styles.card)} onSubmit={lookup} noValidate>
         <Field name="email" label={t.userEmail} error={issues.email}>
           <input
             id="email"
@@ -137,8 +138,8 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
             aria-describedby={issues.email ? "email-error" : undefined}
           />
         </Field>
-        <div className={styles.actions}>
-          <button className={styles.primary} disabled={pending}>
+        <div className={cn(styles.actions)}>
+          <button className={cn(styles.primary)} disabled={pending}>
             {t.findTarget}
           </button>
         </div>
@@ -149,13 +150,13 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
         ) : target.code ? (
           <>
             <Notice code={target.code} t={t} />
-            <button className={styles.secondary} onClick={target.reload}>
+            <button className={cn(styles.secondary)} onClick={target.reload}>
               {t.retry}
             </button>
           </>
         ) : (
           user && (
-            <section className={styles.card}>
+            <section className={cn(styles.card)}>
               <h2>{user.name}</h2>
               <p>
                 {user.email} · {option(t, user.role)} · {option(t, user.status)}
@@ -169,8 +170,8 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
                 <Notice code="TARGET_INELIGIBLE" t={t} />
               ) : (
                 <form onSubmit={review} noValidate aria-busy={pending}>
-                  <fieldset className={styles.formFields} disabled={pending}>
-                    <div className={styles.grid}>
+                  <fieldset className={cn(styles.formFields)} disabled={pending}>
+                    <div className={cn(styles.grid)}>
                       <Field
                         name="action"
                         label={t.action}
@@ -230,7 +231,7 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
                           }
                         />
                       </Field>
-                      <div className={styles.full}>
+                      <div className={cn(styles.full)}>
                         <Field
                           name="reason"
                           label={t.reason}
@@ -250,12 +251,12 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
                         </Field>
                       </div>
                     </div>
-                    <div className={styles.actions}>
-                      <button className={styles.primary} disabled={pending}>
+                    <div className={cn(styles.actions)}>
+                      <button className={cn(styles.primary)} disabled={pending}>
                         {actionLabel(action)}
                       </button>
                       <button
-                        className={styles.secondary}
+                        className={cn(styles.secondary)}
                         type="button"
                         onClick={target.reload}
                       >
@@ -268,7 +269,7 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
             </section>
           )
         ))}
-      <section className={styles.card}>
+      <section className={cn(styles.card)}>
         <h2>{t.accessTitle}</h2>
         <form
           onSubmit={(event) => {
@@ -285,11 +286,11 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
               onChange={(event) => setSearchValue(event.target.value)}
             />
           </Field>
-          <div className={styles.actions}>
-            <button className={styles.secondary}>{t.search}</button>
+          <div className={cn(styles.actions)}>
+            <button className={cn(styles.secondary)}>{t.search}</button>
             <button
               type="button"
-              className={styles.secondary}
+              className={cn(styles.secondary)}
               onClick={list.reload}
             >
               {t.refresh}
@@ -300,7 +301,7 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
         {list.loading ? (
           <Notice text={t.loading} t={t} />
         ) : (
-          <ul className={styles.list}>
+          <ul className={cn(styles.list)}>
             {list.data?.users.map((row) => (
               <li key={row.id}>
                 <div>
@@ -312,7 +313,7 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
                 </div>
                 <button
                   type="button"
-                  className={styles.secondary}
+                  className={cn(styles.secondary)}
                   disabled={pending}
                   onClick={() => {
                     setTargetPath(`admin/users/${row.id}`);
@@ -327,9 +328,9 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
           </ul>
         )}
         {list.data?.nextCursor && (
-          <div className={styles.actions}>
+          <div className={cn(styles.actions)}>
             <button
-              className={styles.secondary}
+              className={cn(styles.secondary)}
               onClick={() => setCursor(list.data!.nextCursor!)}
             >
               {t.next}

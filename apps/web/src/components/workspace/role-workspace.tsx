@@ -1,4 +1,5 @@
 "use client";
+import { cn } from "@/lib/ui/cn";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -31,7 +32,7 @@ import {
   validate,
   type Issues,
 } from "./workspace-ui";
-import styles from "./workspace.module.css";
+import styles from "./workspace.styles";
 export function RoleApplication({
   locale,
   t,
@@ -102,7 +103,7 @@ export function RoleApplication({
     return (
       <>
         <Notice code={existing.code} t={t} />
-        <button className={styles.secondary} onClick={existing.reload}>
+        <button className={cn(styles.secondary)} onClick={existing.reload}>
           {t.retry}
         </button>
       </>
@@ -111,22 +112,22 @@ export function RoleApplication({
     return (
       <>
         <Notice text={t.pending} t={t} />
-        <Link className={styles.primary} href="/account/role-requests">
+        <Link className={cn(styles.primary)} href="/account/role-requests">
           {t.applicationsTitle}
         </Link>
       </>
     );
   return (
     <>
-      <p className={styles.intro}>{t.applicationBody}</p>
+      <p className={cn(styles.intro)}>{t.applicationBody}</p>
       <Notice code={code} t={t} />
       <form
         onSubmit={submit}
         noValidate
         aria-busy={pending}
-        className={styles.card}
+        className={cn(styles.card)}
       >
-        <fieldset className={styles.formFields} disabled={pending}>
+        <fieldset className={cn(styles.formFields)} disabled={pending}>
           <Field
             name="targetRole"
             label={t.chooseRole}
@@ -154,7 +155,7 @@ export function RoleApplication({
               <Notice code={questionnaire.code} t={t} />
               <button
                 type="button"
-                className={styles.secondary}
+                className={cn(styles.secondary)}
                 onClick={questionnaire.reload}
               >
                 {t.retry}
@@ -164,7 +165,7 @@ export function RoleApplication({
             questionnaire.data?.targetRole !== target ? (
             <Notice text={t.loading} t={t} />
           ) : (
-            <div className={styles.actions}>
+            <div className={cn(styles.actions)}>
               <QuestionFields
                 fields={questionnaire.data.fields}
                 values={values}
@@ -175,9 +176,9 @@ export function RoleApplication({
               />
             </div>
           )}
-          <div className={styles.actions}>
+          <div className={cn(styles.actions)}>
             <button
-              className={styles.primary}
+              className={cn(styles.primary)}
               disabled={
                 pending ||
                 questionnaire.loading ||
@@ -187,7 +188,7 @@ export function RoleApplication({
             >
               {pending ? t.saving : t.submit}
             </button>
-            <Link className={styles.secondary} href="/account/role-requests">
+            <Link className={cn(styles.secondary)} href="/account/role-requests">
               {t.applicationsTitle}
             </Link>
           </div>
@@ -237,15 +238,15 @@ export function RoleHistory({
     }).format(new Date(value));
   return (
     <>
-      <div className={styles.actions}>
+      <div className={cn(styles.actions)}>
         {auth.user?.role === UserRole.LEARNER && (
-          <Link className={styles.primary} href="/account/role-requests/new">
+          <Link className={cn(styles.primary)} href="/account/role-requests/new">
             {t.newApplication}
           </Link>
         )}
         <button
           type="button"
-          className={styles.secondary}
+          className={cn(styles.secondary)}
           onClick={() => {
             reload();
             void auth.restore();
@@ -280,9 +281,9 @@ export function RoleHistory({
         <Notice text={t.noResults} t={t} />
       ) : (
         requests.map((request) => (
-          <article className={styles.card} key={request.id}>
+          <article className={cn(styles.card)} key={request.id}>
             <h2>{option(t, request.targetRole)}</h2>
-            <span className={styles.badge} data-state={request.status}>
+            <span className={cn(styles.badge)} data-state={request.status}>
               {option(t, request.status)}
             </span>
             <p>
@@ -308,7 +309,7 @@ export function RoleHistory({
               </>
             ) : (
               <Link
-                className={styles.secondary}
+                className={cn(styles.secondary)}
                 href={`/account/role-requests/${request.id}`}
               >
                 {t.details}
@@ -316,9 +317,9 @@ export function RoleHistory({
             )}
             {request.status === "APPROVED" &&
               auth.user?.role === UserRole.FARMER && (
-                <div className={styles.actions}>
+                <div className={cn(styles.actions)}>
                   <Link
-                    className={styles.primary}
+                    className={cn(styles.primary)}
                     href={
                       auth.user.farmerOnboardingRequired
                         ? "/account/farm-onboarding"
@@ -335,9 +336,9 @@ export function RoleHistory({
         ))
       )}
       {!id && list.data?.nextCursor && (
-        <div className={styles.actions}>
+        <div className={cn(styles.actions)}>
           <button
-            className={styles.secondary}
+            className={cn(styles.secondary)}
             onClick={() => setCursor(list.data!.nextCursor!)}
           >
             {t.next}
@@ -363,7 +364,7 @@ export function ReviewQueue({
   );
   return (
     <>
-      <div className={`${styles.grid} ${styles.card}`}>
+      <div className={cn(styles.grid, styles.card)}>
         <Field name="review-status" label={t.filter}>
           <select
             id="review-status"
@@ -403,11 +404,11 @@ export function ReviewQueue({
       {queue.loading ? (
         <Notice text={t.loading} t={t} />
       ) : (
-        <section className={styles.card}>
+        <section className={cn(styles.card)}>
           {!queue.data?.requests.length && !queue.code ? (
             <p>{t.noResults}</p>
           ) : (
-            <ul className={styles.list}>
+            <ul className={cn(styles.list)}>
               {queue.data?.requests.map((request) => (
                 <li key={request.id}>
                   <div>
@@ -424,7 +425,7 @@ export function ReviewQueue({
                     </small>
                   </div>
                   <Link
-                    className={styles.secondary}
+                    className={cn(styles.secondary)}
                     href={`/admin/role-requests/${request.id}`}
                   >
                     {t.details}
@@ -435,13 +436,13 @@ export function ReviewQueue({
           )}
         </section>
       )}
-      <div className={styles.actions}>
-        <button className={styles.secondary} onClick={queue.reload}>
+      <div className={cn(styles.actions)}>
+        <button className={cn(styles.secondary)} onClick={queue.reload}>
           {t.refresh}
         </button>
         {queue.data?.nextCursor && (
           <button
-            className={styles.secondary}
+            className={cn(styles.secondary)}
             onClick={() => setCursor(queue.data!.nextCursor!)}
           >
             {t.next}
@@ -532,7 +533,7 @@ export function ApplicationReview({
     return (
       <>
         <Notice code={detail.code ?? "NOT_FOUND"} t={t} />
-        <button className={styles.secondary} onClick={detail.reload}>
+        <button className={cn(styles.secondary)} onClick={detail.reload}>
           {t.retry}
         </button>
       </>
@@ -546,15 +547,15 @@ export function ApplicationReview({
   return (
     <>
       <Notice code={code} text={success ? t.saved : undefined} t={t} />
-      <section className={styles.card}>
+      <section className={cn(styles.card)}>
         <h2>{row.applicant.name}</h2>
         <p>
           {row.applicant.email} · {option(t, row.applicant.role)}
         </p>
-        <span className={styles.badge} data-state={row.request.status}>
+        <span className={cn(styles.badge)} data-state={row.request.status}>
           {option(t, row.request.targetRole)} · {option(t, row.request.status)}
         </span>
-        <h3 className={styles.actions}>{t.responses}</h3>
+        <h3 className={cn(styles.actions)}>{t.responses}</h3>
         <Answers answers={row.request.answers} t={t} />
         {row.request.publicDecisionReason && (
           <p>
@@ -583,7 +584,7 @@ export function ApplicationReview({
         />
       ) : (
         <form
-          className={styles.card}
+          className={cn(styles.card)}
           onSubmit={review}
           noValidate
           aria-busy={pending}
@@ -592,8 +593,8 @@ export function ApplicationReview({
           {row.request.targetRole === ProfessionalRole.VET && (
             <Notice text={t.vetNotice} t={t} />
           )}
-          <fieldset className={styles.formFields} disabled={pending}>
-            <div className={styles.grid}>
+          <fieldset className={cn(styles.formFields)} disabled={pending}>
+            <div className={cn(styles.grid)}>
               <Field name="decision" label={t.decision}>
                 <select
                   id="decision"
@@ -659,12 +660,12 @@ export function ApplicationReview({
                 </Field>
               )}
             </div>
-            <div className={styles.actions}>
-              <button className={styles.primary} disabled={pending}>
+            <div className={cn(styles.actions)}>
+              <button className={cn(styles.primary)} disabled={pending}>
                 {decision === "APPROVED" ? t.approve : t.reject}
               </button>
               <button
-                className={styles.secondary}
+                className={cn(styles.secondary)}
                 type="button"
                 onClick={detail.reload}
               >
@@ -674,9 +675,9 @@ export function ApplicationReview({
           </fieldset>
         </form>
       )}
-      <section className={styles.card}>
+      <section className={cn(styles.card)}>
         <h2>{t.history}</h2>
-        <ul className={styles.list}>
+        <ul className={cn(styles.list)}>
           {row.history.map((request) => (
             <li key={request.id}>
               {option(t, request.targetRole)} · {option(t, request.status)}

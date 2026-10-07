@@ -131,7 +131,7 @@ async function connect(target) {
     if (message.method === "Runtime.exceptionThrown")
       exceptions.push(
         message.params.exceptionDetails.exception?.description ??
-          message.params.exceptionDetails.text,
+        message.params.exceptionDetails.text,
       );
     if (!message.id) return;
     const request = pending.get(message.id);
@@ -154,7 +154,7 @@ async function connect(target) {
     if (result.exceptionDetails)
       throw new Error(
         result.exceptionDetails.exception?.description ??
-          "Browser evaluation failed",
+        "Browser evaluation failed",
       );
     return result.result.value;
   };
@@ -241,6 +241,11 @@ async function dismiss(client) {
     "Escape did not dismiss dialog",
   );
 }
+async function chooseRole(client, role) {
+  await client.evaluate(
+    `(() => { const select = document.querySelector('#auth-role'); const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set; setter.call(select, ${JSON.stringify(role)}); select.dispatchEvent(new Event('change', { bubbles: true })); })()`,
+  );
+}
 
 try {
   nextProcess = spawn(
@@ -264,7 +269,7 @@ try {
   );
   chrome = spawn(
     process.env.CHROME_PATH ||
-      "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    "C:/Program Files/Google/Chrome/Application/chrome.exe",
     [
       "--headless=new",
       "--remote-debugging-port=9333",
@@ -312,7 +317,7 @@ try {
         "auth-email",
       );
       assert.equal(
-        await client.evaluate("document.body.style.overflow"),
+        await client.evaluate("getComputedStyle(document.body).overflow"),
         "hidden",
       );
       assert.ok(
@@ -367,9 +372,15 @@ try {
       );
       assert.equal(
         await client.evaluate(
-          "document.querySelectorAll('dialog input[name=role]').length",
+          "document.querySelectorAll('dialog select[name=role] option').length",
         ),
         4,
+      );
+      assert.equal(
+        await client.evaluate(
+          "getComputedStyle(document.querySelector('#auth-register-fields')).gridTemplateColumns.split(' ').length",
+        ),
+        width >= 640 ? 2 : 1,
       );
       assert.ok(
         await client.evaluate(
@@ -383,7 +394,7 @@ try {
         screenshots.push(location);
       }
       await dismiss(client);
-      assert.equal(await client.evaluate("document.body.style.overflow"), "");
+      assert.equal(await client.evaluate("getComputedStyle(document.body).overflow"), "visible");
       assert.equal(
         await client.evaluate(
           width < 800
@@ -413,7 +424,7 @@ try {
     confirmation: "long password",
     phone: " +8801800000000 ",
   });
-  await client.evaluate("document.querySelector('input[value=VET]').click()");
+  await chooseRole(client, "VET");
   await submit(client);
   await until(
     () => operations.some((operation) => operation.action === "register"),
@@ -607,7 +618,7 @@ try {
     "Unavailable service feedback missing",
   );
   offline = false;
-  await client.evaluate("document.querySelector('input[value=BUYER]').click()");
+  await chooseRole(client, "BUYER");
   await submit(client);
   await signedIn(client);
   assert.ok(
@@ -682,7 +693,7 @@ try {
     );
   });
 } finally {
-  if (clients[0]) await clients[0].call("Browser.close").catch(() => {});
+  if (clients[0]) await clients[0].call("Browser.close").catch(() => { });
   for (const client of clients) client.ws.close();
   if (chrome) chrome.kill();
   if (nextProcess) nextProcess.kill();
@@ -700,5 +711,5 @@ try {
     force: true,
     maxRetries: 5,
     retryDelay: 200,
-  }).catch(() => {});
+  }).catch(() => { });
 }

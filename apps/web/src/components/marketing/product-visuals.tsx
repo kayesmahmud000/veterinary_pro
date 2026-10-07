@@ -1,4 +1,5 @@
-import ui from "./showcase.module.css";
+import { cn } from "@/lib/ui/cn";
+import ui from "./showcase.styles";
 
 export function AnimalMark({ species = 0 }: { species?: number }) {
   return (
@@ -76,7 +77,7 @@ export function AnimalMark({ species = 0 }: { species?: number }) {
 
 export function ServiceArtwork({ kind }: { kind: number }) {
   return (
-    <div className={`${ui.serviceArt} ${ui[`art${kind}`]}`}>
+    <div className={cn(ui.serviceArt, [ui.art0, ui.art1, ui.art2][kind])}>
       <svg viewBox="0 0 320 160" fill="none" aria-hidden="true">
         <ellipse cx="160" cy="145" rx="128" ry="12" fill="#264b3510" />
         {kind === 0 ? (

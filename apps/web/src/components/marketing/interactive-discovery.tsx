@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/ui/cn";
+import siteStyles from "@/lib/ui/site.styles";
 import Image from "next/image";
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
@@ -18,8 +20,8 @@ import {
 } from "lucide-react";
 import type { Messages } from "@/lib/i18n/en";
 import { formatNumber, type Locale } from "@/lib/i18n/locale";
-import styles from "./marketing.module.css";
-import ui from "./interactive.module.css";
+import styles from "./marketing.styles";
+import ui from "./interactive.styles";
 
 const destinations = ["/farm-management", "/learning", "/veterinary-care"];
 const icons = [Sprout, BookOpen, HeartPulse];
@@ -84,7 +86,7 @@ export function InteractiveHero({
   return (
     <section
       ref={banner}
-      className={ui.heroBanner}
+      className={cn(ui.heroBanner)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onFocusCapture={() => setFocused(true)}
@@ -93,10 +95,10 @@ export function InteractiveHero({
           setFocused(false);
       }}
     >
-      <div className={ui.heroPhotos}>
+      <div className={cn(ui.heroPhotos)}>
         {copy.goals.map((slide, index) => (
           <div
-            className={ui.heroPhoto}
+            className={cn(ui.heroPhoto)}
             key={slide.label}
             aria-hidden={selected !== index}
           >
@@ -106,29 +108,29 @@ export function InteractiveHero({
               fill
               priority={index === 0}
               sizes="100vw"
-              className={ui.heroPhotoImage}
+              className={cn(ui.heroPhotoImage)}
             />
           </div>
         ))}
       </div>
-      <div className={ui.heroShade} aria-hidden="true" />
-      <div className={`container ${ui.heroContainer}`}>
-        <div className={ui.heroContent}>
-          <div className="eyebrow">
-            <span className={ui.heroStatusDot} />
+      <div className={cn(ui.heroShade)} aria-hidden="true" />
+      <div className={cn(siteStyles["container"], ui.heroContainer)}>
+        <div className={cn(ui.heroContent)}>
+          <div className={cn(siteStyles["eyebrow"])}>
+            <span className={cn(ui.heroStatusDot)} />
             {content.hero.eyebrow}
           </div>
           <h1>{content.hero.title}</h1>
           <p
-            className={ui.heroSubhead}
+            className={cn(ui.heroSubhead)}
             id={id}
             aria-live={rotating ? "off" : "polite"}
           >
             {goal.previewTitle}
           </p>
-          <div className={ui.heroActions}>
+          <div className={cn(ui.heroActions)}>
             <div
-              className={ui.photoChoices}
+              className={cn(ui.photoChoices)}
               role="group"
               aria-label={copy.label}
             >
@@ -148,16 +150,16 @@ export function InteractiveHero({
                 );
               })}
             </div>
-            <div className="actions">
+            <div className={cn(siteStyles["actions"])}>
               <Link
-                className={`button ${ui.heroPrimaryAction}`}
+                className={cn(siteStyles["button"], ui.heroPrimaryAction)}
                 href={destinations[selected]}
               >
                 {goal.action}
                 <ArrowUpRight size={18} aria-hidden="true" />
               </Link>
               <Link
-                className={`button ${ui.heroSecondaryAction}`}
+                className={cn(siteStyles["button"], ui.heroSecondaryAction)}
                 href="#farm-demo"
               >
                 {copy.demo}
@@ -167,13 +169,13 @@ export function InteractiveHero({
           </div>
         </div>
         <div
-          className={ui.heroCarousel}
+          className={cn(ui.heroCarousel)}
           role="region"
           aria-roledescription={copy.carousel}
           aria-label={copy.carouselLabel}
         >
           <button
-            className={ui.carouselArrow}
+            className={cn(ui.carouselArrow)}
             type="button"
             aria-label={copy.previousSlide}
             onClick={() =>
@@ -185,9 +187,9 @@ export function InteractiveHero({
           >
             <ChevronLeft size={20} aria-hidden="true" />
           </button>
-          <div className={ui.heroCarouselControls}>
+          <div className={cn(ui.heroCarouselControls)}>
             <button
-              className={ui.carouselPlayback}
+              className={cn(ui.carouselPlayback)}
               type="button"
               aria-label={autoplay ? copy.pauseSlideshow : copy.playSlideshow}
               title={autoplay ? copy.pauseSlideshow : copy.playSlideshow}
@@ -203,13 +205,13 @@ export function InteractiveHero({
               )}
             </button>
             <div
-              className={ui.carouselPagination}
+              className={cn(ui.carouselPagination)}
               role="group"
               aria-label={copy.slideNavigation}
             >
               {copy.goals.map((slide, index) => (
                 <button
-                  className={ui.heroThumbnail}
+                  className={cn(ui.heroThumbnail)}
                   key={slide.label}
                   type="button"
                   aria-label={`${copy.goToSlide} ${formatNumber(index + 1, locale)}: ${slide.label}`}
@@ -222,7 +224,7 @@ export function InteractiveHero({
               ))}
             </div>
             <span
-              className={ui.carouselCount}
+              className={cn(ui.carouselCount)}
               aria-live={rotating ? "off" : "polite"}
             >
               {formatNumber(selected + 1, locale)} /{" "}
@@ -230,7 +232,7 @@ export function InteractiveHero({
             </span>
           </div>
           <button
-            className={ui.carouselArrow}
+            className={cn(ui.carouselArrow)}
             type="button"
             aria-label={copy.nextSlide}
             onClick={() =>
@@ -257,22 +259,22 @@ export function WorkflowExplorer({
   const [selected, setSelected] = useState(0);
   const id = useId();
   return (
-    <section className={styles.workflow}>
-      <div className={`container ${styles.workflowGrid}`}>
+    <section className={cn(styles.workflow)}>
+      <div className={cn(siteStyles["container"], styles.workflowGrid)}>
         <div>
-          <div className="eyebrow">{content.eyebrow}</div>
+          <div className={cn(siteStyles["eyebrow"])}>{content.eyebrow}</div>
           <h2>
             {content.title}
             <br />
             <span>{content.connections}</span>
           </h2>
           <p>{content.body}</p>
-          <Link className="text-link" href="/farm-management">
+          <Link className={cn(siteStyles["text-link"])} href="/farm-management">
             {content.action}
             <ArrowUpRight size={18} aria-hidden="true" />
           </Link>
-          <div className={ui.recordPreview} id={id}>
-            <span className={ui.badge}>{copy.sample}</span>
+          <div className={cn(ui.recordPreview)} id={id}>
+            <span className={cn(ui.badge)}>{copy.sample}</span>
             <h3>{copy.recordTitles[selected]}</h3>
             <dl>
               {copy.recordLabels[selected].map((label, i) => (
@@ -286,8 +288,8 @@ export function WorkflowExplorer({
           </div>
         </div>
         <div>
-          <p className={ui.helper}>{copy.hint}</p>
-          <ol className={ui.workflowSteps} aria-label={copy.label}>
+          <p className={cn(ui.helper)}>{copy.hint}</p>
+          <ol className={cn(ui.workflowSteps)} aria-label={copy.label}>
             {content.steps.map((step, i) => (
               <li key={step.title}>
                 <button
@@ -296,12 +298,12 @@ export function WorkflowExplorer({
                   aria-controls={id}
                   onClick={() => setSelected(i)}
                 >
-                  <span className={ui.stepNumber}>
+                  <span className={cn(ui.stepNumber)}>
                     {formatNumber(i + 1, locale, { minimumIntegerDigits: 2 })}
                   </span>
                   <span>
                     <strong>{step.title}</strong>
-                    <span className={ui.stepBody}>{step.body}</span>
+                    <span className={cn(ui.stepBody)}>{step.body}</span>
                   </span>
                   <ArrowUpRight size={18} aria-hidden="true" />
                 </button>
@@ -338,14 +340,14 @@ export function SearchableFaq({
       .includes(normalized),
   );
   return (
-    <section className={`container ${styles.faq}`}>
+    <section className={cn(siteStyles["container"], styles.faq)}>
       <div>
-        <div className="eyebrow">{content.eyebrow}</div>
+        <div className={cn(siteStyles["eyebrow"])}>{content.eyebrow}</div>
         <h2>{content.title}</h2>
-        <label className={ui.inputLabel} htmlFor={id}>
+        <label className={cn(ui.inputLabel)} htmlFor={id}>
           {copy.search}
         </label>
-        <div className={ui.searchField}>
+        <div className={cn(ui.searchField)}>
           <Search size={18} aria-hidden="true" />
           <input
             ref={input}
@@ -356,13 +358,13 @@ export function SearchableFaq({
             placeholder={copy.placeholder}
           />
         </div>
-        <p className={ui.helper} role="status">
+        <p className={cn(ui.helper)} role="status">
           {formatNumber(filtered.length, locale)} {copy.results}
         </p>
         {query && (
           <button
             type="button"
-            className={ui.inlineButton}
+            className={cn(ui.inlineButton)}
             onClick={() => {
               setQuery("");
               input.current?.focus();
@@ -384,7 +386,7 @@ export function SearchableFaq({
             </details>
           ))
         ) : (
-          <p className={ui.emptyState}>{copy.empty}</p>
+          <p className={cn(ui.emptyState)}>{copy.empty}</p>
         )}
       </div>
     </section>
@@ -406,10 +408,10 @@ export function FeatureExplorer({
   const id = useId();
   const Icon = icons[kind === "farm" ? 0 : kind === "learning" ? 1 : 2];
   return (
-    <section className={ui.featureExplorer} aria-label={copy.label}>
+    <section className={cn(ui.featureExplorer)} aria-label={copy.label}>
       <div>
-        <p className={ui.helper}>{copy.hint}</p>
-        <div className={ui.featureChoices} role="group" aria-label={copy.label}>
+        <p className={cn(ui.helper)}>{copy.hint}</p>
+        <div className={cn(ui.featureChoices)} role="group" aria-label={copy.label}>
           {sections.map((section, index) => (
             <button
               key={section.title}
@@ -427,14 +429,14 @@ export function FeatureExplorer({
           ))}
         </div>
       </div>
-      <article id={id} className={ui.featureDetail}>
-        <div className={ui.featureDetailTop}>
-          <span className={ui.badge}>{copy.detail}</span>
+      <article id={id} className={cn(ui.featureDetail)}>
+        <div className={cn(ui.featureDetailTop)}>
+          <span className={cn(ui.badge)}>{copy.detail}</span>
           <Icon size={30} aria-hidden="true" />
         </div>
         <h2>{sections[selected].title}</h2>
         <p>{sections[selected].body}</p>
-        <ul className={ui.checkList}>
+        <ul className={cn(ui.checkList)}>
           {copy.highlights[kind][selected].map((item) => (
             <li key={item}>
               <Check size={17} aria-hidden="true" />
@@ -443,7 +445,7 @@ export function FeatureExplorer({
           ))}
         </ul>
         {kind === "farm" && (
-          <Link className="text-link" href="/#farm-demo">
+          <Link className={cn(siteStyles["text-link"])} href="/#farm-demo">
             {copy.demo}
             <ArrowUpRight size={18} aria-hidden="true" />
           </Link>

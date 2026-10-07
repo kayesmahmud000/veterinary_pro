@@ -22,7 +22,7 @@ export function GET(
   return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="vetralink-${guide.slug}.csv"`,
+      "Content-Disposition": `attachment; filename="khamar-school-${guide.slug}.csv"`,
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
     },

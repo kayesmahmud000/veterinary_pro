@@ -1,4 +1,5 @@
 "use client";
+import { cn } from "@/lib/ui/cn";
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,7 +15,7 @@ import {
 } from "./role-workspace";
 import { AdministrativeAccess } from "./administrative-access";
 import { Notice, option } from "./workspace-ui";
-import styles from "./workspace.module.css";
+import styles from "./workspace.styles";
 export type WorkspaceView =
   | "onboarding"
   | "farm"
@@ -65,9 +66,9 @@ export function Workspace({
     access: t.accessTitle,
   }[view];
   return (
-    <main id="main-content" className={styles.shell}>
+    <main id="main-content" className={cn(styles.shell)}>
       <nav
-        className={styles.navigation}
+        className={cn(styles.navigation)}
         aria-label={locale === "bn" ? "অ্যাকাউন্টের পথ" : "Account navigation"}
       >
         <Link href="/">{t.home}</Link>
@@ -94,7 +95,7 @@ export function Workspace({
           </>
         )}
       </nav>
-      <h1 className={styles.heading}>{title}</h1>
+      <h1 className={cn(styles.heading)}>{title}</h1>
       {auth.checking ? (
         <Notice text={t.loading} t={t} />
       ) : auth.error && auth.error !== "session_expired" ? (
@@ -104,17 +105,17 @@ export function Workspace({
             t={t}
           />
           <button
-            className={styles.secondary}
+            className={cn(styles.secondary)}
             onClick={() => void auth.restore()}
           >
             {t.retry}
           </button>
         </>
       ) : !auth.user ? (
-        <section className={styles.card}>
+        <section className={cn(styles.card)}>
           <h2>{t.signInRequired}</h2>
           <p>{t.signInBody}</p>
-          <button className={styles.primary} onClick={() => auth.open("login")}>
+          <button className={cn(styles.primary)} onClick={() => auth.open("login")}>
             {auth.messages.signIn}
           </button>
         </section>

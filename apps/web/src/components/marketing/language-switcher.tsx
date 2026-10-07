@@ -1,5 +1,7 @@
 "use client";
 
+import { cn } from "@/lib/ui/cn";
+import siteStyles from "@/lib/ui/site.styles";
 import { usePathname, useSearchParams } from "next/navigation";
 import { changeLocale } from "@/lib/i18n/actions";
 import type { Locale } from "@/lib/i18n/locale";
@@ -17,7 +19,7 @@ export function LanguageSwitcher({
   return (
     <form
       action={changeLocale}
-      className="language-switcher"
+      className={cn(siteStyles["language-switcher"])}
       aria-label={label}
     >
       <input type="hidden" name="returnTo" value={returnTo} />

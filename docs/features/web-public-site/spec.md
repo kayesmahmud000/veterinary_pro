@@ -55,8 +55,8 @@ These are proposed canonical URLs, not instructions to scaffold empty pages. Cre
 | `/`, `/farm-management`, `/learning`, `/veterinary-care` | Public discovery and product explanation | WEB-1A–D; no API |
 | `/catalog`, `/catalog/[slug]` | Public course/eBook/tool discovery and detail | WEB-5; API-STORE |
 | `/pricing` | Public live plan comparison | WEB-6; API-BILLING |
-| Sign in / sign up / account modals on the current public URL                                                                                                | User requirement 2026-10-07 supersedes separate `/login` and `/register` pages; see [modal auth spec](../../tasks/web-auth-modals/spec.md) | WEB-1E; API-AUTH                                                   |
-| `/account/orders`, `/account/orders/[id]`, `/account/library`                                                                                               | Future authenticated purchases and entitlements; current account summary uses the modal                                                    | WEB-5; API-AUTH / API-STORE                                        |
+| Sign in / sign up / account modals on the current public URL | User requirement 2026-10-07 supersedes separate `/login` and `/register` pages; see [modal auth spec](../../tasks/web-auth-modals/spec.md) | WEB-1E; API-AUTH |
+| `/account/orders`, `/account/orders/[id]`, `/account/library` | Future authenticated purchases and entitlements; current account summary uses the modal | WEB-5; API-AUTH / API-STORE |
 | `/checkout/[id]` | Authenticated product checkout using the backend product identifier; server determines price and payment state | WEB-5; API-STORE; detailed payment route/session contract required |
 | `/account/farm-onboarding`, `/farm` | Mandatory FARMER setup, authorized farm summary and member actions | Implemented WEB-2/API-B1; [evidence](../role-request-approval/operations.md) |
 | `/account/role-requests`, `/admin/role-requests`, `/admin/administrative-access` | Professional applications/review and restricted privilege management | Implemented [role/onboarding feature](../role-request-approval/spec.md) |
@@ -75,6 +75,8 @@ Authentication and role names must follow [shared enums](../../../packages/share
 ## Next.js structure and interactions
 
 Keep `src/app/layout.tsx` as the shared root document and import `src/app/globals.css`. Move the placeholder home to `src/app/(marketing)/page.tsx` when replacing it; do not leave two routes owning `/`. A `(marketing)/layout.tsx` supplies public header/footer without wrapping future private workspaces. Next.js route groups do not appear in URLs.
+
+The public header, footer and page sections share a centered `w-11/12` container. Keep this width contract consistent across public routes.
 
 Implement the three public overview routes beneath `(marketing)`. The later modal auth requirement supersedes a separate `(auth)` group. The implemented `(workspace)` group supplies farmer/account/review/access shells. The root `not-found.tsx` uses the public shell explicitly because unknown paths are not guaranteed to render inside the marketing layout.
 

@@ -1,10 +1,12 @@
+import { cn } from "@/lib/ui/cn";
+import siteStyles from "@/lib/ui/site.styles";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Download } from "lucide-react";
 import { getLocalization } from "@/lib/i18n/server";
 import { formatNumber } from "@/lib/i18n/locale";
 import { guideDefinitions, readingMinutes } from "@/lib/learning-guides";
-import ui from "@/components/marketing/showcase.module.css";
+import ui from "@/components/marketing/showcase.styles";
 
 type GuideIndex = 0 | 1 | 2;
 
@@ -20,16 +22,16 @@ export function GuideArticle({ index }: { index: GuideIndex }) {
   const copy = messages.resources;
   const article = copy.articles[index];
   return (
-    <main id="main-content" className="container">
-      <article className={ui.article}>
+    <main id="main-content" className={cn(siteStyles["container"])}>
+      <article className={cn(ui.article)}>
         <Link
-          className="text-link"
+          className={cn(siteStyles["text-link"])}
           href={`/learning?topic=${guide.topic}#guides`}
         >
           <ArrowLeft size={18} aria-hidden="true" />
           {copy.back}
         </Link>
-        <div className={ui.articleMeta}>
+        <div className={cn(ui.articleMeta)}>
           <span>{copy.format}</span>
           <span>{copy.topics[index]}</span>
           <span>
@@ -37,18 +39,18 @@ export function GuideArticle({ index }: { index: GuideIndex }) {
           </span>
         </div>
         <h1>{article.title}</h1>
-        <p className={ui.articleIntro}>{article.intro}</p>
+        <p className={cn(ui.articleIntro)}>{article.intro}</p>
         {article.sections.map((section) => (
           <section key={section.title}>
             <h2>{section.title}</h2>
             <p>{section.body}</p>
           </section>
         ))}
-        <p className={ui.takeaway}>{article.takeaway}</p>
+        <p className={cn(ui.takeaway)}>{article.takeaway}</p>
         {article.headers.length > 0 && (
-          <div className={ui.downloadBox}>
+          <div className={cn(ui.downloadBox)}>
             <a
-              className="button"
+              className={cn(siteStyles["button"])}
               href={`/learning/${guide.slug}/template`}
               download
             >
@@ -58,7 +60,7 @@ export function GuideArticle({ index }: { index: GuideIndex }) {
             <p>{copy.templateNote}</p>
           </div>
         )}
-        <nav className={ui.relatedGuides} aria-label={copy.related}>
+        <nav className={cn(ui.relatedGuides)} aria-label={copy.related}>
           <h2>{copy.related}</h2>
           {guideDefinitions
             .map((item, index) => ({ ...item, index }))
