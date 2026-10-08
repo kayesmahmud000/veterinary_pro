@@ -82,7 +82,7 @@ export function LandingSections() {
         </div>
       </section>
       <SpeciesExplorer copy={messages.showcase.species} />
-      <FarmDemo copy={messages.interactive.demo} locale={locale} />
+      <FarmDemo copy={messages.interactive.demo} locale={locale} brandName={messages.brand.name} />
       <WorkflowExplorer
         content={content.workflow}
         copy={messages.interactive.workflow}

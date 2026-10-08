@@ -24,7 +24,13 @@ export function BrandLogo({ className }: { className?: string }) {
 }
 
 /** Shared accessible brand link; crop the supplied square artwork only in the UI. */
-export function SiteBrand({ homeLabel }: { homeLabel: string }) {
+export function SiteBrand({
+  homeLabel,
+  name,
+}: {
+  homeLabel: string;
+  name: string;
+}) {
   return (
     <Link
       href="/"
@@ -32,7 +38,7 @@ export function SiteBrand({ homeLabel }: { homeLabel: string }) {
       className="inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap text-[1.35rem] font-bold tracking-[-0.035em] max-[799px]:mr-auto max-[799px]:text-[1.05rem] max-[380px]:text-[0.95rem]"
     >
       <BrandLogo className="max-[799px]:h-10 max-[799px]:w-10 max-[380px]:h-8 max-[380px]:w-8" />
-      <span>Khamar School</span>
+      <span>{name}</span>
     </Link>
   );
 }

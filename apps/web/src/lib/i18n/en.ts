@@ -3,6 +3,7 @@ import { resourcesEn } from "./resources";
 import { authEn } from "./auth";
 
 export const en = {
+  brand: { name: "Khamar School" },
   auth: authEn,
   showcase: showcaseEn,
   resources: resourcesEn,

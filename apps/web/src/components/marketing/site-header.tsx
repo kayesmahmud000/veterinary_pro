@@ -15,7 +15,7 @@ export function SiteHeader() {
   return (
     <HeaderSurface>
       <div className={cn(siteStyles["container"], siteStyles["header-inner"])}>
-        <SiteBrand homeLabel={messages.navigation.home} />
+        <SiteBrand homeLabel={messages.navigation.home} name={messages.brand.name} />
         <nav className={cn(siteStyles["desktop-nav"])} aria-label={messages.navigation.main}>
           {items.map((item) => (
             <Link href={item.href} key={item.href}>

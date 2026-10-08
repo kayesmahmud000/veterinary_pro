@@ -27,9 +27,11 @@ const icons = [Sprout, Milk, Wallet];
 export function FarmDemo({
   copy,
   locale,
+  brandName,
 }: {
   copy: Messages["interactive"]["demo"];
   locale: Locale;
+  brandName: string;
 }) {
   const [view, setView] = useState(0);
   const [animal, setAnimal] = useState(0);
@@ -80,7 +82,7 @@ export function FarmDemo({
             <div>
               <BrandLogo className="h-11 w-11" />
               <div>
-                <strong>Khamar School</strong>
+                <strong>{brandName}</strong>
                 <span>{copy.sample}</span>
               </div>
             </div>

@@ -8,7 +8,7 @@ export function generateMetadata(): Metadata {
   return {
     title: {
       default: messages.metadata.siteTitle,
-      template: "%s | Khamar School",
+      template: `%s | ${messages.brand.name}`,
     },
     description: messages.metadata.siteDescription,
     icons: { icon: "/assets/brand/logo-green.jpeg", apple: "/assets/brand/logo-green.jpeg" },

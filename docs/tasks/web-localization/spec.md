@@ -24,9 +24,9 @@ Frontend/Web, UI/UX, Tech Lead, UI Reviewer, Code Reviewer and QA perspectives a
 
 ## Acceptance
 
-1. A fresh visit to each public route and an unknown route renders Bangla content, `html lang="bn"` and localized metadata. Invalid preferences also fall back to Bangla. Unknown routes retain HTTP 404.
+1. A fresh visit to each public route and an unknown route renders Bangla content, `html lang="bn"` and localized metadata. The brand in homepage/default titles, shared child-page title suffixes and brand-bearing descriptions follows the selected locale: “খামার স্কুল” in Bangla and “Khamar School” in English. Invalid preferences also fall back to Bangla. Unknown routes retain HTTP 404.
 2. Switching to English translates all visible public copy, FAQ, illustrative labels, navigation, recovery messages and assistive labels. Switching back restores Bangla. The current URL is preserved; refresh, navigation and a later visit retain selection.
 3. Server-rendered output works without the API, external resources or JavaScript. Concurrent visitors with different cookies receive their own locale; no global mutable language state exists.
-4. Both catalogs have the same complete typed structure. No raw translation keys or silent English fallbacks appear. Native-language selector labels and the brand are intentional exceptions.
+4. Both catalogs have the same complete typed structure. No raw translation keys or silent English fallbacks appear. Native-language selector labels are intentional exceptions. Per the 2026-10-08 user requirement, names beside the logo in the header, footer and sample farm demo use the shared `brand.name` translation: “খামার স্কুল” in Bangla and “Khamar School” in English. The brand home link's assistive label and footer copyright name follow the locale too.
 5. Both languages remain readable without horizontal overflow at 360, 768 and 1440 CSS pixels and 200% zoom. Menu Escape/focus, keyboard language selection and native FAQ still work.
 6. Web build, focused behavioral/browser checks, context validation and whitespace review pass, or unavailable checks are explicitly recorded. The roadmap links evidence and requires bilingual acceptance for every future web milestone.

@@ -74,6 +74,12 @@ for (const [path, bangla, english] of routes) {
       /<meta name="description" content="([^"]*)"/,
     )?.[1];
     assert.ok(title && description, `${path}: server-rendered metadata`);
+    const brandName = locale === "bn" ? "খামার স্কুল" : "Khamar School";
+    assert.ok(title.includes(brandName), `${path}: localized brand in title`);
+    assert.ok(
+      !title.includes(locale === "bn" ? "Khamar School" : "খামার স্কুল"),
+      `${path}: no brand from the other locale in title`,
+    );
     assert.equal(
       /[\u0980-\u09ff]/u.test(title),
       locale === "bn",

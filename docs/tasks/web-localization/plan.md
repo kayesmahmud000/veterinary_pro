@@ -4,6 +4,17 @@ Spec: [Bangla and English localization](spec.md)
 Scope: Bangla-default localization of the existing public website and roadmap requirements.
 Status: **Verified — 2026-10-06**
 
+## Brand-name localization follow-up — 2026-10-08
+
+- Metadata follow-up: root title suffix and Bangla homepage/default titles still contained the English brand. Use `messages.brand.name` for the suffix and translate brand-bearing Bangla metadata. The existing smoke script now asserts the correct brand and rejects the other locale's brand in every rendered title.
+- **Observed behavior (metadata follow-up):** the added assertion failed on the preceding source build (`/: localized brand in title`), then passed on the corrected build with all 36 localized GETs and 27 native submissions plus existing catalog/CSV/persistence checks. Production compilation/type checks passed in `/tmp/web-brand-metadata-d4yo9g6d`, an isolated source copy with linked existing dependencies; the initial attempt to start the repository build failed because its `.next` production build was unavailable. `check:styles`, context validation and whitespace checks passed.
+- **Observed behavior (metadata browser follow-up):** `/tmp/check-brand-metadata-browser.mjs` verified `document.title` contains only the selected locale's brand at 360/768/1440 widths in both languages, alongside the previous visible-brand checks. Its first run encountered a temporary navigation-context race; polling until the evaluation returned a value resolved the check, and the rerun passed all six combinations. Review confirmed the shared suffix also applies to workspace child-page titles; authenticated workspace pages were not exercised in this check. Suggested commit: `fix(web): localize brand in page metadata`.
+- **Confirmed from code:** the shared header/footer brand link and sample farm demo hardcoded the English name; the Bangla home-link label also retained the English name.
+- Plan: add a typed `brand.name` message to both catalogs, pass it into the shared brand and demo, and localize the home-link label and copyright name. Preserve cookie selection and rendering boundaries; no API, data or migration effects.
+- **Observed behavior:** `pnpm --filter @vetralink/web build`, `check:styles` and `test:styles` passed (2 test files). `test:localization` passed against a local production server: 36 localized GETs, 27 native language-form submissions, persistence/isolation/redirect checks and catalog/CSV regressions.
+- **Observed behavior:** `node /tmp/check-brand-localization.mjs` used local headless Google Chrome/CDP to verify header/footer/demo names, home-link labels, copyright and no horizontal page overflow in Bangla and English at 360, 768 and 1440 CSS pixels. Temporary browser tooling stays outside the repository; this is viewport emulation in one browser, not physical-device or cross-browser certification.
+- Review: all `SiteBrand` and `FarmDemo` callers supply the selected message; no client-side locale state, dependency, styling or API change. `python3 .context/scripts/validate.py` and final `git diff --check` passed. Sandbox blocked local sockets/browser launch; authorized reruns outside the sandbox passed. No Git staging, commit or deployment. Suggested commit: `fix(web): localize brand names beside logos`.
+
 ## Steps
 
 - [x] Inspect project instructions, roadmaps, public-site source and existing verification.

@@ -17,7 +17,7 @@ export function SiteFooter() {
     <footer className={cn(siteStyles["site-footer"])}>
       <div className={cn(siteStyles["container"], siteStyles["footer-top"])}>
         <div>
-          <SiteBrand homeLabel={messages.navigation.home} />
+          <SiteBrand homeLabel={messages.navigation.home} name={messages.brand.name} />
           <p>
             {messages.footer.knowledge}
             <br />
@@ -36,7 +36,7 @@ export function SiteFooter() {
       <div className={cn(siteStyles["container"], siteStyles["footer-bottom"])}>
         <span>
           © {formatNumber(Number(year), locale, { useGrouping: false })}{" "}
-          Khamar School
+          {messages.brand.name}
         </span>
         <span>{messages.footer.people}</span>
       </div>

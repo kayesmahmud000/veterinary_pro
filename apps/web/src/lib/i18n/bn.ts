@@ -4,14 +4,15 @@ import { resourcesBn } from "./resources";
 import { authBn } from "./auth";
 
 export const bn: Messages = {
+  brand: { name: "খামার স্কুল" },
   auth: authBn,
   showcase: showcaseBn,
   resources: resourcesBn,
   metadata: {
-    siteTitle: "Khamar School — আপনার খামার ও প্রাণীর সমন্বিত যত্ন",
+    siteTitle: "খামার স্কুল — আপনার খামার ও প্রাণীর সমন্বিত যত্ন",
     siteDescription:
-      "Khamar School-এর সঙ্গে জানুন প্রাণীর তথ্য, ব্যবহারিক শিক্ষা ও পশুচিকিৎসাকে একসঙ্গে যুক্ত করার উপায়।",
-    homeTitle: "Khamar School — আপনার খামার ও প্রাণীর সমন্বিত যত্ন",
+      "খামার স্কুলের সঙ্গে জানুন প্রাণীর তথ্য, ব্যবহারিক শিক্ষা ও পশুচিকিৎসাকে একসঙ্গে যুক্ত করার উপায়।",
+    homeTitle: "খামার স্কুল — আপনার খামার ও প্রাণীর সমন্বিত যত্ন",
     homeDescription:
       "আপনার খামারের পূর্ণ চিত্র জানুন। প্রাণিসম্পদ ব্যবস্থাপনা, ব্যবহারিক শিক্ষা ও পশুচিকিৎসার সমন্বিত ধারণা দেখুন।",
   },
@@ -24,7 +25,7 @@ export const bn: Messages = {
     footer: "ফুটারের নেভিগেশন",
     open: "নেভিগেশন খুলুন",
     close: "নেভিগেশন বন্ধ করুন",
-    home: "Khamar School-এর মূল পাতা",
+    home: "খামার স্কুলের মূল পাতা",
     skip: "মূল বিষয়বস্তুতে যান",
     language: "ওয়েবসাইটের ভাষা",
   },
