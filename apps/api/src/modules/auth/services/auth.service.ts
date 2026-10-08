@@ -3,6 +3,7 @@ import {
   AuthUserSummary,
   LoginRequestDto,
   LoginResponseDto,
+  PUBLIC_REGISTRATION_ROLES,
   RefreshTokenResponseDto,
   RegisterRequestDto,
   RegisterResponseDto,
@@ -63,14 +64,11 @@ export class AuthService implements IAuthService {
     dto: RegisterRequestDto,
     meta?: ClientMetadata
   ): Promise<RegisterResponseDto> {
-    const requestedRole = dto.role ?? UserRole.FARMER;
+    const requestedRole = dto.role ?? UserRole.LEARNER;
 
-    if (
-      requestedRole === UserRole.SUPER_ADMIN ||
-      requestedRole === UserRole.ADMIN
-    ) {
+    if (!PUBLIC_REGISTRATION_ROLES.includes(requestedRole)) {
       throw new ForbiddenOperationException(
-        "Registration for administrative roles is prohibited."
+        "Registration for this role is prohibited."
       );
     }
 

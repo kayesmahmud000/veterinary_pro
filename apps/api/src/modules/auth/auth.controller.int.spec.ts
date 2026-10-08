@@ -133,6 +133,47 @@ describe("AuthController (Integration via Supertest)", () => {
   });
 
   describe("POST /auth/register", () => {
+    it("should accept LEARNER through the HTTP validation boundary", async () => {
+      const learner = { ...mockAuthUserSummary, role: UserRole.LEARNER };
+      authService.register.mockResolvedValueOnce({
+        user: learner,
+        tokens: mockTokens,
+      });
+
+      const response = await request(app.getHttpServer())
+        .post("/auth/register")
+        .send({
+          email: "learner@vetralink.com",
+          password: "SecurePassword123!",
+          name: "New Learner",
+          role: UserRole.LEARNER,
+        })
+        .expect(201);
+
+      expect(response.body.data.user.role).toBe(UserRole.LEARNER);
+      expect(authService.register).toHaveBeenCalledWith(
+        expect.objectContaining({ role: UserRole.LEARNER }),
+        expect.any(Object),
+      );
+    });
+
+    it.each([UserRole.ADMIN, UserRole.SUPER_ADMIN, "UNKNOWN_ROLE"])(
+      "should reject %s before invoking registration",
+      async (role) => {
+        await request(app.getHttpServer())
+          .post("/auth/register")
+          .send({
+            email: "blocked@vetralink.com",
+            password: "SecurePassword123!",
+            name: "Blocked User",
+            role,
+          })
+          .expect(400);
+
+        expect(authService.register).not.toHaveBeenCalled();
+      },
+    );
+
     it("should return 201 with ApiResponse envelope when input is valid", async () => {
       authService.register.mockResolvedValueOnce({
         user: mockAuthUserSummary,

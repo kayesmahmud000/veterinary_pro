@@ -14,6 +14,7 @@ generator client {
 // ==========================================
 
 enum UserRole {
+  LEARNER
   SUPER_ADMIN
   ADMIN
   VET

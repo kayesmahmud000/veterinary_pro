@@ -64,7 +64,9 @@ export class AuthController {
   @Public()
   @HttpCode(HttpStatus.CREATED)
   @ResponseMessage("User registration successful")
-  @ApiOperation({ summary: "Register a new user account (Farmer, Vet, Buyer)" })
+  @ApiOperation({
+    summary: "Register a new user account (Learner, Farmer, Vet, Buyer)",
+  })
   @ApiCreatedResponse({ description: "User registered successfully" })
   @ApiConflictResponse({ description: "Email or phone number already registered" })
   @ApiForbiddenResponse({

@@ -1,5 +1,10 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { UserRole, UserStatus } from "@vetralink/shared-types";
+import {
+  PUBLIC_REGISTRATION_ROLES,
+  RegisterRequestDto,
+  UserRole,
+  UserStatus,
+} from "@vetralink/shared-types";
 import { AuthService } from "./auth.service";
 import {
   IUserRepository,
@@ -136,27 +141,57 @@ describe("AuthService", () => {
       expect((result.user as any).passwordHash).toBeUndefined();
     });
 
-    it("should reject registration with SUPER_ADMIN role", async () => {
-      await expect(
-        authService.register({
-          email: "admin@example.com",
-          password: "password123",
-          name: "Admin Attempt",
-          role: UserRole.SUPER_ADMIN,
-        })
-      ).rejects.toThrow(ForbiddenOperationException);
+    it("should register omitted roles as LEARNER", async () => {
+      const result = await authService.register({
+        email: "learner@example.com",
+        password: "SecurePassword123!",
+        name: "New Learner",
+      });
+
+      expect(result.user.role).toBe(UserRole.LEARNER);
+      expect(userRepository.create.mock.calls[0][0].role).toBe(UserRole.LEARNER);
+      expect(tokenService.generateTokens).toHaveBeenCalledWith(
+        expect.objectContaining({ role: UserRole.LEARNER }),
+      );
     });
 
-    it("should reject registration with ADMIN role", async () => {
-      await expect(
-        authService.register({
+    it.each(PUBLIC_REGISTRATION_ROLES)(
+      "should preserve explicit %s in persistence and token claims",
+      async (role) => {
+        const result = await authService.register({
+          email: "public@example.com",
+          password: "SecurePassword123!",
+          name: "Public User",
+          role,
+        });
+
+        expect(result.user.role).toBe(role);
+        expect(userRepository.create.mock.calls[0][0].role).toBe(role);
+        expect(tokenService.generateTokens).toHaveBeenCalledWith(
+          expect.objectContaining({ role }),
+        );
+      },
+    );
+
+    it.each([UserRole.SUPER_ADMIN, UserRole.ADMIN, "UNKNOWN_ROLE"])(
+      "should reject untrusted %s before side effects",
+      async (role) => {
+        // Deliberately bypass the public type to exercise the runtime boundary.
+        const untrusted = {
           email: "admin@example.com",
           password: "password123",
           name: "Admin Attempt",
-          role: UserRole.ADMIN,
-        })
-      ).rejects.toThrow(ForbiddenOperationException);
-    });
+          role,
+        } as unknown as RegisterRequestDto;
+        await expect(authService.register(untrusted)).rejects.toThrow(
+          ForbiddenOperationException,
+        );
+        expect(userRepository.existsByEmail).not.toHaveBeenCalled();
+        expect(passwordHasher.hash).not.toHaveBeenCalled();
+        expect(tokenService.generateTokens).not.toHaveBeenCalled();
+        expect(transactionManager.run).not.toHaveBeenCalled();
+      },
+    );
 
     it("should throw EntityConflictException when email is taken", async () => {
       userRepository.existsByEmail.mockResolvedValueOnce(true);

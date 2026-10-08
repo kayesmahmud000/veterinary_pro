@@ -1,6 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { UserRole, UserStatus } from "@vetralink/shared-types";
 import { AuthController } from "./auth.controller";
+import { RegisterDto } from "./dto/register.dto";
 import { AUTH_SERVICE, IAuthService } from "./services/auth.service.interface";
 import {
   IUserRepository,
@@ -99,7 +100,7 @@ describe("AuthController", () => {
 
   describe("register", () => {
     it("should call authService.register and return user summary and tokens", async () => {
-      const dto = {
+      const dto: RegisterDto = {
         email: "farmer@vetralink.com",
         password: "SecurePassword123!",
         name: "John Farmer",
@@ -142,17 +143,16 @@ describe("AuthController", () => {
         new ForbiddenOperationException("Administrative roles prohibited")
       );
 
-      await expect(
-        controller.register(
-          {
-            email: "admin@vetralink.com",
-            password: "SecurePassword123!",
-            name: "Bad Actor",
-            role: UserRole.SUPER_ADMIN,
-          },
-          mockMeta
-        )
-      ).rejects.toThrow(ForbiddenOperationException);
+      // Direct calls deliberately bypass the HTTP validation boundary.
+      const untrusted = {
+        email: "admin@vetralink.com",
+        password: "SecurePassword123!",
+        name: "Bad Actor",
+        role: UserRole.SUPER_ADMIN,
+      } as unknown as RegisterDto;
+      await expect(controller.register(untrusted, mockMeta)).rejects.toThrow(
+        ForbiddenOperationException,
+      );
     });
   });
 
