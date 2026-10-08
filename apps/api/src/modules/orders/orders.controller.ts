@@ -43,10 +43,7 @@ import {
 } from "@vetralink/shared-types";
 import { CurrentUser, ResponseMessage } from "../../common/decorators";
 import { JwtAuthGuard, RolesGuard } from "../../common/guards";
-import {
-  Idempotent,
-  IdempotencyInterceptor,
-} from "../../common/idempotency";
+import { Idempotent, IdempotencyInterceptor } from "../../common/idempotency";
 import {
   ICheckoutService,
   CHECKOUT_SERVICE,
@@ -68,12 +65,16 @@ export class OrdersController {
     private readonly checkoutService: ICheckoutService,
     @Optional()
     @Inject(ORDER_FULFILLMENT_SERVICE)
-    private readonly fulfillmentService?: IOrderFulfillmentService
+    private readonly fulfillmentService?: IOrderFulfillmentService,
   ) {}
 
   @Post("checkout")
   @HttpCode(HttpStatus.CREATED)
-  @Idempotent({ header: "idempotency-key", ttlSeconds: 86400, lockTtlSeconds: 60 })
+  @Idempotent({
+    header: "idempotency-key",
+    ttlSeconds: 86400,
+    lockTtlSeconds: 60,
+  })
   @ApiOperation({
     summary: "Initialize an ACID checkout workflow",
     description:
@@ -93,14 +94,14 @@ export class OrdersController {
     @CurrentUser() user: JwtPayload,
     @Body() dto: CreateCheckoutDto,
     @Headers("x-trace-id") traceId?: string,
-    @Ip() ipAddress?: string
+    @Ip() ipAddress?: string,
   ): Promise<CheckoutResponseDto> {
     return this.checkoutService.checkout(
       user.sub,
       dto,
       user.email,
       traceId,
-      ipAddress
+      ipAddress,
     );
   }
 
@@ -118,7 +119,7 @@ export class OrdersController {
   public async getMyOrders(
     @CurrentUser() user: JwtPayload,
     @Query("page") page?: string,
-    @Query("limit") limit?: string
+    @Query("limit") limit?: string,
   ): Promise<{ orders: OrderDetailResponseDto[]; total: number }> {
     const pageNum = page ? parseInt(page, 10) : 1;
     const limitNum = limit ? parseInt(limit, 10) : 20;
@@ -141,9 +142,10 @@ export class OrdersController {
   @ResponseMessage("Order retrieved successfully.")
   public async getOrderById(
     @CurrentUser() user: JwtPayload,
-    @Param("id", ParseUUIDPipe) id: string
+    @Param("id", ParseUUIDPipe) id: string,
   ): Promise<OrderDetailResponseDto> {
-    const isAdmin = user.role === UserRole.ADMIN;
+    const isAdmin =
+      user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN;
     return this.checkoutService.getOrderById(id, user.sub, isAdmin);
   }
 
@@ -165,15 +167,17 @@ export class OrdersController {
   @ResponseMessage("Download tokens retrieved successfully.")
   public async getOrderDownloadTokens(
     @CurrentUser() user: JwtPayload,
-    @Param("id", ParseUUIDPipe) id: string
+    @Param("id", ParseUUIDPipe) id: string,
   ): Promise<OrderDownloadTokensResponseDto> {
     if (!this.fulfillmentService) {
-      throw new BadRequestException("Order fulfillment service is unavailable.");
+      throw new BadRequestException(
+        "Order fulfillment service is unavailable.",
+      );
     }
     return this.fulfillmentService.getOrderDownloadTokens(
       id,
       user.sub,
-      user.role
+      user.role,
     );
   }
 
@@ -193,7 +197,8 @@ export class OrdersController {
     name: "redirect",
     required: false,
     type: Boolean,
-    description: "If true, redirects (HTTP 302) directly to presigned download URL",
+    description:
+      "If true, redirects (HTTP 302) directly to presigned download URL",
   })
   @ApiOkResponse({
     description: "Presigned download URL and quota status retrieved.",
@@ -217,10 +222,12 @@ export class OrdersController {
     @Res() res: Response,
     @Query("redirect") redirect?: string,
     @Headers("x-trace-id") traceId?: string,
-    @Ip() ipAddress?: string
+    @Ip() ipAddress?: string,
   ): Promise<void> {
     if (!this.fulfillmentService) {
-      throw new BadRequestException("Order fulfillment service is unavailable.");
+      throw new BadRequestException(
+        "Order fulfillment service is unavailable.",
+      );
     }
     if (!downloadToken || downloadToken.trim() === "") {
       throw new BadRequestException("Query parameter 'token' is required.");
@@ -232,7 +239,7 @@ export class OrdersController {
       user.sub,
       user.role,
       traceId,
-      ipAddress
+      ipAddress,
     );
 
     if (redirect === "true") {
@@ -263,24 +270,28 @@ export class OrdersController {
   @ApiBadRequestResponse({
     description: "Order is not completed or fulfillment service unavailable.",
   })
-  @ApiForbiddenResponse({ description: "Forbidden: user does not own this order." })
+  @ApiForbiddenResponse({
+    description: "Forbidden: user does not own this order.",
+  })
   @ApiNotFoundResponse({ description: "Order not found." })
   @ApiUnauthorizedResponse({ description: "Authentication required." })
   @ResponseMessage("Order delivery email enqueued successfully.")
   public async resendOrderEmail(
     @CurrentUser() user: JwtPayload,
     @Param("id", ParseUUIDPipe) id: string,
-    @Headers("x-trace-id") traceId?: string
+    @Headers("x-trace-id") traceId?: string,
   ): Promise<{ enqueued: boolean; orderId: string }> {
     if (!this.fulfillmentService) {
-      throw new BadRequestException("Order fulfillment service is unavailable.");
+      throw new BadRequestException(
+        "Order fulfillment service is unavailable.",
+      );
     }
 
     return this.fulfillmentService.resendOrderDeliveryEmail(
       id,
       user.sub,
       user.role,
-      traceId
+      traceId,
     );
   }
 }

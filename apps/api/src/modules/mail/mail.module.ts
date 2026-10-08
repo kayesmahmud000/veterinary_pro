@@ -1,13 +1,12 @@
 import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
-import { AppConfigModule, EnvService } from "../../config";
+import { AppConfigModule } from "../../config";
+import { MailProviderModule } from "./mail-provider.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { AuditModule } from "../audit/audit.module";
 import { OrderRepository } from "../orders/repositories/order.repository";
 import { ORDER_REPOSITORY } from "../orders/repositories/order.repository.interface";
-import {
-  EMAIL_PROVIDER_TOKEN,
-} from "./interfaces/mail-provider.interface";
+import { EMAIL_PROVIDER_TOKEN } from "./interfaces/mail-provider.interface";
 import {
   MAIL_QUEUE_NAME,
   MAIL_QUEUE_SERVICE,
@@ -23,6 +22,7 @@ import { MailProcessor } from "./processors/mail.processor";
 @Module({
   imports: [
     AppConfigModule,
+    MailProviderModule,
     PrismaModule,
     AuditModule,
     BullModule.registerQueue({
@@ -33,33 +33,6 @@ import { MailProcessor } from "./processors/mail.processor";
     {
       provide: ORDER_REPOSITORY,
       useClass: OrderRepository,
-    },
-    MockMailProvider,
-    ResendMailProvider,
-    SesMailProvider,
-    {
-      provide: EMAIL_PROVIDER_TOKEN,
-      useFactory: (
-        envService: EnvService,
-        mockProvider: MockMailProvider,
-        resendProvider: ResendMailProvider,
-        sesProvider: SesMailProvider
-      ) => {
-        const provider = envService.emailProvider;
-        if (provider === "resend") {
-          return resendProvider;
-        }
-        if (provider === "ses") {
-          return sesProvider;
-        }
-        return mockProvider;
-      },
-      inject: [
-        EnvService,
-        MockMailProvider,
-        ResendMailProvider,
-        SesMailProvider,
-      ],
     },
     MailService,
     {
@@ -76,10 +49,7 @@ import { MailProcessor } from "./processors/mail.processor";
   exports: [
     MAIL_SERVICE,
     MAIL_QUEUE_SERVICE,
-    EMAIL_PROVIDER_TOKEN,
-    MockMailProvider,
-    ResendMailProvider,
-    SesMailProvider,
+    MailProviderModule,
     MailProcessor,
   ],
 })

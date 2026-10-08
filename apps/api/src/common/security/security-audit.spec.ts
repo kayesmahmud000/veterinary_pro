@@ -60,11 +60,15 @@ describe("Platform Security Audit & Compliance Suite", () => {
       const encrypted = piiCryptoService.encrypt(original);
       const parts = encrypted.split(":");
 
-      // Tamper with encrypted payload
-      const tampered = `${parts[0]}:${parts[1]}:ff${parts[2]?.slice(2)}`;
+      // Flip a bit so the payload changes even when its first byte is already ff.
+      const payload = Buffer.from(parts[2]!, "hex");
+      payload[0] ^= 0x01;
+      const tampered = `${parts[0]}:${parts[1]}:${payload.toString("hex")}`;
+
+      expect(tampered).not.toBe(encrypted);
 
       expect(() => piiCryptoService.decrypt(tampered)).toThrow(
-        PiiCryptoException
+        PiiCryptoException,
       );
     });
 
@@ -109,7 +113,7 @@ describe("Platform Security Audit & Compliance Suite", () => {
 
     const createMockContext = (
       user?: JwtPayload,
-      headers: Record<string, string> = {}
+      headers: Record<string, string> = {},
     ): ExecutionContext => {
       const request = {
         headers,
@@ -140,10 +144,12 @@ describe("Platform Security Audit & Compliance Suite", () => {
         .mockReturnValueOnce(false) // IS_PUBLIC_KEY
         .mockReturnValueOnce(undefined); // TENANT_OPTIONS_KEY
 
-      const context = createMockContext(undefined, { "x-farm-id": validFarmId });
+      const context = createMockContext(undefined, {
+        "x-farm-id": validFarmId,
+      });
 
       await expect(guard.canActivate(context)).rejects.toThrow(
-        UnauthorizedDomainException
+        UnauthorizedDomainException,
       );
     });
 
@@ -163,7 +169,7 @@ describe("Platform Security Audit & Compliance Suite", () => {
       const context = createMockContext(user, { "x-farm-id": otherFarmId });
 
       await expect(guard.canActivate(context)).rejects.toThrow(
-        ForbiddenOperationException
+        ForbiddenOperationException,
       );
     });
 
@@ -180,7 +186,7 @@ describe("Platform Security Audit & Compliance Suite", () => {
           userId: "user-123",
           role: FarmRole.OWNER,
           createdAt: new Date(),
-        })
+        }),
       );
 
       const user: JwtPayload = {
@@ -206,7 +212,9 @@ describe("Platform Security Audit & Compliance Suite", () => {
         role: UserRole.SUPER_ADMIN,
         status: UserStatus.ACTIVE,
       };
-      const context = createMockContext(adminUser, { "x-farm-id": validFarmId });
+      const context = createMockContext(adminUser, {
+        "x-farm-id": validFarmId,
+      });
 
       const canActivate = await guard.canActivate(context);
       expect(canActivate).toBe(true);
@@ -224,10 +232,12 @@ describe("Platform Security Audit & Compliance Suite", () => {
         role: UserRole.FARMER,
         status: UserStatus.ACTIVE,
       };
-      const context = createMockContext(user, { "x-farm-id": "invalid-farm-id" });
+      const context = createMockContext(user, {
+        "x-farm-id": "invalid-farm-id",
+      });
 
       await expect(guard.canActivate(context)).rejects.toThrow(
-        ValidationDomainException
+        ValidationDomainException,
       );
     });
   });
@@ -294,11 +304,11 @@ describe("Platform Security Audit & Compliance Suite", () => {
       const context = createMockContext(user);
 
       expect(() => guard.canActivate(context)).toThrow(
-        ForbiddenOperationException
+        ForbiddenOperationException,
       );
     });
 
-    it("should always allow SUPER_ADMIN even if role is not explicitly specified", () => {
+    it("rejects SUPER_ADMIN when a route does not explicitly include it", () => {
       reflector.getAllAndOverride
         .mockReturnValueOnce(false)
         .mockReturnValueOnce([UserRole.VET]);
@@ -310,7 +320,9 @@ describe("Platform Security Audit & Compliance Suite", () => {
       };
       const context = createMockContext(admin);
 
-      expect(guard.canActivate(context)).toBe(true);
+      expect(() => guard.canActivate(context)).toThrow(
+        ForbiddenOperationException,
+      );
     });
   });
 });

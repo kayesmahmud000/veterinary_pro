@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import {
   JwtPayload,
@@ -53,6 +54,11 @@ describe("MediaUploadController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MediaUploadController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: MEDIA_UPLOAD_SERVICE,
           useValue: mockMediaUploadService,
@@ -94,15 +100,14 @@ describe("MediaUploadController", () => {
       };
 
       mockMediaUploadService.initiateMultipartUpload.mockResolvedValue(
-        expectedResponse
+        expectedResponse,
       );
 
       const result = await controller.initiateMultipartUpload(dto, mockUser);
 
-      expect(mockMediaUploadService.initiateMultipartUpload).toHaveBeenCalledWith(
-        dto,
-        mockUser.sub
-      );
+      expect(
+        mockMediaUploadService.initiateMultipartUpload,
+      ).toHaveBeenCalledWith(dto, mockUser.sub);
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -122,13 +127,13 @@ describe("MediaUploadController", () => {
       };
 
       mockMediaUploadService.getPresignedPartUrl.mockResolvedValue(
-        expectedResponse
+        expectedResponse,
       );
 
       const result = await controller.getPresignedPartUrl(dto);
 
       expect(mockMediaUploadService.getPresignedPartUrl).toHaveBeenCalledWith(
-        dto
+        dto,
       );
       expect(result).toEqual(expectedResponse);
     });
@@ -150,15 +155,14 @@ describe("MediaUploadController", () => {
       };
 
       mockMediaUploadService.completeMultipartUpload.mockResolvedValue(
-        expectedResponse
+        expectedResponse,
       );
 
       const result = await controller.completeMultipartUpload(dto, mockUser);
 
-      expect(mockMediaUploadService.completeMultipartUpload).toHaveBeenCalledWith(
-        dto,
-        mockUser.sub
-      );
+      expect(
+        mockMediaUploadService.completeMultipartUpload,
+      ).toHaveBeenCalledWith(dto, mockUser.sub);
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -176,7 +180,7 @@ describe("MediaUploadController", () => {
 
       expect(mockMediaUploadService.abortMultipartUpload).toHaveBeenCalledWith(
         dto,
-        mockUser.sub
+        mockUser.sub,
       );
       expect(result).toEqual({ aborted: true });
     });
@@ -199,15 +203,14 @@ describe("MediaUploadController", () => {
       };
 
       mockMediaUploadService.generateDirectUploadUrl.mockResolvedValue(
-        expectedResponse
+        expectedResponse,
       );
 
       const result = await controller.generateDirectUploadUrl(dto, mockUser);
 
-      expect(mockMediaUploadService.generateDirectUploadUrl).toHaveBeenCalledWith(
-        dto,
-        mockUser.sub
-      );
+      expect(
+        mockMediaUploadService.generateDirectUploadUrl,
+      ).toHaveBeenCalledWith(dto, mockUser.sub);
       expect(result).toEqual(expectedResponse);
     });
   });
@@ -225,7 +228,9 @@ describe("MediaUploadController", () => {
 
       const result = await controller.queueTranscode(dto, mockUser);
 
-      expect(mockTranscodeQueueService.dispatchTranscodeJob).toHaveBeenCalledWith({
+      expect(
+        mockTranscodeQueueService.dispatchTranscodeJob,
+      ).toHaveBeenCalledWith({
         productId: dto.productId,
         rawS3Key: dto.rawS3Key,
         bucket: "test-media-bucket",
@@ -258,7 +263,7 @@ describe("MediaUploadController", () => {
       const result = await controller.getTranscodeStatus("transcode-123");
 
       expect(mockTranscodeQueueService.getJobStatus).toHaveBeenCalledWith(
-        "transcode-123"
+        "transcode-123",
       );
       expect(result).toEqual(mockStatus);
     });
@@ -267,9 +272,8 @@ describe("MediaUploadController", () => {
       mockTranscodeQueueService.getJobStatus.mockResolvedValueOnce(null);
 
       await expect(
-        controller.getTranscodeStatus("non-existent-job")
+        controller.getTranscodeStatus("non-existent-job"),
       ).rejects.toThrow(EntityNotFoundException);
     });
   });
 });
-

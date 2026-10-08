@@ -31,7 +31,11 @@ import {
   QueryConsultationMessagesDto,
   UserRole,
 } from "@vetralink/shared-types";
-import { CurrentUser, ResponseMessage, Roles } from "../../../common/decorators";
+import {
+  CurrentUser,
+  ResponseMessage,
+  Roles,
+} from "../../../common/decorators";
 import { JwtAuthGuard, RolesGuard } from "../../../common/guards";
 import { ConsultationChatGateway } from "../gateways/consultation-chat.gateway";
 import {
@@ -63,7 +67,8 @@ export class ConsultationChatController {
   @ApiNotFoundResponse({ description: "Consultation not found" })
   @ApiUnauthorizedResponse({ description: "JWT authentication required" })
   @ApiForbiddenResponse({
-    description: "Insufficient permissions to view messages for this consultation",
+    description:
+      "Insufficient permissions to view messages for this consultation",
   })
   @ResponseMessage("Consultation messages retrieved successfully")
   public async getMessages(
@@ -93,7 +98,8 @@ export class ConsultationChatController {
   @ApiNotFoundResponse({ description: "Consultation not found" })
   @ApiUnauthorizedResponse({ description: "JWT authentication required" })
   @ApiForbiddenResponse({
-    description: "Insufficient permissions to send messages for this consultation",
+    description:
+      "Insufficient permissions to send messages for this consultation",
   })
   @ResponseMessage("Message sent successfully")
   public async sendMessage(
@@ -109,7 +115,7 @@ export class ConsultationChatController {
     );
 
     // Broadcast to WebSocket clients
-    this.chatGateway.broadcastMessage(id, message);
+    await this.chatGateway.broadcastMessage(id, message);
 
     return message;
   }
@@ -128,7 +134,8 @@ export class ConsultationChatController {
   @ApiNotFoundResponse({ description: "Consultation not found" })
   @ApiUnauthorizedResponse({ description: "JWT authentication required" })
   @ApiForbiddenResponse({
-    description: "Insufficient permissions to upload media for this consultation",
+    description:
+      "Insufficient permissions to upload media for this consultation",
   })
   @ResponseMessage("Presigned upload URL generated successfully")
   public async generateMediaUploadUrl(
@@ -152,7 +159,8 @@ export class ConsultationChatController {
   @ApiNotFoundResponse({ description: "Consultation not found" })
   @ApiUnauthorizedResponse({ description: "JWT authentication required" })
   @ApiForbiddenResponse({
-    description: "Insufficient permissions to update messages for this consultation",
+    description:
+      "Insufficient permissions to update messages for this consultation",
   })
   @ResponseMessage("Messages marked as read successfully")
   public async markMessagesRead(

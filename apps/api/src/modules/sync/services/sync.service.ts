@@ -10,6 +10,7 @@ import {
 import {
   ForbiddenOperationException,
   ValidationDomainException,
+  WorkflowException,
 } from "../../../common/exceptions/domain.exception";
 import {
   AUDIT_LOG_REPOSITORY,
@@ -35,13 +36,13 @@ export class SyncService implements ISyncService {
     @Inject(FARM_MEMBER_REPOSITORY)
     private readonly farmMemberRepo: IFarmMemberRepository,
     @Inject(AUDIT_LOG_REPOSITORY)
-    private readonly auditLogRepo: IAuditLogRepository
+    private readonly auditLogRepo: IAuditLogRepository,
   ) {}
 
   public async pull(
     user: JwtPayload,
     farmId: string,
-    lastPulledAt?: number | string | null
+    lastPulledAt?: number | string | null,
   ): Promise<SyncPullResponseDto> {
     await this.assertFarmAccess(user, farmId);
 
@@ -50,13 +51,13 @@ export class SyncService implements ISyncService {
       since = new Date(lastPulledAt);
       if (isNaN(since.getTime())) {
         throw new ValidationDomainException(
-          "Invalid lastPulledAt watermark timestamp. Expected Unix epoch milliseconds or ISO-8601 string."
+          "Invalid lastPulledAt watermark timestamp. Expected Unix epoch milliseconds or ISO-8601 string.",
         );
       }
     }
 
     this.logger.log(
-      `User '${user.sub}' initiating sync pull for farm '${farmId}' (since: ${since ? since.toISOString() : "INITIAL_FULL_SYNC"})`
+      `User '${user.sub}' initiating sync pull for farm '${farmId}' (since: ${since ? since.toISOString() : "INITIAL_FULL_SYNC"})`,
     );
 
     const changes = await this.syncRepo.pullFarmDeltas(farmId, since);
@@ -72,26 +73,26 @@ export class SyncService implements ISyncService {
   public async push(
     user: JwtPayload,
     dto: SyncPushRequestDto,
-    traceId?: string
+    traceId?: string,
   ): Promise<SyncPushResponseDto> {
     await this.assertFarmAccess(user, dto.farmId);
 
     const clientLastPulledAt = new Date(dto.lastPulledAt);
     if (isNaN(clientLastPulledAt.getTime())) {
       throw new ValidationDomainException(
-        "Invalid lastPulledAt watermark timestamp in push payload."
+        "Invalid lastPulledAt watermark timestamp in push payload.",
       );
     }
 
     this.logger.log(
-      `User '${user.sub}' executing batch sync push for farm '${dto.farmId}' (client watermark: ${clientLastPulledAt.toISOString()})`
+      `User '${user.sub}' executing batch sync push for farm '${dto.farmId}' (client watermark: ${clientLastPulledAt.toISOString()})`,
     );
 
     const result = await this.syncRepo.applyPushMutations(
       dto.farmId,
       user.sub,
       dto.changes,
-      clientLastPulledAt
+      clientLastPulledAt,
     );
 
     const activeTraceId = traceId ?? crypto.randomUUID();
@@ -119,7 +120,7 @@ export class SyncService implements ISyncService {
 
   public async getStatus(
     user: JwtPayload,
-    farmId: string
+    farmId: string,
   ): Promise<SyncStatusDto> {
     await this.assertFarmAccess(user, farmId);
 
@@ -138,20 +139,27 @@ export class SyncService implements ISyncService {
 
   private async assertFarmAccess(
     user: JwtPayload,
-    farmId: string
+    farmId: string,
   ): Promise<void> {
+    if (user.role === UserRole.LEARNER) throw new ForbiddenOperationException();
+    if (user.role === UserRole.FARMER && user.farmerOnboardingRequired)
+      throw new WorkflowException(
+        "FARM_ONBOARDING_REQUIRED",
+        "Complete farm setup before accessing this farm.",
+        403,
+      );
     if (user.role === UserRole.SUPER_ADMIN) {
       return;
     }
 
     const membership = await this.farmMemberRepo.findMembership(
       farmId,
-      user.sub
+      user.sub,
     );
 
     if (!membership) {
       throw new ForbiddenOperationException(
-        "Access denied: You are not a registered member of this farm tenant."
+        "Access denied: You are not a registered member of this farm tenant.",
       );
     }
   }

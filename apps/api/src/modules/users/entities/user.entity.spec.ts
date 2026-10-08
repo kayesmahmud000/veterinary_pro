@@ -8,7 +8,8 @@ describe("UserEntity Domain Model", () => {
     name: "John Doe",
     passwordHash: "$2b$12$e8Yk1.eR/s/fakehashstringexample",
     phone: "+8801712345678",
-    phoneHash: "a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456789abcdef0123",
+    phoneHash:
+      "a1b2c3d4e5f60123456789abcdef0123456789abcdef0123456789abcdef0123",
   };
 
   describe("Factory Methods", () => {
@@ -19,7 +20,7 @@ describe("UserEntity Domain Model", () => {
       expect(user.id).toBeDefined();
       expect(user.email).toBe("farmer.john@example.com"); // Normalized lowercase
       expect(user.name).toBe("John Doe");
-      expect(user.role).toBe(UserRole.FARMER);
+      expect(user.role).toBe(UserRole.LEARNER);
       expect(user.status).toBe(UserStatus.ACTIVE);
       expect(user.isEmailVerified).toBe(false);
       expect(user.lastLoginAt).toBeNull();
@@ -63,7 +64,7 @@ describe("UserEntity Domain Model", () => {
         UserEntity.create({
           ...validProps,
           email: "invalid-email-without-at",
-        })
+        }),
       ).toThrow(ValidationDomainException);
     });
 
@@ -72,7 +73,7 @@ describe("UserEntity Domain Model", () => {
         UserEntity.create({
           ...validProps,
           name: "   ",
-        })
+        }),
       ).toThrow(ValidationDomainException);
     });
 
@@ -81,7 +82,7 @@ describe("UserEntity Domain Model", () => {
         UserEntity.create({
           ...validProps,
           passwordHash: "",
-        })
+        }),
       ).toThrow(ValidationDomainException);
     });
   });

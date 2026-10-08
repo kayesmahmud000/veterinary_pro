@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Reflector } from "@nestjs/core";
 import { Test, TestingModule } from "@nestjs/testing";
 import { ProfitLossInterval } from "@vetralink/shared-types";
@@ -27,6 +28,11 @@ describe("FinancialProfitLossController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FinancialProfitLossController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: FARM_PROFIT_LOSS_SERVICE,
           useValue: profitLossService,
@@ -44,7 +50,7 @@ describe("FinancialProfitLossController", () => {
     }).compile();
 
     controller = module.get<FinancialProfitLossController>(
-      FinancialProfitLossController
+      FinancialProfitLossController,
     );
   });
 
@@ -80,13 +86,13 @@ describe("FinancialProfitLossController", () => {
       const result = await controller.generateProfitLoss(
         farmId,
         query,
-        "trace-xyz"
+        "trace-xyz",
       );
 
       expect(profitLossService.generateProfitLoss).toHaveBeenCalledWith(
         farmId,
         query,
-        "trace-xyz"
+        "trace-xyz",
       );
       expect(result).toBe(mockStatement);
     });
@@ -118,7 +124,7 @@ describe("FinancialProfitLossController", () => {
 
       expect(profitLossService.getSummaryKpi).toHaveBeenCalledWith(
         farmId,
-        query
+        query,
       );
       expect(result).toBe(mockKpi);
     });

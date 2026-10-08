@@ -1,86 +1,97 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { FarmRole } from "@vetralink/shared-types";
-import { EntityConflictException } from "../../../common/exceptions/domain.exception";
+import { randomUUID } from "crypto";
+import { FarmRole, UserRole } from "@vetralink/shared-types";
 import { FarmMemberEntity } from "../entities/farm-member.entity";
-import {
-  FARM_MEMBER_REPOSITORY,
-  IFarmMemberRepository,
-} from "../repositories/farm-member.repository.interface";
 import { FarmMembersService } from "./farm-members.service";
-
-describe("FarmMembersService", () => {
-  let service: FarmMembersService;
-  let memberRepo: jest.Mocked<IFarmMemberRepository>;
-
-  const mockMember = FarmMemberEntity.create({
-    id: "mem-1",
-    farmId: "farm-1",
-    userId: "user-1",
-    role: FarmRole.HERDSMAN,
-  });
-
-  beforeEach(async () => {
-    memberRepo = {
-      findMembership: jest.fn(),
-      findUserFarms: jest.fn(),
-      findByFarmId: jest.fn(),
-      countMembers: jest.fn(),
-      create: jest.fn(),
+const ownerId = randomUUID(),
+  targetId = randomUUID(),
+  farmId = randomUUID();
+describe("FarmMembersService permissions and transaction", () => {
+  let service: FarmMembersService,
+    members: any,
+    audit: any,
+    quota: any,
+    actorRole: FarmRole;
+  const tx = { transaction: true };
+  beforeEach(() => {
+    actorRole = FarmRole.OWNER;
+    members = {
+      findMembership: jest.fn(async (_farm, id) =>
+        id === ownerId ? { role: actorRole } : null,
+      ),
+      create: jest.fn(async (entity) => entity),
+      findByFarmId: jest.fn(async () => []),
     };
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        FarmMembersService,
-        { provide: FARM_MEMBER_REPOSITORY, useValue: memberRepo },
-      ],
-    }).compile();
-
-    service = module.get<FarmMembersService>(FarmMembersService);
+    audit = { record: jest.fn() };
+    quota = { assertQuotaAvailable: jest.fn() };
+    service = new FarmMembersService(
+      members,
+      {
+        lockById: jest.fn(async () => ({
+          isActive: () => true,
+          role: UserRole.FARMER,
+          farmerOnboardingRequired: false,
+        })),
+      } as any,
+      { run: async (fn) => fn(tx as any) },
+      audit,
+      quota,
+      {
+        lockFarm: async () => ({ id: farmId }),
+        memberSummaries: async () => [],
+      } as any,
+    );
   });
-
-  describe("addMember()", () => {
-    it("should throw EntityConflictException if user is already a member", async () => {
-      memberRepo.findMembership.mockResolvedValue(mockMember);
-
-      await expect(
-        service.addMember("farm-1", { userId: "user-1" }),
-      ).rejects.toThrow(EntityConflictException);
-      expect(memberRepo.create).not.toHaveBeenCalled();
-    });
-
-    it("should create and return member when user is not a member", async () => {
-      memberRepo.findMembership.mockResolvedValue(null);
-      memberRepo.create.mockResolvedValue(mockMember);
-
-      const result = await service.addMember("farm-1", {
-        userId: "user-1",
-        role: FarmRole.HERDSMAN,
-      });
-
-      expect(memberRepo.findMembership).toHaveBeenCalledWith(
-        "farm-1",
-        "user-1",
+  it.each(Object.values(FarmRole))(
+    "lets an owner add %s atomically with audit",
+    async (role) => {
+      const result = await service.addMember(
+        farmId,
+        { userId: targetId, role },
+        { sub: ownerId } as any,
       );
-      expect(memberRepo.create).toHaveBeenCalled();
-      expect(result).toMatchObject({
-        id: "mem-1",
-        farmId: "farm-1",
-        userId: "user-1",
-        role: FarmRole.HERDSMAN,
-      });
-    });
+      expect(result.role).toBe(role);
+      expect(members.create).toHaveBeenCalledWith(
+        expect.any(FarmMemberEntity),
+        tx,
+      );
+      expect(audit.record).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "FARM_MEMBER_ADDED" }),
+        tx,
+      );
+    },
+  );
+  it("prevents managers from granting OWNER", async () => {
+    actorRole = FarmRole.MANAGER;
+    await expect(
+      service.addMember(farmId, { userId: targetId, role: FarmRole.OWNER }, {
+        sub: ownerId,
+      } as any),
+    ).rejects.toMatchObject({ statusCode: 403 });
+    expect(members.create).not.toHaveBeenCalled();
   });
-
-  describe("getMembers()", () => {
-    it("should return list of farm members and total count", async () => {
-      memberRepo.findByFarmId.mockResolvedValue([mockMember]);
-
-      const result = await service.getMembers("farm-1");
-
-      expect(memberRepo.findByFarmId).toHaveBeenCalledWith("farm-1");
-      expect(result.items).toHaveLength(1);
-      expect(result.total).toBe(1);
-      expect(result.items[0]?.id).toBe(mockMember.id);
-    });
+  it("rejects an existing member", async () => {
+    members.findMembership.mockResolvedValue({ role: FarmRole.OWNER });
+    await expect(
+      service.addMember(farmId, { userId: targetId }, { sub: ownerId } as any),
+    ).rejects.toMatchObject({ statusCode: 409 });
+  });
+  it("does not write a member after quota failure", async () => {
+    quota.assertQuotaAvailable.mockRejectedValue(new Error("Quota"));
+    await expect(
+      service.addMember(farmId, { userId: targetId }, { sub: ownerId } as any),
+    ).rejects.toThrow("Quota");
+    expect(members.create).not.toHaveBeenCalled();
+  });
+  it("rejects forged roles at the service boundary", async () => {
+    await expect(
+      service.addMember(
+        farmId,
+        { userId: targetId, role: "SUPER_ADMIN" } as any,
+        { sub: ownerId } as any,
+      ),
+    ).rejects.toMatchObject({ statusCode: 422 });
+  });
+  it("returns the current member list", async () => {
+    expect(await service.getMembers(farmId)).toEqual({ items: [], total: 0 });
   });
 });

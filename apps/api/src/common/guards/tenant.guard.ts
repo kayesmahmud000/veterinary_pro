@@ -20,6 +20,7 @@ import {
   ForbiddenOperationException,
   UnauthorizedDomainException,
   ValidationDomainException,
+  WorkflowException,
 } from "../exceptions/domain.exception";
 
 const UUID_REGEX =
@@ -30,7 +31,7 @@ export class TenantGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     @Inject(FARM_MEMBER_REPOSITORY)
-    private readonly farmMemberRepository: IFarmMemberRepository
+    private readonly farmMemberRepository: IFarmMemberRepository,
   ) {}
 
   public async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -45,7 +46,7 @@ export class TenantGuard implements CanActivate {
 
     const tenantOptions = this.reflector.getAllAndOverride<TenantOptions>(
       TENANT_OPTIONS_KEY,
-      [context.getHandler(), context.getClass()]
+      [context.getHandler(), context.getClass()],
     );
 
     const request = context.switchToHttp().getRequest();
@@ -54,7 +55,7 @@ export class TenantGuard implements CanActivate {
     if (!farmId) {
       if (tenantOptions && !tenantOptions.optional) {
         throw new ValidationDomainException(
-          "Farm tenant identifier is required. Provide 'x-farm-id' header or 'farmId' parameter."
+          "Farm tenant identifier is required. Provide 'x-farm-id' header or 'farmId' parameter.",
         );
       }
       return true;
@@ -62,16 +63,27 @@ export class TenantGuard implements CanActivate {
 
     if (!UUID_REGEX.test(farmId)) {
       throw new ValidationDomainException(
-        "Invalid farm tenant identifier format. Expected UUID."
+        "Invalid farm tenant identifier format. Expected UUID.",
       );
     }
 
     const user: JwtPayload | undefined = request.user;
     if (!user) {
       throw new UnauthorizedDomainException(
-        "Authentication is required to access farm tenants."
+        "Authentication is required to access farm tenants.",
       );
     }
+
+    if (user.role === UserRole.LEARNER)
+      throw new ForbiddenOperationException(
+        "Professional farm access is required.",
+      );
+    if (user.role === UserRole.FARMER && user.farmerOnboardingRequired)
+      throw new WorkflowException(
+        "FARM_ONBOARDING_REQUIRED",
+        "Complete farm setup before accessing the farm.",
+        403,
+      );
 
     // Platform SUPER_ADMIN has global tenant inspection bypass
     if (user.role === UserRole.SUPER_ADMIN) {
@@ -81,18 +93,18 @@ export class TenantGuard implements CanActivate {
 
     const membership = await this.farmMemberRepository.findMembership(
       farmId,
-      user.sub
+      user.sub,
     );
 
     if (!membership) {
       throw new ForbiddenOperationException(
-        "Access denied: You are not a member of this farm tenant."
+        "Access denied: You are not a member of this farm tenant.",
       );
     }
 
     const requiredFarmRoles = this.reflector.getAllAndOverride<FarmRole[]>(
       FARM_ROLES_KEY,
-      [context.getHandler(), context.getClass()]
+      [context.getHandler(), context.getClass()],
     );
 
     if (requiredFarmRoles && requiredFarmRoles.length > 0) {
@@ -101,7 +113,7 @@ export class TenantGuard implements CanActivate {
 
       if (!hasPermission) {
         throw new ForbiddenOperationException(
-          `Insufficient farm permissions. Required: [${requiredFarmRoles.join(", ")}], Provided: '${membership.role}'`
+          `Insufficient farm permissions. Required: [${requiredFarmRoles.join(", ")}], Provided: '${membership.role}'`,
         );
       }
     }
@@ -120,7 +132,11 @@ export class TenantGuard implements CanActivate {
       request.headers?.["X-Farm-Id"] ??
       request.headers?.["X-Tenant-Id"];
 
-    if (headerId && typeof headerId === "string" && headerId.trim().length > 0) {
+    if (
+      headerId &&
+      typeof headerId === "string" &&
+      headerId.trim().length > 0
+    ) {
       return headerId.trim();
     }
 

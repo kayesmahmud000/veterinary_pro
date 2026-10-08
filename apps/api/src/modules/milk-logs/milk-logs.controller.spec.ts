@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
 import { StreamableFile } from "@nestjs/common";
@@ -107,6 +108,11 @@ describe("MilkLogsController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MilkLogsController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: MILK_LOGS_SERVICE,
           useValue: service,
@@ -151,14 +157,14 @@ describe("MilkLogsController", () => {
         farmId,
         mockUser,
         dto,
-        "trace-123"
+        "trace-123",
       );
 
       expect(service.createMilkLog).toHaveBeenCalledWith(
         farmId,
         mockUser.sub,
         dto,
-        "trace-123"
+        "trace-123",
       );
       expect(result).toEqual(mockMilkLogResponse);
     });
@@ -188,14 +194,14 @@ describe("MilkLogsController", () => {
         farmId,
         mockUser,
         dto,
-        "trace-bulk-123"
+        "trace-bulk-123",
       );
 
       expect(service.createBulkMilkLog).toHaveBeenCalledWith(
         farmId,
         mockUser.sub,
         dto,
-        "trace-bulk-123"
+        "trace-bulk-123",
       );
       expect(result).toEqual(mockBulkResponse);
     });
@@ -234,12 +240,12 @@ describe("MilkLogsController", () => {
 
       const result = await controller.getMilkLogById(
         farmId,
-        mockMilkLogResponse.id
+        mockMilkLogResponse.id,
       );
 
       expect(service.getMilkLogById).toHaveBeenCalledWith(
         mockMilkLogResponse.id,
-        farmId
+        farmId,
       );
       expect(result).toEqual(mockMilkLogResponse);
     });
@@ -262,7 +268,7 @@ describe("MilkLogsController", () => {
         mockUser,
         mockMilkLogResponse.id,
         dto,
-        "trace-456"
+        "trace-456",
       );
 
       expect(service.updateMilkLog).toHaveBeenCalledWith(
@@ -270,7 +276,7 @@ describe("MilkLogsController", () => {
         farmId,
         mockUser.sub,
         dto,
-        "trace-456"
+        "trace-456",
       );
       expect(result).toEqual(updatedResponse);
     });
@@ -284,14 +290,14 @@ describe("MilkLogsController", () => {
         farmId,
         mockUser,
         mockMilkLogResponse.id,
-        "trace-789"
+        "trace-789",
       );
 
       expect(service.deleteMilkLog).toHaveBeenCalledWith(
         mockMilkLogResponse.id,
         farmId,
         mockUser.sub,
-        "trace-789"
+        "trace-789",
       );
       expect(result).toEqual({ deleted: true, id: mockMilkLogResponse.id });
     });
@@ -359,13 +365,13 @@ describe("MilkLogsController", () => {
         farmId,
         query,
         mockRes,
-        "trace-export-1"
+        "trace-export-1",
       );
 
       expect(exportService.exportMilkLogs).toHaveBeenCalledWith(
         farmId,
         query,
-        "trace-export-1"
+        "trace-export-1",
       );
       expect(mockRes.set).toHaveBeenCalledWith({
         "Content-Type": "text/csv; charset=utf-8",
@@ -410,12 +416,12 @@ describe("MilkLogsController", () => {
 
       const result = await controller.getAnomalyById(
         farmId,
-        mockAnomalyResponse.id
+        mockAnomalyResponse.id,
       );
 
       expect(anomalyService.getAnomalyById).toHaveBeenCalledWith(
         mockAnomalyResponse.id,
-        farmId
+        farmId,
       );
       expect(result).toEqual(mockAnomalyResponse);
     });
@@ -440,7 +446,7 @@ describe("MilkLogsController", () => {
       expect(anomalyService.triggerFarmScan).toHaveBeenCalledWith(
         farmId,
         mockUser.sub,
-        dto
+        dto,
       );
       expect(result).toEqual(scanResponse);
     });
@@ -466,14 +472,14 @@ describe("MilkLogsController", () => {
         farmId,
         mockUser,
         mockAnomalyResponse.id,
-        dto
+        dto,
       );
 
       expect(anomalyService.acknowledgeAnomaly).toHaveBeenCalledWith(
         mockAnomalyResponse.id,
         farmId,
         mockUser.sub,
-        dto
+        dto,
       );
       expect(result).toEqual(ackResponse);
     });
@@ -498,14 +504,14 @@ describe("MilkLogsController", () => {
         farmId,
         mockUser,
         mockAnomalyResponse.id,
-        dto
+        dto,
       );
 
       expect(anomalyService.resolveAnomaly).toHaveBeenCalledWith(
         mockAnomalyResponse.id,
         farmId,
         mockUser.sub,
-        dto
+        dto,
       );
       expect(result).toEqual(resResponse);
     });

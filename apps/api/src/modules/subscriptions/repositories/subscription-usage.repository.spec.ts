@@ -86,6 +86,7 @@ describe("SubscriptionUsageRepository", () => {
       expect(prisma.farmMember.count).toHaveBeenCalledWith({
         where: {
           farmId: "farm-2",
+          NOT: { user: { ownedFarms: { some: { id: "farm-2" } } } },
         },
       });
     });
@@ -97,15 +98,13 @@ describe("SubscriptionUsageRepository", () => {
         },
       };
 
-      const count = await repository.countFarmMembers(
-        "farm-2",
-        txMock as any,
-      );
+      const count = await repository.countFarmMembers("farm-2", txMock as any);
 
       expect(count).toBe(1);
       expect(txMock.farmMember.count).toHaveBeenCalledWith({
         where: {
           farmId: "farm-2",
+          NOT: { user: { ownedFarms: { some: { id: "farm-2" } } } },
         },
       });
       expect(prisma.farmMember.count).not.toHaveBeenCalled();

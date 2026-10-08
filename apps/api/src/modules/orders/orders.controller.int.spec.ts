@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
@@ -109,6 +110,11 @@ describe("OrdersController (Integration via Supertest)", () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [OrdersController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: CHECKOUT_SERVICE,
           useValue: checkoutService,
@@ -134,7 +140,7 @@ describe("OrdersController (Integration via Supertest)", () => {
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
-      })
+      }),
     );
     app.useGlobalInterceptors(new ResponseInterceptor(reflector));
     app.useGlobalFilters(new GlobalExceptionFilter());
@@ -188,7 +194,9 @@ describe("OrdersController (Integration via Supertest)", () => {
 
     it("should return 422 Unprocessable Entity when domain validation fails (e.g. duplicate or unavailable product)", async () => {
       checkoutService.checkout.mockRejectedValueOnce(
-        new ValidationDomainException("Duplicate products in checkout are not allowed.")
+        new ValidationDomainException(
+          "Duplicate products in checkout are not allowed.",
+        ),
       );
 
       const response = await request(app.getHttpServer())
@@ -225,7 +233,9 @@ describe("OrdersController (Integration via Supertest)", () => {
 
   describe("GET /orders/my-orders", () => {
     it("should return 401 Unauthorized without auth token", async () => {
-      const response = await request(app.getHttpServer()).get("/orders/my-orders");
+      const response = await request(app.getHttpServer()).get(
+        "/orders/my-orders",
+      );
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -251,7 +261,7 @@ describe("OrdersController (Integration via Supertest)", () => {
   describe("GET /orders/:id", () => {
     it("should return 401 Unauthorized without auth token", async () => {
       const response = await request(app.getHttpServer()).get(
-        `/orders/${validOrderId}`
+        `/orders/${validOrderId}`,
       );
 
       expect(response.status).toBe(401);
@@ -269,7 +279,7 @@ describe("OrdersController (Integration via Supertest)", () => {
 
     it("should return 404 Not Found when order does not exist", async () => {
       checkoutService.getOrderById.mockRejectedValueOnce(
-        new EntityNotFoundException("Order", foreignOrderId)
+        new EntityNotFoundException("Order", foreignOrderId),
       );
 
       const response = await request(app.getHttpServer())
@@ -282,7 +292,9 @@ describe("OrdersController (Integration via Supertest)", () => {
 
     it("should return 403 Forbidden when customer accesses foreign order", async () => {
       checkoutService.getOrderById.mockRejectedValueOnce(
-        new ForbiddenOperationException("You do not have permission to view this order.")
+        new ForbiddenOperationException(
+          "You do not have permission to view this order.",
+        ),
       );
 
       const response = await request(app.getHttpServer())

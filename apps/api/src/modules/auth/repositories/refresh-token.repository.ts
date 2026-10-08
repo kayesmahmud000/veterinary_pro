@@ -10,13 +10,20 @@ import {
 
 @Injectable()
 export class RefreshTokenRepository implements IRefreshTokenRepository {
+  public async lockByTokenHash(
+    tokenHash: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<RefreshTokenEntity | null> {
+    await tx.$queryRaw`SELECT id FROM refresh_tokens WHERE token_hash = ${tokenHash} FOR UPDATE`;
+    return this.findByTokenHash(tokenHash, tx);
+  }
   private readonly logger = new Logger(RefreshTokenRepository.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
   public async create(
     token: RefreshTokenEntity,
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
   ): Promise<RefreshTokenEntity> {
     const client = tx ?? this.prisma;
 
@@ -42,7 +49,7 @@ export class RefreshTokenRepository implements IRefreshTokenRepository {
       ) {
         throw new EntityConflictException(
           "A refresh token with this hash already exists.",
-          "tokenHash"
+          "tokenHash",
         );
       }
       throw error;
@@ -51,7 +58,7 @@ export class RefreshTokenRepository implements IRefreshTokenRepository {
 
   public async findById(
     id: string,
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
   ): Promise<RefreshTokenEntity | null> {
     const client = tx ?? this.prisma;
     const row = await client.refreshToken.findUnique({
@@ -67,7 +74,7 @@ export class RefreshTokenRepository implements IRefreshTokenRepository {
 
   public async findByTokenHash(
     tokenHash: string,
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
   ): Promise<RefreshTokenEntity | null> {
     const client = tx ?? this.prisma;
     const row = await client.refreshToken.findUnique({
@@ -83,7 +90,7 @@ export class RefreshTokenRepository implements IRefreshTokenRepository {
 
   public async findActiveByUserId(
     userId: string,
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
   ): Promise<RefreshTokenEntity[]> {
     const client = tx ?? this.prisma;
     const now = new Date();
@@ -103,7 +110,7 @@ export class RefreshTokenRepository implements IRefreshTokenRepository {
   public async revoke(
     id: string,
     revokedAt = new Date(),
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
   ): Promise<void> {
     const client = tx ?? this.prisma;
 
@@ -126,7 +133,7 @@ export class RefreshTokenRepository implements IRefreshTokenRepository {
   public async revokeByTokenHash(
     tokenHash: string,
     revokedAt = new Date(),
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
   ): Promise<void> {
     const client = tx ?? this.prisma;
 
@@ -142,7 +149,7 @@ export class RefreshTokenRepository implements IRefreshTokenRepository {
   public async revokeAllForUser(
     userId: string,
     revokedAt = new Date(),
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const client = tx ?? this.prisma;
 
@@ -159,7 +166,7 @@ export class RefreshTokenRepository implements IRefreshTokenRepository {
 
   public async deleteExpiredTokens(
     beforeDate = new Date(),
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const client = tx ?? this.prisma;
 
@@ -173,7 +180,7 @@ export class RefreshTokenRepository implements IRefreshTokenRepository {
   }
 
   private toEntity(
-    row: Prisma.RefreshTokenGetPayload<Record<string, never>>
+    row: Prisma.RefreshTokenGetPayload<Record<string, never>>,
   ): RefreshTokenEntity {
     return RefreshTokenEntity.reconstitute({
       id: row.id,

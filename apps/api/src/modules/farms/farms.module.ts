@@ -7,11 +7,24 @@ import { FARM_MEMBER_REPOSITORY } from "./repositories/farm-member.repository.in
 import { FarmMembersService } from "./services/farm-members.service";
 import { FARM_MEMBERS_SERVICE } from "./services/farm-members.service.interface";
 import { FarmMembersController } from "./farm-members.controller";
+import { UsersModule } from "../users/users.module";
+import { AuditModule } from "../audit/audit.module";
+import { FarmOnboardingController } from "./farm-onboarding.controller";
+import { FarmOnboardingService } from "./services/farm-onboarding.service";
+import { FarmOnboardingRepository } from "./repositories/farm-onboarding.repository";
 
 @Module({
-  imports: [PrismaModule, SubscriptionsModule, AuthModule],
-  controllers: [FarmMembersController],
+  imports: [
+    PrismaModule,
+    SubscriptionsModule,
+    AuthModule,
+    UsersModule,
+    AuditModule,
+  ],
+  controllers: [FarmMembersController, FarmOnboardingController],
   providers: [
+    FarmOnboardingRepository,
+    FarmOnboardingService,
     FarmMemberRepository,
     {
       provide: FARM_MEMBER_REPOSITORY,

@@ -22,6 +22,18 @@ enum UserRole {
   BUYER
 }
 
+enum ProfessionalRole {
+  FARMER
+  VET
+  BUYER
+}
+
+enum RoleRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum UserStatus {
   ACTIVE
   SUSPENDED
@@ -317,7 +329,11 @@ model User {
   phoneHash       String?    @unique @map("phone_hash") @db.VarChar(64) // HMAC-SHA256 blind index for O(1) indexed lookups
   passwordHash    String     @map("password_hash") @db.VarChar(255)
   name            String     @db.VarChar(100)
-  role            UserRole   @default(FARMER)
+  role            UserRole   @default(LEARNER)
+  roleVersion     Int        @default(0) @map("role_version")
+  authorizationVersion Int   @default(0) @map("authorization_version")
+  previousNonAdministrativeRole UserRole? @map("previous_non_administrative_role")
+  farmerOnboardingRequired Boolean @default(false) @map("farmer_onboarding_required")
   status          UserStatus @default(ACTIVE)
   avatarUrl       String?    @map("avatar_url") @db.Text
   isEmailVerified Boolean    @default(false) @map("is_email_verified")
@@ -356,6 +372,10 @@ model User {
   receivedReviews      ConsultationReview[]      @relation("VetReviews")
   moderatedReviews     ConsultationReview[]      @relation("ModeratedReviews")
   auditLogs            AuditLog[]
+  roleRequests         RoleUpgradeRequest[] @relation("Applicant")
+  reviewedRoleRequests RoleUpgradeRequest[] @relation("Reviewer")
+  farmerOnboarding     FarmerOnboarding?
+  roleNotificationDeliveries RoleNotificationDelivery[]
 
   @@index([email])
   @@index([phoneHash])
@@ -414,9 +434,82 @@ model Farm {
   healthEscalationLogs HealthIncidentEscalationLog[]
   healthRecordAttachments HealthRecordAttachment[]
   dunningLogs          SubscriptionDunningLog[]
+  onboardedFarmers     FarmerOnboarding[]
 
   @@index([ownerId])
   @@map("farms")
+}
+
+model FarmerOnboarding {
+  userId        String @id @map("user_id") @db.Uuid
+  farmId        String @map("farm_id") @db.Uuid
+  submissionKey String @map("submission_key") @db.Uuid
+  payloadHash   String @map("payload_hash") @db.VarChar(64)
+  completedAt   DateTime @default(now()) @map("completed_at") @db.Timestamptz(6)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  farm Farm @relation(fields: [farmId], references: [id], onDelete: Restrict)
+  @@map("farmer_onboardings")
+}
+
+model RoleUpgradeRequest {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  applicantUserId String @map("applicant_user_id") @db.Uuid
+  targetRole ProfessionalRole @map("target_role")
+  status RoleRequestStatus @default(PENDING)
+  questionnaireVersion Int @map("questionnaire_version")
+  answers Json
+  locale String @default("bn") @db.VarChar(2)
+  requestVersion Int @default(1) @map("request_version")
+  submissionKey String @map("submission_key") @db.Uuid
+  payloadHash String @map("payload_hash") @db.VarChar(64)
+  submittedAt DateTime @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  decidedAt DateTime? @map("decided_at") @db.Timestamptz(6)
+  reviewerUserId String? @map("reviewer_user_id") @db.Uuid
+  publicDecisionReason String? @map("public_decision_reason") @db.VarChar(500)
+  privateReviewNote String? @map("private_review_note") @db.VarChar(1000)
+  qualificationVerificationNote String? @map("qualification_verification_note") @db.VarChar(1000)
+  applicant User @relation("Applicant", fields: [applicantUserId], references: [id], onDelete: Restrict)
+  reviewer User? @relation("Reviewer", fields: [reviewerUserId], references: [id], onDelete: Restrict)
+  @@unique([applicantUserId, submissionKey])
+  @@index([status, submittedAt, id])
+  @@index([applicantUserId, submittedAt, id])
+  @@map("role_upgrade_requests")
+}
+
+model RoleNotificationOutbox {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventKey String @unique @map("event_key") @db.VarChar(200)
+  eventType String @map("event_type") @db.VarChar(50)
+  requestId String? @map("request_id") @db.Uuid
+  targetUserId String? @map("target_user_id") @db.Uuid
+  authorizationVersion Int? @map("authorization_version")
+  locale String @default("bn") @db.VarChar(2)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  availableAt DateTime @default(now()) @map("available_at") @db.Timestamptz(6)
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz(6)
+  attempts Int @default(0)
+  lastErrorCode String? @map("last_error_code") @db.VarChar(100)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+  deliveries RoleNotificationDelivery[]
+  @@index([completedAt, availableAt])
+  @@map("role_notification_outbox")
+}
+
+model RoleNotificationDelivery {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  outboxId String @map("outbox_id") @db.Uuid
+  recipientUserId String @map("recipient_user_id") @db.Uuid
+  status String @default("PENDING") @db.VarChar(20)
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  sentAt DateTime? @map("sent_at") @db.Timestamptz(6)
+  providerMessageId String? @map("provider_message_id") @db.VarChar(255)
+  errorCode String? @map("error_code") @db.VarChar(100)
+  outbox RoleNotificationOutbox @relation(fields: [outboxId], references: [id], onDelete: Restrict)
+  recipient User @relation(fields: [recipientUserId], references: [id], onDelete: Restrict)
+  @@unique([outboxId, recipientUserId])
+  @@index([status, nextAttemptAt])
+  @@map("role_notification_deliveries")
 }
 
 model FarmMember {

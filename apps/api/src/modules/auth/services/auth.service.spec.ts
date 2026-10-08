@@ -1,3 +1,5 @@
+import { CurrentIdentityService } from "./current-identity.service";
+import { AUDIT_LOG_REPOSITORY } from "../../audit/repositories/audit-log.repository.interface";
 import { Test, TestingModule } from "@nestjs/testing";
 import {
   PUBLIC_REGISTRATION_ROLES,
@@ -14,14 +16,8 @@ import {
   IRefreshTokenRepository,
   REFRESH_TOKEN_REPOSITORY,
 } from "../repositories/refresh-token.repository.interface";
-import {
-  IPasswordHasher,
-  PASSWORD_HASHER,
-} from "./password-hasher.interface";
-import {
-  ITokenService,
-  TOKEN_SERVICE,
-} from "./token.service.interface";
+import { IPasswordHasher, PASSWORD_HASHER } from "./password-hasher.interface";
+import { ITokenService, TOKEN_SERVICE } from "./token.service.interface";
 import {
   ITransactionManager,
   TRANSACTION_MANAGER,
@@ -63,6 +59,9 @@ describe("AuthService", () => {
     const mockUserRepo: Partial<jest.Mocked<IUserRepository>> = {
       create: jest.fn().mockImplementation((user) => Promise.resolve(user)),
       findById: jest.fn(),
+      lockById: jest.fn().mockResolvedValue(mockUserEntity),
+      recordLogin: jest.fn(),
+      invalidateSessions: jest.fn(),
       findByEmail: jest.fn(),
       findByPhoneHash: jest.fn(),
       update: jest.fn().mockImplementation((user) => Promise.resolve(user)),
@@ -74,6 +73,9 @@ describe("AuthService", () => {
       create: jest.fn().mockImplementation((token) => Promise.resolve(token)),
       findById: jest.fn(),
       findByTokenHash: jest.fn(),
+      lockByTokenHash: jest
+        .fn()
+        .mockImplementation((hash) => mockTokenRepo.findByTokenHash!(hash)),
       revoke: jest.fn().mockResolvedValue(undefined),
       revokeByTokenHash: jest.fn().mockResolvedValue(undefined),
       revokeAllForUser: jest.fn().mockResolvedValue(2),
@@ -90,7 +92,9 @@ describe("AuthService", () => {
       generateRefreshToken: jest.fn().mockReturnValue("mock_refresh_token_hex"),
       hashRefreshToken: jest.fn((token) => `hash_of_${token}`),
       verifyAccessToken: jest.fn(),
-      getRefreshTokenExpiresAt: jest.fn().mockReturnValue(new Date(Date.now() + 7 * 86400000)),
+      getRefreshTokenExpiresAt: jest
+        .fn()
+        .mockReturnValue(new Date(Date.now() + 7 * 86400000)),
     };
 
     const mockTxManager: jest.Mocked<ITransactionManager> = {
@@ -105,6 +109,11 @@ describe("AuthService", () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         AuthService,
         { provide: USER_REPOSITORY, useValue: mockUserRepo },
         { provide: REFRESH_TOKEN_REPOSITORY, useValue: mockTokenRepo },
@@ -112,6 +121,7 @@ describe("AuthService", () => {
         { provide: TOKEN_SERVICE, useValue: mockTokensService },
         { provide: TRANSACTION_MANAGER, useValue: mockTxManager },
         { provide: PiiCryptoService, useValue: mockPiiService },
+        { provide: AUDIT_LOG_REPOSITORY, useValue: { record: jest.fn() } },
       ],
     }).compile();
 
@@ -133,7 +143,9 @@ describe("AuthService", () => {
         role: UserRole.FARMER,
       });
 
-      expect(userRepository.existsByEmail).toHaveBeenCalledWith("new@example.com");
+      expect(userRepository.existsByEmail).toHaveBeenCalledWith(
+        "new@example.com",
+      );
       expect(passwordHasher.hash).toHaveBeenCalledWith("SecurePassword123!");
       expect(transactionManager.run).toHaveBeenCalled();
       expect(result.tokens).toEqual(mockTokens);
@@ -201,7 +213,7 @@ describe("AuthService", () => {
           email: "taken@example.com",
           password: "password123",
           name: "Duplicate",
-        })
+        }),
       ).rejects.toThrow(EntityConflictException);
     });
 
@@ -214,7 +226,7 @@ describe("AuthService", () => {
           password: "password123",
           name: "Duplicate Phone",
           phone: "+12025550100",
-        })
+        }),
       ).rejects.toThrow(EntityConflictException);
     });
   });
@@ -228,10 +240,12 @@ describe("AuthService", () => {
         password: "CorrectPassword123",
       });
 
-      expect(userRepository.findByEmail).toHaveBeenCalledWith("test@example.com");
+      expect(userRepository.findByEmail).toHaveBeenCalledWith(
+        "test@example.com",
+      );
       expect(passwordHasher.compare).toHaveBeenCalledWith(
         "CorrectPassword123",
-        mockUserEntity.passwordHash
+        mockUserEntity.passwordHash,
       );
       expect(transactionManager.run).toHaveBeenCalled();
       expect(result.tokens).toEqual(mockTokens);
@@ -248,7 +262,9 @@ describe("AuthService", () => {
       });
 
       expect(piiCryptoService.hashPhone).toHaveBeenCalledWith("+12025550100");
-      expect(userRepository.findByPhoneHash).toHaveBeenCalledWith("hashed_+12025550100");
+      expect(userRepository.findByPhoneHash).toHaveBeenCalledWith(
+        "hashed_+12025550100",
+      );
       expect(result.user.id).toBe(mockUserEntity.id);
     });
 
@@ -259,7 +275,7 @@ describe("AuthService", () => {
         authService.login({
           email: "nonexistent@example.com",
           password: "password",
-        })
+        }),
       ).rejects.toThrow(UnauthorizedDomainException);
     });
 
@@ -275,7 +291,7 @@ describe("AuthService", () => {
         authService.login({
           email: "suspended@example.com",
           password: "password",
-        })
+        }),
       ).rejects.toThrow(ForbiddenOperationException);
     });
 
@@ -287,7 +303,7 @@ describe("AuthService", () => {
         authService.login({
           email: "test@example.com",
           password: "WrongPassword",
-        })
+        }),
       ).rejects.toThrow(UnauthorizedDomainException);
     });
   });
@@ -300,13 +316,13 @@ describe("AuthService", () => {
         expiresAt: new Date(Date.now() + 86400000),
       });
 
-      refreshTokenRepository.findByTokenHash.mockResolvedValueOnce(validToken);
+      refreshTokenRepository.findByTokenHash.mockResolvedValue(validToken);
       userRepository.findById.mockResolvedValueOnce(mockUserEntity);
 
       const result = await authService.refreshToken("valid_refresh_token");
 
       expect(refreshTokenRepository.findByTokenHash).toHaveBeenCalledWith(
-        "hash_of_valid_refresh_token"
+        "hash_of_valid_refresh_token",
       );
       expect(transactionManager.run).toHaveBeenCalled();
       expect(result.tokens).toEqual(mockTokens);
@@ -320,15 +336,17 @@ describe("AuthService", () => {
       });
       revokedToken.revoke(new Date(Date.now() - 60000)); // Already revoked!
 
-      refreshTokenRepository.findByTokenHash.mockResolvedValueOnce(revokedToken);
+      refreshTokenRepository.findByTokenHash.mockResolvedValue(revokedToken);
 
-      await expect(
-        authService.refreshToken("reused_token")
-      ).rejects.toThrow(UnauthorizedDomainException);
+      await expect(authService.refreshToken("reused_token")).rejects.toThrow(
+        UnauthorizedDomainException,
+      );
 
       // Replay attack defense triggered
       expect(refreshTokenRepository.revokeAllForUser).toHaveBeenCalledWith(
-        mockUserEntity.id
+        mockUserEntity.id,
+        expect.any(Date),
+        expect.any(Object),
       );
     });
 
@@ -339,19 +357,19 @@ describe("AuthService", () => {
         expiresAt: new Date(Date.now() - 1000), // In past
       });
 
-      refreshTokenRepository.findByTokenHash.mockResolvedValueOnce(expiredToken);
+      refreshTokenRepository.findByTokenHash.mockResolvedValue(expiredToken);
 
-      await expect(
-        authService.refreshToken("expired_token")
-      ).rejects.toThrow(UnauthorizedDomainException);
+      await expect(authService.refreshToken("expired_token")).rejects.toThrow(
+        UnauthorizedDomainException,
+      );
     });
 
     it("should throw UnauthorizedDomainException if token is not found", async () => {
-      refreshTokenRepository.findByTokenHash.mockResolvedValueOnce(null);
+      refreshTokenRepository.findByTokenHash.mockResolvedValue(null);
 
-      await expect(
-        authService.refreshToken("unknown_token")
-      ).rejects.toThrow(UnauthorizedDomainException);
+      await expect(authService.refreshToken("unknown_token")).rejects.toThrow(
+        UnauthorizedDomainException,
+      );
     });
   });
 
@@ -359,14 +377,16 @@ describe("AuthService", () => {
     it("should revoke token by hash on logout", async () => {
       await authService.logout("refresh_token_to_logout");
       expect(refreshTokenRepository.revokeByTokenHash).toHaveBeenCalledWith(
-        "hash_of_refresh_token_to_logout"
+        "hash_of_refresh_token_to_logout",
       );
     });
 
     it("should revoke all active tokens on logoutAll", async () => {
       await authService.logoutAll(mockUserEntity.id);
       expect(refreshTokenRepository.revokeAllForUser).toHaveBeenCalledWith(
-        mockUserEntity.id
+        mockUserEntity.id,
+        expect.any(Date),
+        expect.any(Object),
       );
     });
   });

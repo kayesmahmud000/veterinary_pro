@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Reflector } from "@nestjs/core";
 import { Test, TestingModule } from "@nestjs/testing";
 import { ProfitLossInterval } from "@vetralink/shared-types";
@@ -27,6 +28,11 @@ describe("FinancialFeedAnalyticsController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FinancialFeedAnalyticsController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: FARM_FEED_ANALYTICS_SERVICE,
           useValue: feedAnalyticsService,
@@ -44,7 +50,7 @@ describe("FinancialFeedAnalyticsController", () => {
     }).compile();
 
     controller = module.get<FinancialFeedAnalyticsController>(
-      FinancialFeedAnalyticsController
+      FinancialFeedAnalyticsController,
     );
   });
 
@@ -73,7 +79,7 @@ describe("FinancialFeedAnalyticsController", () => {
       };
 
       feedAnalyticsService.computeCostPerLiter.mockResolvedValueOnce(
-        mockResult
+        mockResult,
       );
 
       const query = {
@@ -84,13 +90,13 @@ describe("FinancialFeedAnalyticsController", () => {
       const result = await controller.getCostPerLiter(
         farmId,
         query,
-        "trace-abc"
+        "trace-abc",
       );
 
       expect(feedAnalyticsService.computeCostPerLiter).toHaveBeenCalledWith(
         farmId,
         query,
-        "trace-abc"
+        "trace-abc",
       );
       expect(result).toBe(mockResult);
     });
@@ -123,7 +129,7 @@ describe("FinancialFeedAnalyticsController", () => {
       };
 
       feedAnalyticsService.computeFeedConversion.mockResolvedValueOnce(
-        mockResult
+        mockResult,
       );
 
       const query = {
@@ -134,13 +140,13 @@ describe("FinancialFeedAnalyticsController", () => {
       const result = await controller.getFeedConversion(
         farmId,
         query,
-        "trace-def"
+        "trace-def",
       );
 
       expect(feedAnalyticsService.computeFeedConversion).toHaveBeenCalledWith(
         farmId,
         query,
-        "trace-def"
+        "trace-def",
       );
       expect(result).toBe(mockResult);
     });

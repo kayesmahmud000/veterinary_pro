@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Reflector } from "@nestjs/core";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Response } from "express";
@@ -27,6 +28,11 @@ describe("FinancialStatementController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FinancialStatementController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: FARM_PERFORMANCE_STATEMENT_SERVICE,
           useValue: statementService,
@@ -44,7 +50,7 @@ describe("FinancialStatementController", () => {
     }).compile();
 
     controller = module.get<FinancialStatementController>(
-      FinancialStatementController
+      FinancialStatementController,
     );
   });
 
@@ -65,29 +71,24 @@ describe("FinancialStatementController", () => {
 
       const query = { year: 2026, month: 9 };
 
-      await controller.downloadMonthlyPdf(
-        farmId,
-        query,
-        mockRes,
-        "trace-xyz"
-      );
+      await controller.downloadMonthlyPdf(farmId, query, mockRes, "trace-xyz");
 
       expect(statementService.generateMonthlyPdf).toHaveBeenCalledWith(
         farmId,
         query,
-        "trace-xyz"
+        "trace-xyz",
       );
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         "Content-Type",
-        "application/pdf"
+        "application/pdf",
       );
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         "Content-Disposition",
-        `attachment; filename="${filename}"`
+        `attachment; filename="${filename}"`,
       );
       expect(mockRes.setHeader).toHaveBeenCalledWith(
         "Content-Length",
-        fakePdfBuffer.length
+        fakePdfBuffer.length,
       );
       expect(mockRes.end).toHaveBeenCalledWith(fakePdfBuffer);
     });
@@ -101,20 +102,20 @@ describe("FinancialStatementController", () => {
       };
 
       statementService.getMonthlyStatementData.mockResolvedValueOnce(
-        mockData as any
+        mockData as any,
       );
 
       const query = { year: 2026, month: 9 };
       const result = await controller.getMonthlySummary(
         farmId,
         query,
-        "trace-abc"
+        "trace-abc",
       );
 
       expect(statementService.getMonthlyStatementData).toHaveBeenCalledWith(
         farmId,
         query,
-        "trace-abc"
+        "trace-abc",
       );
       expect(result).toBe(mockData);
     });

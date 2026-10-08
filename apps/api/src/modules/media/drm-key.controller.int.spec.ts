@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
@@ -78,6 +79,11 @@ describe("DrmKeyController (Integration via Supertest)", () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       controllers: [DrmKeyController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         { provide: DRM_KEY_SERVICE, useValue: drmKeyService },
         { provide: DRM_TOKEN_SERVICE, useValue: drmTokenService },
         { provide: ENTITLEMENT_SERVICE, useValue: entitlementService },
@@ -92,7 +98,7 @@ describe("DrmKeyController (Integration via Supertest)", () => {
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
-      })
+      }),
     );
     app.setGlobalPrefix("api/v1");
     app.useGlobalInterceptors(new ResponseInterceptor(new Reflector()));
@@ -158,7 +164,7 @@ describe("DrmKeyController (Integration via Supertest)", () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.playbackToken).toBe("ephemeral-drm-token");
       expect(response.body.data.keyUrl).toContain(
-        "/api/v1/media/drm/key/ephemeral-drm-token"
+        "/api/v1/media/drm/key/ephemeral-drm-token",
       );
       expect(response.body.data.expiresInSeconds).toBe(600);
     });
@@ -167,11 +173,11 @@ describe("DrmKeyController (Integration via Supertest)", () => {
   describe("GET /api/v1/media/drm/key/:playbackToken", () => {
     it("should return 401 Unauthorized if playback token is invalid or expired", async () => {
       drmTokenService.verifyPlaybackToken.mockRejectedValue(
-        new UnauthorizedDomainException("Token has expired")
+        new UnauthorizedDomainException("Token has expired"),
       );
 
       const response = await request(app.getHttpServer()).get(
-        "/api/v1/media/drm/key/expired-token"
+        "/api/v1/media/drm/key/expired-token",
       );
 
       expect(response.status).toBe(401);
@@ -211,7 +217,7 @@ describe("DrmKeyController (Integration via Supertest)", () => {
   describe("GET /api/v1/media/drm/key (query param)", () => {
     it("should return 401 when token query param is missing", async () => {
       const response = await request(app.getHttpServer()).get(
-        "/api/v1/media/drm/key"
+        "/api/v1/media/drm/key",
       );
 
       expect(response.status).toBe(401);

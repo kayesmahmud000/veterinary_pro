@@ -31,10 +31,10 @@ export const EnvSchema = z
       .string()
       .regex(
         /^[0-9a-fA-F]{64}$/,
-        "AES_PII_ENCRYPTION_KEY must be a 64-character hexadecimal string (32 bytes)"
+        "AES_PII_ENCRYPTION_KEY must be a 64-character hexadecimal string (32 bytes)",
       )
       .default(
-        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
       ),
     HASH_PEPPER: z
       .string()
@@ -79,6 +79,8 @@ export const EnvSchema = z
     RESEND_API_KEY: z.string().optional(),
     AWS_SES_REGION: z.string().optional(),
     API_BASE_URL: z.string().url().default("http://localhost:3001"),
+    WEB_BASE_URL: z.string().url().default("http://localhost:3000"),
+    AUTH_LEGACY_CLAIMS_UNTIL: z.string().datetime().optional(),
   })
   .superRefine((data, ctx) => {
     // Skip strict Stripe and AWS validation on Vercel unless explicitly requested
@@ -91,7 +93,10 @@ export const EnvSchema = z
     }
 
     if (data.NODE_ENV === "production" || data.NODE_ENV === "staging") {
-      if (!data.STRIPE_SECRET_KEY || !data.STRIPE_SECRET_KEY.startsWith("sk_")) {
+      if (
+        !data.STRIPE_SECRET_KEY ||
+        !data.STRIPE_SECRET_KEY.startsWith("sk_")
+      ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["STRIPE_SECRET_KEY"],
@@ -146,7 +151,7 @@ export function validateEnv(config: Record<string, unknown>): EnvConfig {
     }
 
     throw new Error(
-      `Invalid application environment configuration: ${errorDetails.map((e) => e.field).join(", ")}`
+      `Invalid application environment configuration: ${errorDetails.map((e) => e.field).join(", ")}`,
     );
   }
 

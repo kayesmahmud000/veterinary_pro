@@ -11,13 +11,15 @@ import {
   TOKEN_SERVICE,
 } from "../../modules/auth/services/token.service.interface";
 import { UnauthorizedDomainException } from "../exceptions/domain.exception";
+import { CurrentIdentityService } from "../../modules/auth/services/current-identity.service";
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     @Inject(TOKEN_SERVICE)
-    private readonly tokenService: ITokenService
+    private readonly tokenService: ITokenService,
+    private readonly identities: CurrentIdentityService,
   ) {}
 
   public async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -41,14 +43,14 @@ export class JwtAuthGuard implements CanActivate {
     const parts = authHeader.trim().split(" ");
     if (parts.length !== 2 || parts[0] !== "Bearer" || !parts[1]) {
       throw new UnauthorizedDomainException(
-        "Invalid Authorization header format. Expected 'Bearer <token>'."
+        "Invalid Authorization header format. Expected 'Bearer <token>'.",
       );
     }
 
     const token = parts[1];
     const payload = await this.tokenService.verifyAccessToken(token);
 
-    request.user = payload;
+    request.user = await this.identities.resolve(payload);
     return true;
   }
 }

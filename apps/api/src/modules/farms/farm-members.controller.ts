@@ -26,12 +26,15 @@ import {
   FarmMemberResponseDto,
   FarmRole,
   SubscriptionQuotaType,
+  JwtPayload,
+  addFarmMemberSchema,
 } from "@vetralink/shared-types";
 import {
   CheckQuota,
   FarmRoles,
   ResponseMessage,
   Tenant,
+  CurrentUser,
 } from "../../common/decorators";
 import {
   JwtAuthGuard,
@@ -39,6 +42,7 @@ import {
   TenantGuard,
 } from "../../common/guards";
 import { AddFarmMemberDto } from "./dto";
+import { SchemaValidationPipe } from "../../common/pipes/schema-validation.pipe";
 import {
   FARM_MEMBERS_SERVICE,
   IFarmMembersService,
@@ -67,7 +71,8 @@ export class FarmMembersController {
   @ResponseMessage("Farm member added successfully")
   @ApiOperation({
     summary: "Add or invite a staff member to the farm tenant",
-    description: "Enforces subscription tier staff quotas (Starter: 1, Pro: 3, Enterprise: Unlimited)",
+    description:
+      "Enforces subscription tier staff quotas (Starter: 1, Pro: 3, Enterprise: Unlimited)",
   })
   @ApiCreatedResponse({ description: "Farm member added successfully" })
   @ApiConflictResponse({ description: "User is already a member of this farm" })
@@ -77,9 +82,10 @@ export class FarmMembersController {
   @ApiUnauthorizedResponse({ description: "Missing or invalid JWT token" })
   public async addMember(
     @Param("farmId", ParseUUIDPipe) farmId: string,
-    @Body() dto: AddFarmMemberDto,
+    @Body(new SchemaValidationPipe(addFarmMemberSchema)) dto: AddFarmMemberDto,
+    @CurrentUser() actor: JwtPayload,
   ): Promise<FarmMemberResponseDto> {
-    return this.farmMembersService.addMember(farmId, dto);
+    return this.farmMembersService.addMember(farmId, dto, actor);
   }
 
   @Get(":farmId/members")

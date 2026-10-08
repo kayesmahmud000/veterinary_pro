@@ -6,7 +6,7 @@ Reviewed: **2026-10-05**, source baseline **d5d311b**. Start with the [project r
 
 **Confirmed from documentation:** the original tracker records Sprints 0–15 complete. Their original task IDs, dates and checkboxes are preserved below. This is backend delivery history, including shared bootstrap, mobile sync and release work; it does not mean the web product is complete. “Dashboard,” “portal” and “editor” in those task names mean the supporting API capability. The original `READY / COMPLETED` labels are historical task claims, not current integration or production readiness.
 
-**Confirmed from code:** domain controllers/services and adjacent tests exist under [modules](src/modules/). The [web roadmap](../web/ROADMAP.md) owns browser implementation status. No new backend implementation is recorded as in progress by this documentation change.
+**Confirmed from code:** domain controllers/services and adjacent tests exist under [modules](src/modules/). The [web roadmap](../web/ROADMAP.md) owns browser implementation status. Updated 2026-10-07: default LEARNER/six-role authentication, audited farmer onboarding/member management, professional review, SUPER privilege management and a durable role-mail worker are implemented; see [evidence/runbook](../../docs/features/role-request-approval/operations.md).
 
 ## API dependency register
 
@@ -14,8 +14,8 @@ This register owns API availability for web planning. Paths are relative to `/ap
 
 | ID | Capability and source of contract | Delivery history | Availability / handoff condition |
 | --- | --- | --- | --- |
-| API-AUTH | [Auth controller](src/modules/auth/auth.controller.ts): `auth/register`, `login`, `refresh`, `logout`, `logout-all`, `me` | Tasks 2.1–2.7 | Present; browser session/refresh and denial behavior unverified. No OTP/passwordless route in this controller. |
-| API-FARM | [Farm members](src/modules/farms/farm-members.controller.ts): GET/POST `farms/:farmId/members`; [module](src/modules/farms/farms.module.ts) | Task 2.6 and 10.3 | Partial: no farm creation or current-user farm discovery controller found. Self-service workspace onboarding is blocked by API-B1 below. Existing-farm flows still need authorized farm selection. |
+| API-AUTH | [Auth controller](src/modules/auth/auth.controller.ts): `auth/register`, `login`, `refresh`, `logout`, `logout-all`, `me` | Tasks 2.1–2.7 | Present and locally verified with isolated real PostgreSQL/Redis/browser sessions; deployed acceptance remains unverified. No OTP/passwordless route in this controller. |
+| API-FARM | [Farm members](src/modules/farms/farm-members.controller.ts): GET/POST `farms/:farmId/members`; [module](src/modules/farms/farms.module.ts) | Task 2.6 and 10.3 | Present: farms/onboarding create/confirm and farms/my discovery, OWNER membership, dashboard gate and email/UUID member management. Real isolated browser/DB quota/permission checks passed; production remains unverified. |
 | API-ANIMAL | [Animals](src/modules/animals/animals.controller.ts): `animals`, lineage, weights/growth, import jobs, QR/badges | Tasks 6.1–6.6 | Present; tenant/role/quota checks and import worker/storage integration unverified. |
 | API-MILK | [Milk logs](src/modules/milk-logs/milk-logs.controller.ts): CRUD, bulk, analytics, anomalies, export | Tasks 7.1–7.5 | Present; farm-scoped integration and anomaly worker operation unverified. |
 | API-HEALTH | [Incidents/attachments](src/modules/clinical-health/clinical-health.controller.ts), [vaccinations/schedules](src/modules/clinical-health/vaccine-schedule.controller.ts) | Tasks 8.1–8.5 | Present; storage and real reminder/escalation delivery unverified; see provider gaps. |
@@ -30,9 +30,9 @@ This register owns API availability for web planning. Paths are relative to `/ap
 
 ## Remaining backend work
 
-These are open integration/scope gaps, not retroactive changes to historical checkboxes or newly promised features. No assignee or implementation start has been recorded. Create a scoped spec/plan before implementation and link it here; preserve the original task history.
+These are open integration/scope gaps, not retroactive changes to historical checkboxes or newly promised features. API-B1 is implemented locally; API-B2/B3 remain separate scope/release work. Create a scoped spec/plan before implementation and link it here; preserve the original task history.
 
-- [ ] **API-B1 — Farm workspace contract (not started):** define and implement the missing creation/discovery contract required by the existing product's farm workspace journey. Evidence: only FarmMembersController is registered in FarmsModule. Consumer: [WEB-2](../web/ROADMAP.md#web-delivery-backlog). Specify tenancy and authorization before unblocking self-service onboarding.
+- [x] **API-B1 — Farm workspace contract (implemented locally, 2026-10-07):** mandatory new-FARMER onboarding, atomic farm/OWNER creation or actual-member confirmation, current-user discovery and audited quota-protected members. [Feature evidence](../../docs/features/role-request-approval/operations.md) verifies the isolated API/DB/browser flow; separate release verification remains API-B3. Consumer: [WEB-2](../web/ROADMAP.md#web-delivery-backlog).
 - [ ] **API-B2 — Product coverage reconciliation (not started):** reconcile PDF §3/§7 requirements not covered by the original sprint checklist: course chapters/progress/resources, encrypted browser PDF reading, flock mortality, standalone invoice expectations, and OTP/passwordless. No dedicated controllers were found for those flows; a DTO/schema or provider portal does not prove end-to-end support. Decide contract gaps and client scope in a shared feature spec; do not silently drop requirements or invent APIs. Consumer: WEB-11 and the affected web rows.
 - [ ] **API-B3 — Integration and release evidence (unverified):** resolve applicable [known gaps](../../.context/known-gaps.md), then attach current real provider/runtime/security/load evidence to scoped plans. This includes notifications, payment/mail fallbacks, durable workers/realtime, signing keys, and sync concerns. Detailed gap facts stay in that single register. Consumers: every API-dependent web feature; UI work can begin against reviewed contracts, but integrated completion must wait for its required evidence.
 

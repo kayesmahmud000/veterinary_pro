@@ -13,9 +13,12 @@ import { TOKEN_SERVICE } from "./services/token.service.interface";
 import { AuthService } from "./services/auth.service";
 import { AUTH_SERVICE } from "./services/auth.service.interface";
 import { AuthController } from "./auth.controller";
+import { CurrentIdentityService } from "./services/current-identity.service";
+import { AuditModule } from "../audit/audit.module";
 
 @Module({
   imports: [
+    AuditModule,
     AppConfigModule,
     CryptoModule,
     UsersModule,
@@ -32,6 +35,7 @@ import { AuthController } from "./auth.controller";
   ],
   controllers: [AuthController],
   providers: [
+    CurrentIdentityService,
     RefreshTokenRepository,
     {
       provide: REFRESH_TOKEN_REPOSITORY,
@@ -54,6 +58,7 @@ import { AuthController } from "./auth.controller";
     },
   ],
   exports: [
+    CurrentIdentityService,
     RefreshTokenRepository,
     REFRESH_TOKEN_REPOSITORY,
     BcryptPasswordHasher,

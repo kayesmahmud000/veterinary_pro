@@ -21,6 +21,8 @@ import { ConsultationsModule } from "./modules/consultations";
 import { IdempotencyModule } from "./common/idempotency";
 
 import { SyncModule } from "./modules/sync";
+import { RoleRequestsModule } from "./modules/role-requests/role-requests.module";
+import { AdministrationModule } from "./modules/administration/administration.module";
 
 @Module({
   imports: [
@@ -35,8 +37,12 @@ import { SyncModule } from "./modules/sync";
           connection: {
             host: url.hostname,
             port: parseInt(url.port || "6379", 10),
-            password: url.password ? decodeURIComponent(url.password) : undefined,
-            username: url.username ? decodeURIComponent(url.username) : undefined,
+            password: url.password
+              ? decodeURIComponent(url.password)
+              : undefined,
+            username: url.username
+              ? decodeURIComponent(url.username)
+              : undefined,
             tls: isTls ? {} : undefined,
             maxRetriesPerRequest: null,
             enableReadyCheck: false,
@@ -63,6 +69,8 @@ import { SyncModule } from "./modules/sync";
     WatermarkModule,
     MailModule,
     SyncModule,
+    RoleRequestsModule,
+    AdministrationModule,
   ],
 })
 export class AppModule {}

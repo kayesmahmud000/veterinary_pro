@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
@@ -8,11 +9,7 @@ const request =
     ? supertest
     : ((supertest as any).default ?? supertest);
 
-import {
-  MediaCategory,
-  UserRole,
-  UserStatus,
-} from "@vetralink/shared-types";
+import { MediaCategory, UserRole, UserStatus } from "@vetralink/shared-types";
 import { MediaUploadController } from "./media-upload.controller";
 import {
   IMediaUploadService,
@@ -83,6 +80,11 @@ describe("MediaUploadController (Integration via Supertest)", () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       controllers: [MediaUploadController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: MEDIA_UPLOAD_SERVICE,
           useValue: mediaUploadService,
@@ -108,7 +110,7 @@ describe("MediaUploadController (Integration via Supertest)", () => {
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
-      })
+      }),
     );
     app.useGlobalInterceptors(new ResponseInterceptor(app.get(Reflector)));
     app.useGlobalFilters(new GlobalExceptionFilter());
@@ -156,7 +158,9 @@ describe("MediaUploadController (Integration via Supertest)", () => {
         totalParts: 5,
       };
 
-      mediaUploadService.initiateMultipartUpload.mockResolvedValue(responsePayload);
+      mediaUploadService.initiateMultipartUpload.mockResolvedValue(
+        responsePayload,
+      );
 
       const res = await request(app.getHttpServer())
         .post("/media/uploads/multipart/initiate")
@@ -170,7 +174,7 @@ describe("MediaUploadController (Integration via Supertest)", () => {
       expect(res.body.data).toEqual(responsePayload);
       expect(mediaUploadService.initiateMultipartUpload).toHaveBeenCalledWith(
         validBody,
-        vetPayload.sub
+        vetPayload.sub,
       );
     });
 
@@ -210,7 +214,7 @@ describe("MediaUploadController (Integration via Supertest)", () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data).toEqual(partPayload);
       expect(mediaUploadService.getPresignedPartUrl).toHaveBeenCalledWith(
-        validBody
+        validBody,
       );
     });
 
@@ -241,7 +245,9 @@ describe("MediaUploadController (Integration via Supertest)", () => {
         etag: '"combined-etag"',
       };
 
-      mediaUploadService.completeMultipartUpload.mockResolvedValue(completePayload);
+      mediaUploadService.completeMultipartUpload.mockResolvedValue(
+        completePayload,
+      );
 
       const res = await request(app.getHttpServer())
         .post("/media/uploads/multipart/complete")
@@ -253,7 +259,7 @@ describe("MediaUploadController (Integration via Supertest)", () => {
       expect(res.body.data).toEqual(completePayload);
       expect(mediaUploadService.completeMultipartUpload).toHaveBeenCalledWith(
         validBody,
-        vetPayload.sub
+        vetPayload.sub,
       );
     });
 
@@ -285,7 +291,7 @@ describe("MediaUploadController (Integration via Supertest)", () => {
       expect(res.body.data).toEqual({ aborted: true });
       expect(mediaUploadService.abortMultipartUpload).toHaveBeenCalledWith(
         validBody,
-        vetPayload.sub
+        vetPayload.sub,
       );
     });
   });
@@ -307,7 +313,7 @@ describe("MediaUploadController (Integration via Supertest)", () => {
       };
 
       mediaUploadService.generateDirectUploadUrl.mockResolvedValue(
-        presignedPayload
+        presignedPayload,
       );
 
       const res = await request(app.getHttpServer())
@@ -320,7 +326,7 @@ describe("MediaUploadController (Integration via Supertest)", () => {
       expect(res.body.data).toEqual(presignedPayload);
       expect(mediaUploadService.generateDirectUploadUrl).toHaveBeenCalledWith(
         validBody,
-        vetPayload.sub
+        vetPayload.sub,
       );
     });
   });
@@ -359,7 +365,9 @@ describe("MediaUploadController (Integration via Supertest)", () => {
 
       expect(res.body.success).toBe(true);
       expect(res.body.statusCode).toBe(202);
-      expect(res.body.message).toBe("Video transcoding job queued successfully");
+      expect(res.body.message).toBe(
+        "Video transcoding job queued successfully",
+      );
       expect(res.body.data).toEqual({
         jobId: "transcode-prod-1111-12345",
         productId: validBody.productId,
@@ -423,4 +431,3 @@ describe("MediaUploadController (Integration via Supertest)", () => {
     });
   });
 });
-

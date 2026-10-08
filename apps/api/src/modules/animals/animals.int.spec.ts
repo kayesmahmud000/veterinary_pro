@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
@@ -144,25 +145,29 @@ describe("AnimalsController (Integration via Supertest)", () => {
     };
 
     farmMemberRepository = {
-      findMembership: jest.fn().mockImplementation(async (targetFarmId: string, targetUserId: string) => {
-        if (targetFarmId === farmId) {
-          if (targetUserId === ownerUserId) {
-            return FarmMemberEntity.create({
-              farmId,
-              userId: ownerUserId,
-              role: FarmRole.OWNER,
-            });
-          }
-          if (targetUserId === herdsmanUserId) {
-            return FarmMemberEntity.create({
-              farmId,
-              userId: herdsmanUserId,
-              role: FarmRole.HERDSMAN,
-            });
-          }
-        }
-        return null;
-      }),
+      findMembership: jest
+        .fn()
+        .mockImplementation(
+          async (targetFarmId: string, targetUserId: string) => {
+            if (targetFarmId === farmId) {
+              if (targetUserId === ownerUserId) {
+                return FarmMemberEntity.create({
+                  farmId,
+                  userId: ownerUserId,
+                  role: FarmRole.OWNER,
+                });
+              }
+              if (targetUserId === herdsmanUserId) {
+                return FarmMemberEntity.create({
+                  farmId,
+                  userId: herdsmanUserId,
+                  role: FarmRole.HERDSMAN,
+                });
+              }
+            }
+            return null;
+          },
+        ),
       findUserFarms: jest.fn(),
       findByFarmId: jest.fn(),
       countMembers: jest.fn(),
@@ -206,6 +211,11 @@ describe("AnimalsController (Integration via Supertest)", () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [AnimalsController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: ANIMALS_SERVICE,
           useValue: animalsService,
@@ -237,7 +247,7 @@ describe("AnimalsController (Integration via Supertest)", () => {
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
-      })
+      }),
     );
     app.useGlobalInterceptors(new ResponseInterceptor(reflector));
     app.useGlobalFilters(new GlobalExceptionFilter());
@@ -384,7 +394,9 @@ describe("AnimalsController (Integration via Supertest)", () => {
 
   describe("GET /animals/lookup/:identifier", () => {
     it("should return 200 OK with animal data when lookup succeeds", async () => {
-      animalsService.lookupByIdentifier.mockResolvedValueOnce(mockAnimalResponse);
+      animalsService.lookupByIdentifier.mockResolvedValueOnce(
+        mockAnimalResponse,
+      );
 
       const res = await request(app.getHttpServer())
         .get("/animals/lookup/COW-001")
@@ -398,7 +410,7 @@ describe("AnimalsController (Integration via Supertest)", () => {
 
     it("should return 404 Not Found when animal identifier is not found", async () => {
       animalsService.lookupByIdentifier.mockRejectedValueOnce(
-        new EntityNotFoundException("Animal", "NON-EXISTENT")
+        new EntityNotFoundException("Animal", "NON-EXISTENT"),
       );
 
       const res = await request(app.getHttpServer())
@@ -461,7 +473,10 @@ describe("AnimalsController (Integration via Supertest)", () => {
 
     it("should return 404 Not Found when animal does not exist in farm", async () => {
       animalsService.getAnimalLineage.mockRejectedValueOnce(
-        new EntityNotFoundException("Animal", "00000000-0000-0000-0000-000000000000")
+        new EntityNotFoundException(
+          "Animal",
+          "00000000-0000-0000-0000-000000000000",
+        ),
       );
 
       const res = await request(app.getHttpServer())
@@ -643,17 +658,19 @@ describe("AnimalsController (Integration via Supertest)", () => {
         validWeightLogId,
         farmId,
         ownerUserId,
-        "trace-int-del"
+        "trace-int-del",
       );
     });
 
     it("should return 404 Not Found if weight log does not exist", async () => {
       animalsService.deleteWeightLog.mockRejectedValueOnce(
-        new EntityNotFoundException("AnimalWeightLog", nonExistentWeightLogId)
+        new EntityNotFoundException("AnimalWeightLog", nonExistentWeightLogId),
       );
 
       const res = await request(app.getHttpServer())
-        .delete(`/animals/${mockAnimalResponse.id}/weights/${nonExistentWeightLogId}`)
+        .delete(
+          `/animals/${mockAnimalResponse.id}/weights/${nonExistentWeightLogId}`,
+        )
         .set("Authorization", "Bearer owner-token")
         .set("x-farm-id", farmId);
 
@@ -690,7 +707,11 @@ describe("AnimalsController (Integration via Supertest)", () => {
         .post("/animals/import")
         .set("Authorization", "Bearer owner-token")
         .set("x-farm-id", farmId)
-        .attach("file", Buffer.from("tagNumber,species,gender\nCOW-1,COW,FEMALE"), "test_herd.csv");
+        .attach(
+          "file",
+          Buffer.from("tagNumber,species,gender\nCOW-1,COW,FEMALE"),
+          "test_herd.csv",
+        );
 
       expect(res.status).toBe(202);
       expect(res.body.success).toBe(true);
@@ -703,7 +724,11 @@ describe("AnimalsController (Integration via Supertest)", () => {
         .post("/animals/import")
         .set("Authorization", "Bearer non-member-token")
         .set("x-farm-id", farmId)
-        .attach("file", Buffer.from("tagNumber,species,gender\nCOW-1,COW,FEMALE"), "test_herd.csv");
+        .attach(
+          "file",
+          Buffer.from("tagNumber,species,gender\nCOW-1,COW,FEMALE"),
+          "test_herd.csv",
+        );
 
       expect(res.status).toBe(403);
     });
@@ -712,7 +737,7 @@ describe("AnimalsController (Integration via Supertest)", () => {
   describe("GET /animals/import/template", () => {
     it("should return 200 OK and CSV template content", async () => {
       animalsService.generateImportTemplate.mockReturnValueOnce(
-        "tagNumber,name,species,breed,gender,dateOfBirth,weightKg,rfidNumber,sireTag,damTag"
+        "tagNumber,name,species,breed,gender,dateOfBirth,weightKg,rfidNumber,sireTag,damTag",
       );
 
       const res = await request(app.getHttpServer())
@@ -806,7 +831,7 @@ describe("AnimalsController (Integration via Supertest)", () => {
 
     it("should return 404 Not Found if job does not exist", async () => {
       animalsService.getImportJob.mockRejectedValueOnce(
-        new EntityNotFoundException("AnimalImportJob", validJobId)
+        new EntityNotFoundException("AnimalImportJob", validJobId),
       );
 
       const res = await request(app.getHttpServer())
@@ -857,7 +882,9 @@ describe("AnimalsController (Integration via Supertest)", () => {
 
       expect(res.status).toBe(200);
       expect(res.headers["content-type"]).toContain("image/png");
-      expect(res.headers["content-disposition"]).toContain('inline; filename="qr-COW-001.png"');
+      expect(res.headers["content-disposition"]).toContain(
+        'inline; filename="qr-COW-001.png"',
+      );
     });
 
     it("should return 403 Forbidden when accessed by non-member", async () => {
@@ -887,7 +914,9 @@ describe("AnimalsController (Integration via Supertest)", () => {
 
       expect(res.status).toBe(200);
       expect(res.headers["content-type"]).toContain("application/pdf");
-      expect(res.headers["content-disposition"]).toContain('inline; filename="tag-COW-001.pdf"');
+      expect(res.headers["content-disposition"]).toContain(
+        'inline; filename="tag-COW-001.pdf"',
+      );
     });
   });
 
@@ -910,11 +939,16 @@ describe("AnimalsController (Integration via Supertest)", () => {
 
       expect(res.status).toBe(200);
       expect(res.headers["content-type"]).toContain("application/pdf");
-      expect(res.headers["content-disposition"]).toContain('attachment; filename="farm-tags-');
+      expect(res.headers["content-disposition"]).toContain(
+        'attachment; filename="farm-tags-',
+      );
     });
 
     it("should return 400 Bad Request if animalIds contains more than 100 items", async () => {
-      const longList = Array.from({ length: 101 }, (_, i) => "99999999-9999-9999-9999-999999999999");
+      const longList = Array.from(
+        { length: 101 },
+        (_, i) => "99999999-9999-9999-9999-999999999999",
+      );
 
       const res = await request(app.getHttpServer())
         .post("/animals/tag-badges/batch")
@@ -930,9 +964,8 @@ describe("AnimalsController (Integration via Supertest)", () => {
 
   describe("Subscription Tier Quota Interception", () => {
     it("should return HTTP 403 when animal quota is exceeded during registration", async () => {
-      const { QuotaExceededDomainException } = await import(
-        "../../common/exceptions/domain.exception"
-      );
+      const { QuotaExceededDomainException } =
+        await import("../../common/exceptions/domain.exception");
       quotaService.assertQuotaAvailable.mockRejectedValueOnce(
         new QuotaExceededDomainException(
           "Subscription quota exceeded: Your STARTER plan allows a maximum of 5 animals (current: 5). Please upgrade to PRO tier.",
@@ -942,8 +975,8 @@ describe("AnimalsController (Integration via Supertest)", () => {
             limit: 5,
             planTier: "STARTER" as any,
             upgradeTier: "PRO" as any,
-          }
-        )
+          },
+        ),
       );
 
       const res = await request(app.getHttpServer())
@@ -963,4 +996,3 @@ describe("AnimalsController (Integration via Supertest)", () => {
     });
   });
 });
-

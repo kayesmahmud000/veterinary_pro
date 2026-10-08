@@ -1,3 +1,4 @@
+import { CurrentIdentityService } from "../auth/services/current-identity.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { Reflector } from "@nestjs/core";
 import {
@@ -91,6 +92,11 @@ describe("AnimalsController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AnimalsController],
       providers: [
+        // This HTTP harness mocks identity lookup; live database authorization is covered by role-workflow.database.spec.ts.
+        {
+          provide: CurrentIdentityService,
+          useValue: { resolve: async (claims: any) => claims },
+        },
         {
           provide: ANIMALS_SERVICE,
           useValue: animalsService,
@@ -111,7 +117,9 @@ describe("AnimalsController", () => {
           provide: SUBSCRIPTION_QUOTA_SERVICE,
           useValue: {
             checkQuota: jest.fn().mockResolvedValue({ allowed: true }),
-            assertQuotaAvailable: jest.fn().mockResolvedValue({ allowed: true }),
+            assertQuotaAvailable: jest
+              .fn()
+              .mockResolvedValue({ allowed: true }),
             getFarmQuotaUsage: jest.fn().mockResolvedValue({
               farmId: mockFarmId,
               planTier: "PRO",
@@ -149,14 +157,14 @@ describe("AnimalsController", () => {
         mockFarmId,
         dto,
         mockUser,
-        "trace-abc"
+        "trace-abc",
       );
 
       expect(animalsService.registerAnimal).toHaveBeenCalledWith(
         mockFarmId,
         dto,
         mockUser.sub,
-        "trace-abc"
+        "trace-abc",
       );
       expect(result).toEqual(mockAnimalResponse);
     });
@@ -170,7 +178,13 @@ describe("AnimalsController", () => {
       };
       animalsService.getAnimals.mockResolvedValueOnce(paginatedResult);
 
-      const query = { species: AnimalSpecies.COW, page: 1, limit: 20, sortBy: "createdAt" as const, sortOrder: "desc" as const };
+      const query = {
+        species: AnimalSpecies.COW,
+        page: 1,
+        limit: 20,
+        sortBy: "createdAt" as const,
+        sortOrder: "desc" as const,
+      };
       const result = await controller.getAnimals(mockFarmId, query);
 
       expect(animalsService.getAnimals).toHaveBeenCalledWith(mockFarmId, query);
@@ -182,11 +196,14 @@ describe("AnimalsController", () => {
     it("should delegate to animalsService.getAnimalById", async () => {
       animalsService.getAnimalById.mockResolvedValueOnce(mockAnimalResponse);
 
-      const result = await controller.getAnimalById(mockFarmId, mockAnimalResponse.id);
+      const result = await controller.getAnimalById(
+        mockFarmId,
+        mockAnimalResponse.id,
+      );
 
       expect(animalsService.getAnimalById).toHaveBeenCalledWith(
         mockAnimalResponse.id,
-        mockFarmId
+        mockFarmId,
       );
       expect(result).toEqual(mockAnimalResponse);
     });
@@ -203,7 +220,7 @@ describe("AnimalsController", () => {
         mockAnimalResponse.id,
         dto,
         mockUser,
-        "trace-xyz"
+        "trace-xyz",
       );
 
       expect(animalsService.updateAnimal).toHaveBeenCalledWith(
@@ -211,7 +228,7 @@ describe("AnimalsController", () => {
         mockFarmId,
         dto,
         mockUser.sub,
-        "trace-xyz"
+        "trace-xyz",
       );
       expect(result.name).toBe("Daisy Updated");
     });
@@ -225,14 +242,14 @@ describe("AnimalsController", () => {
         mockFarmId,
         mockAnimalResponse.id,
         mockUser,
-        "trace-del"
+        "trace-del",
       );
 
       expect(animalsService.archiveAnimal).toHaveBeenCalledWith(
         mockAnimalResponse.id,
         mockFarmId,
         mockUser.sub,
-        "trace-del"
+        "trace-del",
       );
       expect(result).toEqual(mockAnimalResponse);
     });
@@ -244,7 +261,9 @@ describe("AnimalsController", () => {
         tagNumber: { value: "COW-001", isAvailable: true },
         rfidNumber: { value: "982000412345678", isAvailable: true },
       };
-      animalsService.checkTagAvailability.mockResolvedValueOnce(mockAvailability);
+      animalsService.checkTagAvailability.mockResolvedValueOnce(
+        mockAvailability,
+      );
 
       const query = {
         tagNumber: "COW-001",
@@ -254,7 +273,7 @@ describe("AnimalsController", () => {
 
       expect(animalsService.checkTagAvailability).toHaveBeenCalledWith(
         mockFarmId,
-        query
+        query,
       );
       expect(result).toEqual(mockAvailability);
     });
@@ -262,16 +281,18 @@ describe("AnimalsController", () => {
 
   describe("lookupByIdentifier", () => {
     it("should delegate to animalsService.lookupByIdentifier", async () => {
-      animalsService.lookupByIdentifier.mockResolvedValueOnce(mockAnimalResponse);
+      animalsService.lookupByIdentifier.mockResolvedValueOnce(
+        mockAnimalResponse,
+      );
 
       const result = await controller.lookupByIdentifier(
         mockFarmId,
-        "982000412345678"
+        "982000412345678",
       );
 
       expect(animalsService.lookupByIdentifier).toHaveBeenCalledWith(
         "982000412345678",
-        mockFarmId
+        mockFarmId,
       );
       expect(result).toEqual(mockAnimalResponse);
     });
@@ -307,13 +328,13 @@ describe("AnimalsController", () => {
       const result = await controller.getAnimalLineage(
         mockFarmId,
         mockAnimalResponse.id,
-        { generations: 4 }
+        { generations: 4 },
       );
 
       expect(animalsService.getAnimalLineage).toHaveBeenCalledWith(
         mockAnimalResponse.id,
         mockFarmId,
-        4
+        4,
       );
       expect(result).toEqual(mockLineage);
     });
@@ -348,7 +369,7 @@ describe("AnimalsController", () => {
         mockAnimalResponse.id,
         dto,
         mockUser,
-        "trace-weight-1"
+        "trace-weight-1",
       );
 
       expect(animalsService.recordWeight).toHaveBeenCalledWith(
@@ -356,7 +377,7 @@ describe("AnimalsController", () => {
         mockFarmId,
         dto,
         mockUser.sub,
-        "trace-weight-1"
+        "trace-weight-1",
       );
       expect(result).toEqual(mockWeightLogResponse);
     });
@@ -374,13 +395,13 @@ describe("AnimalsController", () => {
       const result = await controller.getWeightHistory(
         mockFarmId,
         mockAnimalResponse.id,
-        { page: 1, limit: 20 }
+        { page: 1, limit: 20 },
       );
 
       expect(animalsService.getWeightHistory).toHaveBeenCalledWith(
         mockAnimalResponse.id,
         mockFarmId,
-        { page: 1, limit: 20 }
+        { page: 1, limit: 20 },
       );
       expect(result).toEqual(mockHistory);
     });
@@ -407,12 +428,12 @@ describe("AnimalsController", () => {
 
       const result = await controller.getGrowthCurve(
         mockFarmId,
-        mockAnimalResponse.id
+        mockAnimalResponse.id,
       );
 
       expect(animalsService.getGrowthCurve).toHaveBeenCalledWith(
         mockAnimalResponse.id,
-        mockFarmId
+        mockFarmId,
       );
       expect(result).toEqual(mockGrowthCurve);
     });
@@ -427,7 +448,7 @@ describe("AnimalsController", () => {
         mockAnimalResponse.id,
         "weight-log-to-delete",
         mockUser,
-        "trace-del-1"
+        "trace-del-1",
       );
 
       expect(animalsService.deleteWeightLog).toHaveBeenCalledWith(
@@ -435,7 +456,7 @@ describe("AnimalsController", () => {
         "weight-log-to-delete",
         mockFarmId,
         mockUser.sub,
-        "trace-del-1"
+        "trace-del-1",
       );
       expect(result).toEqual({ message: "Weight log deleted successfully" });
     });
@@ -471,14 +492,14 @@ describe("AnimalsController", () => {
         mockFarmId,
         mockFile,
         mockUser,
-        "trace-upload-1"
+        "trace-upload-1",
       );
 
       expect(animalsService.createImportJob).toHaveBeenCalledWith(
         mockFarmId,
         mockFile,
         mockUser.sub,
-        "trace-upload-1"
+        "trace-upload-1",
       );
       expect(result).toEqual(mockJobDto);
     });
@@ -486,7 +507,9 @@ describe("AnimalsController", () => {
 
   describe("getImportTemplate", () => {
     it("should delegate to animalsService.generateImportTemplate", () => {
-      animalsService.generateImportTemplate.mockReturnValueOnce("header1,header2");
+      animalsService.generateImportTemplate.mockReturnValueOnce(
+        "header1,header2",
+      );
 
       const result = controller.getImportTemplate();
 
@@ -506,7 +529,11 @@ describe("AnimalsController", () => {
 
       const result = await controller.getImportJobs(mockFarmId, 1, 20);
 
-      expect(animalsService.getImportJobs).toHaveBeenCalledWith(mockFarmId, 1, 20);
+      expect(animalsService.getImportJobs).toHaveBeenCalledWith(
+        mockFarmId,
+        1,
+        20,
+      );
       expect(result).toEqual(mockJobs);
     });
   });
@@ -537,7 +564,10 @@ describe("AnimalsController", () => {
 
       const result = await controller.getImportJob(mockFarmId, "job-1111");
 
-      expect(animalsService.getImportJob).toHaveBeenCalledWith("job-1111", mockFarmId);
+      expect(animalsService.getImportJob).toHaveBeenCalledWith(
+        "job-1111",
+        mockFarmId,
+      );
       expect(result).toEqual(mockJobDto);
     });
   });
@@ -559,8 +589,14 @@ describe("AnimalsController", () => {
       const dto = { animalIds: ["id-1", "id-2"] };
       await controller.printBatchTagBadges(mockFarmId, dto, res);
 
-      expect(tagService.generateBatchTagBadgesPdf).toHaveBeenCalledWith(mockFarmId, dto);
-      expect(res.setHeader).toHaveBeenCalledWith("Content-Type", "application/pdf");
+      expect(tagService.generateBatchTagBadgesPdf).toHaveBeenCalledWith(
+        mockFarmId,
+        dto,
+      );
+      expect(res.setHeader).toHaveBeenCalledWith(
+        "Content-Type",
+        "application/pdf",
+      );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.end).toHaveBeenCalledWith(mockPdfBuffer);
     });
@@ -584,13 +620,16 @@ describe("AnimalsController", () => {
 
       await controller.getAnimalQrCode(mockFarmId, "animal-1", {}, res);
 
-      expect(tagService.generateQrCode).toHaveBeenCalledWith(mockFarmId, "animal-1");
+      expect(tagService.generateQrCode).toHaveBeenCalledWith(
+        mockFarmId,
+        "animal-1",
+      );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
           data: mockQrDto,
-        })
+        }),
       );
     });
 
@@ -607,13 +646,21 @@ describe("AnimalsController", () => {
         end: jest.fn(),
       } as unknown as Response;
 
-      await controller.getAnimalQrCode(mockFarmId, "animal-1", { format: "png" }, res);
+      await controller.getAnimalQrCode(
+        mockFarmId,
+        "animal-1",
+        { format: "png" },
+        res,
+      );
 
-      expect(tagService.generateQrCodePngBuffer).toHaveBeenCalledWith(mockFarmId, "animal-1");
+      expect(tagService.generateQrCodePngBuffer).toHaveBeenCalledWith(
+        mockFarmId,
+        "animal-1",
+      );
       expect(res.setHeader).toHaveBeenCalledWith("Content-Type", "image/png");
       expect(res.setHeader).toHaveBeenCalledWith(
         "Content-Disposition",
-        'inline; filename="qr-COW-100.png"'
+        'inline; filename="qr-COW-100.png"',
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.end).toHaveBeenCalledWith(mockPngBuffer);
@@ -636,15 +683,20 @@ describe("AnimalsController", () => {
 
       await controller.getAnimalTagBadgePdf(mockFarmId, "animal-1", res);
 
-      expect(tagService.generateSingleTagBadgePdf).toHaveBeenCalledWith(mockFarmId, "animal-1");
-      expect(res.setHeader).toHaveBeenCalledWith("Content-Type", "application/pdf");
+      expect(tagService.generateSingleTagBadgePdf).toHaveBeenCalledWith(
+        mockFarmId,
+        "animal-1",
+      );
+      expect(res.setHeader).toHaveBeenCalledWith(
+        "Content-Type",
+        "application/pdf",
+      );
       expect(res.setHeader).toHaveBeenCalledWith(
         "Content-Disposition",
-        'inline; filename="tag-COW-100.pdf"'
+        'inline; filename="tag-COW-100.pdf"',
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.end).toHaveBeenCalledWith(mockPdfBuffer);
     });
   });
 });
-
