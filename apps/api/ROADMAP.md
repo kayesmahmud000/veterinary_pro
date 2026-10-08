@@ -10,6 +10,12 @@ Reviewed: **2026-10-05**, source baseline **d5d311b**. Start with the [project r
 
 ## API dependency register
 
+Updated 2026-10-08: explicit offline first-super-admin bootstrap also supports new
+email/name/password accounts. Owner-requested account creation and real authenticated
+API checks against the configured database are recorded in the
+[owner-login plan](../../docs/tasks/first-super-admin-login/plan.md). Public signup
+still excludes administrative roles; this is separate from deployed-site acceptance.
+
 This register owns API availability for web planning. Paths are relative to `/api/v1`; inspect linked controllers, DTOs, guards and module bindings for exact methods, permissions and response shapes. **Present** means source exists, **Partial** means a required contract is missing, and **Unverified** means runtime/provider acceptance evidence is still required. No row currently certifies a deployed integration as **Ready**. A historical completed task alone cannot promote a row to Ready.
 
 | ID | Capability and source of contract | Delivery history | Availability / handoff condition |

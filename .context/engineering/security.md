@@ -22,6 +22,13 @@ PII keys, hash peppers and prescription signing keys need persistent secure stor
 
 Public/auth/download/webhook routes require abuse limits with tested enforcement. The legacy `@Throttle`/100-requests rule is an intent, not an installed rate limiter here. Do not claim regulatory compliance, clinical certification or dependency vulnerability status from old documentation. Re-evaluate the actual release and environment.
 
+First-super-admin recovery is an explicit offline operator action. Bootstrap accepts
+either an existing active UUID or new email/name/password when no active SUPER_ADMIN
+exists, retaining one transaction for account/role/audit/outbox. It never runs at
+HTTP startup and never replaces an existing account password. See the
+[bootstrap runbook](../../docs/features/role-request-approval/operations.md#first-super_admin-bootstrap)
+and [owner-login evidence](../../docs/tasks/first-super-admin-login/plan.md).
+
 [Known gaps](../known-gaps.md) records concrete differences including serverless diagnostic disclosure and permissive configuration. Those observations require scoped fixes and verification; this documentation task does not fix them.
 
 Updated 2026-10-07: current-primary identity/authorizationVersion checks apply to HTTP and chat events/receiving sockets; revoked idle sockets are checked every five seconds. Public roles are LEARNER/FARMER/VET/BUYER with default LEARNER. New FARMER farm access requires completed onboarding. Role review and SUPER-only fresh-password management lock/version/audit/outbox atomically; applications and privileged mutations have tested Redis limits. [Verification and migration/recovery limits](../../docs/features/role-request-approval/operations.md) distinguish local synthetic acceptance from release readiness.

@@ -18,6 +18,7 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
+apps/api/src/scripts/super-admin.credentials.local.cjs
 !infrastructure/.env.docker.example
 
 # Logs

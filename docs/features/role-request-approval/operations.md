@@ -71,14 +71,27 @@ A SENT ledger means the provider accepted the message, not inbox delivery. Corre
 
 ## First SUPER_ADMIN bootstrap
 
-There is no public administrative signup or self-promotion. If an active SUPER_ADMIN exists, use protected management with fresh password/reason. If none exists, an authorized operator may run the offline script against a reviewed database and an existing active account:
+There is no public administrative signup or self-promotion. If an active SUPER_ADMIN exists, use protected management with fresh password/reason. If none exists, an authorized operator may run the offline script against a reviewed database:
 
 - Explicit DATABASE_URL.
-- ROLE_BOOTSTRAP_USER_ID: existing account UUID.
+- Existing-account mode: ROLE_BOOTSTRAP_USER_ID is the existing active account UUID;
+  leave the new-account inputs unset.
+- New-account mode (2026-10-08): leave ROLE_BOOTSTRAP_USER_ID unset and supply
+  ROLE_BOOTSTRAP_EMAIL, ROLE_BOOTSTRAP_NAME and ROLE_BOOTSTRAP_PASSWORD. Email is
+  normalized; the password must have at least 12 characters and at most 72 UTF-8
+  bytes. Existing email addresses, including deleted accounts, are refused rather
+  than having their passwords replaced.
 - ROLE_BOOTSTRAP_REASON: bounded human review reason.
 - ROLE_BOOTSTRAP_CONFIRM: BOOTSTRAP_FIRST_SUPER_ADMIN.
 - Command: pnpm --filter @vetralink/api admin:bootstrap.
 
-The script shares the advisory lock, refuses existing active SUPER_ADMIN or a pending target application, preserves fallback, increments versions, revokes refresh sessions and writes audit/outbox atomically. It does not create accounts and was not invoked during implementation.
+The script shares the advisory lock, refuses existing active SUPER_ADMIN or a pending target application, preserves fallback, increments versions, revokes refresh sessions and writes audit/outbox atomically. New-account mode creates an ACTIVE account with a 12-round bcrypt password hash in the same transaction. It never seeds accounts at application startup or prints passwords. Original implementation did not invoke it; the later owner-login task records its own [verification evidence](../../tasks/first-super-admin-login/plan.md).
+
+The normal login endpoint for every role is POST /api/v1/auth/login with email and
+password; GET /api/v1/auth/me confirms the resolved identity. Web login uses the
+same account. Phone-only login is not supported by the existing required-email DTO.
+At the owner's request, their credentials are retained in the ignored local code
+file `apps/api/src/scripts/super-admin.credentials.local.cjs`. That file is operator
+reference material and is not imported by HTTP/startup code or committed to Git.
 
 Recovery favors compatible roll-forward and scoped durable-work repair. Do not drop role/history tables or roll back to five-role/FARMER-default readers after new accounts exist. Production recovery/backup restoration requires its own reviewed operation.
