@@ -114,7 +114,7 @@ async function navigate(route) {
   await until(
     () =>
       client.evaluate(
-        "document.readyState==='complete' && [...document.querySelectorAll('header [data-auth-trigger]')].some(b=>!b.disabled)",
+        "document.readyState==='complete' && ([...document.querySelectorAll('header [data-auth-trigger]')].some(b=>!b.disabled) || !!document.querySelector('header details summary'))",
       ),
     "Session did not become ready",
   );
@@ -172,6 +172,7 @@ async function dismiss() {
   );
 }
 async function signOut() {
+  await navigate("/learning");
   await open();
   await client.evaluate(
     "[...document.querySelectorAll('dialog button')].find(b=>b.textContent.trim()==='Sign out').click()",
@@ -196,10 +197,12 @@ async function signIn(user) {
     );
   } else {
     await until(
-      () => client.evaluate("!!document.querySelector('[data-account-title]')"),
-      "Login profile did not appear",
+      () =>
+        client.evaluate(
+          "location.pathname==='/dashboard' && !!document.querySelector('[data-dashboard-role]')",
+        ),
+      "Login dashboard did not appear",
     );
-    await dismiss();
   }
 }
 async function confirm() {
@@ -254,7 +257,15 @@ try {
     });
   nextProcess = spawn(
     process.execPath,
-    [require.resolve("next/dist/bin/next"), "start", "-p", "3310"],
+    [
+      require.resolve("next/dist/bin/next"),
+      "start",
+      ...(process.env.WEB_TEST_BUILD_DIR
+        ? [process.env.WEB_TEST_BUILD_DIR]
+        : []),
+      "-p",
+      "3310",
+    ],
     {
       cwd: webDir,
       windowsHide: true,
@@ -306,15 +317,17 @@ try {
   await fill({ ...learner, password, confirmation: password }, "auth-");
   await submit("dialog form");
   await until(
-    () => client.evaluate("!!document.querySelector('[data-account-title]')"),
+    () =>
+      client.evaluate(
+        "location.pathname==='/dashboard' && !!document.querySelector('[data-dashboard-role]')",
+      ),
     "Default signup failed",
   );
   assert.ok(
     await client.evaluate(
-      "document.querySelector('dialog').textContent.includes('Learner')",
+      "document.querySelector('main').textContent.includes('Learner')",
     ),
   );
-  await dismiss();
   const storedLearner = await db.user.findUnique({
     where: { email: learner.email },
   });
@@ -470,7 +483,7 @@ try {
   await until(
     () =>
       client.evaluate(
-        "location.pathname==='/farm' && !!document.querySelector('#email')",
+        "location.pathname==='/farm' && !!document.querySelector('[data-farm-discovery]')",
       ),
     "Farm setup did not open dashboard",
   );
@@ -478,6 +491,52 @@ try {
       where: { email: farmer.email },
     }),
     farm = await db.farm.findFirst({ where: { ownerId: storedFarmer.id } });
+  // Farm onboarding deliberately creates no subscription. This isolated fixture
+  // grants a synthetic active plan before asserting write/quota behavior.
+  const memberPlan = await db.subscriptionPlan.upsert({
+    where: { tier: "STARTER" },
+    update: {
+      maxAnimals: 5,
+      features: {
+        maxAnimals: 5,
+        maxStaff: 2,
+        teleVetPriority: "STANDARD",
+        advancedAnalytics: false,
+        bulkImportExport: false,
+        customReports: false,
+      },
+    },
+    create: {
+      name: `Synthetic workspace ${run}`,
+      tier: "STARTER",
+      priceMonthlyCents: 0,
+      priceAnnualCents: 0,
+      maxAnimals: 5,
+      features: {
+        maxAnimals: 5,
+        maxStaff: 2,
+        teleVetPriority: "STANDARD",
+        advancedAnalytics: false,
+        bulkImportExport: false,
+        customReports: false,
+      },
+    },
+  });
+  await db.subscription.create({
+    data: {
+      userId: storedFarmer.id,
+      farmId: farm.id,
+      planId: memberPlan.id,
+      status: "ACTIVE",
+      currentPeriodStart: new Date(),
+      currentPeriodEnd: new Date(Date.now() + 30 * 86400000),
+    },
+  });
+  await navigate(`/app/farms/${farm.id}/members`);
+  await until(
+    () => client.evaluate("!!document.querySelector('#email:not(:disabled)')"),
+    "Member form access not ready",
+  );
   assert.equal(storedFarmer.farmerOnboardingRequired, false);
   assert.equal(
     (
@@ -514,7 +573,7 @@ try {
   await until(
     () =>
       client.evaluate(
-        "document.querySelector('main [role=alert]')?.textContent.includes('staff limit')",
+        "document.querySelector('main').textContent.includes('reached its staff quota')",
       ),
     "Staff quota failure missing",
   );
@@ -522,7 +581,7 @@ try {
     for (const width of [1440, 375, 320]) {
       await locale(lang);
       await viewport(width);
-      await navigate("/farm");
+      await navigate(`/app/farms/${farm.id}/members`);
       await until(
         () => client.evaluate("!!document.querySelector('#email')"),
         "Farm dashboard missing",
@@ -544,9 +603,14 @@ try {
   await until(
     () =>
       client.evaluate(
-        "location.pathname==='/farm' && !!document.querySelector('#role')",
+        "location.pathname==='/farm' && !!document.querySelector('[data-farm-discovery]')",
       ),
     "Member onboarding did not complete",
+  );
+  await navigate(`/app/farms/${farm.id}/members`);
+  await until(
+    () => client.evaluate("!!document.querySelector('#role')"),
+    "Manager member form missing",
   );
   assert.equal(
     await client.evaluate(
@@ -649,7 +713,7 @@ try {
     "Administrative target form missing",
   );
   await fill({ email: applicant.user.email });
-  await submit("main > form");
+  await submit("main form");
   await until(
     () => client.evaluate("!!document.querySelector('#actorPassword')"),
     "Administrative target missing",

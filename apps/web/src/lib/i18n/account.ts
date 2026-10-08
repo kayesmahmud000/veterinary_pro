@@ -1,0 +1,73 @@
+import type { Locale } from "./locale";
+export const accountEn = {
+  welcome: "Welcome back",
+  intro: "Your account, learning and farm work in one place.",
+  account: "Your account",
+  profileBody: "View your details, access and preferences.",
+  start: "Continue from here",
+  learn: "Free learning",
+  learnBody: "Explore practical guides for caring for your farm.",
+  apply: "Professional access",
+  applyBody: "Apply for a professional role when you are ready.",
+  farm: "Your farms",
+  farmBody: "Open an existing farm or complete your farm setup.",
+  review: "Role applications",
+  reviewBody: "Review applications and verify professional qualifications.",
+  doctors: "Meet the doctors",
+  doctorsBody: "Explore the public doctor directory.",
+  help: "Need a hand?",
+  helpBody: "Find answers and ways to contact the team.",
+  role: "Primary role",
+  email: "Email",
+  phone: "Phone",
+  name: "Name",
+  joined: "Joined",
+  verified: "Verified",
+  unverified: "Not verified",
+  missing: "Not provided",
+  active: "Active",
+  readonly:
+    "These account details are read-only. Contact support if you need a correction.",
+  accessBody:
+    "Your primary role determines your account workspace. Farm permissions depend on each farm membership.",
+  securityBody: "Sign out when you finish on a shared device.",
+  language: "Website language",
+};
+export type AccountMessages = typeof accountEn;
+export const accountBn: AccountMessages = {
+  welcome: "আবার স্বাগতম",
+  intro: "আপনার অ্যাকাউন্ট, শেখা ও খামারের কাজ এক জায়গায়।",
+  account: "আপনার অ্যাকাউন্ট",
+  profileBody: "ব্যক্তিগত তথ্য, অ্যাক্সেস ও পছন্দ দেখুন।",
+  start: "এখান থেকে এগিয়ে যান",
+  learn: "বিনামূল্যে শিখুন",
+  learnBody: "খামারের যত্নে ব্যবহারিক নির্দেশিকা পড়ুন।",
+  apply: "পেশাগত অ্যাক্সেস",
+  applyBody: "প্রস্তুত হলে পেশাগত ভূমিকার জন্য আবেদন করুন।",
+  farm: "আপনার খামার",
+  farmBody: "আপনার খামার খুলুন অথবা খামার সেটআপ সম্পন্ন করুন।",
+  review: "ভূমিকার আবেদন",
+  reviewBody: "আবেদন পর্যালোচনা ও পেশাগত যোগ্যতা যাচাই করুন।",
+  doctors: "চিকিৎসকদের পরিচিতি",
+  doctorsBody: "চিকিৎসকদের প্রকাশিত পরিচিতি দেখুন।",
+  help: "সহায়তা দরকার?",
+  helpBody: "উত্তর খুঁজুন ও আমাদের সঙ্গে যোগাযোগ করুন।",
+  role: "মূল ভূমিকা",
+  email: "ইমেইল",
+  phone: "ফোন",
+  name: "নাম",
+  joined: "যোগদানের তারিখ",
+  verified: "যাচাইকৃত",
+  unverified: "যাচাই হয়নি",
+  missing: "দেওয়া হয়নি",
+  active: "সক্রিয়",
+  readonly:
+    "এই তথ্যগুলো শুধু দেখা যায়। সংশোধন প্রয়োজন হলে সহায়তায় যোগাযোগ করুন।",
+  accessBody:
+    "মূল ভূমিকা অনুযায়ী অ্যাকাউন্টের কর্মক্ষেত্র নির্ধারিত হয়। খামারের অনুমতি নির্ভর করে সেই খামারের সদস্যপদের ওপর।",
+  securityBody: "অন্যের সঙ্গে ব্যবহার করা ডিভাইসে কাজ শেষে সাইন আউট করুন।",
+  language: "ওয়েবসাইটের ভাষা",
+};
+export function getAccountMessages(locale: Locale) {
+  return locale === "bn" ? accountBn : accountEn;
+}

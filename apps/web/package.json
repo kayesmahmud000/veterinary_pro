@@ -17,7 +17,10 @@
     "check:styles": "node scripts/check-styles.mjs",
     "test:styles": "node --test scripts/check-styles.test.mjs scripts/check-tailwind.mjs",
     "test:public-pages": "node scripts/check-public-pages.mjs",
-    "test:public-navigation:browser": "node scripts/check-public-navigation-browser.mjs"
+    "test:public-navigation:browser": "node scripts/check-public-navigation-browser.mjs",
+    "test:workspace-navigation": "node --test scripts/check-workspace-navigation.mjs",
+    "test:farm-overview": "node --test scripts/check-farm-overview.mjs",
+    "test:dashboard:browser": "node scripts/check-dashboard-browser.mjs"
   },
   "dependencies": {
     "@radix-ui/react-navigation-menu": "^1.3.0",

@@ -21,10 +21,11 @@ function compile(file, overrides = {}) {
   );
   return module.exports;
 }
+const farmContracts = compile("../src/lib/workspace/farm-contracts.ts");
 const contracts = compile("../src/lib/workspace/contracts.ts"),
   { handleWorkspace, resolveEndpoint } = compile(
     "../src/lib/workspace/server.ts",
-    { "./contracts": contracts },
+    { "./contracts": contracts, "./farm-contracts": farmContracts },
   );
 const shared = require("@vetralink/shared-types");
 const id = "550e8400-e29b-41d4-a716-446655440000",
@@ -239,6 +240,34 @@ test("workspace boundary validation, privacy and upstream methods", async (t) =>
       async () => {
         globalThis.fetch = async (url, options) => {
           calls.push({ url: String(url), options });
+          if (new URL(url).pathname.endsWith("/farms/my"))
+            return ok({
+              required: false,
+              farms: [
+                {
+                  id,
+                  name: "Test farm",
+                  farmType: "DAIRY",
+                  country: "Bangladesh",
+                  address: null,
+                  role: "OWNER",
+                  ownerId: targetId,
+                },
+              ],
+            });
+          if (new URL(url).pathname.endsWith("/access-status"))
+            return ok({
+              subscriptionId: "",
+              farmId: id,
+              status: "ACTIVE",
+              accessMode: "FULL_ACCESS",
+              canRead: true,
+              canWrite: true,
+              daysPastDue: 0,
+              gracePeriodDaysRemaining: 0,
+              gracePeriodEnd: null,
+              suspensionDate: null,
+            });
           return ok({
             id,
             userId: targetId,

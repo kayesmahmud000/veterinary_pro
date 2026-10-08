@@ -25,6 +25,8 @@ import { RoleSelect } from "./role-select";
 import { PhoneField } from "./phone-field";
 import { DEFAULT_PHONE_COUNTRY } from "@/lib/auth/phone";
 import type { CountryCode } from "libphonenumber-js/max";
+import { getPostLoginDestination } from "@/lib/workspace/navigation";
+import { getWorkspaceShellMessages } from "@/lib/i18n/workspace-shell";
 
 export function AuthDialog() {
   const router = useRouter();
@@ -38,6 +40,7 @@ export function AuthDialog() {
     mutate,
     error: sessionError,
     restore,
+    returnTo,
   } = useAuth();
   const mode = modal === "register" ? "register" : "login";
   const dialog = useRef<HTMLDialogElement>(null);
@@ -102,7 +105,7 @@ export function AuthDialog() {
 
   function switchMode() {
     if (busy.current) return;
-    open(mode === "login" ? "register" : "login");
+    open(mode === "login" ? "register" : "login", returnTo);
     setValues((current) => ({ ...current, password: "", confirmation: "" }));
     setShowPassword(false);
     setError(undefined);
@@ -132,12 +135,10 @@ export function AuthDialog() {
       setFields(result.fields ?? {});
       requestAnimationFrame(() => feedback.current?.focus());
     } else {
-      if (
-        result.user?.role === "FARMER" &&
-        result.user.farmerOnboardingRequired
-      ) {
+      if (result.user?.status === "ACTIVE") {
+        const destination = getPostLoginDestination(result.user, returnTo);
         close();
-        router.push("/account/farm-onboarding");
+        router.push(destination);
       }
       setValues((current) => ({ ...current, password: "", confirmation: "" }));
       setShowPassword(false);
@@ -355,6 +356,12 @@ export function AuthDialog() {
             </div>
             <p className={cn(styles.sessionNote)}>{t.sessionNote}</p>
             <div className={cn(styles.accountLinks)}>
+              <Link href="/dashboard" onClick={close}>
+                {getWorkspaceShellMessages(locale).dashboard}
+              </Link>
+              <Link href="/account/profile" onClick={close}>
+                {getWorkspaceShellMessages(locale).profile}
+              </Link>
               <Link href="/account/role-requests" onClick={close}>
                 {t.applications}
               </Link>

@@ -12,6 +12,7 @@ export function useRemote<T>(
   schema: z.ZodType<T, any, any>,
 ) {
   const [result, setResult] = useState<WorkspaceResult<T>>({ status: 0 });
+  const [scope, setScope] = useState<string | null>(null);
   const [loading, setLoading] = useState(true),
     [revision, revise] = useState(0);
   useEffect(() => {
@@ -21,6 +22,7 @@ export function useRemote<T>(
       return;
     }
     let active = true;
+    setScope(path);
     setLoading(true);
     setResult({ status: 0 });
     void workspaceRequest(path, schema).then((value) => {
@@ -33,7 +35,12 @@ export function useRemote<T>(
       active = false;
     };
   }, [path, schema, revision]);
-  return { ...result, loading, reload: () => revise((v) => v + 1) };
+  const current = scope === path;
+  return {
+    ...(current ? result : { status: 0 }),
+    loading: !!path && (!current || loading),
+    reload: () => revise((v) => v + 1),
+  };
 }
 export function option(t: WorkspaceMessages, value: string) {
   return (t.options as Record<string, string>)[value] ?? value;
@@ -169,7 +176,10 @@ export function QuestionFields({
                 </label>
               ))}
               {issues[field.key] && (
-                <small id={`${field.key}-error`} className={cn(styles.fieldError)}>
+                <small
+                  id={`${field.key}-error`}
+                  className={cn(styles.fieldError)}
+                >
                   {issues[field.key]}
                 </small>
               )}
@@ -188,7 +198,10 @@ export function QuestionFields({
                 {label}
               </label>
               {issues[field.key] && (
-                <small className={cn(styles.fieldError)} id={`${field.key}-error`}>
+                <small
+                  className={cn(styles.fieldError)}
+                  id={`${field.key}-error`}
+                >
                   {issues[field.key]}
                 </small>
               )}

@@ -47,7 +47,7 @@ export async function workspaceRequest<T>(
       clearTimeout(timer);
     }
   };
-  return withSessionLock(async () => {
+  const run = async () => {
     let result = await attempt();
     if (result.status === 401) {
       const refresh = await authRequest("refresh");
@@ -55,6 +55,27 @@ export async function workspaceRequest<T>(
       if (typeof window !== "undefined")
         window.dispatchEvent(new Event("vetralink-session-updated"));
     }
+    return result;
+  };
+  // Keep writes/session rotation serialized; independent card reads need not
+  // wait behind a slow financial or clinical request.
+  if (method !== "GET") return withSessionLock(run);
+  const first = await attempt();
+  if (first.status !== 401) return first;
+  return withSessionLock(async () => {
+    // Another tab/read may have rotated cookies while we waited for the lock.
+    const session = await authRequest("session");
+    if (!session.ok && session.status === 401) {
+      const refresh = await authRequest("refresh");
+      if (!refresh.ok) {
+        if (typeof window !== "undefined")
+          window.dispatchEvent(new Event("vetralink-session-updated"));
+        return first;
+      }
+    } else if (!session.ok) return { status: 503, code: "UNAVAILABLE" };
+    const result = await attempt();
+    if (typeof window !== "undefined")
+      window.dispatchEvent(new Event("vetralink-session-updated"));
     return result;
   });
 }

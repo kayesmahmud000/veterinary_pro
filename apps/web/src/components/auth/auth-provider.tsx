@@ -15,6 +15,7 @@ import type { AuthMessages } from "@/lib/i18n/auth";
 import type { Locale } from "@/lib/i18n/locale";
 import { authRequest, withSessionLock } from "@/lib/auth/client";
 import { AuthDialog } from "./auth-dialog";
+import { validateWorkspaceReturnTo } from "@/lib/workspace/navigation";
 
 type Modal = AuthMode | "account" | null;
 type AuthContextValue = {
@@ -22,9 +23,10 @@ type AuthContextValue = {
   checking: boolean;
   error?: AuthErrorCode;
   modal: Modal;
+  returnTo?: string;
   messages: AuthMessages;
   locale: Locale;
-  open: (mode: Exclude<Modal, null>) => void;
+  open: (mode: Exclude<Modal, null>, returnTo?: string) => void;
   close: () => void;
   restore: () => Promise<void>;
   mutate: (
@@ -53,8 +55,19 @@ export function AuthProvider({
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState<AuthErrorCode>();
   const [modal, setModal] = useState<Modal>(null);
+  const [returnTo, setReturnTo] = useState<string>();
   const channel = useRef<BroadcastChannel | null>(null);
-  const close = useCallback(() => setModal(null), []);
+  const close = useCallback(() => {
+    setModal(null);
+    setReturnTo(undefined);
+  }, []);
+  const open = useCallback(
+    (mode: Exclude<Modal, null>, destination?: string) => {
+      setReturnTo(validateWorkspaceReturnTo(destination) ?? undefined);
+      setModal(mode);
+    },
+    [],
+  );
 
   const restore = useCallback(async () => {
     setChecking(true);
@@ -115,9 +128,10 @@ export function AuthProvider({
         checking,
         error,
         modal,
+        returnTo,
         messages,
         locale,
-        open: setModal,
+        open,
         close,
         restore,
         mutate,

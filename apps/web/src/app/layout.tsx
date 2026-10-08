@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getLocalization } from "@/lib/i18n/server";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { NavigationGuardProvider } from "@/components/workspace/navigation-guard";
 import siteStyles from "@/lib/ui/site.styles";
 import "./globals.css";
 export function generateMetadata(): Metadata {
@@ -27,7 +28,7 @@ export default function RootLayout({
     <html lang={locale} className={siteStyles.document}>
       <body className={siteStyles.body}>
         <AuthProvider messages={messages.auth} locale={locale}>
-          {children}
+          <NavigationGuardProvider>{children}</NavigationGuardProvider>
         </AuthProvider>
       </body>
     </html>

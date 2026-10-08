@@ -56,13 +56,13 @@ These are proposed canonical URLs, not instructions to scaffold empty pages. Cre
 | `/catalog`, `/catalog/[slug]` | Public course/eBook/tool discovery and detail | WEB-5; API-STORE |
 | `/pricing` | Public live plan comparison | WEB-6; API-BILLING |
 | Sign in / sign up / account modals on the current public URL | User requirement 2026-10-07 supersedes separate `/login` and `/register` pages; see [modal auth spec](../../tasks/web-auth-modals/spec.md) | WEB-1E; API-AUTH |
-| `/dashboard`, `/account/profile` | Proposed common role-aware post-login entry and read-only self-profile; not implemented | [Workspace design/plan](../../tasks/web-workspace-design/spec.md); API-AUTH. Profile writes require a separate contract. |
+| `/dashboard`, `/account/profile` | Implemented locally: common role-aware post-login entry and read-only self-profile | [Workspace design/plan](../../tasks/web-workspace-design/spec.md); API-AUTH. Profile writes require a separate contract. |
 | `/account/orders`, `/account/orders/[id]`, `/account/library` | Future authenticated purchases and entitlements; current account summary uses the modal | WEB-5; API-AUTH / API-STORE |
 | `/checkout/[id]` | Authenticated product checkout using the backend product identifier; server determines price and payment state | WEB-5; API-STORE; detailed payment route/session contract required |
-| `/account/farm-onboarding`, `/farm` | Mandatory FARMER setup, authorized farm summary and member actions | Implemented WEB-2/API-B1; [evidence](../role-request-approval/operations.md) |
-| `/app/farms/[farmId]`, `/app/farms/[farmId]/members` | Proposed selected-farm overview and transition of existing member management; not implemented | [Workspace design/plan](../../tasks/web-workspace-design/spec.md); WEB-2/3/4 and corresponding farm-domain APIs |
+| `/account/farm-onboarding`, `/farm` | Mandatory FARMER setup and authorized farm discovery; member actions now use the canonical selected-farm route | Implemented WEB-2/API-B1; [evidence](../role-request-approval/operations.md) |
+| `/app/farms/[farmId]`, `/app/farms/[farmId]/members` | Implemented locally: selected-farm overview and member management | [Workspace design/plan](../../tasks/web-workspace-design/spec.md); WEB-2/3/4 and corresponding farm-domain APIs |
 | `/account/role-requests`, `/admin/role-requests`, `/admin/administrative-access` | Professional applications/review and restricted privilege management | Implemented [role/onboarding feature](../role-request-approval/spec.md) |
-| `/app/farms/[farmId]/animals`, `/app/farms/[farmId]/animals/new`, `/app/farms/[farmId]/animals/[animalId]` | Registry, registration, detail, pedigree and weights | WEB-3; API-ANIMAL |
+| `/app/farms/[farmId]/animals`, `/app/farms/[farmId]/animals/new`, `/app/farms/[farmId]/animals/[animalId]` | Implemented first slice: list/search/filter/registration/detail/basic edit; pedigree and weights remain later | WEB-3; API-ANIMAL |
 | `/app/farms/[farmId]/milk`, `/app/farms/[farmId]/health`, `/app/farms/[farmId]/vaccinations`, `/app/farms/[farmId]/finances`, `/app/farms/[farmId]/reports` | Farm records, schedules and reporting | WEB-4; API-MILK / API-HEALTH / API-FINANCE |
 | `/app/farms/[farmId]/billing` | Farm subscription, quota, access status and billing portal | WEB-6; API-BILLING |
 | `/app/farms/[farmId]/consultations`, `/app/farms/[farmId]/consultations/new` | Farmer consultation history and intake | WEB-7; API-TRIAGE |

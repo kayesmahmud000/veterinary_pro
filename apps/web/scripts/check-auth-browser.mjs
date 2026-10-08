@@ -216,6 +216,18 @@ async function fill(client, values) {
 const submit = (client) =>
   client.evaluate("document.querySelector('dialog form').requestSubmit()");
 async function signedIn(client) {
+  // Explicit auth now closes the modal and lands on the common workspace.
+  await until(
+    () =>
+      client.evaluate(
+        "location.pathname === '/dashboard' && !!document.querySelector('[data-dashboard-role]')",
+      ),
+    "Explicit login did not reach dashboard",
+  );
+  await navigate(client);
+  await client.evaluate(
+    "document.querySelector('[data-auth-trigger]').click()",
+  );
   try {
     await until(
       () => client.evaluate("!!document.querySelector('[data-account-title]')"),
@@ -261,7 +273,15 @@ async function choosePhoneCountry(client, country) {
 try {
   nextProcess = spawn(
     process.execPath,
-    [require.resolve("next/dist/bin/next"), "start", "-p", "3210"],
+    [
+      require.resolve("next/dist/bin/next"),
+      "start",
+      ...(process.env.WEB_TEST_BUILD_DIR
+        ? [process.env.WEB_TEST_BUILD_DIR]
+        : []),
+      "-p",
+      "3210",
+    ],
     {
       cwd: webDir,
       windowsHide: true,

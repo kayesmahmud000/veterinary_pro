@@ -2,14 +2,10 @@
 // Prefer utilities in JSX for new one-off styles; extract shared combinations here.
 const styles = {
   shell: [
-    "w-11/12",
-    "my-0",
-    "mx-auto",
-    "pt-[140px]",
-    "pb-[72px]",
+    "min-w-0",
+    "py-8",
     "min-h-[80vh]",
-    "max-[640.01px]:pt-[112px]",
-    "max-[640.01px]:pb-12",
+    "min-[640px]:py-12",
     "motion-reduce:[&_*]:scroll-auto",
   ].join(" "),
   navigation: [
@@ -24,7 +20,7 @@ const styles = {
     "max-[640.01px]:text-[.85rem]",
   ].join(" "),
   heading: [
-    "text-[clamp(2rem,_5vw,_3.4rem)]",
+    "text-[clamp(1.75rem,_4vw,_2.6rem)]",
     "leading-[1.15]",
     "font-medium",
     "max-w-[850px]",

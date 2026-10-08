@@ -1,6 +1,6 @@
 # Post-login dashboard and profile design
 
-Status: **Proposed design; application implementation not started**  
+Status: **Implemented locally: common workspace and first Farmer registry slice; live integration acceptance pending**
 Date: **2026-10-08**  
 Inspected revision: **47e4680**, plus the user's current uncommitted web changes.  
 User-selected order: **common dashboard/profile → Farmer workspace**.
@@ -11,7 +11,7 @@ Design Khamar School's authenticated experience around the existing livestock, l
 
 This delivery contains the design, [wireframes](wireframes.png), editable [SVG](wireframes.svg) and [implementation plan](plan.md). Wireframes contain fictional sample data and future screens; they are visual proposals, not working dashboards. The selected first implementation batch is a shared workspace shell, common dashboard, read-only self-profile and post-login routing. Subsequent domain batches have separate acceptance gates.
 
-## Confirmed baseline and implications
+## Confirmed baseline and implications (before implementation)
 
 | Confirmed from code | Design implication |
 | --- | --- |
@@ -137,15 +137,15 @@ Member role affects actions independently of primary platform role. Current anim
 
 ### Source-grounded card read models
 
-Paths are relative to `/api/v1`; these routes exist in API source but are **not yet exposed through the web workspace allowlist**.
+Paths are relative to `/api/v1`; the implementation exposes these projections through fixed, farm-scoped web workspace mappings. Full domain editors remain separate.
 
 | Card | API/source | Projection and behavior |
 | --- | --- | --- |
 | Registered animals | `GET animals?page=1&limit=1`; [controller](../../../apps/api/src/modules/animals/animals.controller.ts) | `data.meta.total` from the unfiltered registered-animal list. Label includes sold/deceased records; an active-herd card would require `status=ACTIVE` and a different label. Never use first-page item count or onboarding animalCount. |
-| Today's recorded milk | `GET milk-logs/analytics?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&entryType=ALL`; [controller](../../../apps/api/src/modules/milk-logs/milk-logs.controller.ts) | `summary.totalYieldLiters`; with `summary.totalRecords===0`, display “No entry today”, not measured zero production. Seven-day trend uses a separate date range. Dates initially use documented farm-workspace Asia/Dhaka policy; show that label, and reconcile backend date semantics during real acceptance. |
+| Recorded milk on the UTC reporting date | `GET milk-logs/analytics?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&entryType=ALL`; [controller](../../../apps/api/src/modules/milk-logs/milk-logs.controller.ts) | `summary.totalYieldLiters`; with `summary.totalRecords===0`, display “No entry for this reporting date”, distinct from recorded zero. Current API milk/finance buckets use UTC; overview labels that date/window and separately shows the Asia/Dhaka local date. Seven-day trend remains a later domain slice. |
 | Care due | `GET clinical-health/vaccinations/schedule?daysAhead=7&asOfDate=YYYY-MM-DD`; [controller](../../../apps/api/src/modules/clinical-health/vaccine-schedule.controller.ts) | `dueNext7Days`, `overdueCount`, `upcomingEvents`; no fake notification delivery assertion. |
 | Period financial summary | `GET financial/profit-loss/summary?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD`; [controller](../../../apps/api/src/modules/financial/financial-profit-loss.controller.ts) | `netProfit`, `totalRevenue`, `totalExpense`, API currency/date range. Do not label net profit as income or externally paid money. |
-| Access/quota | `GET subscriptions/farm/:farmId/access-status` and `/quota`; [controller](../../../apps/api/src/modules/subscriptions/subscription.controller.ts) | Returned access and quotas, with permission/missing-subscription/provider error states handled explicitly. Subscription endpoints validate membership in their services; a selected header is not authorization. |
+| Access/quota | `GET subscriptions/farm/:farmId/access-status` and `/quota`; [controller](../../../apps/api/src/modules/subscriptions/subscription.controller.ts) | Returned access and quotas, with permission/missing-subscription/provider error states handled explicitly. These API reads lack membership enforcement; the web BFF positively checks `farms/my` before contacting them. A selected header is not authorization. |
 
 Do not merge partial reads into a synthetic all-success dashboard response. The first farm integration can fetch the independent validated card projections concurrently through the fixed BFF routes; add a backend summary endpoint only if measured cost justifies it.
 
@@ -163,4 +163,8 @@ Stage A: common shell/dashboard/read-only profile and entry navigation. Stage B:
 
 Profile editing, public vet publication, course progress/certificates, general notifications, passwordless/reset, browser offline, live video and actual payment/payout execution require their own contracts/provider acceptance. Keep their product direction visible in the roadmap; do not scaffold inactive screens in Stage A.
 
-UI/UX, architecture, frontend/API, security and QA perspectives were used for this proposal. No runtime/schema/dependency change is part of this design delivery. Rollback of the current delivery is documentation/artifact removal; future implementations must retain existing URLs and make domain batches independently releasable.
+UI/UX, architecture, frontend/API, security and QA perspectives were used for the original proposal. That design-only delivery changed documentation/artifacts; the subsequent implementation preserves existing URLs and adds reversible web components/BFF mappings without schema migrations or new dependencies.
+
+## Local implementation evidence (2026-10-08)
+
+Tasks 1–6 are implemented in the current checkout. See the [execution ledger](progress.md) for tests, review corrections and integration limits, and the [registry contract](../web-animal-registry/spec.md). Profile is read-only. Newly onboarded farms have no automatic subscription; writes remain blocked until an actual active subscription grants access. Subsequent domain handoffs are still separate.
