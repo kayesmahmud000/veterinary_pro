@@ -57,3 +57,24 @@ Grouped the language selector and desktop auth actions at the right edge of the 
 Widened the registration dialog on larger screens, placed signup fields in a two-column grid from 640px upward, and kept a single column below that breakpoint. Replaced the public-role radio cards with a localized native select; the permitted role set and default LEARNER value are unchanged.
 
 **Observed locally:** the signup grid rendered two columns at 1440px and 768px, and one at 375px and 320px. The dialog and page had no horizontal overflow at any checked width. The dropdown exposed exactly the four public roles and selected VET successfully. Auth-boundary tests still passed (8 tests); the standalone production Chrome auth harness has not been run with this UI change.
+
+## Role dropdown follow-up (2026-10-08)
+
+- [x] Inspect auth modal/validation/public-role contracts and implement the localized icon/description presentation using the existing native dropdown.
+- [x] Verify bilingual keyboard role changes/descriptions, responsive screenshots, pending/registration payload behavior, styles and isolated production build; update context/evidence.
+
+Role dropdown evidence: isolated production build/type validation, auth boundary tests and style guard/suites pass. `CHROME_NO_SANDBOX=1 node /tmp/web-public-discovery-eikgv7_1/scripts/check-auth-browser.mjs` passes bilingual native ArrowDown role selection, description/ARIA updates, four permitted roles, desktop/tablet/375px/320px layout and focus, exact signup payloads, pending dismissal guard, cookies, session/history and cross-tab/error/retry regressions. Its localization replay passes 80 GETs/60 forms. Screenshots `/tmp/vetralink-auth-qa-ZlSBGf/bn-1440-signup.png` and `en-320-signup.png` reviewed; temporary Chrome/mock/Next processes cleaned up by the harness. Controlled synthetic upstream only; no live API/database acceptance is claimed.
+
+## Country-code picker and phone validation follow-up
+
+1. [x] Add failing real-phone utility/form/BFF tests and libphonenumber-js dependency.
+2. [x] Implement strict normalizers and native country/phone control, default BD; integrate bilingual feedback and exact signup payload.
+3. [x] Verify focused auth/style tests, isolated production build and controlled-upstream bilingual browser acceptance; review screenshots, document limits and final diff.
+
+Implementation stays in the existing checkout and preserves earlier changes. No API/database migration or Git mutation. Rollback removes this web control/validation/dependency while preserving existing account data.
+
+Phone validation evidence (2026-10-08): real auth tests first failed for the absent utility, then `node apps/web/scripts/check-auth.mjs` passes 12 tests including six existing boundary cases. Native picker/number integration uses libphonenumber-js 1.13.15 /max metadata; metadata fixtures were checked against the installed version (the old documented Singapore example is now valid, so the regression uses an invalid 1-prefix at a possible length). Tests cover BD default, trunk zero, Bangla digits, formatted/international numbers, optional whitespace, foreign/shared calling codes, rejected letters/prose/extensions/lengths/mismatches and client-bypass prevention before upstream. Web payloads contain canonical E.164 only. Existing phone hashes/data and direct API/mobile contracts are unchanged; no ownership/OTP verification or legacy-number migration is included.
+
+Style guard and both style suites pass. Isolated production compilation/type validation passes; no writes to the user's .next. `CHROME_NO_SANDBOX=1 node /tmp/web-public-discovery-eikgv7_1/scripts/check-auth-browser.mjs` passes both-language BD default, localized country hint, invalid/valid/Bangla edits, US choice, Canadian international paste, explicit country mismatch, optional clear, submit focus/rejection, canonical phone/no country key in the exact upstream payload and pending-disabled controls. Existing signup/login/session/rotation/retry/focus checks and 80 localized GETs/60 native language forms also pass. Synthetic mock upstream only, with no live API/database registration. The harness cleans up temporary servers/Chrome. Reviewed `/tmp/vetralink-auth-qa-y15MQ9/bn-320-signup.png` and `en-1440-signup.png`; Bangla hint wording subsequently made fully Bangla. Final build replay recorded below.
+
+Final phone replay: all 12 auth tests and the production build/type check pass after the Bangla hint refinement. Context validation passes (48 documents, 304 local links, 93 source entries) and git diff --check passes. Self-review confirms strict web validation, optional blank omission, geographic-country matching, exact payload selection, native pending disablement and accessible labels/error associations. No Git mutations or deployment. Suggested commit: `feat(web): add validated signup phone country picker`.

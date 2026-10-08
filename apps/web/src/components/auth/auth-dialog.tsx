@@ -13,7 +13,6 @@ import {
   X,
 } from "lucide-react";
 import {
-  PUBLIC_ROLES,
   validateAuthForm,
   type AuthErrorCode,
   type AuthField,
@@ -22,6 +21,10 @@ import {
 import { useAuth } from "./auth-provider";
 import styles from "./auth.styles";
 import { BrandLogo } from "@/components/brand/site-brand";
+import { RoleSelect } from "./role-select";
+import { PhoneField } from "./phone-field";
+import { DEFAULT_PHONE_COUNTRY } from "@/lib/auth/phone";
+import type { CountryCode } from "libphonenumber-js/max";
 
 export function AuthDialog() {
   const router = useRouter();
@@ -29,6 +32,7 @@ export function AuthDialog() {
     user,
     modal,
     messages: t,
+    locale,
     close,
     open,
     mutate,
@@ -45,6 +49,9 @@ export function AuthDialog() {
   const [fields, setFields] = useState<FieldErrors>({});
   const [success, setSuccess] = useState<string>();
   const [showPassword, setShowPassword] = useState(false);
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>(
+    DEFAULT_PHONE_COUNTRY,
+  );
   const [values, setValues] = useState({
     email: "",
     password: "",
@@ -58,7 +65,7 @@ export function AuthDialog() {
     const element = dialog.current;
     const opener =
       document.activeElement instanceof HTMLElement &&
-        document.activeElement !== document.body
+      document.activeElement !== document.body
         ? document.activeElement
         : null;
     const wasScrollLocked = document.body.classList.contains("overflow-hidden");
@@ -109,13 +116,11 @@ export function AuthDialog() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy.current) return;
-    const validation = validateAuthForm(mode, values);
+    const validation = validateAuthForm(mode, { ...values, phoneCountry });
     setFields(validation.fields);
     if (Object.keys(validation.fields).length || !validation.payload) {
       const field = Object.keys(validation.fields)[0];
-      form.current
-        ?.querySelector<HTMLElement>(`[name="${field}"]`)
-        ?.focus();
+      form.current?.querySelector<HTMLElement>(`[name="${field}"]`)?.focus();
       return;
     }
     busy.current = true;
@@ -173,7 +178,9 @@ export function AuthDialog() {
       <div className={cn(styles.field, "auth-field")}>
         <label htmlFor={`auth-${field}`}>{label}</label>
         <div
-          className={cn(isPassword && field === "password" ? styles.password : undefined)}
+          className={cn(
+            isPassword && field === "password" ? styles.password : undefined,
+          )}
         >
           <input
             id={`auth-${field}`}
@@ -410,36 +417,31 @@ export function AuthDialog() {
                   >
                     {input("name", t.name)}
                     {input("email", t.email, "email")}
-                    {input("phone", t.phone, "tel", t.phoneHint)}
+                    <PhoneField
+                      value={values.phone}
+                      country={phoneCountry}
+                      onChange={(value) => change("phone", value)}
+                      onCountryChange={(country) => {
+                        setPhoneCountry(country);
+                        setFields((current) => ({
+                          ...current,
+                          phone: undefined,
+                        }));
+                        setError(undefined);
+                      }}
+                      copy={t}
+                      locale={locale}
+                      error={fields.phone ? t.fields.phone : undefined}
+                    />
                     {input("password", t.password, "password", t.passwordHint)}
                     {input("confirmation", t.confirmation, "password")}
                     <div className={cn(styles.field, "auth-field")}>
-                      <label htmlFor="auth-role">{t.role}</label>
-                      <select
-                        id="auth-role"
-                        name="role"
+                      <RoleSelect
                         value={values.role}
-                        onChange={(event) => change("role", event.target.value)}
-                        aria-invalid={fields.role ? true : undefined}
-                        aria-describedby={
-                          fields.role ? "auth-role-error" : undefined
-                        }
-                        required
-                      >
-                        {PUBLIC_ROLES.map((role) => (
-                          <option key={role} value={role}>
-                            {t.roles[role]}
-                          </option>
-                        ))}
-                      </select>
-                      {fields.role && (
-                        <span
-                          id="auth-role-error"
-                          className={cn(styles.fieldError)}
-                        >
-                          {t.fields.role}
-                        </span>
-                      )}
+                        onValueChange={(value) => change("role", value)}
+                        copy={t}
+                        error={fields.role ? t.fields.role : undefined}
+                      />
                     </div>
                   </div>
                 )}

@@ -2,8 +2,10 @@ import type { Messages } from "./en";
 import { showcaseBn } from "./showcase";
 import { resourcesBn } from "./resources";
 import { authBn } from "./auth";
+import { publicPagesBn } from "./public-pages";
 
 export const bn: Messages = {
+  publicPages: publicPagesBn,
   brand: { name: "খামার স্কুল" },
   auth: authBn,
   showcase: showcaseBn,
@@ -17,6 +19,13 @@ export const bn: Messages = {
       "আপনার খামারের পূর্ণ চিত্র জানুন। প্রাণিসম্পদ ব্যবস্থাপনা, ব্যবহারিক শিক্ষা ও পশুচিকিৎসার সমন্বিত ধারণা দেখুন।",
   },
   navigation: {
+    courses: "কোর্স",
+    blog: "ব্লগ",
+    about: "আমাদের সম্পর্কে",
+    help: "সহায়তা",
+    doctors: "আমাদের চিকিৎসকরা",
+    demo: "ডেমো দেখুন",
+    guides: "গাইড ও টেমপ্লেট",
     farm: "খামার ব্যবস্থাপনা",
     learning: "শিক্ষা",
     veterinary: "পশুচিকিৎসা",

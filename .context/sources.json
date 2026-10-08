@@ -417,6 +417,82 @@
     },
     {
       "path": "apps/web/scripts/check-styles.mjs"
+    },
+    {
+      "path": "apps/web/src/lib/public-navigation.ts"
+    },
+    {
+      "path": "apps/web/src/lib/public-content.ts"
+    },
+    {
+      "path": "apps/web/src/lib/doctor-directory.ts"
+    },
+    {
+      "path": "apps/web/src/content/doctors.json"
+    },
+    {
+      "path": "apps/web/src/middleware.ts"
+    },
+    {
+      "path": "apps/web/src/components/ui/navigation-menu.tsx"
+    },
+    {
+      "path": "apps/web/scripts/check-public-content.mjs"
+    },
+    {
+      "path": "apps/web/scripts/check-public-pages.mjs"
+    },
+    {
+      "path": "apps/web/scripts/check-public-navigation-browser.mjs"
+    },
+    {
+      "path": "docs/tasks/web-public-navigation/spec.md"
+    },
+    {
+      "path": "docs/tasks/web-public-navigation/plan.md"
+    },
+    {
+      "path": "apps/web/src/components/auth/role-select.tsx",
+      "anchors": [
+        "aria-describedby",
+        "PUBLIC_ROLES"
+      ]
+    },
+    {
+      "path": "apps/web/src/components/marketing/use-public-nav-location.ts",
+      "anchors": [
+        "hashchange",
+        "popstate"
+      ]
+    },
+    {
+      "path": "apps/web/src/lib/auth/phone.ts",
+      "anchors": [
+        "normalizeSignupPhone",
+        "normalizeInternationalPhone",
+        "libphonenumber-js/max"
+      ]
+    },
+    {
+      "path": "apps/web/src/components/auth/phone-field.tsx",
+      "anchors": [
+        "auth-phone-country",
+        "tel-national"
+      ]
+    },
+    {
+      "path": "docs/tasks/web-workspace-design/spec.md",
+      "anchors": [
+        "Proposed design; application implementation not started",
+        "common dashboard/profile → Farmer workspace"
+      ]
+    },
+    {
+      "path": "docs/tasks/web-workspace-design/plan.md",
+      "anchors": [
+        "Stage A — common dashboard/profile",
+        "all product implementation steps below are pending"
+      ]
     }
   ]
 }

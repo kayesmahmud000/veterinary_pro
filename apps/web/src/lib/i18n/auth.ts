@@ -17,10 +17,20 @@ export const authEn = {
   password: "Password",
   name: "Full name",
   phone: "Phone number (optional)",
-  phoneHint: "Include your country code, for example +880.",
+  phoneHint:
+    "Select your country and enter a local number, or paste a full international number.",
+  phoneCountry: "Phone country / calling code",
+  phoneExample: "Example",
   passwordHint: "Use 8–128 characters.",
   confirmation: "Confirm password",
   role: "How will you use Khamar School?",
+  roleDescriptions: {
+    LEARNER:
+      "Start with learning and resources. You can apply for a professional role later.",
+    FARMER: "Choose this to manage a farm. Farm setup follows registration.",
+    VET: "Choose this if you are a veterinarian and want to use veterinary services.",
+    BUYER: "Choose this to explore courses and resources for purchase.",
+  },
   roles: {
     LEARNER: "Learner (default)",
     FARMER: "Farmer / farm owner",
@@ -53,6 +63,7 @@ export const authEn = {
   sessionNote:
     "Your session stays available when you reload this browser. Sign out when using a shared device.",
   fields: {
+    phone: "Enter a valid phone number for the selected country.",
     required: "Please fill in this field.",
     email: "Enter a valid email address.",
     name: "Enter a name with 2–100 characters.",
@@ -103,10 +114,21 @@ export const authBn: AuthMessages = {
   password: "পাসওয়ার্ড",
   name: "পুরো নাম",
   phone: "ফোন নম্বর (ঐচ্ছিক)",
-  phoneHint: "দেশের কোডসহ লিখুন, যেমন +880।",
+  phoneHint:
+    "দেশ বেছে নিয়ে স্থানীয় নম্বর লিখুন, অথবা দেশের কোডসহ পূর্ণ নম্বর পেস্ট করুন।",
+  phoneCountry: "ফোন নম্বরের দেশ / ডায়ালিং কোড",
+  phoneExample: "উদাহরণ",
   passwordHint: "৮–১২৮ অক্ষর ব্যবহার করুন।",
   confirmation: "পাসওয়ার্ড আবার লিখুন",
   role: "খামার স্কুল কীভাবে ব্যবহার করবেন?",
+  roleDescriptions: {
+    LEARNER:
+      "শেখা ও শিক্ষার উপকরণ দিয়ে শুরু করুন। পরে পেশাগত ভূমিকার জন্য আবেদন করতে পারবেন।",
+    FARMER:
+      "খামার পরিচালনার জন্য এটি বেছে নিন। নিবন্ধনের পর খামারের তথ্য পূরণ করতে হবে।",
+    VET: "আপনি পশুচিকিৎসক হলে এবং পশুচিকিৎসার সেবা ব্যবহার করতে চাইলে এটি বেছে নিন।",
+    BUYER: "কেনার জন্য কোর্স ও শিক্ষার উপকরণ খুঁজতে এটি বেছে নিন।",
+  },
   roles: {
     LEARNER: "শিক্ষার্থী (ডিফল্ট)",
     FARMER: "খামারি / খামারের মালিক",
@@ -139,6 +161,7 @@ export const authBn: AuthMessages = {
   sessionNote:
     "এই ব্রাউজারে পাতা আবার খুললেও সেশন থাকবে। অন্যের ডিভাইস ব্যবহার করলে সাইন আউট করুন।",
   fields: {
+    phone: "বেছে নেওয়া দেশের জন্য সঠিক ফোন নম্বর লিখুন।",
     required: "এই ঘরটি পূরণ করুন।",
     email: "সঠিক ইমেইল ঠিকানা লিখুন।",
     name: "২–১০০ অক্ষরের নাম লিখুন।",

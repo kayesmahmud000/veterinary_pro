@@ -408,7 +408,11 @@ export function FeatureExplorer({
   const id = useId();
   const Icon = icons[kind === "farm" ? 0 : kind === "learning" ? 1 : 2];
   return (
-    <section className={cn(ui.featureExplorer)} aria-label={copy.label}>
+    <section
+      id={kind === "learning" ? "courses" : undefined}
+      className={cn(ui.featureExplorer)}
+      aria-label={copy.label}
+    >
       <div>
         <p className={cn(ui.helper)}>{copy.hint}</p>
         <div className={cn(ui.featureChoices)} role="group" aria-label={copy.label}>

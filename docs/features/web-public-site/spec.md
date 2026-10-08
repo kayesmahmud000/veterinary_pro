@@ -56,9 +56,11 @@ These are proposed canonical URLs, not instructions to scaffold empty pages. Cre
 | `/catalog`, `/catalog/[slug]` | Public course/eBook/tool discovery and detail | WEB-5; API-STORE |
 | `/pricing` | Public live plan comparison | WEB-6; API-BILLING |
 | Sign in / sign up / account modals on the current public URL | User requirement 2026-10-07 supersedes separate `/login` and `/register` pages; see [modal auth spec](../../tasks/web-auth-modals/spec.md) | WEB-1E; API-AUTH |
+| `/dashboard`, `/account/profile` | Proposed common role-aware post-login entry and read-only self-profile; not implemented | [Workspace design/plan](../../tasks/web-workspace-design/spec.md); API-AUTH. Profile writes require a separate contract. |
 | `/account/orders`, `/account/orders/[id]`, `/account/library` | Future authenticated purchases and entitlements; current account summary uses the modal | WEB-5; API-AUTH / API-STORE |
 | `/checkout/[id]` | Authenticated product checkout using the backend product identifier; server determines price and payment state | WEB-5; API-STORE; detailed payment route/session contract required |
 | `/account/farm-onboarding`, `/farm` | Mandatory FARMER setup, authorized farm summary and member actions | Implemented WEB-2/API-B1; [evidence](../role-request-approval/operations.md) |
+| `/app/farms/[farmId]`, `/app/farms/[farmId]/members` | Proposed selected-farm overview and transition of existing member management; not implemented | [Workspace design/plan](../../tasks/web-workspace-design/spec.md); WEB-2/3/4 and corresponding farm-domain APIs |
 | `/account/role-requests`, `/admin/role-requests`, `/admin/administrative-access` | Professional applications/review and restricted privilege management | Implemented [role/onboarding feature](../role-request-approval/spec.md) |
 | `/app/farms/[farmId]/animals`, `/app/farms/[farmId]/animals/new`, `/app/farms/[farmId]/animals/[animalId]` | Registry, registration, detail, pedigree and weights | WEB-3; API-ANIMAL |
 | `/app/farms/[farmId]/milk`, `/app/farms/[farmId]/health`, `/app/farms/[farmId]/vaccinations`, `/app/farms/[farmId]/finances`, `/app/farms/[farmId]/reports` | Farm records, schedules and reporting | WEB-4; API-MILK / API-HEALTH / API-FINANCE |
@@ -95,3 +97,7 @@ Default to Server Components. Locale is resolved per request with a persistent l
 ## Review and rollout
 
 Web/UI/UX and architecture perspectives define this design; QA, code and UI review validate the rendered result. Main risks are dead navigation, misleading launch copy, keyboard/mobile regressions and accidental collision at `/`. No migrations or API rollout are required. Rollback restores the previous web page/layout and removes the newly introduced public assets/routes, preserving unrelated changes. Update current client context and roadmap status only after verification.
+
+## Public discovery follow-up (2026-10-08)
+
+The user-approved [public navigation specification](../../tasks/web-public-navigation/spec.md) extends the implemented public routes with `/about`, `/help`, `/blog`, `/blog/[slug]`, `/doctors` and `/doctors/[id]`. It supersedes the original single-level desktop navigation with farm/learning/veterinary dropdown groups and direct blog/about/help links. Doctor profiles are manually curated public content with two clearly marked fictional frontend demos; protected vet accounts and consultation booking remain separate. Verification and limitations are recorded in its [plan](../../tasks/web-public-navigation/plan.md).

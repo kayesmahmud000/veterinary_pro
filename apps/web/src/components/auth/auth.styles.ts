@@ -305,7 +305,7 @@ const styles = {
     "[&_button:disabled]:cursor-wait",
     "[&_button:disabled]:opacity-[0.65]",
     "max-[1150.01px]:[&_.auth-headerSignUp]:hidden",
-    "max-[799.01px]:hidden",
+    "max-[1279.01px]:hidden",
   ].join(" "),
   mobileControls: [
     "flex",

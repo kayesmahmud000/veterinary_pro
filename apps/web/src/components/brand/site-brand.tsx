@@ -35,9 +35,9 @@ export function SiteBrand({
     <Link
       href="/"
       aria-label={homeLabel}
-      className="inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap text-[1.35rem] font-bold tracking-[-0.035em] max-[799px]:mr-auto max-[799px]:text-[1.05rem] max-[380px]:text-[0.95rem]"
+      className="inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap text-[1.35rem] font-bold tracking-[-0.035em] max-[1279px]:mr-auto max-[1279px]:text-[1.05rem] max-[380px]:text-[0.95rem]"
     >
-      <BrandLogo className="max-[799px]:h-10 max-[799px]:w-10 max-[380px]:h-8 max-[380px]:w-8" />
+      <BrandLogo className="max-[1279px]:h-10 max-[1279px]:w-10 max-[380px]:h-8 max-[380px]:w-8" />
       <span>{name}</span>
     </Link>
   );

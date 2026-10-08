@@ -51,7 +51,12 @@ const upstream = http.createServer(async (req, res) => {
   for await (const chunk of req) text += chunk;
   const data = text ? JSON.parse(text) : {};
   const action = req.url.split("/").at(-1);
-  operations.push({ action, keys: Object.keys(data), role: data.role });
+  operations.push({
+    action,
+    keys: Object.keys(data),
+    role: data.role,
+    phone: data.phone,
+  });
   const send = (status, value, message = "") => {
     res.writeHead(status, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ success: status < 400, data: value, message }));
@@ -131,7 +136,7 @@ async function connect(target) {
     if (message.method === "Runtime.exceptionThrown")
       exceptions.push(
         message.params.exceptionDetails.exception?.description ??
-        message.params.exceptionDetails.text,
+          message.params.exceptionDetails.text,
       );
     if (!message.id) return;
     const request = pending.get(message.id);
@@ -154,7 +159,7 @@ async function connect(target) {
     if (result.exceptionDetails)
       throw new Error(
         result.exceptionDetails.exception?.description ??
-        "Browser evaluation failed",
+          "Browser evaluation failed",
       );
     return result.result.value;
   };
@@ -193,7 +198,7 @@ async function openDialog(client, mode, width) {
     "Auth control stayed busy",
   );
   await client.evaluate(
-    width < 800 ? "document.querySelector('.menu-toggle').click()" : "void 0",
+    width < 1280 ? "document.querySelector('.menu-toggle').click()" : "void 0",
   );
   await client.evaluate(
     `(() => { const buttons = [...document.querySelectorAll('header button')].filter(b => b.getClientRects().length); const button = buttons.find(b => ${mode === "register" ? "b.textContent.trim() === (document.documentElement.lang === 'bn' ? 'সাইন আপ' : 'Sign up')" : "b.hasAttribute('data-auth-trigger')"}); if (!button) throw new Error('Auth trigger missing'); button.focus(); button.click(); })()`,
@@ -247,6 +252,12 @@ async function chooseRole(client, role) {
   );
 }
 
+async function choosePhoneCountry(client, country) {
+  await client.evaluate(
+    `(() => { const select = document.querySelector('#auth-phone-country'); const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set; setter.call(select, ${JSON.stringify(country)}); select.dispatchEvent(new Event('change', { bubbles: true })); })()`,
+  );
+}
+
 try {
   nextProcess = spawn(
     process.execPath,
@@ -269,9 +280,12 @@ try {
   );
   chrome = spawn(
     process.env.CHROME_PATH ||
-    "C:/Program Files/Google/Chrome/Application/chrome.exe",
+      (process.platform === "win32"
+        ? "C:/Program Files/Google/Chrome/Application/chrome.exe"
+        : "/usr/bin/google-chrome"),
     [
       "--headless=new",
+      ...(process.env.CHROME_NO_SANDBOX === "1" ? ["--no-sandbox"] : []),
       "--remote-debugging-port=9333",
       `--user-data-dir=${path.join(tempRoot, "profile")}`,
       "--no-first-run",
@@ -304,7 +318,7 @@ try {
         width,
         height: 900,
         deviceScaleFactor: 1,
-        mobile: width < 800,
+        mobile: width < 1280,
       });
       await navigate(client);
       assert.equal(
@@ -378,6 +392,105 @@ try {
       );
       assert.equal(
         await client.evaluate(
+          "document.querySelector('#auth-phone-country').value",
+        ),
+        "BD",
+      );
+      assert.ok(
+        await client.evaluate(
+          "document.querySelector('#auth-phone-hint').textContent.includes(document.documentElement.lang==='bn' ? 'বাংলাদেশ' : 'Bangladesh')",
+        ),
+      );
+      await fill(client, { phone: "01712" });
+      await client.evaluate(
+        "document.querySelector('#auth-phone').focus(); document.querySelector('#auth-role').focus()",
+      );
+      await until(
+        () =>
+          client.evaluate(
+            "document.querySelector('#auth-phone').getAttribute('aria-invalid')==='true' && !!document.querySelector('#auth-phone-error')",
+          ),
+        "Incomplete phone feedback missing",
+      );
+      await fill(client, { phone: "০১৭১২৩৪৫৬৭৮" });
+      await until(
+        () => client.evaluate("!document.querySelector('#auth-phone-error')"),
+        "Valid Bangla number remains invalid",
+      );
+      await choosePhoneCountry(client, "US");
+      await fill(client, { phone: "2025550123" });
+      await until(
+        () => client.evaluate("!document.querySelector('#auth-phone-error')"),
+        "Valid US local phone rejected",
+      );
+      await fill(client, { phone: "+14165550123" });
+      await until(
+        () =>
+          client.evaluate(
+            "document.querySelector('#auth-phone-country').value==='CA' && !document.querySelector('#auth-phone-error')",
+          ),
+        "International paste did not select Canada",
+      );
+      await choosePhoneCountry(client, "BD");
+      await until(
+        () => client.evaluate("!!document.querySelector('#auth-phone-error')"),
+        "Explicit country mismatch not rejected",
+      );
+      await fill(client, { phone: "" });
+      await until(
+        () => client.evaluate("!document.querySelector('#auth-phone-error')"),
+        "Optional empty phone rejected",
+      );
+      const learnerDescription = await client.evaluate(
+        "document.querySelector('#auth-role-description').textContent",
+      );
+      assert.ok(
+        learnerDescription.includes(locale === "bn" ? "আবেদন" : "apply"),
+      );
+      assert.equal(
+        await client.evaluate(
+          "document.querySelector('#auth-role').getAttribute('aria-describedby')",
+        ),
+        "auth-role-description",
+      );
+      await client.evaluate("document.querySelector('#auth-role').focus()");
+      await client.call("Input.dispatchKeyEvent", {
+        type: "keyDown",
+        key: "ArrowDown",
+        code: "ArrowDown",
+        windowsVirtualKeyCode: 40,
+      });
+      await client.call("Input.dispatchKeyEvent", {
+        type: "keyUp",
+        key: "ArrowDown",
+        code: "ArrowDown",
+        windowsVirtualKeyCode: 40,
+      });
+      await until(
+        () =>
+          client.evaluate(
+            "document.querySelector('#auth-role').value==='FARMER'",
+          ),
+        "Keyboard role selection failed",
+      );
+      await until(
+        () =>
+          client.evaluate(
+            "document.querySelector('#auth-role-description').textContent.includes(document.documentElement.lang==='bn' ? 'খামারের তথ্য' : 'Farm setup')",
+          ),
+        "Selected role explanation did not update",
+      );
+      for (const role of ["VET", "BUYER", "LEARNER"]) {
+        await chooseRole(client, role);
+        assert.notEqual(
+          await client.evaluate(
+            "document.querySelector('#auth-role-description').textContent.trim()",
+          ),
+          "",
+        );
+      }
+      assert.equal(
+        await client.evaluate(
           "getComputedStyle(document.querySelector('#auth-register-fields')).gridTemplateColumns.split(' ').length",
         ),
         width >= 640 ? 2 : 1,
@@ -394,10 +507,13 @@ try {
         screenshots.push(location);
       }
       await dismiss(client);
-      assert.equal(await client.evaluate("getComputedStyle(document.body).overflow"), "visible");
+      assert.equal(
+        await client.evaluate("getComputedStyle(document.body).overflow"),
+        "visible",
+      );
       assert.equal(
         await client.evaluate(
-          width < 800
+          width < 1280
             ? "document.activeElement.classList.contains('menu-toggle')"
             : "document.activeElement.hasAttribute('data-auth-trigger')",
         ),
@@ -422,8 +538,19 @@ try {
     email: "vet@example.test",
     password: "long password",
     confirmation: "long password",
-    phone: " +8801800000000 ",
+    phone: "01712",
   });
+  await submit(client);
+  assert.equal(
+    operations.filter((op) => op.action === "register").length,
+    0,
+    "Invalid phone must not reach upstream",
+  );
+  assert.equal(
+    await client.evaluate("document.activeElement.id"),
+    "auth-phone",
+  );
+  await fill(client, { phone: "০১৮০০০০০০০০" });
   await chooseRole(client, "VET");
   await submit(client);
   await until(
@@ -448,8 +575,24 @@ try {
     true,
     `Pending cancel state: ${JSON.stringify(pendingCancelState)}`,
   );
+  assert.equal(
+    await client.evaluate(
+      "document.querySelector('#auth-phone-country').matches(':disabled') && document.querySelector('#auth-phone').matches(':disabled')",
+    ),
+    true,
+    "Pending signup disables phone country and number",
+  );
   await signedIn(client);
   assert.equal(operations.filter((op) => op.action === "register").length, 1);
+  assert.equal(
+    operations.find((op) => op.action === "register").phone,
+    "+8801800000000",
+  );
+  assert.ok(
+    !operations
+      .find((op) => op.action === "register")
+      .keys.includes("phoneCountry"),
+  );
   assert.ok(
     await client.evaluate(
       "document.querySelector('dialog').textContent.includes('Veterinarian')",
@@ -693,7 +836,7 @@ try {
     );
   });
 } finally {
-  if (clients[0]) await clients[0].call("Browser.close").catch(() => { });
+  if (clients[0]) await clients[0].call("Browser.close").catch(() => {});
   for (const client of clients) client.ws.close();
   if (chrome) chrome.kill();
   if (nextProcess) nextProcess.kill();
@@ -711,5 +854,5 @@ try {
     force: true,
     maxRetries: 5,
     retryDelay: 200,
-  }).catch(() => { });
+  }).catch(() => {});
 }

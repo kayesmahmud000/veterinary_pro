@@ -1,0 +1,44 @@
+[
+  {
+    "id": "demo-rafiq-hasan",
+    "published": true,
+    "isDemo": true,
+    "name": { "bn": "ডা. রফিক হাসান", "en": "Dr. Rafiq Hasan" },
+    "qualifications": {
+      "bn": "ডিভিএম — নমুনা যোগ্যতা",
+      "en": "DVM — sample qualification"
+    },
+    "location": {
+      "bn": "ঢাকা — নমুনা অবস্থান",
+      "en": "Dhaka — sample location"
+    },
+    "biography": {
+      "bn": "এই কাল্পনিক পরিচিতিতে দুগ্ধ গবাদিপশু ও ছাগল-ভেড়ার যত্নে আগ্রহী একজন চিকিৎসকের তথ্যের নমুনা দেখানো হয়েছে। এটি কোনো আসল ব্যক্তির পরিচিতি নয়; অভিজ্ঞতা ও যোগ্যতা ডেমোর জন্য তৈরি।",
+      "en": "This fictional profile demonstrates the information shown for a veterinarian with an interest in dairy cattle, goats and sheep. It does not describe a real person; experience and qualifications are demonstration data."
+    },
+    "specialties": ["dairy", "goat_sheep"],
+    "yearsExperience": 8,
+    "languages": ["bn", "en"]
+  },
+  {
+    "id": "demo-nadia-rahman",
+    "published": true,
+    "isDemo": true,
+    "name": { "bn": "ডা. নাদিয়া রহমান", "en": "Dr. Nadia Rahman" },
+    "qualifications": {
+      "bn": "ডিভিএম — নমুনা যোগ্যতা",
+      "en": "DVM — sample qualification"
+    },
+    "location": {
+      "bn": "চট্টগ্রাম — নমুনা অবস্থান",
+      "en": "Chattogram — sample location"
+    },
+    "biography": {
+      "bn": "এই কাল্পনিক পরিচিতিতে পোলট্রি ও প্রাণীর সাধারণ যত্নে আগ্রহী একজন চিকিৎসকের তথ্যের নমুনা দেখানো হয়েছে। নাম, যোগ্যতা ও অভিজ্ঞতা ডেমোর অংশ; এই পাতায় অ্যাপয়েন্টমেন্ট বুক করা যায় না।",
+      "en": "This fictional profile demonstrates a veterinarian's introduction with an interest in poultry and general animal care. The name, qualifications and experience are sample data. This page does not offer appointment booking."
+    },
+    "specialties": ["poultry", "general"],
+    "yearsExperience": 5,
+    "languages": ["bn", "en"]
+  }
+]

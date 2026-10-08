@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1430" viewBox="0 0 1600 1430" role="img" aria-labelledby="title desc">
+<title id="title">Khamar School post-login workspace design</title>
+<desc id="desc">Proposed common dashboard, mobile dashboard, read-only profile and future farmer dashboard. All names and metrics are fictional design samples.</desc>
+<rect x="0" y="0" width="1600" height="1430" rx="0" fill="#eef2eb" stroke="#eef2eb"/>
+<text x="40" y="56" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="32" fill="#183f32" font-weight="700">খামার স্কুল · Login-এর পরের workspace</text>
+<text x="40" y="88" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="17" fill="#53655c" font-weight="400">প্রস্তাবিত design • সব নাম ও সংখ্যা নমুনা • Common dashboard/profile আগে, Farmer workspace পরে</text>
+<rect x="40" y="125" width="1040" height="615" rx="18" fill="#fafbf7" stroke="#dfe5dc"/>
+<rect x="40" y="125" width="1040" height="62" rx="16" fill="white" stroke="#dfe5dc"/>
+<text x="58" y="164" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="20" fill="#183f32" font-weight="700">খামার স্কুল</text>
+<text x="262" y="164" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#53655c" font-weight="400">ড্যাশবোর্ড</text>
+<text x="902" y="164" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="13" fill="#53655c" font-weight="400">বাংলা  |  ENG</text>
+<rect x="1008" y="143" width="48" height="27" rx="13" fill="#fafbf7" stroke="#dfe5dc"/>
+<text x="1018" y="162" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="12" fill="#183f32" font-weight="400">রহিম</text>
+<rect x="40" y="187" width="198" height="553" rx="0" fill="white" stroke="#dfe5dc"/>
+<text x="58" y="227" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#a26913" font-weight="700">ড্যাশবোর্ড</text>
+<text x="58" y="273" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#53655c" font-weight="400">খামারে যান</text>
+<text x="58" y="319" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#53655c" font-weight="400">আমার প্রোফাইল</text>
+<text x="58" y="365" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#53655c" font-weight="400">আমার আবেদন</text>
+<text x="58" y="411" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#53655c" font-weight="400">সহায়তা</text>
+<text x="58" y="679" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="14" fill="#53655c" font-weight="400">ওয়েবসাইটে ফিরুন</text>
+<text x="58" y="716" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="14" fill="#53655c" font-weight="400">সাইন আউট</text>
+<text x="264" y="241" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="28" fill="#183f32" font-weight="700">স্বাগতম, রহিম উদ্দিন</text>
+<text x="264" y="273" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#53655c" font-weight="400">খামারের কাজ শুরু করুন, অথবা আপনার অ্যাকাউন্ট দেখুন।</text>
+<rect x="842" y="219" width="202" height="27" rx="13" fill="#fafbf7" stroke="#dfe5dc"/>
+<text x="852" y="238" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="12" fill="#183f32" font-weight="400">অ্যাকাউন্ট: খামারি</text>
+<rect x="264" y="303" width="370" height="184" rx="12" fill="white" stroke="#dfe5dc"/>
+<text x="282" y="335" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="18" fill="#183f32" font-weight="700">খামারের কাজ</text>
+<text x="282" y="366" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#53655c" font-weight="400">আপনার খামার সেটআপ সম্পন্ন হয়েছে।</text>
+<text x="282" y="398" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="14" fill="#53655c" font-weight="400">অনুমোদিত খামার বেছে নিয়ে কাজ শুরু করুন।</text>
+<rect x="282" y="420" width="155" height="44" rx="8" fill="#214e3a" stroke="#214e3a"/>
+<text x="296" y="449" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="15" fill="white" font-weight="700">খামারে যান →</text>
+<rect x="654" y="303" width="390" height="184" rx="12" fill="white" stroke="#dfe5dc"/>
+<text x="672" y="335" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="18" fill="#183f32" font-weight="700">অ্যাকাউন্টের পরিচিতি</text>
+<text x="672" y="368" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#53655c" font-weight="400">ইমেইল যাচাই: এখনও হয়নি</text>
+<text x="672" y="401" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="15" fill="#53655c" font-weight="400">ফোন: +88018*******23</text>
+<text x="672" y="455" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#a26913" font-weight="700">প্রোফাইল দেখুন →</text>
+<rect x="264" y="507" width="370" height="151" rx="12" fill="white" stroke="#dfe5dc"/>
+<text x="282" y="539" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="18" fill="#183f32" font-weight="700">অ্যাকাউন্টের আবেদন</text>
+<text x="282" y="571" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="15" fill="#53655c" font-weight="400">আপনার পূর্বের আবেদন ও সিদ্ধান্ত দেখুন।</text>
+<text x="282" y="619" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#a26913" font-weight="700">আবেদনের ইতিহাস →</text>
+<rect x="654" y="507" width="390" height="151" rx="12" fill="white" stroke="#dfe5dc"/>
+<text x="672" y="539" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="18" fill="#183f32" font-weight="700">ফ্রি শেখার রিসোর্স</text>
+<text x="672" y="571" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="15" fill="#53655c" font-weight="400">পশুর রেকর্ড, দুধের হিসাব ও খরচের গাইড।</text>
+<text x="672" y="619" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#a26913" font-weight="700">শেখা শুরু করুন →</text>
+<text x="264" y="699" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="14" fill="#53655c" font-weight="400">সহায়তা দরকার? সহায়তা পাতা দেখুন।</text>
+<text x="40" y="779" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="17" fill="#183f32" font-weight="700">01  COMMON DASHBOARD · /dashboard · প্রথম implementation ধাপ</text>
+<rect x="1120" y="125" width="420" height="615" rx="18" fill="#fafbf7" stroke="#dfe5dc"/>
+<rect x="1120" y="125" width="420" height="62" rx="16" fill="white" stroke="#dfe5dc"/>
+<text x="1140" y="165" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="24" fill="#183f32" font-weight="400">☰</text>
+<text x="1188" y="165" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="20" fill="#183f32" font-weight="700">খামার স্কুল</text>
+<text x="1410" y="164" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="14" fill="#53655c" font-weight="400">বাংলা</text>
+<rect x="1467" y="143" width="48" height="27" rx="13" fill="#fafbf7" stroke="#dfe5dc"/>
+<text x="1477" y="162" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="12" fill="#183f32" font-weight="400">রহিম</text>
+<text x="1140" y="240" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="25" fill="#183f32" font-weight="700">আপনার ড্যাশবোর্ড</text>
+<text x="1140" y="275" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#53655c" font-weight="400">স্বাগতম, রহিম · খামারি</text>
+<rect x="1140" y="306" width="380" height="190" rx="12" fill="white" stroke="#dfe5dc"/>
+<text x="1158" y="338" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="18" fill="#183f32" font-weight="700">খামারের কাজ</text>
+<text x="1158" y="372" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#53655c" font-weight="400">সেটআপ সম্পন্ন হয়েছে।</text>
+<text x="1158" y="404" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="15" fill="#53655c" font-weight="400">খামার বেছে নিয়ে কাজ শুরু করুন।</text>
+<rect x="1158" y="429" width="166" height="44" rx="8" fill="#214e3a" stroke="#214e3a"/>
+<text x="1172" y="458" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="15" fill="white" font-weight="700">খামারে যান →</text>
+<rect x="1140" y="515" width="380" height="161" rx="12" fill="white" stroke="#dfe5dc"/>
+<text x="1158" y="547" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="18" fill="#183f32" font-weight="700">অ্যাকাউন্টের পরিচিতি</text>
+<text x="1158" y="580" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#53655c" font-weight="400">ইমেইল যাচাই: এখনও হয়নি</text>
+<text x="1158" y="639" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#a26913" font-weight="700">প্রোফাইল দেখুন →</text>
+<text x="1140" y="713" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="14" fill="#53655c" font-weight="400">শেখার রিসোর্স ও সহায়তা মেনুতে পাবেন।</text>
+<text x="1120" y="779" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="17" fill="#183f32" font-weight="700">02  MOBILE · Compact header + drawer</text>
+<rect x="40" y="857" width="730" height="500" rx="18" fill="#fafbf7" stroke="#dfe5dc"/>
+<rect x="40" y="857" width="730" height="62" rx="16" fill="white" stroke="#dfe5dc"/>
+<text x="58" y="896" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="20" fill="#183f32" font-weight="700">খামার স্কুল</text>
+<text x="592" y="896" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="13" fill="#53655c" font-weight="400">বাংলা  |  ENG</text>
+<rect x="698" y="875" width="48" height="27" rx="13" fill="#fafbf7" stroke="#dfe5dc"/>
+<text x="708" y="894" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="12" fill="#183f32" font-weight="400">রহিম</text>
+<text x="62" y="966" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="25" fill="#183f32" font-weight="700">আমার প্রোফাইল</text>
+<rect x="60" y="992" width="214" height="315" rx="12" fill="white" stroke="#dfe5dc"/>
+<rect x="120" y="1020" width="94" height="80" rx="18" fill="#eff2eb" stroke="#dfe5dc"/>
+<text x="147" y="1073" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="30" fill="#183f32" font-weight="700">রউ</text>
+<text x="80" y="1135" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="20" fill="#183f32" font-weight="700">রহিম উদ্দিন</text>
+<rect x="92" y="1150" width="145" height="27" rx="13" fill="#fafbf7" stroke="#dfe5dc"/>
+<text x="102" y="1169" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="12" fill="#183f32" font-weight="400">খামারি · সক্রিয়</text>
+<text x="80" y="1216" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="14" fill="#53655c" font-weight="400">যোগ দিয়েছেন</text>
+<text x="80" y="1246" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#183f32" font-weight="400">৮ অক্টোবর ২০২৬</text>
+<text x="297" y="1017" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#a26913" font-weight="700">ব্যক্তিগত তথ্য</text>
+<text x="448" y="1017" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#53655c" font-weight="400">অ্যাক্সেস</text>
+<text x="545" y="1017" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#53655c" font-weight="400">পছন্দ ও নিরাপত্তা</text>
+<path d="M293 1034 L746 1034" fill="none" stroke="#dfe5dc" stroke-width="1"/>
+<text x="297" y="1073" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="13" fill="#53655c" font-weight="400">নাম</text>
+<text x="297" y="1098" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="17" fill="#183f32" font-weight="400">রহিম উদ্দিন</text>
+<text x="297" y="1130" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="13" fill="#53655c" font-weight="400">ইমেইল</text>
+<text x="297" y="1155" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="17" fill="#183f32" font-weight="400">rahim@example.test</text>
+<text x="297" y="1187" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="13" fill="#53655c" font-weight="400">ফোন</text>
+<text x="297" y="1212" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="17" fill="#183f32" font-weight="400">+88018*******23</text>
+<text x="297" y="1244" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="13" fill="#53655c" font-weight="400">ইমেইল যাচাই</text>
+<text x="297" y="1269" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="17" fill="#183f32" font-weight="400">এখনও হয়নি</text>
+<text x="297" y="1322" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="13" fill="#53655c" font-weight="400">ভাষা বদলাতে পছন্দ ও নিরাপত্তা দেখুন।</text>
+<text x="40" y="1398" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#183f32" font-weight="700">03  PROFILE · /account/profile · পরিচিতি / অ্যাক্সেস / পছন্দ</text>
+<rect x="810" y="857" width="730" height="500" rx="18" fill="#fafbf7" stroke="#dfe5dc"/>
+<rect x="810" y="857" width="730" height="62" rx="16" fill="white" stroke="#dfe5dc"/>
+<text x="828" y="896" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="20" fill="#183f32" font-weight="700">খামার স্কুল</text>
+<text x="1362" y="896" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="13" fill="#53655c" font-weight="400">বাংলা  |  ENG</text>
+<rect x="1468" y="875" width="48" height="27" rx="13" fill="#fafbf7" stroke="#dfe5dc"/>
+<text x="1478" y="894" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="12" fill="#183f32" font-weight="400">রহিম</text>
+<text x="830" y="966" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="25" fill="#183f32" font-weight="700">সোনালি খামার</text>
+<text x="830" y="995" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="14" fill="#53655c" font-weight="400">মালিক · খামার বদলান ▾</text>
+<rect x="1308" y="943" width="206" height="27" rx="13" fill="#fafbf7" stroke="#dfe5dc"/>
+<text x="1318" y="962" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="12" fill="#a26913" font-weight="400">পরবর্তী ধাপ · নমুনা তথ্য</text>
+<rect x="830" y="1020" width="162" height="94" rx="12" fill="white" stroke="#dfe5dc"/>
+<text x="842" y="1050" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="13" fill="#53655c" font-weight="400">নিবন্ধিত পশু</text>
+<text x="842" y="1092" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="24" fill="#183f32" font-weight="700">৪৮</text>
+<rect x="1006" y="1020" width="162" height="94" rx="12" fill="white" stroke="#dfe5dc"/>
+<text x="1018" y="1050" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="13" fill="#53655c" font-weight="400">আজকের দুধ</text>
+<text x="1018" y="1092" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="24" fill="#183f32" font-weight="700">৯৫ লিটার</text>
+<rect x="1182" y="1020" width="162" height="94" rx="12" fill="white" stroke="#dfe5dc"/>
+<text x="1194" y="1050" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="13" fill="#53655c" font-weight="400">৭ দিনে টিকা</text>
+<text x="1194" y="1092" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="24" fill="#183f32" font-weight="700">৬</text>
+<rect x="1358" y="1020" width="162" height="94" rx="12" fill="white" stroke="#dfe5dc"/>
+<text x="1370" y="1050" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="13" fill="#53655c" font-weight="400">মাসের নিট লাভ</text>
+<text x="1370" y="1092" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="24" fill="#183f32" font-weight="700">৳১২,৪০০</text>
+<rect x="830" y="1134" width="389" height="188" rx="12" fill="white" stroke="#dfe5dc"/>
+<text x="848" y="1166" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="18" fill="#183f32" font-weight="700">গত ৭ দিনের দুধ · নমুনা</text>
+<path d="M852 1282 L1196 1282" fill="none" stroke="#dfe5dc" stroke-width="1"/>
+<polyline points="853,1266 908,1247 963,1253 1019,1225 1074,1231 1130,1204 1196,1196" fill="none" stroke="#214e3a" stroke-width="3"/>
+<path d="M853 1266 L908 1247" fill="none" stroke="#214e3a" stroke-width="3"/>
+<path d="M908 1247 L963 1253" fill="none" stroke="#214e3a" stroke-width="3"/>
+<path d="M963 1253 L1019 1225" fill="none" stroke="#214e3a" stroke-width="3"/>
+<path d="M1019 1225 L1074 1231" fill="none" stroke="#214e3a" stroke-width="3"/>
+<path d="M1074 1231 L1130 1204" fill="none" stroke="#214e3a" stroke-width="3"/>
+<path d="M1130 1204 L1196 1196" fill="none" stroke="#214e3a" stroke-width="3"/>
+<text x="852" y="1308" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="12" fill="#53655c" font-weight="400">দুধের পরিমাণ · লিটার</text>
+<rect x="1236" y="1134" width="284" height="188" rx="12" fill="white" stroke="#dfe5dc"/>
+<text x="1254" y="1166" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="18" fill="#183f32" font-weight="700">আসন্ন পরিচর্যা</text>
+<text x="1254" y="1202" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#183f32" font-weight="400">গরু #০১২ · টিকা</text>
+<text x="1254" y="1229" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="14" fill="#53655c" font-weight="400">আগামীকাল</text>
+<path d="M1254 1247 L1501 1247" fill="none" stroke="#dfe5dc" stroke-width="1"/>
+<text x="1254" y="1279" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="14" fill="#183f32" font-weight="400">ছাগল #০০৫ · কৃমিনাশক</text>
+<text x="1254" y="1305" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="13" fill="#53655c" font-weight="400">৩ দিনের মধ্যে</text>
+<text x="810" y="1398" font-family="Noto Sans Bengali, Arial, sans-serif" font-size="16" fill="#183f32" font-weight="700">04  FARM OVERVIEW · পরবর্তী ধাপ · নমুনা তথ্য</text>
+</svg>

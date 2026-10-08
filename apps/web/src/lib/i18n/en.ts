@@ -1,8 +1,10 @@
 import { showcaseEn } from "./showcase";
 import { resourcesEn } from "./resources";
 import { authEn } from "./auth";
+import { publicPagesEn } from "./public-pages";
 
 export const en = {
+  publicPages: publicPagesEn,
   brand: { name: "Khamar School" },
   auth: authEn,
   showcase: showcaseEn,
@@ -16,6 +18,13 @@ export const en = {
       "A clearer picture of your farm. Explore connected livestock management, practical learning and veterinary care.",
   },
   navigation: {
+    blog: "Blog",
+    about: "About us",
+    help: "Help",
+    doctors: "Our doctors",
+    demo: "Try the demo",
+    guides: "Guides and templates",
+    courses: "Courses",
     farm: "Farm management",
     learning: "Learning",
     veterinary: "Veterinary care",

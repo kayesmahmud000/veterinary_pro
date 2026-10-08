@@ -22,7 +22,8 @@ function compile(path, overrides = {}) {
   );
   return module.exports;
 }
-const contracts = compile("../src/lib/auth/contracts.ts");
+const phone = compile("../src/lib/auth/phone.ts");
+const contracts = compile("../src/lib/auth/contracts.ts", { "./phone": phone });
 const { handleAuth } = compile("../src/lib/auth/server.ts", {
   "./contracts": contracts,
 });
@@ -82,7 +83,12 @@ test("uses exact payloads, signup bounds and four public roles and default Learn
       confirmation: "not-upstream",
       arbitrary: true,
     });
-    assert.deepEqual(result.payload, role === "LEARNER" ? { email: input.email, name: input.name, password: input.password } : { ...input, role });
+    assert.deepEqual(
+      result.payload,
+      role === "LEARNER"
+        ? { email: input.email, name: input.name, password: input.password }
+        : { ...input, role },
+    );
   }
   assert.equal(
     contracts.validateCredentials("register", { ...input, role: "ADMIN" })
@@ -124,6 +130,124 @@ test("uses exact payloads, signup bounds and four public roles and default Learn
     }).payload,
     undefined,
   );
+});
+
+test("signup phone defaults to Bangladesh, supports local/Bangla/formatted numbers and exact E.164", () => {
+  for (const raw of [
+    "01712345678",
+    "1712345678",
+    "০১৭১২-৩৪৫৬৭৮",
+    "+880 1712 345678",
+    "8801712345678",
+  ]) {
+    assert.equal(phone.normalizeSignupPhone(raw).phone, "+8801712345678", raw);
+    const result = contracts.validateAuthForm("register", {
+      ...input,
+      phone: raw,
+      confirmation: input.password,
+      phoneCountry: "BD",
+    });
+    assert.deepEqual(result.fields, {});
+    assert.equal(result.payload.phone, "+8801712345678");
+    assert.ok(!("phoneCountry" in result.payload));
+  }
+  for (const raw of [undefined, "", "  "]) {
+    const result = contracts.validateAuthForm("register", {
+      ...input,
+      phone: raw,
+      confirmation: input.password,
+    });
+    assert.deepEqual(result.fields, {});
+    assert.ok(!("phone" in result.payload));
+  }
+});
+
+test("country-specific phone validity rejects malformed, ambiguous and mismatched numbers", () => {
+  for (const raw of [
+    "01712",
+    "01212345678",
+    "017123456789",
+    "abc01712345678",
+    "Call +8801712345678",
+    "+8801712345678 ext 2",
+    "+8808801712345678",
+    "++8801712345678",
+    "01712<script>",
+    null,
+    [],
+    1712345678,
+  ]) {
+    assert.equal(
+      phone.normalizeSignupPhone(raw).error,
+      "phone",
+      JSON.stringify(raw),
+    );
+    const result = contracts.validateAuthForm("register", {
+      ...input,
+      phone: raw,
+      confirmation: input.password,
+    });
+    assert.equal(result.fields.phone, "phone");
+    assert.equal(result.payload, undefined);
+  }
+  assert.equal(
+    phone.normalizeSignupPhone("+8801712345678", "US").error,
+    "phone",
+  );
+  assert.equal(
+    phone.normalizeSignupPhone("2025550123", "invalid").error,
+    "phone",
+  );
+  assert.equal(
+    phone.normalizeSignupPhone("12345678", "SG").error,
+    "phone",
+    "Full metadata rejects an invalid prefix at a possible length",
+  );
+  assert.equal(
+    phone.normalizeSignupPhone("2025550123", "US").phone,
+    "+12025550123",
+  );
+  assert.equal(
+    phone.normalizeSignupPhone("4165550123", "CA").phone,
+    "+14165550123",
+  );
+  assert.equal(
+    phone.normalizeSignupPhone("+12025550123", "CA").error,
+    "phone",
+    "Shared +1 code does not make US and Canada interchangeable",
+  );
+  assert.equal(
+    phone.normalizeSignupPhone("07400123456", "GB").phone,
+    "+447400123456",
+  );
+});
+
+test("valid international paste detects a country; web credentials require normalized international phone", () => {
+  assert.equal(phone.inferPhoneCountry("+8801712345678"), "BD");
+  assert.equal(phone.inferPhoneCountry("+12025550123"), "US");
+  assert.equal(phone.inferPhoneCountry("+14165550123"), "CA");
+  assert.equal(phone.inferPhoneCountry("01712345678"), undefined);
+  assert.equal(phone.inferPhoneCountry("+88017"), undefined);
+  assert.equal(
+    contracts.validateCredentials("register", {
+      ...input,
+      phone: "+880 1712-345678",
+    }).payload.phone,
+    "+8801712345678",
+  );
+  for (const raw of [
+    "01712345678",
+    "nonsense",
+    "+88017",
+    "+6512345678",
+    "+80012345678",
+  ]) {
+    assert.equal(
+      contracts.validateCredentials("register", { ...input, phone: raw }).fields
+        .phone,
+      "phone",
+    );
+  }
 });
 
 test("auth boundary protects origins, HttpOnly cookies, errors and rotation lifecycle", async (t) => {
@@ -347,4 +471,36 @@ test("auth boundary protects origins, HttpOnly cookies, errors and rotation life
       });
     },
   );
+});
+
+test("web registration rejects invalid phone without calling upstream and canonicalizes valid phone", async (t) => {
+  const original = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = original;
+  });
+  let calls = 0;
+  let payload;
+  globalThis.fetch = async (_url, options) => {
+    calls++;
+    payload = JSON.parse(options.body);
+    return ok({ user, tokens }, 201);
+  };
+  const rejected = await handleAuth(
+    request("register", { ...input, phone: "+88017" }),
+    "register",
+  );
+  assert.equal(rejected.status, 400);
+  assert.equal((await rejected.json()).fields.phone, "phone");
+  assert.equal(calls, 0);
+  const accepted = await handleAuth(
+    request("register", {
+      ...input,
+      phone: "+880 1712-345678",
+      phoneCountry: "US",
+    }),
+    "register",
+  );
+  assert.equal(accepted.status, 201);
+  assert.equal(payload.phone, "+8801712345678");
+  assert.ok(!("phoneCountry" in payload));
 });

@@ -12,6 +12,7 @@ import {
 import type { AuthUserSummary } from "@vetralink/shared-types";
 import type { AuthErrorCode, AuthMode, AuthResult } from "@/lib/auth/contracts";
 import type { AuthMessages } from "@/lib/i18n/auth";
+import type { Locale } from "@/lib/i18n/locale";
 import { authRequest, withSessionLock } from "@/lib/auth/client";
 import { AuthDialog } from "./auth-dialog";
 
@@ -22,6 +23,7 @@ type AuthContextValue = {
   error?: AuthErrorCode;
   modal: Modal;
   messages: AuthMessages;
+  locale: Locale;
   open: (mode: Exclude<Modal, null>) => void;
   close: () => void;
   restore: () => Promise<void>;
@@ -41,9 +43,11 @@ export function useAuth() {
 export function AuthProvider({
   children,
   messages,
+  locale,
 }: {
   children: ReactNode;
   messages: AuthMessages;
+  locale: Locale;
 }) {
   const [user, setUser] = useState<AuthUserSummary | null>(null);
   const [checking, setChecking] = useState(true);
@@ -112,6 +116,7 @@ export function AuthProvider({
         error,
         modal,
         messages,
+        locale,
         open: setModal,
         close,
         restore,

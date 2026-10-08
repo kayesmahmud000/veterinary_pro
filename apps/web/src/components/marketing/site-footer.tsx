@@ -17,14 +17,20 @@ export function SiteFooter() {
     <footer className={cn(siteStyles["site-footer"])}>
       <div className={cn(siteStyles["container"], siteStyles["footer-top"])}>
         <div>
-          <SiteBrand homeLabel={messages.navigation.home} name={messages.brand.name} />
+          <SiteBrand
+            homeLabel={messages.navigation.home}
+            name={messages.brand.name}
+          />
           <p>
             {messages.footer.knowledge}
             <br />
             {messages.footer.farms}
           </p>
         </div>
-        <nav aria-label={messages.navigation.footer}>
+        <nav
+          aria-label={messages.navigation.footer}
+          className="sm:grid-cols-2 xl:grid-cols-3 !gap-x-8"
+        >
           {items.map((item) => (
             <Link key={item.href} href={item.href}>
               {item.label}

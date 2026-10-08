@@ -9,22 +9,29 @@
     "lint": "next lint",
     "test:localization": "node scripts/check-localization.mjs",
     "test:planner": "node --test scripts/check-milk-projection.mjs",
+    "test:public-content": "node --test scripts/check-public-content.mjs",
     "test:auth": "node --test scripts/check-auth.mjs",
     "test:auth:browser": "node scripts/check-auth-browser.mjs",
     "test:workspace": "node --test scripts/check-workspace.mjs",
     "test:workspace:browser": "node scripts/check-workspace-browser.mjs",
     "check:styles": "node scripts/check-styles.mjs",
-    "test:styles": "node --test scripts/check-styles.test.mjs scripts/check-tailwind.mjs"
+    "test:styles": "node --test scripts/check-styles.test.mjs scripts/check-tailwind.mjs",
+    "test:public-pages": "node scripts/check-public-pages.mjs",
+    "test:public-navigation:browser": "node scripts/check-public-navigation-browser.mjs"
   },
   "dependencies": {
-    "zod": "^3.23.8",
+    "@radix-ui/react-navigation-menu": "^1.3.0",
+    "@radix-ui/react-slot": "^1.4.0",
     "@vetralink/shared-types": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "libphonenumber-js": "^1.13.15",
+    "lucide-react": "^0.436.0",
     "next": "^14.2.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "lucide-react": "^0.436.0",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^2.5.2"
+    "tailwind-merge": "^2.5.2",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20.14.11",

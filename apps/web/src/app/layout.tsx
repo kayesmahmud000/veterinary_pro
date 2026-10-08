@@ -11,7 +11,10 @@ export function generateMetadata(): Metadata {
       template: `%s | ${messages.brand.name}`,
     },
     description: messages.metadata.siteDescription,
-    icons: { icon: "/assets/brand/logo-green.jpeg", apple: "/assets/brand/logo-green.jpeg" },
+    icons: {
+      icon: "/assets/brand/logo-green.jpeg",
+      apple: "/assets/brand/logo-green.jpeg",
+    },
   };
 }
 export default function RootLayout({
@@ -23,7 +26,9 @@ export default function RootLayout({
   return (
     <html lang={locale} className={siteStyles.document}>
       <body className={siteStyles.body}>
-        <AuthProvider messages={messages.auth}>{children}</AuthProvider>
+        <AuthProvider messages={messages.auth} locale={locale}>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

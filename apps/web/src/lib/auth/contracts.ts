@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeInternationalPhone, normalizeSignupPhone } from "./phone";
 import {
   authUserSchema,
   loginSchema,
@@ -13,7 +14,13 @@ export type AuthMode = "login" | "register";
 export type AuthField =
   "email" | "password" | "name" | "phone" | "role" | "confirmation";
 export type FieldError =
-  "required" | "email" | "name" | "password" | "confirmation" | "role";
+  | "required"
+  | "email"
+  | "name"
+  | "phone"
+  | "password"
+  | "confirmation"
+  | "role";
 export type FieldErrors = Partial<Record<AuthField, FieldError>>;
 export const authErrorSchema = z.enum([
   "validation",
@@ -66,7 +73,7 @@ function errors(issues: z.ZodIssue[]): FieldErrors {
       fields[field]
     )
       continue;
-    fields[field] = field === "phone" ? "required" : field;
+    fields[field] = field;
   }
   return fields;
 }
@@ -78,13 +85,15 @@ export function validateCredentials(
     return { fields: { email: "required" } };
   const data = input as Record<string, unknown>;
   const role = data.role === undefined ? UserRole.LEARNER : data.role;
+  const phone =
+    mode === "register" ? normalizeInternationalPhone(data.phone) : {};
   const selected = {
     email: data.email,
     password: data.password,
     ...(mode === "register"
       ? {
           name: data.name,
-          ...(data.phone !== undefined ? { phone: data.phone } : {}),
+          ...(phone.phone ? { phone: phone.phone } : {}),
           ...(role === UserRole.LEARNER ? {} : { role }),
         }
       : {}),
@@ -92,7 +101,11 @@ export function validateCredentials(
   const result = (mode === "login" ? loginSchema : registerSchema).safeParse(
     selected,
   );
-  if (!result.success) return { fields: errors(result.error.issues) };
+  const fields = {
+    ...(!result.success ? errors(result.error.issues) : {}),
+    ...(phone.error ? { phone: phone.error } : {}),
+  };
+  if (!result.success || phone.error) return { fields };
   const value = result.data as RegisterRequestDto;
   return {
     fields: {},
@@ -110,22 +123,39 @@ export function validateCredentials(
   };
 }
 export function validateAuthForm(mode: AuthMode, input: unknown) {
-  const validation = validateCredentials(mode, input);
+  const data =
+    input && typeof input === "object" && !Array.isArray(input)
+      ? (input as Record<string, unknown>)
+      : undefined;
+  const phone =
+    mode === "register" && data
+      ? normalizeSignupPhone(data.phone, data.phoneCountry)
+      : {};
+  const validation = validateCredentials(
+    mode,
+    mode === "register" && data ? { ...data, phone: phone.phone } : input,
+  );
   if (mode === "register" && input && typeof input === "object") {
     const data = input as Record<string, unknown>;
     const result = signupFormSchema.safeParse({
       email: data.email,
       password: data.password,
       name: data.name,
-      ...(data.phone !== undefined ? { phone: data.phone } : {}),
+      ...(phone.phone ? { phone: phone.phone } : {}),
       ...(data.role !== undefined ? { role: data.role } : {}),
       confirmation: data.confirmation,
     });
     if (!result.success)
       return {
-        fields: { ...validation.fields, ...errors(result.error.issues) },
+        fields: {
+          ...validation.fields,
+          ...errors(result.error.issues),
+          ...(phone.error ? { phone: phone.error } : {}),
+        },
       };
   }
+  if (phone.error)
+    return { fields: { ...validation.fields, phone: phone.error } };
   return validation;
 }
 // Zod selects only the documented fields, including additive onboarding/version metadata.

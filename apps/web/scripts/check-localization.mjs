@@ -7,6 +7,45 @@ assert.ok(
   "Use a local test server",
 );
 const routes = [
+  [
+    "/blog",
+    "ছোট ভাবনা। আরও গোছানো খামারের কাজ।",
+    "Small ideas. Better farm routines.",
+  ],
+  [
+    "/about",
+    "জ্ঞান, রেকর্ড ও যত্ন। একসঙ্গে।",
+    "Knowledge, records and care. Connected.",
+  ],
+  ["/help", "আপনার পরের ধাপ খুঁজে নিন।", "Find your next step."],
+  ["/doctors", "চিকিৎসকদের পরিচিতি জানুন।", "Get to know our doctors."],
+  ["/doctors/demo-rafiq-hasan", "ডা. রফিক হাসান", "Dr. Rafiq Hasan"],
+  ["/doctors/demo-nadia-rahman", "ডা. নাদিয়া রহমান", "Dr. Nadia Rahman"],
+  [
+    "/blog/one-place-for-farm-notes",
+    "খামারের নোট রাখার একটি জায়গা ঠিক করুন",
+    "Give your farm notes a home",
+  ],
+  [
+    "/blog/a-weekly-farm-review",
+    "সপ্তাহে একবার কাজগুলো গুছিয়ে দেখুন",
+    "Make time for a short weekly review",
+  ],
+  [
+    "/blog/prepare-an-animal-record-summary",
+    "প্রাণীর রেকর্ডের একটি প্রয়োজনীয় সারাংশ তৈরি করুন",
+    "Prepare a useful animal-record summary",
+  ],
+  [
+    "/blog/localization-test-missing",
+    "পাতাটি পাওয়া যায়নি।",
+    "Page not found.",
+  ],
+  [
+    "/doctors/localization-test-missing",
+    "পাতাটি পাওয়া যায়নি।",
+    "Page not found.",
+  ],
   ["/", "আপনার খামারের পূর্ণ চিত্র।", "A clearer picture of your farm."],
   [
     "/farm-management",

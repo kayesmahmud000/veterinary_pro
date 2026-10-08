@@ -32,7 +32,7 @@ Tokens: `accessToken`, `refreshToken`, `tokenType: Bearer`, `expiresIn` in secon
 - Historical password complexity prose exceeds current DTO enforcement (length only). UI enforces the actual 8–128-character signup contract. Confirmation is local and never sent upstream. Login permits existing nonempty passwords, without applying signup minimums.
 - OTP/reset DTOs exist without controller routes. Do not expose dead recovery or passwordless controls.
 - RegisterDto, AuthService and shared Zod accept only LEARNER/FARMER/VET/BUYER; omission defaults LEARNER. API storage/permissions remain authoritative.
-- Phone format is not enforced by the DTO. Show an international-format hint, omit blank phone and preserve nonblank trimmed input without inventing a country restriction.
+- Phone format is not enforced by the API DTO. The original international-hint-only web decision is superseded by the 2026-10-08 country-code picker/strict web validation follow-up below. API/mobile compatibility remains unchanged.
 
 ## Design, sessions and security
 
@@ -59,3 +59,15 @@ Frontend/Web/UI/UX, API/Security, Tech Lead, Code Reviewer/QA and UI Reviewer pe
 7. Signup fields use two columns at widths of 640px and above and one column below; the public role choice is a localized dropdown containing only the permitted registration roles.
 
 Updated 2026-10-07: all six roles, shared Zod, default LEARNER/professional signup, farmer setup redirect and protected application/review/access links are implemented. [Real isolated verification and release limits](../../features/role-request-approval/operations.md) supplement the original controlled-upstream auth evidence.
+
+## Role dropdown presentation follow-up (2026-10-08)
+
+User requested a clearer signup role dropdown. Preserve the native controlled select, default LEARNER, public role allowlist, request payloads and fieldset pending disablement. Add a decorative role icon/custom arrow, improved Tailwind appearance and a localized selected-role explanation linked through aria-describedby and politely announced when selection changes. Error descriptions remain linked alongside the explanation. Preserve the existing responsive field layout and mobile/keyboard picker behavior; do not imply self-selected roles are verified credentials or expand authorization.
+
+## Signup country-code picker and phone validation (2026-10-08)
+
+User requirement: add a signup phone country-code picker, default Bangladesh, and validate entered numbers correctly. Phone stays optional. All supported geographic countries use bundled libphonenumber-js/max metadata and localized country names; no geolocation/network calls or separate UI framework. Show the selected calling code beside the input, with accessible country/number labels and mobile/keyboard native selection. National Bangladesh numbers (including leading zero), Bangla digits, harmless formatting and full international paste are supported. A complete valid international paste updates the selected country; explicit mismatches after changing the picker produce an error. Do not alter typed characters/cursor automatically.
+
+Use strict whole-input parsing plus country-specific validity, not a length-only regex. Reject invalid prefixes/lengths, letters, embedded-number prose, extensions, repeated calling codes, unsupported country selections and selected-country mismatches. Blur/submit exposes localized inline errors; editing revalidates a touched field. Blank/whitespace phone omits the value. Submit only canonical E.164 phone, without country UI fields; the web auth server boundary repeats strict international validation/normalization to prevent client bypass. API/mobile shared schemas and existing phone hashes/data are unchanged; API callers outside the web boundary still follow the original contract. Number-plan validation is distinct from phone ownership/OTP verification. Metadata must be refreshed as numbering plans change.
+
+Acceptance: Bangladesh default +880, foreign/shared-calling-code countries, international paste and national/Bangla normalization, malformed/blank/mismatch inputs, errors/focus/pending, exact payload, client-bypass rejection and bilingual 320px/desktop appearance all verified. No live registration data is used.
