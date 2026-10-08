@@ -20,6 +20,15 @@ Parameterized Prisma/raw SQL only; never concatenate user input into query text.
 
 ## Migration requirements
 
+Added 2026-10-08: the new `20261008090000_restore_consultation_schema` migration
+adds consultation payment/scheduling columns, notification/payout/review tables,
+their enums/indexes/relations and a table-scoped missing vet-profile FK repair.
+Prisma maps existing named compound indexes to their physical names and declares
+the existing farm/category index. Applied history is unchanged. Full isolated
+populated rehearsal and configured-database deployment/zero-diff verification
+are recorded in [runtime repair evidence](../../docs/tasks/vercel-runtime-repair/plan.md);
+this does not establish a new Vercel deployment or provider delivery.
+
 Create new migrations; do not edit applied history. Review SQL locks, indexes, constraints, defaults, uniqueness conflicts, nullability and data volume. Use additive expand/backfill/contract steps for breaking changes. Keep schema migrations separate from dedicated, restartable and audited data backfills, preserving the existing project rule.
 
 `db:migrate` invokes **development** migration tooling and may request a reset. Only use against an explicitly disposable development database. `db:deploy` applies committed migrations to a selected environment and requires deployment authorization. Never reset/drop production or remove Compose volumes as a routine fix.

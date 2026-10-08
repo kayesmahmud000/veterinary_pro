@@ -43,6 +43,12 @@ Load scripts in `infrastructure/load-testing/` cover auth, ERP, tele-vet and syn
 
 ## Completion evidence
 
+Added 2026-10-08: API `test:vercel` uses Node's runner and real temporary build
+fixtures to exercise the actual Vercel wrapper: flat/nested output discovery,
+flat precedence, workspace working directory and diagnostic discovery. These
+tests do not boot Nest or prove uploaded dependency/Prisma binary packaging.
+See [runtime repair evidence](../../docs/tasks/vercel-runtime-repair/plan.md).
+
 Added 2026-10-06: the web `test:localization` smoke script verifies the existing public routes against a local production server (default `http://localhost:3100`), including default/invalid locale, metadata, native selection forms, cookie persistence, visitor isolation and return-URL validation. Pass a different local origin as a script argument when needed. Run with `NODE_ENV=production` for production build/start. Avoid building into the same `.next` directory while a dev server uses it; use an isolated temporary copy for runtime verification. This script does not replace rendered browser, cross-browser or application integration checks.
 
 Added 2026-10-07: `pnpm --filter @vetralink/web test:planner` uses Node's test runner and the existing TypeScript compiler to test the real local milk-estimate utility without a server or generated files. It covers Bangla/ASCII decimals, malformed/bounded inputs, zero and 7/30-day calculations. Browser checks still verify selection, validation feedback, projections and locale-aware presentation.

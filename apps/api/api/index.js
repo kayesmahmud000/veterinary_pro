@@ -15,6 +15,24 @@ if (!global.__vetralink_handlers_registered) {
 
 let cachedHandler = null;
 
+function serverlessCandidates() {
+  const roots = [
+    path.resolve(__dirname, "../dist"),
+    path.resolve(process.cwd(), "dist"),
+    path.resolve(process.cwd(), "apps/api/dist"),
+  ];
+  return [
+    ...roots.flatMap((root) => [
+      path.join(root, "serverless.js"),
+      path.join(root, "serverless"),
+    ]),
+    ...roots.flatMap((root) => [
+      path.join(root, "src/serverless.js"),
+      path.join(root, "src/serverless"),
+    ]),
+  ];
+}
+
 function renderLandingHtml() {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -309,13 +327,7 @@ module.exports = async (req, res) => {
 
     if (rawUrl.includes("diagnose") || rawUrl.includes("debug")) {
       diag.diagnostics = {};
-      const candidates = [
-        path.resolve(__dirname, "../dist/src/serverless.js"),
-        path.resolve(__dirname, "../dist/src/serverless"),
-        path.resolve(process.cwd(), "dist/src/serverless.js"),
-        path.resolve(process.cwd(), "dist/src/serverless"),
-        path.resolve(process.cwd(), "apps/api/dist/src/serverless.js"),
-      ];
+      const candidates = serverlessCandidates();
       diag.diagnostics.candidatePaths = candidates.map((c) => ({
         path: c,
         exists: fs.existsSync(c),
@@ -356,13 +368,7 @@ module.exports = async (req, res) => {
   // 4. Lazy module resolution with full error interception
   if (!cachedHandler) {
     try {
-      const candidates = [
-        path.resolve(__dirname, "../dist/src/serverless.js"),
-        path.resolve(__dirname, "../dist/src/serverless"),
-        path.resolve(process.cwd(), "dist/src/serverless.js"),
-        path.resolve(process.cwd(), "dist/src/serverless"),
-        path.resolve(process.cwd(), "apps/api/dist/src/serverless.js"),
-      ];
+      const candidates = serverlessCandidates();
 
       let resolvedPath = null;
       for (const candidate of candidates) {

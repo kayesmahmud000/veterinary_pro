@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "buildCommand": "pnpm --filter @vetralink/shared-types build && pnpm --filter @vetralink/api build",
   "functions": {
     "api/index.js": {
       "includeFiles": "{dist/**,prisma/**,node_modules/.prisma/client/**}",

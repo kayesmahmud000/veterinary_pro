@@ -542,7 +542,7 @@ model HealthIncidentEscalationLog {
   animal        Animal       @relation(fields: [animalId], references: [id], onDelete: Cascade)
   recipientUser User?        @relation(fields: [recipientUserId], references: [id], onDelete: SetNull)
 
-  @@unique([healthRecordId, level, channel], name: "unique_health_incident_escalation_level")
+  @@unique([healthRecordId, level, channel], name: "unique_health_incident_escalation_level", map: "unique_health_incident_escalation_level")
   @@index([farmId, dispatchedAt])
   @@index([healthRecordId])
   @@map("health_incident_escalations")
@@ -624,7 +624,7 @@ model VaccineReminderLog {
   animal        Animal        @relation(fields: [animalId], references: [id], onDelete: Cascade)
   recipientUser User?         @relation(fields: [recipientUserId], references: [id], onDelete: SetNull)
 
-  @@unique([vaccineRecordId, milestone, channel, dispatchedDate], name: "unique_vaccine_reminder_daily")
+  @@unique([vaccineRecordId, milestone, channel, dispatchedDate], name: "unique_vaccine_reminder_daily", map: "unique_vaccine_reminder_daily")
   @@index([farmId, dispatchedAt])
   @@index([farmId, animalId])
   @@index([vaccineRecordId])
@@ -759,6 +759,7 @@ model FarmTransaction {
   @@index([farmId, txDate])
   @@index([farmId, type, txDate])
   @@index([farmId, type, category, txDate])
+  @@index([farmId, category])
   @@index([farmId, animalId])
   @@index([farmId, deletedAt])
   @@map("farm_transactions")
@@ -891,7 +892,7 @@ model SubscriptionDunningLog {
   user         User         @relation(fields: [userId], references: [id], onDelete: Restrict)
   farm         Farm?        @relation(fields: [farmId], references: [id], onDelete: SetNull)
 
-  @@unique([subscriptionId, stage, channel, dispatchedDate], name: "unique_subscription_dunning_daily")
+  @@unique([subscriptionId, stage, channel, dispatchedDate], name: "unique_subscription_dunning_daily", map: "unique_subscription_dunning_daily")
   @@index([subscriptionId, stage])
   @@index([userId, dispatchedAt])
   @@index([farmId, dispatchedAt])
