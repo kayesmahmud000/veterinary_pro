@@ -39,16 +39,26 @@ const user = (role, required = false) => ({
   roleVersion: 0,
   farmerOnboardingRequired: required,
 });
-test("all six ready identities land on the dashboard; mandatory setup wins over returns", () => {
+test("learners land on home, other ready identities on dashboard; mandatory setup wins", () => {
   assert.equal(typeof nav.getPostLoginDestination, "function");
-  for (const role of [
-    "LEARNER",
-    "FARMER",
-    "BUYER",
-    "VET",
-    "ADMIN",
-    "SUPER_ADMIN",
-  ])
+  assert.equal(nav.getPostLoginDestination(user("LEARNER")), "/");
+  assert.equal(nav.getPostLoginDestination(user("LEARNER"), "/dashboard"), "/");
+  assert.equal(
+    nav.getPostLoginDestination(user("LEARNER"), "/dashboard?bad=1"),
+    "/",
+  );
+  assert.equal(
+    nav.getPostLoginDestination(user("LEARNER"), "https://evil.test"),
+    "/",
+  );
+  assert.equal(
+    nav.getPostLoginDestination(
+      user("LEARNER"),
+      "/account/profile?section=access",
+    ),
+    "/account/profile?section=access",
+  );
+  for (const role of ["FARMER", "BUYER", "VET", "ADMIN", "SUPER_ADMIN"])
     assert.equal(nav.getPostLoginDestination(user(role)), "/dashboard");
   assert.equal(
     nav.getPostLoginDestination(user("FARMER", true), "/account/profile"),
@@ -102,7 +112,11 @@ test("navigation follows exact platform roles without inventing operational page
   ]) {
     const items = nav.getWorkspaceNav(user(role), "en");
     const hrefs = items.map((item) => item.href);
-    assert.ok(hrefs.includes("/dashboard"));
+    assert.equal(hrefs.includes("/dashboard"), role !== "LEARNER");
+    assert.equal(
+      hrefs[0],
+      role === "LEARNER" ? "/account/profile" : "/dashboard",
+    );
     assert.ok(hrefs.includes("/account/profile"));
     assert.equal(
       hrefs.includes("/account/role-requests/new"),

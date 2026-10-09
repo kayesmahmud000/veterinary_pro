@@ -63,6 +63,8 @@ The API IDs refer to the single [backend dependency register](../api/ROADMAP.md#
 
 ## Selecting the next work
 
+**Learner navigation follow-up (2026-10-09), complete locally:** learner login/signup defaults to home with direct Profile access and no Dashboard entry; other roles retain their workspace entry/setup behavior. Enrolled-course links remain part of the future enrollment feature per user direction. See the [workspace ledger](../../docs/tasks/web-workspace-design/progress.md#learner-navigation-follow-up--2026-10-09) for 68 controlled browser checks and build/style/unit evidence.
+
 **Workspace width follow-up (2026-10-09), complete locally:** all workspace routes use a full-width shell/header with responsive padding; dashboard/profile/farm/register responsive Chrome checks passed. See the [execution ledger](../../docs/tasks/web-workspace-design/progress.md#full-width-workspace-follow-up--2026-10-09).
 
 **Implemented locally (2026-10-08):** [Dashboard/profile and Farmer workspace specification](../../docs/tasks/web-workspace-design/spec.md), [wireframes](../../docs/tasks/web-workspace-design/wireframes.png) and [execution ledger](../../docs/tasks/web-workspace-design/progress.md) cover common `/dashboard` and read-only `/account/profile`, a shared application shell, authorized selected-farm overview/member management and the first WEB-3 registry slice. Controlled-upstream browser/unit/style/build acceptance is recorded in the ledger; live isolated PostgreSQL/Redis/API services were unavailable. General profile editing and subsequent WEB-4/provider-dependent domain batches remain separate. Existing auth/onboarding/application/admin URLs remain supported.

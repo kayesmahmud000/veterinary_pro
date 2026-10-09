@@ -356,9 +356,11 @@ export function AuthDialog() {
             </div>
             <p className={cn(styles.sessionNote)}>{t.sessionNote}</p>
             <div className={cn(styles.accountLinks)}>
-              <Link href="/dashboard" onClick={close}>
-                {getWorkspaceShellMessages(locale).dashboard}
-              </Link>
+              {user.role !== "LEARNER" && (
+                <Link href="/dashboard" onClick={close}>
+                  {getWorkspaceShellMessages(locale).dashboard}
+                </Link>
+              )}
               <Link href="/account/profile" onClick={close}>
                 {getWorkspaceShellMessages(locale).profile}
               </Link>

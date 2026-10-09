@@ -39,6 +39,9 @@ export function WorkspaceHeader({
     [logoutError, setLogoutError] = useState(false);
   const identity = !auth.checking && !auth.error ? auth.user : null;
   const { farm } = useFarmContext();
+  const entry = identity
+    ? getWorkspaceNav(identity, auth.locale)[0]
+    : undefined;
   const current = identity
     ? [
         ...getWorkspaceNav(identity, auth.locale),
@@ -99,10 +102,10 @@ export function WorkspaceHeader({
           <SiteBrand name={brand.name} homeLabel={homeLabel} />
         </div>
         <div className="hidden min-w-0 flex-1 min-[1024px]:block">
-          <Link href="/dashboard" className="text-sm text-muted">
-            {t.dashboard}
+          <Link href={entry?.href ?? "/"} className="text-sm text-muted">
+            {entry?.label ?? t.home}
           </Link>
-          {current && current.href !== "/dashboard" && (
+          {current && current.href !== entry?.href && (
             <span className="text-sm text-muted"> / {current.label}</span>
           )}
         </div>
@@ -134,12 +137,14 @@ export function WorkspaceHeader({
               <p className="m-0 break-words px-2 py-2 text-sm font-semibold">
                 {identity.name}
               </p>
-              <Link
-                className="flex min-h-11 items-center rounded-lg px-2 text-sm"
-                href="/dashboard"
-              >
-                {t.dashboard}
-              </Link>
+              {identity.role !== "LEARNER" && (
+                <Link
+                  className="flex min-h-11 items-center rounded-lg px-2 text-sm"
+                  href="/dashboard"
+                >
+                  {t.dashboard}
+                </Link>
+              )}
               <Link
                 className="flex min-h-11 items-center rounded-lg px-2 text-sm"
                 href="/account/profile"

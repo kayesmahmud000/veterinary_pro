@@ -46,7 +46,9 @@ flowchart TD
   C --> D[/farm: select authorized farm]
   B -->|No| E{Valid protected return destination?}
   E -->|Yes| F[Resume destination through its access gate]
-  E -->|No| G[/dashboard: current-role overview]
+  E -->|No| K{LEARNER?}
+  K -->|Yes| L[/: public home; Profile account link]
+  K -->|No| G[/dashboard: current-role overview]
   G --> H[/account/profile]
   G --> D
   G --> I[Existing role application or admin review]
@@ -55,9 +57,9 @@ flowchart TD
 
 Proposed behavior:
 
-- After explicit successful login/register: pending FARMER setup wins, then a validated protected return destination, otherwise `/dashboard` for all six roles.
+- Per the user's 2026-10-09 navigation update, after explicit successful login/register: pending FARMER setup wins, then a validated protected return destination, otherwise `/` for LEARNER and `/dashboard` for other ready roles. A LEARNER return to `/dashboard` falls back to `/`; opening `/dashboard` as a restored LEARNER redirects to `/account/profile` without rendering the dashboard. Existing protected profile/application returns remain supported.
 - After setup, retain the current `/farm` destination. When the farm overview ships, `/farm` remains the farm discovery/selection entry and opens `/app/farms/[farmId]`. Existing member management stays reachable throughout the transition.
-- Restoring a session on `/`, `/blog` or another public page keeps that page open. Account controls gain Dashboard/Profile links; keep the modal account summary/logout as a compatible shortcut.
+- Restoring a session on `/`, `/blog` or another public page keeps that page open. LEARNER public account controls link directly to Profile and all learner navigation omits Dashboard. Other roles keep Dashboard/Profile links and the modal account summary/logout shortcut. Workspace breadcrumbs use Profile as the learner entry.
 - A protected page opened while signed out shows the existing login-required pattern. Completing its modal login resumes that page unless setup is mandatory. Never place private page content behind a cosmetic client-only role check.
 - Validate return destinations against released workspace routes, normalize with a same-origin URL, reject absolute/external URLs, protocol-relative URLs, backslashes and API paths. An unauthorized destination still renders the ordinary denial state; return navigation grants no access.
 - Losing a role or membership clears protected data and refreshes the identity. Unknown roles fail closed. LEARNER cannot open operational farm/clinical work.
@@ -92,7 +94,7 @@ All rows below are **proposed**, with existing URLs explicitly marked.
 
 | Role | Dashboard emphasis | Destination set as the domains ship |
 | --- | --- | --- |
-| LEARNER | Free learning, account/profile, application status; paid content if actually entitled | `/learning` **existing**, `/account/role-requests` and `/account/role-requests/new` **existing**; later `/account/library`, `/account/orders`, `/catalog` |
+| LEARNER | Public home after login/signup, direct profile, application status; no dashboard | `/account/profile`, `/learning`, `/account/role-requests` and `/account/role-requests/new` **existing**; enrolled-course links ship with the enrollment feature (user-selected scope 2026-10-09); later `/account/library`, `/account/orders`, `/catalog` |
 | FARMER | Current farm, next operational action, setup/access feedback | `/account/farm-onboarding`, `/farm` **existing**; later selected-farm overview, animals, milk, health/vaccinations, finance/reports, members, billing, consultations |
 | BUYER | Owned resources and real order states; free discovery until commerce ships | Later `/account/library`, `/account/orders`; farm navigation only for confirmed memberships allowed by current backend rules |
 | VET | Assigned cases, availability and case actions | Later `/vet`, `/vet/availability`, `/vet/settlements`, authorized `/consultations/[id]` and prescription view; never self-assign privileges or imply every case is their patient |

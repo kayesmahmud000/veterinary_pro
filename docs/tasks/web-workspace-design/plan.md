@@ -20,6 +20,8 @@
 
 ## Review focus
 
+2026-10-09 learner navigation follow-up: update `getPostLoginDestination` and `getWorkspaceNav` so LEARNER defaults to home and has no dashboard entry; preserve validated profile/application returns and Farmer setup precedence. Make public learner controls link directly to Profile; hide learner dashboard shortcuts in both account menus, use Profile breadcrumbs, and redirect learner `/dashboard` visits to Profile without mounting the overview. First update/run navigation tests (RED), implement and rerun (GREEN), extend controlled browser acceptance for learner login/signup/profile/direct dashboard behavior in both locales, then run style suites and an isolated production build. Enrolled-course links are explicitly deferred to the enrollment feature per the user's reply. No API/persistence contract changes.
+
 2026-10-09 width follow-up: replace the shared shell/header `w-11/12` with `w-full`, add responsive horizontal padding and balance sidebar padding. Review all workspace routes through their shared layout; run style checks, production build and the controlled dashboard/profile responsive browser suite. No API, persistence, auth or tenant-contract changes. Verification results are recorded in [progress.md](progress.md).
 
 1. Restored session versus explicit login: public browsing stays in place; setup and protected return paths get deterministic precedence (Task 1/3).

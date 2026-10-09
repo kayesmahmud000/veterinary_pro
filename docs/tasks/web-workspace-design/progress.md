@@ -8,10 +8,20 @@ Current status: Tasks 1–6 implemented and locally verified. Live PostgreSQL/Re
 
 ## Full-width workspace follow-up — 2026-10-09
 
+See the later [learner navigation follow-up](#learner-navigation-follow-up--2026-10-09) for the updated login/profile behavior.
+
 - Confirmed from code: all dashboard/profile/account/admin/farm routes inherit `(workspace)/layout.tsx`. Updated the shared shell/header from `w-11/12` to `w-full`, balanced desktop sidebar padding and aligned header/content gutters at 16/24/32px. Public containers retain their existing width. No API, identity, permission or persistence changes.
 - Checks passed: `pnpm --filter @vetralink/web check:styles`; `pnpm --filter @vetralink/web test:styles` (2/2); isolated production build via `pnpm exec next build /tmp/web-full-width-xysqxdc3` from `apps/web` (including TypeScript); `WEB_TEST_BUILD_DIR=/tmp/web-full-width-xysqxdc3 pnpm --filter @vetralink/web test:dashboard:browser` (64 checks). Browser execution required approved escalation after sandbox localhost binding returned EPERM.
 - Observed behavior: 40 responsive screenshots cover dashboard/profile/farm/register in bn/en at 320/375/768/1024/1440px without horizontal overflow. Visually reviewed desktop dashboard and 320px profile snapshots at `/tmp/khamar-workspace-qa-vVoKWO`. This is controlled-upstream Chrome evidence, not live database/provider acceptance.
 - Self-review and final re-review found no remaining in-scope issues; shared layout coverage and docs were reconciled. No new tests were added for this reversible utility-only adjustment. Suggested commit: `fix(web): use full width for workspace routes`.
+
+## Learner navigation follow-up — 2026-10-09
+
+- User scope: LEARNER login/signup defaults to public home; other ready roles retain Dashboard. Learners have direct Profile access and no Dashboard navigation. User explicitly deferred enrolled-course links to the enrollment feature; no enrollment pages or placeholder routes were added.
+- Confirmed from code: shared navigation preserves mandatory Farmer setup and validated protected profile/application returns, discards learner dashboard returns, and omits learner Dashboard items. Public learner account controls link directly to Profile; both account menus and workspace breadcrumbs respect the learner entry. Direct learner `/dashboard` visits replace the URL with `/account/profile` without mounting the overview.
+- Navigation tests observed RED for the old `/dashboard` learner default and dashboard navigation, then GREEN (4/4) after implementation. Checks passed: `pnpm --filter @vetralink/web check:styles`, `test:styles` (2/2), `test:auth`, `test:workspace` and `test:workspace-navigation`.
+- Isolated production build passed via `pnpm exec next build /tmp/web-learner-nav-xvj1b40j` from `apps/web`, including TypeScript. Approved local Chrome acceptance via `WEB_TEST_BUILD_DIR=/tmp/web-learner-nav-xvj1b40j pnpm --filter @vetralink/web test:dashboard:browser` passed **68 checks**, including learner login and default-role signup in bn/en, direct Profile links, hidden Dashboard shortcuts, dashboard-to-profile redirect, all other role views, protected returns, setup precedence and existing responsive/farm/registry regressions. Screenshot directory: `/tmp/khamar-workspace-qa-S2uMUb`.
+- Self-review/re-review: no remaining in-scope findings; no auth/API/storage/tenant contract changes. Evidence uses a controlled HTTP upstream and Chrome, not live provider/database or alternate-browser acceptance. Suggested commit: `fix(web): keep learners on home after authentication`.
 
 Ruling: use the current checkout and a sibling tracked ledger — the approved plan and repository policy preserve human-managed Git; do not create branches, commit or delete execution history. Builds/browser profiles use temporary isolated directories. Cost: changes share the user's checkout, so inspect/preserve concurrent changes.
 

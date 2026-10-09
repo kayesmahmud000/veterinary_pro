@@ -118,8 +118,15 @@ const upstream = http.createServer(async (req, res) => {
     return req.headers.authorization
       ? send(200, users.get(role))
       : send(401, null);
-  if (route === "auth/login") {
-    const user = [...users.values()].find((u) => u.email === data.email);
+  if (route === "auth/login" || route === "auth/register") {
+    const user =
+      route === "auth/register"
+        ? {
+            ...users.get(data.role ?? "LEARNER"),
+            name: data.name,
+            email: data.email,
+          }
+        : [...users.values()].find((u) => u.email === data.email);
     if (!user || data.password !== "DemoPassword123!") return send(401, null);
     return send(200, {
       user,
@@ -413,11 +420,16 @@ try {
     for (const locale of ["bn", "en"])
       for (const role of roles) {
         await seed(role, locale);
-        await go("/dashboard");
+        await go(
+          "/dashboard",
+          role === "LEARNER" ? "/account/profile" : "/dashboard",
+        );
         await until(
           () =>
             evaluate(
-              `document.querySelector('[data-dashboard-role]')?.getAttribute('data-dashboard-role')===${JSON.stringify(role)}`,
+              role === "LEARNER"
+                ? `!!document.querySelector('[data-account-profile]') && !document.querySelector('[data-dashboard-role]')`
+                : `document.querySelector('[data-dashboard-role]')?.getAttribute('data-dashboard-role')===${JSON.stringify(role)}`,
             ),
           "Role overview " + role,
         );
@@ -436,6 +448,13 @@ try {
         );
         const hrefs = await evaluate(
           `Array.from(document.querySelectorAll('[data-workspace-nav="desktop"] a')).map(a=>a.getAttribute('href'))`,
+        );
+        assert.equal(hrefs.includes("/dashboard"), role !== "LEARNER");
+        assert.equal(
+          await evaluate(
+            `!!document.querySelector('header a[href="/dashboard"]')`,
+          ),
+          role !== "LEARNER",
         );
         assert.equal(
           hrefs.includes("/admin/role-requests"),
@@ -776,6 +795,77 @@ try {
       "Explicit login landing",
     );
     checks++;
+    // Learner public login/signup returns home with a direct profile link.
+    for (const locale of ["bn", "en"]) {
+      for (const mode of ["login", "register"]) {
+        await seed("LEARNER", locale);
+        await call("Network.deleteCookies", {
+          name: "vetralink_access",
+          url: origin,
+        });
+        await call("Network.deleteCookies", {
+          name: "vetralink_refresh",
+          url: origin,
+        });
+        await go("/learning");
+        await until(
+          () =>
+            evaluate(
+              `!!document.querySelector('[data-auth-trigger]:not(:disabled)')`,
+            ),
+          "Signed-out public controls",
+        );
+        await evaluate(`document.querySelector('[data-auth-trigger]').click()`);
+        await until(
+          () => evaluate(`!!document.querySelector('#auth-email')`),
+          "Learner login dialog",
+        );
+        if (mode === "register") {
+          await evaluate(
+            `document.querySelector('dialog form').nextElementSibling.querySelector('button').click()`,
+          );
+          await until(
+            () => evaluate(`!!document.querySelector('#auth-name')`),
+            "Learner signup dialog",
+          );
+        }
+        await evaluate(
+          `(() => {const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;for(const [name,value] of Object.entries(${JSON.stringify(mode === "register" ? { name: "Synthetic Learner", email: "learner@example.test", password: "DemoPassword123!", confirmation: "DemoPassword123!" } : { email: "learner@example.test", password: "DemoPassword123!" })})){const input=document.getElementById('auth-'+name);set.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}));}})()`,
+        );
+        await evaluate(`document.querySelector('dialog form').requestSubmit()`);
+        await until(
+          () =>
+            evaluate(
+              `location.pathname==='/' && !document.querySelector('dialog[open]') && !!document.querySelector('[data-profile-link]')`,
+            ),
+          "Learner " + mode + " home",
+        );
+        assert.equal(
+          await evaluate(`!!document.querySelector('a[href="/dashboard"]')`),
+          false,
+        );
+        await evaluate(
+          `Array.from(document.querySelectorAll('[data-profile-link]')).find(a=>a.getClientRects().length).click()`,
+        );
+        await until(
+          () =>
+            evaluate(
+              `location.pathname==='/account/profile' && !!document.querySelector('[data-account-profile]')`,
+            ),
+          "Direct learner profile",
+        );
+        await evaluate(
+          `document.querySelector('header details summary').click()`,
+        );
+        assert.equal(
+          await evaluate(
+            `!!document.querySelector('header details a[href="/dashboard"]')`,
+          ),
+          false,
+        );
+        checks++;
+      }
+    }
     // Farm context: route identity, professional membership and revocation.
     for (const locale of ["bn", "en"])
       for (const role of ["FARMER", "BUYER", "VET"]) {

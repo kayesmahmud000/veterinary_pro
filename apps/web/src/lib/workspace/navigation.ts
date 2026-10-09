@@ -78,7 +78,10 @@ export function getPostLoginDestination(
   if (!identity) throw new Error("An active identity is required");
   if (identity.role === UserRole.FARMER && identity.farmerOnboardingRequired)
     return "/account/farm-onboarding";
-  return validateWorkspaceReturnTo(returnTo) ?? "/dashboard";
+  const destination = validateWorkspaceReturnTo(returnTo);
+  if (identity.role === UserRole.LEARNER)
+    return destination && destination !== "/dashboard" ? destination : "/";
+  return destination ?? "/dashboard";
 }
 export function getWorkspaceNav(
   user: AuthUserSummary,
@@ -87,9 +90,10 @@ export function getWorkspaceNav(
   const identity = activeUser(user);
   if (!identity) return [];
   const t = getWorkspaceShellMessages(locale);
-  const items: WorkspaceNavItem[] = [
-    { label: t.dashboard, href: "/dashboard" },
-  ];
+  const items: WorkspaceNavItem[] =
+    identity.role === UserRole.LEARNER
+      ? []
+      : [{ label: t.dashboard, href: "/dashboard" }];
   if (identity.role === UserRole.FARMER)
     items.push({
       label: identity.farmerOnboardingRequired ? t.setup : t.farm,
