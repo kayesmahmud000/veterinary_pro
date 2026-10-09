@@ -6,6 +6,13 @@ Scope: implement Tasks 1–6 (shared dashboard/profile and Farmer foundation/reg
 
 Current status: Tasks 1–6 implemented and locally verified. Live PostgreSQL/Redis/API acceptance remains pending because the isolated services are unavailable. Entries below retain the execution history.
 
+## Full-width workspace follow-up — 2026-10-09
+
+- Confirmed from code: all dashboard/profile/account/admin/farm routes inherit `(workspace)/layout.tsx`. Updated the shared shell/header from `w-11/12` to `w-full`, balanced desktop sidebar padding and aligned header/content gutters at 16/24/32px. Public containers retain their existing width. No API, identity, permission or persistence changes.
+- Checks passed: `pnpm --filter @vetralink/web check:styles`; `pnpm --filter @vetralink/web test:styles` (2/2); isolated production build via `pnpm exec next build /tmp/web-full-width-xysqxdc3` from `apps/web` (including TypeScript); `WEB_TEST_BUILD_DIR=/tmp/web-full-width-xysqxdc3 pnpm --filter @vetralink/web test:dashboard:browser` (64 checks). Browser execution required approved escalation after sandbox localhost binding returned EPERM.
+- Observed behavior: 40 responsive screenshots cover dashboard/profile/farm/register in bn/en at 320/375/768/1024/1440px without horizontal overflow. Visually reviewed desktop dashboard and 320px profile snapshots at `/tmp/khamar-workspace-qa-vVoKWO`. This is controlled-upstream Chrome evidence, not live database/provider acceptance.
+- Self-review and final re-review found no remaining in-scope issues; shared layout coverage and docs were reconciled. No new tests were added for this reversible utility-only adjustment. Suggested commit: `fix(web): use full width for workspace routes`.
+
 Ruling: use the current checkout and a sibling tracked ledger — the approved plan and repository policy preserve human-managed Git; do not create branches, commit or delete execution history. Builds/browser profiles use temporary isolated directories. Cost: changes share the user's checkout, so inspect/preserve concurrent changes.
 
 Pre-flight: Tasks 1 → 2/3 share normalized navigation/return policy; Task 2 owns shell without main, each page owns main. Tasks 4 → 5/6 share validated route farm context and membership projection. Task 5 → 6 shares animal projection; mutations remain separately allowlisted. No interface conflict found.

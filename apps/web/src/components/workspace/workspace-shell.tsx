@@ -48,8 +48,8 @@ export function WorkspaceShell({
   return (
     <FarmContextProvider>
       <div data-workspace-shell className="min-h-screen bg-paper">
-        <div className="mx-auto grid w-11/12 grid-cols-[minmax(0,1fr)] min-[1024px]:grid-cols-[240px_minmax(0,1fr)]">
-          <aside className="sticky top-0 hidden h-screen min-w-0 flex-col gap-8 overflow-y-auto border-y-0 border-l-0 border-r border-solid border-line bg-white py-6 pr-4 min-[1024px]:flex">
+        <div className="grid w-full grid-cols-[minmax(0,1fr)] min-[1024px]:grid-cols-[240px_minmax(0,1fr)]">
+          <aside className="sticky top-0 hidden h-screen min-w-0 flex-col gap-8 overflow-y-auto border-y-0 border-l-0 border-r border-solid border-line bg-white px-4 py-6 min-[1024px]:flex">
             <SiteBrand
               name={messages.brand.name}
               homeLabel={messages.navigation.home}
@@ -64,7 +64,7 @@ export function WorkspaceShell({
               onMenu={() => setOpen(true)}
               menuOpen={open}
             />
-            <div className="min-w-0 py-2 min-[1024px]:pl-8">{children}</div>
+            <div className="min-w-0 px-4 py-2 min-[640px]:px-6 min-[1024px]:px-8">{children}</div>
           </div>
         </div>
         <dialog

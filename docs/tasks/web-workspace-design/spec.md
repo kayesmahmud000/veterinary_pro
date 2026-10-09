@@ -64,7 +64,7 @@ Proposed behavior:
 
 ## Workspace shell and visual language
 
-Desktop at **1024px and wider**: centered `w-11/12` outer container, 240px sidebar and flexible content column with `min-w-0`. Below 1024px use a compact header and a labeled mobile navigation drawer. This is a separate application breakpoint; public navigation keeps its current 1280px breakpoint.
+Desktop at **1024px and wider**: full-width (`w-full`) outer container, 240px sidebar and flexible content column with `min-w-0`. Per the user's 2026-10-09 update, all workspace routes (dashboard, profile, account, admin and farm pages) use the full available width; the header also fills its content column. Use 16px horizontal content/header padding below 640px, 24px from 640px and 32px from 1024px; give the desktop sidebar 16px horizontal padding. Below 1024px use a compact header and a labeled mobile navigation drawer. This is a separate application breakpoint; public navigation keeps its current 1280px breakpoint and public containers retain `w-11/12`.
 
 The sidebar contains the localized SiteBrand, Dashboard, released role/domain destinations, Profile, role applications where supported, Help and Back to website. Header contains the page breadcrumb/title, a farm selector only in farm context, the existing language control and account menu. Do not show a decorative notification bell or search field without a working purpose. Retain sidebar labels rather than requiring icon recognition; collapse-to-icons and dark mode are deferred.
 

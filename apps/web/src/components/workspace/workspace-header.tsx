@@ -83,7 +83,7 @@ export function WorkspaceHeader({
   }
   return (
     <header className="sticky top-0 z-20 border-x-0 border-t-0 border-b border-solid border-line bg-white py-3">
-      <div className="mx-auto flex w-11/12 flex-wrap items-center gap-3">
+      <div className="box-border flex w-full flex-wrap items-center gap-3 px-4 min-[640px]:px-6 min-[1024px]:px-8">
         <button
           data-workspace-menu-trigger
           type="button"
