@@ -43,6 +43,8 @@ Load scripts in `infrastructure/load-testing/` cover auth, ERP, tele-vet and syn
 
 ## Completion evidence
 
+Added 2026-10-09: `pnpm --filter @vetralink/web test:api-diagnostics` verifies real diagnostic wrappers preserve fetch inputs, response streams and thrown errors while suppressing secrets and respecting production opt-in. API `common/middleware/api-response-logger.spec.ts` verifies completion timing, status severity and path redaction. Existing auth/workspace/farm transport checks still exercise request/error handling. See [diagnostic evidence](../../docs/tasks/api-request-diagnostics/plan.md); synthetic live requests establish connectivity, not successful real-account login.
+
 Added 2026-10-08: API `test:vercel` uses Node's runner and real temporary build
 fixtures to exercise the actual Vercel wrapper: flat/nested output discovery,
 flat precedence, workspace working directory and diagnostic discovery. These

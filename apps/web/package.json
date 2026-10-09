@@ -11,6 +11,7 @@
     "test:planner": "node --test scripts/check-milk-projection.mjs",
     "test:public-content": "node --test scripts/check-public-content.mjs",
     "test:auth": "node --test scripts/check-auth.mjs",
+    "test:api-diagnostics": "node --test scripts/check-api-diagnostics.mjs",
     "test:auth:browser": "node scripts/check-auth-browser.mjs",
     "test:workspace": "node --test scripts/check-workspace.mjs",
     "test:workspace:browser": "node scripts/check-workspace-browser.mjs",

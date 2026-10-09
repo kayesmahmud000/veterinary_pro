@@ -25,7 +25,7 @@ const farmContracts = compile("../src/lib/workspace/farm-contracts.ts");
 const contracts = compile("../src/lib/workspace/contracts.ts"),
   { handleWorkspace, resolveEndpoint } = compile(
     "../src/lib/workspace/server.ts",
-    { "./contracts": contracts, "./farm-contracts": farmContracts },
+    { "./contracts": contracts, "./farm-contracts": farmContracts, "../api-diagnostics": compile("../src/lib/api-diagnostics.ts") },
   );
 const shared = require("@vetralink/shared-types");
 const id = "550e8400-e29b-41d4-a716-446655440000",

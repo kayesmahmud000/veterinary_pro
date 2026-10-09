@@ -63,6 +63,10 @@ The API IDs refer to the single [backend dependency register](../api/ROADMAP.md#
 
 ## Selecting the next work
 
+**API diagnostics follow-up (2026-10-09):** auth/workspace upstream and final web responses log safe status/timing/error metadata. Corrected ignored local web backend configuration; synthetic login changed from connection failure 503 to backend invalid-credentials 401. Real-account login remains unverified. See the [diagnostics plan](../../docs/tasks/api-request-diagnostics/plan.md) for tests/builds and production opt-in.
+
+**Protected-entry follow-up (2026-10-09), complete locally:** signed-out workspace visits automatically open Sign in; dismissal returns Home while successful auth preserves validated return/setup policy. Public-dialog dismissal remains unchanged. See the [workspace ledger](../../docs/tasks/web-workspace-design/progress.md#protected-entry-follow-up--2026-10-09) for 79 browser checks, the logout race fix and build/style/unit evidence.
+
 **Learner navigation follow-up (2026-10-09), complete locally:** learner login/signup defaults to home with direct Profile access and no Dashboard entry; other roles retain their workspace entry/setup behavior. Enrolled-course links remain part of the future enrollment feature per user direction. See the [workspace ledger](../../docs/tasks/web-workspace-design/progress.md#learner-navigation-follow-up--2026-10-09) for 68 controlled browser checks and build/style/unit evidence.
 
 **Workspace width follow-up (2026-10-09), complete locally:** all workspace routes use a full-width shell/header with responsive padding; dashboard/profile/farm/register responsive Chrome checks passed. See the [execution ledger](../../docs/tasks/web-workspace-design/progress.md#full-width-workspace-follow-up--2026-10-09).

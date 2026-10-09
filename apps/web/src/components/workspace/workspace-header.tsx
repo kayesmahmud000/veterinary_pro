@@ -173,7 +173,7 @@ export function WorkspaceHeader({
             disabled={auth.checking}
             variant="outline"
             onClick={() =>
-              auth.open("login", query ? `${pathname}?${query}` : pathname)
+              auth.open("login", query ? `${pathname}?${query}` : pathname, true)
             }
             className="max-[639px]:px-2"
           >

@@ -417,6 +417,120 @@ try {
     await cookie("vetralink-locale", locale);
   }
   if (!focus) {
+    // Protected entry automatically prompts; signed-out dismissal leaves for home.
+    await cookie("vetralink_access", "a-LEARNER");
+    offline = true;
+    await go("/account/profile");
+    await until(
+      () => evaluate(`!!document.querySelector('main [role="alert"]')`),
+      "Session failure retains retry",
+    );
+    assert.equal(
+      await evaluate(`!!document.querySelector('dialog[open]')`),
+      false,
+    );
+    offline = false;
+    await call("Network.deleteCookies", { name: "vetralink_access", url: origin });
+    await evaluate(`document.querySelector('main button').click()`);
+    await until(
+      () => evaluate(`!!document.querySelector('dialog[open] #auth-email')`),
+      "Session retry opens protected login",
+    );
+    await evaluate(`document.querySelector('dialog[open] button').click()`);
+    await until(
+      () =>
+        evaluate(
+          `location.pathname==='/' && !document.querySelector('dialog[open]')`,
+        ),
+      "Retry modal dismissal returns home",
+    );
+    checks++;
+    for (const locale of ["bn", "en"]) {
+      await cookie("vetralink-locale", locale);
+      for (const [route, dismissal] of [
+        ["/account/profile?section=access", "close"],
+        ["/dashboard", "escape"],
+        ["/admin/role-requests", "backdrop"],
+        ["/farm", "register-close"],
+      ]) {
+        await go(route);
+        await until(
+          () =>
+            evaluate(`!!document.querySelector('dialog[open] #auth-email')`),
+          "Automatic protected sign in " + locale + " " + dismissal,
+        );
+        if (dismissal === "close") {
+          const shot = await call("Page.captureScreenshot", { format: "png" });
+          await writeFile(
+            path.join(temp, `protected-entry-${locale}.png`),
+            Buffer.from(shot.data, "base64"),
+          );
+        }
+        assert.equal(
+          await evaluate(
+            `!!document.querySelector('[data-account-profile], [data-dashboard-role], [data-selected-farm]')`,
+          ),
+          false,
+        );
+        if (dismissal === "register-close") {
+          await evaluate(
+            `document.querySelector('dialog form').nextElementSibling.querySelector('button').click()`,
+          );
+          await until(
+            () => evaluate(`!!document.querySelector('#auth-name')`),
+            "Protected registration mode",
+          );
+        }
+        if (dismissal === "escape") await key("Escape", "Escape", 27);
+        else if (dismissal === "backdrop") {
+          for (const type of ["mousePressed", "mouseReleased"])
+            await call("Input.dispatchMouseEvent", {
+              type,
+              x: 1,
+              y: 1,
+              button: "left",
+              clickCount: 1,
+            });
+        } else
+          await evaluate(
+            `document.querySelector('dialog[open] button').click()`,
+          );
+        await until(
+          () =>
+            evaluate(
+              `location.pathname==='/' && !document.querySelector('dialog[open]')`,
+            ),
+          "Protected dismissal returns home",
+        );
+        await sleep(150);
+        assert.equal(
+          await evaluate(`!!document.querySelector('dialog[open]')`),
+          false,
+          "No repeated prompt after dismissal",
+        );
+        checks++;
+      }
+      await go("/learning");
+      await until(
+        () =>
+          evaluate(
+            `!!document.querySelector('[data-auth-trigger]:not(:disabled)')`,
+          ),
+        "Public auth controls ready",
+      );
+      await evaluate(`document.querySelector('[data-auth-trigger]').click()`);
+      await until(
+        () => evaluate(`!!document.querySelector('dialog[open] #auth-email')`),
+        "Public sign in",
+      );
+      await key("Escape", "Escape", 27);
+      await until(
+        () => evaluate(`!document.querySelector('dialog[open]')`),
+        "Public modal dismisses",
+      );
+      assert.equal(await evaluate(`location.pathname`), "/learning");
+      checks++;
+    }
     for (const locale of ["bn", "en"])
       for (const role of roles) {
         await seed(role, locale);
@@ -740,10 +854,21 @@ try {
       () => evaluate(`!!document.querySelector('[data-workspace-sign-in]')`),
       "Protected login gate",
     );
-    await evaluate(`document.querySelector('[data-auth-trigger]').click()`);
     await until(
       () => evaluate(`!!document.querySelector('dialog[open] #auth-email')`),
-      "Login modal",
+      "Automatic login modal",
+    );
+    await evaluate(
+      `(() => {const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;for(const [name,value] of Object.entries({email:'learner@example.test',password:'WrongPassword123!'})){const input=document.getElementById('auth-'+name);set.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}));}})()`,
+    );
+    await evaluate(`document.querySelector('dialog form').requestSubmit()`);
+    await until(
+      () => evaluate(`!!document.querySelector('dialog[open] [role="alert"]')`),
+      "Failed login retains protected modal",
+    );
+    assert.equal(
+      await evaluate(`location.pathname+location.search`),
+      "/account/profile?section=access",
     );
     await evaluate(
       `(() => {const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;for(const [name,value] of Object.entries({email:'learner@example.test',password:'DemoPassword123!'})){const input=document.getElementById('auth-'+name);set.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}));}})()`,
@@ -862,6 +987,16 @@ try {
             `!!document.querySelector('header details a[href="/dashboard"]')`,
           ),
           false,
+        );
+        await evaluate(
+          `document.querySelector('header details button').click()`,
+        );
+        await until(
+          () =>
+            evaluate(
+              `location.pathname==='/' && !document.querySelector('dialog[open]')`,
+            ),
+          "Explicit logout returns home without a protected prompt",
         );
         checks++;
       }

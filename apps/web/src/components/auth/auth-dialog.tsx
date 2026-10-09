@@ -41,6 +41,7 @@ export function AuthDialog() {
     error: sessionError,
     restore,
     returnTo,
+    protectedEntry,
   } = useAuth();
   const mode = modal === "register" ? "register" : "login";
   const dialog = useRef<HTMLDialogElement>(null);
@@ -105,7 +106,7 @@ export function AuthDialog() {
 
   function switchMode() {
     if (busy.current) return;
-    open(mode === "login" ? "register" : "login", returnTo);
+    open(mode === "login" ? "register" : "login", returnTo, protectedEntry);
     setValues((current) => ({ ...current, password: "", confirmation: "" }));
     setShowPassword(false);
     setError(undefined);
@@ -114,6 +115,12 @@ export function AuthDialog() {
     requestAnimationFrame(() =>
       form.current?.querySelector<HTMLInputElement>("input")?.focus(),
     );
+  }
+
+  function dismiss() {
+    if (busy.current) return;
+    close();
+    if (protectedEntry && !user) router.replace("/");
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -256,7 +263,7 @@ export function AuthDialog() {
       aria-describedby="auth-description"
       onCancel={(event) => {
         event.preventDefault();
-        if (!busy.current) close();
+        dismiss();
       }}
       onClick={(event) => {
         if (event.target === event.currentTarget && !busy.current) {
@@ -267,7 +274,7 @@ export function AuthDialog() {
             event.clientY < rect.top ||
             event.clientY > rect.bottom
           )
-            close();
+            dismiss();
         }
       }}
     >
@@ -275,7 +282,7 @@ export function AuthDialog() {
         <button
           type="button"
           className={cn(styles.close)}
-          onClick={close}
+          onClick={dismiss}
           disabled={pending}
           aria-label={t.close}
         >

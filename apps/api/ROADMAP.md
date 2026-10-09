@@ -10,6 +10,8 @@ Reviewed: **2026-10-05**, source baseline **d5d311b**. Start with the [project r
 
 ## API dependency register
 
+Updated 2026-10-09: safe HTTP completion diagnostics cover main/serverless Nest entry points, including validation/guard errors. Development defaults on; production requires `API_DEBUG=1`. Focused logger/filter/envelope/auth checks and API build evidence are in the [diagnostics plan](../../docs/tasks/api-request-diagnostics/plan.md). This code has not been deployed by this task.
+
 Updated 2026-10-08: explicit offline first-super-admin bootstrap also supports new
 email/name/password accounts. Owner-requested account creation and real authenticated
 API checks against the configured database are recorded in the

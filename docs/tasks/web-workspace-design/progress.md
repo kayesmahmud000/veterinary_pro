@@ -8,6 +8,8 @@ Current status: Tasks 1–6 implemented and locally verified. Live PostgreSQL/Re
 
 ## Full-width workspace follow-up — 2026-10-09
 
+See also the later [protected-entry follow-up](#protected-entry-follow-up--2026-10-09).
+
 See the later [learner navigation follow-up](#learner-navigation-follow-up--2026-10-09) for the updated login/profile behavior.
 
 - Confirmed from code: all dashboard/profile/account/admin/farm routes inherit `(workspace)/layout.tsx`. Updated the shared shell/header from `w-11/12` to `w-full`, balanced desktop sidebar padding and aligned header/content gutters at 16/24/32px. Public containers retain their existing width. No API, identity, permission or persistence changes.
@@ -22,6 +24,15 @@ See the later [learner navigation follow-up](#learner-navigation-follow-up--2026
 - Navigation tests observed RED for the old `/dashboard` learner default and dashboard navigation, then GREEN (4/4) after implementation. Checks passed: `pnpm --filter @vetralink/web check:styles`, `test:styles` (2/2), `test:auth`, `test:workspace` and `test:workspace-navigation`.
 - Isolated production build passed via `pnpm exec next build /tmp/web-learner-nav-xvj1b40j` from `apps/web`, including TypeScript. Approved local Chrome acceptance via `WEB_TEST_BUILD_DIR=/tmp/web-learner-nav-xvj1b40j pnpm --filter @vetralink/web test:dashboard:browser` passed **68 checks**, including learner login and default-role signup in bn/en, direct Profile links, hidden Dashboard shortcuts, dashboard-to-profile redirect, all other role views, protected returns, setup precedence and existing responsive/farm/registry regressions. Screenshot directory: `/tmp/khamar-workspace-qa-S2uMUb`.
 - Self-review/re-review: no remaining in-scope findings; no auth/API/storage/tenant contract changes. Evidence uses a controlled HTTP upstream and Chrome, not live provider/database or alternate-browser acceptance. Suggested commit: `fix(web): keep learners on home after authentication`.
+
+## Protected-entry follow-up — 2026-10-09
+
+- User outcome: signed-out protected visits automatically open Sign in after session restoration. Close, Escape and backdrop dismissal redirect Home; successful login resumes the validated route with existing setup/role precedence. Login/register switching preserves protected-entry state. Failed login stays open; pending requests retain existing dismissal protection. Public dialogs still dismiss on the current page.
+- Implementation: `WorkspaceGate` prompts once per signed-out route; provider state carries an explicit protected-entry flag; `AuthDialog` uses one dismissal handler. Header/fallback protected login callers also set the flag. No endpoint, cookie/token, permission or persistence contract changed.
+- RED observed against `/tmp/web-learner-nav-xvj1b40j`: `Automatic protected sign in bn close` timed out with only the old inline login card. During review/browser acceptance, explicit logout exposed a race: the departing protected page reopened login after identity cleared. Provider now clears protected-entry prompts on Home; the regression passes. The session-failure fixture was corrected to supply an access cookie, because no-cookie session checks correctly return signed-out locally without an upstream call.
+- Final checks passed: `pnpm --filter @vetralink/web check:styles`, `test:styles` (2/2), `test:auth`, `test:workspace`, `test:workspace-navigation`; isolated production build via `pnpm exec next build /tmp/web-protected-entry-5fujee_k` from `apps/web`, including TypeScript. Style/auth/navigation checks were repeated after the logout fix.
+- Final approved local Chrome run: `WEB_TEST_BUILD_DIR=/tmp/web-protected-entry-5fujee_k pnpm --filter @vetralink/web test:dashboard:browser` passed **79 checks**, including bn/en automatic prompts, Close/Escape/backdrop and register-mode dismissal, session-failure Retry, failed-login retention, query-preserving successful login, public dismissal, explicit logout and existing learner/other-role/responsive/farm/registry behavior. Screenshots: `/tmp/khamar-workspace-qa-IkCnjO`; the equivalent Bangla protected-entry snapshot from `/tmp/khamar-workspace-qa-PRh7uL/protected-entry-bn.png` was visually reviewed.
+- Final self-review/re-review found no remaining in-scope issues. Evidence is controlled-upstream Chrome acceptance, not live provider/database or alternate-browser certification. Suggested commit: `fix(web): require sign in on protected route entry`.
 
 Ruling: use the current checkout and a sibling tracked ledger — the approved plan and repository policy preserve human-managed Git; do not create branches, commit or delete execution history. Builds/browser profiles use temporary isolated directories. Cost: changes share the user's checkout, so inspect/preserve concurrent changes.
 

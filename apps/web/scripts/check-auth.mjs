@@ -26,6 +26,7 @@ const phone = compile("../src/lib/auth/phone.ts");
 const contracts = compile("../src/lib/auth/contracts.ts", { "./phone": phone });
 const { handleAuth } = compile("../src/lib/auth/server.ts", {
   "./contracts": contracts,
+  "../api-diagnostics": compile("../src/lib/api-diagnostics.ts"),
 });
 const user = {
   id: "550e8400-e29b-41d4-a716-446655440000",

@@ -123,6 +123,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
     };
 
+    response.locals = response.locals || {};
+    response.locals["apiErrorCode"] = title;
     response.status(status).json(envelope);
   }
 
