@@ -63,9 +63,15 @@ The API IDs refer to the single [backend dependency register](../api/ROADMAP.md#
 
 ## Selecting the next work
 
+**Public avatar follow-up (2026-10-09):** authenticated public navigation uses an avatar-only hover/click/keyboard disclosure, with My profile/Sign out for learner and Dashboard/Sign out for other roles. Photo failures fall back to initials; mobile uses inline tap expansion. The [auth plan](../../docs/tasks/web-auth-modals/plan.md#public-avatar-menu-follow-up--2026-10-09) owns browser/build/session evidence. Workspace sidebar placement and role/setup policy are preserved.
+
+**Sidebar account follow-up (2026-10-09):** workspace Profile icon/name/link and Sign out moved to the sidebar bottom; the desktop top bar contains only language controls and mobile retains its drawer trigger. The [workspace ledger](../../docs/tasks/web-workspace-design/progress.md#sidebar-account-and-top-bar-follow-up--2026-10-09) owns responsive/browser/build evidence. Public marketing navigation and role/tenant rules remain unchanged.
+
 **API diagnostics follow-up (2026-10-09):** auth/workspace upstream and final web responses log safe status/timing/error metadata. Corrected ignored local web backend configuration; synthetic login changed from connection failure 503 to backend invalid-credentials 401. Real-account login remains unverified. See the [diagnostics plan](../../docs/tasks/api-request-diagnostics/plan.md) for tests/builds and production opt-in.
 
 **Protected-entry follow-up (2026-10-09), complete locally:** signed-out workspace visits automatically open Sign in; dismissal returns Home while successful auth preserves validated return/setup policy. Public-dialog dismissal remains unchanged. See the [workspace ledger](../../docs/tasks/web-workspace-design/progress.md#protected-entry-follow-up--2026-10-09) for 79 browser checks, the logout race fix and build/style/unit evidence.
+
+**Server-protection follow-up (2026-10-09), complete locally:** middleware now verifies active backend identity before protected page delivery, redirecting signed-out/unverifiable requests to Home's immediate sign-in dialog. Browser restoration owns refresh; login/logout invalidate router caches, including protected Back navigation. Five boundary tests, 85 controlled dashboard/HTTP/browser checks, auth/localization regression and isolated production build pass. See [server-entry evidence](../../docs/tasks/web-workspace-design/progress.md#server-protection-follow-up--2026-10-09) for review findings and integration limits.
 
 **Learner navigation follow-up (2026-10-09), complete locally:** learner login/signup defaults to home with direct Profile access and no Dashboard entry; other roles retain their workspace entry/setup behavior. Enrolled-course links remain part of the future enrollment feature per user direction. See the [workspace ledger](../../docs/tasks/web-workspace-design/progress.md#learner-navigation-follow-up--2026-10-09) for 68 controlled browser checks and build/style/unit evidence.
 

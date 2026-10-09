@@ -8,6 +8,26 @@ import type { Locale } from "../i18n/locale";
 import { getWorkspaceShellMessages } from "../i18n/workspace-shell";
 
 export type WorkspaceNavItem = { label: string; href: string };
+export function isProtectedWorkspacePath(pathname: string): boolean {
+  return /^\/(?:dashboard|account|admin|app\/farms|farm)(?:\/|$)/.test(
+    pathname,
+  );
+}
+export function protectedEntryUrl(destination: string): string {
+  const returnTo =
+    validateWorkspaceReturnTo(destination) ??
+    validateWorkspaceReturnTo(destination.split("?")[0]) ??
+    "/dashboard";
+  return `/?${new URLSearchParams({ auth: "required", returnTo })}`;
+}
+export function readProtectedReturnTo(
+  auth: unknown,
+  returnTo: unknown,
+): string | null {
+  return auth === "required" && typeof returnTo === "string"
+    ? validateWorkspaceReturnTo(returnTo)
+    : null;
+}
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const released = new RegExp(
   `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin/(?:administrative-access|role-requests(?:/${uuid})?))$`,

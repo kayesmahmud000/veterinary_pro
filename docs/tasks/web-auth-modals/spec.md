@@ -6,7 +6,7 @@ Parent: [WEB-1E](../../../apps/web/ROADMAP.md), [API-AUTH](../../../apps/api/ROA
 
 ## Outcome and scope
 
-Visitors open sign in or sign up from the public header on desktop and mobile, switch between them inside one dialog, and remain on their current page after authentication. Authenticated visitors open their account summary and sign out in the same dialog. All copy, validation, pending, error and success states support Bangla (default) and English.
+Visitors open sign in or sign up from the public header on desktop and mobile and switch between them inside one dialog. Successful authentication follows the role/setup/validated-return policy in the workspace specification. Per the 2026-10-09 public-avatar update, authenticated public controls show only the user's avatar (initials fallback), with a hover/click/keyboard disclosure containing My profile and Sign out for LEARNER, or Dashboard and Sign out for other roles. The public mobile menu supports the same actions through tap/keyboard. All copy, validation, pending, error and success states support Bangla (default) and English.
 
 **User requirement, 2026-10-07:** authentication uses modals, not separate pages. This supersedes the proposed `/login`, `/register` and `(auth)` shell in the public-site spec. Farm dashboards, account orders/library, OTP, password reset and social login are separate work.
 

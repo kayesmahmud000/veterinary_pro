@@ -2,8 +2,7 @@
 
 import { cn } from "@/lib/ui/cn";
 import { UserRound } from "lucide-react";
-import Link from "next/link";
-import { getWorkspaceShellMessages } from "@/lib/i18n/workspace-shell";
+import { PublicAccountMenu } from "./public-account-menu";
 import { useAuth } from "./auth-provider";
 import styles from "./auth.styles";
 
@@ -14,23 +13,15 @@ export function AuthControls({
   mobile?: boolean;
   onOpen?: () => void;
 }) {
-  const { user, checking, open, locale, messages: t } = useAuth();
+  const { user, checking, error, open, messages: t } = useAuth();
   function show(mode: "login" | "register" | "account") {
     onOpen?.();
     open(mode);
   }
   return (
     <div className={cn(mobile ? styles.mobileControls : styles.controls)}>
-      {!checking && user?.role === "LEARNER" ? (
-        <Link
-          data-profile-link
-          href="/account/profile"
-          className={cn(styles.headerSignIn)}
-          onClick={onOpen}
-        >
-          <UserRound size={18} aria-hidden="true" />{" "}
-          <span>{getWorkspaceShellMessages(locale).profile}</span>
-        </Link>
+      {!checking && !error && user ? (
+        <PublicAccountMenu mobile={mobile} onNavigate={onOpen} />
       ) : (
         <button
           type="button"

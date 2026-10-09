@@ -58,13 +58,13 @@ export function WorkspaceShell({
           </aside>
           <div className="min-w-0">
             <WorkspaceHeader
-              brand={messages.brand}
-              homeLabel={messages.navigation.home}
               languageLabel={messages.navigation.language}
               onMenu={() => setOpen(true)}
               menuOpen={open}
             />
-            <div className="min-w-0 px-4 py-2 min-[640px]:px-6 min-[1024px]:px-8">{children}</div>
+            <div className="min-w-0 px-4 py-2 min-[640px]:px-6 min-[1024px]:px-8">
+              {children}
+            </div>
           </div>
         </div>
         <dialog
@@ -78,21 +78,23 @@ export function WorkspaceShell({
           }}
           className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[min(320px,calc(100vw_-_32px))] max-w-none rounded-r-2xl border-0 bg-white p-5 text-ink shadow-xl [&::backdrop]:bg-[#183f3280]"
         >
-          <div className="mb-7 flex items-center gap-2">
-            <SiteBrand
-              name={messages.brand.name}
-              homeLabel={messages.navigation.home}
-            />
-            <button
-              type="button"
-              aria-label={t.closeMenu}
-              onClick={() => setOpen(false)}
-              className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent"
-            >
-              <X size={21} aria-hidden="true" />
-            </button>
+          <div className="flex min-h-full flex-col">
+            <div className="mb-7 flex items-center gap-2">
+              <SiteBrand
+                name={messages.brand.name}
+                homeLabel={messages.navigation.home}
+              />
+              <button
+                type="button"
+                aria-label={t.closeMenu}
+                onClick={() => setOpen(false)}
+                className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent"
+              >
+                <X size={21} aria-hidden="true" />
+              </button>
+            </div>
+            <WorkspaceNavigation mobile onNavigate={() => setOpen(false)} />
           </div>
-          <WorkspaceNavigation mobile onNavigate={() => setOpen(false)} />
         </dialog>
       </div>
     </FarmContextProvider>

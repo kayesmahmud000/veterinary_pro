@@ -20,6 +20,7 @@
     "test:public-pages": "node scripts/check-public-pages.mjs",
     "test:public-navigation:browser": "node scripts/check-public-navigation-browser.mjs",
     "test:workspace-navigation": "node --test scripts/check-workspace-navigation.mjs",
+    "test:protected-routes": "node --test scripts/check-protected-routes.mjs",
     "test:farm-overview": "node --test scripts/check-farm-overview.mjs",
     "test:dashboard:browser": "node scripts/check-dashboard-browser.mjs"
   },

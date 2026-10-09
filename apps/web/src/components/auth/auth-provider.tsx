@@ -16,7 +16,10 @@ import type { Locale } from "@/lib/i18n/locale";
 import { usePathname } from "next/navigation";
 import { authRequest, withSessionLock } from "@/lib/auth/client";
 import { AuthDialog } from "./auth-dialog";
-import { validateWorkspaceReturnTo } from "@/lib/workspace/navigation";
+import {
+  readProtectedReturnTo,
+  validateWorkspaceReturnTo,
+} from "@/lib/workspace/navigation";
 
 type Modal = AuthMode | "account" | null;
 type AuthContextValue = {
@@ -80,7 +83,11 @@ export function AuthProvider({
   );
   useEffect(() => {
     // Logout can clear identity before its Home transition finishes.
-    if (protectedEntry && pathname === "/") close();
+    if (protectedEntry && pathname === "/") {
+      const query = new URLSearchParams(window.location.search);
+      if (!readProtectedReturnTo(query.get("auth"), query.get("returnTo")))
+        close();
+    }
   }, [protectedEntry, pathname, close]);
 
   const restore = useCallback(async () => {

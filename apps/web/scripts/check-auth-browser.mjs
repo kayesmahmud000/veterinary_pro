@@ -175,7 +175,7 @@ async function navigate(client, route = "/learning") {
     await until(
       () =>
         client.evaluate(
-          "document.readyState === 'complete' && [...document.querySelectorAll('header [data-auth-trigger]')].some(b => !b.disabled)",
+          "document.readyState === 'complete' && [...document.querySelectorAll('header [data-auth-trigger], header [data-avatar-trigger]')].some(b => !b.disabled)",
         ),
       "Session/header did not become ready",
     );
@@ -193,7 +193,7 @@ async function openDialog(client, mode, width) {
   await until(
     () =>
       client.evaluate(
-        "[...document.querySelectorAll('header [data-auth-trigger]')].some(b=>!b.disabled)",
+        "[...document.querySelectorAll('header [data-auth-trigger], header [data-avatar-trigger]')].some(b=>!b.disabled)",
       ),
     "Auth control stayed busy",
   );
@@ -201,10 +201,13 @@ async function openDialog(client, mode, width) {
     width < 1280 ? "document.querySelector('.menu-toggle').click()" : "void 0",
   );
   await client.evaluate(
-    `(() => { const buttons = [...document.querySelectorAll('header button')].filter(b => b.getClientRects().length); const button = buttons.find(b => ${mode === "register" ? "b.textContent.trim() === (document.documentElement.lang === 'bn' ? 'সাইন আপ' : 'Sign up')" : "b.hasAttribute('data-auth-trigger')"}); if (!button) throw new Error('Auth trigger missing'); button.focus(); button.click(); })()`,
+    `(() => { const buttons = [...document.querySelectorAll('header button')].filter(b => b.getClientRects().length); const button = buttons.find(b => ${mode === "register" ? "b.textContent.trim() === (document.documentElement.lang === 'bn' ? 'সাইন আপ' : 'Sign up')" : "b.hasAttribute('data-auth-trigger') || b.hasAttribute('data-avatar-trigger')"}); if (!button) throw new Error('Auth trigger missing'); button.focus(); button.click(); })()`,
   );
   await until(
-    () => client.evaluate("!!document.querySelector('dialog[open]')"),
+    () =>
+      client.evaluate(
+        "!!document.querySelector('dialog[open], [data-public-account-panel]')",
+      ),
     "Dialog did not open",
   );
 }
@@ -226,12 +229,15 @@ async function signedIn(client) {
   );
   await navigate(client);
   await client.evaluate(
-    "document.querySelector('[data-auth-trigger]').click()",
+    "document.querySelector('[data-avatar-trigger]').focus();document.querySelector('[data-avatar-trigger]').click()",
   );
   try {
     await until(
-      () => client.evaluate("!!document.querySelector('[data-account-title]')"),
-      "Account summary did not appear",
+      () =>
+        client.evaluate(
+          "!!document.querySelector('[data-public-account-panel]')",
+        ),
+      "Public avatar menu did not appear",
     );
   } catch (error) {
     const state = await client.evaluate(
@@ -241,20 +247,31 @@ async function signedIn(client) {
   }
 }
 async function dismiss(client) {
-  await client.call("Input.dispatchKeyEvent", {
-    type: "keyDown",
-    key: "Escape",
-    code: "Escape",
-    windowsVirtualKeyCode: 27,
-  });
-  await client.call("Input.dispatchKeyEvent", {
-    type: "keyUp",
-    key: "Escape",
-    code: "Escape",
-    windowsVirtualKeyCode: 27,
-  });
+  await client.call("Page.bringToFront");
+  if (
+    await client.evaluate(
+      "!!document.querySelector('[data-public-account-panel]')",
+    )
+  ) {
+    // Exercise the disclosure handler deterministically; CDP occasionally drops
+    // this key after navigation. Native dialog Escape is exercised below.
+    await client.evaluate(
+      "document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',code:'Escape',bubbles:true,cancelable:true}))",
+    );
+  } else {
+    for (const type of ["keyDown", "keyUp"])
+      await client.call("Input.dispatchKeyEvent", {
+        type,
+        key: "Escape",
+        code: "Escape",
+        windowsVirtualKeyCode: 27,
+      });
+  }
   await until(
-    () => client.evaluate("!document.querySelector('dialog[open]')"),
+    () =>
+      client.evaluate(
+        "!document.querySelector('dialog[open], [data-public-account-panel]')",
+      ),
     "Escape did not dismiss dialog",
   );
 }
@@ -587,8 +604,13 @@ try {
     key: "Escape",
     windowsVirtualKeyCode: 27,
   });
+  await client.call("Input.dispatchKeyEvent", {
+    type: "keyUp",
+    key: "Escape",
+    windowsVirtualKeyCode: 27,
+  });
   const pendingCancelState = await client.evaluate(
-    "({ exists: !!document.querySelector('dialog'), open: document.querySelector('dialog')?.open, pending: document.querySelector('dialog form')?.getAttribute('aria-busy'), account: !!document.querySelector('[data-account-title]') })",
+    "({ exists: !!document.querySelector('dialog'), open: document.querySelector('dialog')?.open, pending: document.querySelector('dialog form')?.getAttribute('aria-busy'), account: !!document.querySelector('[data-public-account-panel]') })",
   );
   assert.equal(
     pendingCancelState.open,
@@ -615,7 +637,7 @@ try {
   );
   assert.ok(
     await client.evaluate(
-      "document.querySelector('dialog').textContent.includes('Veterinarian')",
+      "document.querySelector('[data-account-destination]')?.getAttribute('href') === '/dashboard'",
     ),
   );
   assert.equal(await client.evaluate("location.pathname"), "/learning");
@@ -650,7 +672,7 @@ try {
   await navigate(client, "/farm-management");
   assert.ok(
     await client.evaluate(
-      "document.querySelector('header [data-auth-trigger]').textContent.includes('My account')",
+      "document.querySelector('header [data-avatar-trigger]')?.getAttribute('aria-label').includes('My account')",
     ),
   );
   const target2 = await (
@@ -665,32 +687,124 @@ try {
   await until(
     async () =>
       (await client.evaluate(
-        "!document.querySelector('header [data-auth-trigger]').disabled",
+        "!!document.querySelector('header [data-avatar-trigger]')",
       )) &&
       (await second.evaluate(
-        "!document.querySelector('header [data-auth-trigger]').disabled",
+        "!!document.querySelector('header [data-avatar-trigger]')",
       )),
     "Cross-tab restore did not finish",
   );
   assert.equal(refreshCount, 1);
+  // Refresh-only protected entry must hand off publicly and rotate only in the browser.
+  await client.call("Network.deleteCookies", {
+    name: "vetralink_access",
+    url: origin,
+  });
+  const handoff = await fetch(origin + "/account/profile?section=access", {
+    redirect: "manual",
+    headers: { Cookie: `vetralink_refresh=${[...sessions.keys()].at(-1)}` },
+  });
+  assert.equal(handoff.status, 307);
+  assert.equal(
+    refreshCount,
+    1,
+    "Middleware must never consume a refresh token",
+  );
+  await client.call("Page.navigate", {
+    url: origin + "/account/profile?section=access",
+  });
+  await until(
+    () =>
+      client.evaluate(
+        `location.pathname==='/account/profile' && location.search==='?section=access' && !!document.querySelector('[data-account-profile]') && !document.querySelector('dialog[open]')`,
+      ),
+    "Refresh-only entry resumes requested profile",
+  );
+  assert.equal(
+    refreshCount,
+    2,
+    "Browser performs one protected-entry rotation",
+  );
+  await navigate(client);
+  for (const session of sessions.values()) session.expired = true;
+  await openDialog(client, "login", 1440);
+  await client.evaluate(
+    `document.querySelector('[data-account-destination]').click()`,
+  );
+  await until(
+    () =>
+      client.evaluate(
+        `location.pathname==='/dashboard' && !!document.querySelector('[data-dashboard-role]') && !document.querySelector('dialog[open]')`,
+      ),
+    "Expired access during client navigation restores before resuming",
+  );
+  assert.equal(
+    refreshCount,
+    3,
+    "Existing provider revalidates after denied client navigation",
+  );
+  await navigate(client);
+  await openDialog(client, "login", 1440);
+  await dismiss(client);
+  assert.ok(
+    await client.evaluate(
+      `document.activeElement.hasAttribute('data-avatar-trigger')`,
+    ),
+    "Escape restores avatar focus",
+  );
+  await client.call("Input.dispatchKeyEvent", {
+    type: "keyDown",
+    key: "ArrowDown",
+    code: "ArrowDown",
+    windowsVirtualKeyCode: 40,
+  });
+  await client.call("Input.dispatchKeyEvent", {
+    type: "keyUp",
+    key: "ArrowDown",
+    code: "ArrowDown",
+    windowsVirtualKeyCode: 40,
+  });
+  await until(
+    () =>
+      client.evaluate(
+        `document.activeElement.hasAttribute('data-account-destination')`,
+      ),
+    "ArrowDown focuses account destination",
+  );
+  await client.evaluate(
+    `document.body.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))`,
+  );
+  await until(
+    () =>
+      client.evaluate(`!document.querySelector('[data-public-account-panel]')`),
+    "Outside pointer dismisses avatar menu",
+  );
   await openDialog(client, "login", 1440);
   offline = true;
   await client.evaluate(
-    "[...document.querySelectorAll('dialog button')].find(b=>b.textContent.trim()==='Sign out').click()",
+    "document.querySelector('[data-public-signout]').click()",
   );
   await until(
-    () => client.evaluate("!!document.querySelector('dialog [role=alert]')"),
+    () =>
+      client.evaluate(
+        "!!document.querySelector('[data-public-account-panel] [role=alert]')",
+      ),
     "Logout failure feedback missing",
   );
   assert.ok(
-    await client.evaluate("!!document.querySelector('[data-account-title]')"),
+    await client.evaluate(
+      "!!document.querySelector('[data-public-account-panel]')",
+    ),
   );
   offline = false;
   await client.evaluate(
-    "[...document.querySelectorAll('dialog button')].find(b=>b.textContent.trim()==='Sign out').click()",
+    "document.querySelector('[data-public-signout]').click()",
   );
   await until(
-    () => client.evaluate("!document.querySelector('dialog[open]')"),
+    () =>
+      client.evaluate(
+        "!document.querySelector('dialog[open], [data-public-account-panel]')",
+      ),
     "Logout did not finish",
   );
   await until(
@@ -740,10 +854,11 @@ try {
   await until(
     () =>
       client.evaluate(
-        "!!document.querySelector('#auth-email') && document.querySelector('dialog [role=alert]')?.textContent.includes('expired')",
+        "!!document.querySelector('header [data-auth-trigger]') && !document.querySelector('[data-avatar-trigger], [data-public-account-panel]')",
       ),
-    "Expired session recovery missing",
+    "Expired session hides stale avatar/menu",
   );
+  await openDialog(client, "login", 1440);
   await client.evaluate(
     "[...document.querySelectorAll('dialog button')].at(-1).click()",
   );
@@ -786,7 +901,7 @@ try {
   await signedIn(client);
   assert.ok(
     await client.evaluate(
-      "document.querySelector('dialog').textContent.includes('Buyer')",
+      "document.querySelector('[data-account-destination]')?.getAttribute('href') === '/dashboard'",
     ),
   );
   assert.ok(
@@ -806,10 +921,13 @@ try {
   await navigate(client);
   await openDialog(client, "login", 1440);
   await client.evaluate(
-    "[...document.querySelectorAll('dialog button')].find(b=>b.textContent.trim()==='সাইন আউট').click()",
+    "document.querySelector('[data-public-signout]').click()",
   );
   await until(
-    () => client.evaluate("!document.querySelector('dialog[open]')"),
+    () =>
+      client.evaluate(
+        "!document.querySelector('dialog[open], [data-public-account-panel]')",
+      ),
     "Bangla logout did not finish",
   );
   await openDialog(client, "login", 1440);

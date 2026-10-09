@@ -32,6 +32,7 @@ export function AuthDialog() {
   const router = useRouter();
   const {
     user,
+    checking,
     modal,
     messages: t,
     locale,
@@ -125,7 +126,7 @@ export function AuthDialog() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy.current) return;
+    if (busy.current || (protectedEntry && checking)) return;
     const validation = validateAuthForm(mode, { ...values, phoneCountry });
     setFields(validation.fields);
     if (Object.keys(validation.fields).length || !validation.payload) {
@@ -146,6 +147,7 @@ export function AuthDialog() {
         const destination = getPostLoginDestination(result.user, returnTo);
         close();
         router.push(destination);
+        router.refresh();
       }
       setValues((current) => ({ ...current, password: "", confirmation: "" }));
       setShowPassword(false);
@@ -171,7 +173,11 @@ export function AuthDialog() {
     if (result.code) {
       setError(result.code);
       requestAnimationFrame(() => feedback.current?.focus());
-    } else close();
+    } else {
+      close();
+      if (protectedEntry) router.replace("/");
+      router.refresh();
+    }
   }
 
   function input(
@@ -322,11 +328,14 @@ export function AuthDialog() {
             tabIndex={-1}
           >
             {t.errors[visibleError]}
-            {user && (
+            {(user ||
+              (protectedEntry &&
+                sessionError &&
+                sessionError !== "session_expired")) && (
               <button
                 type="button"
                 className={cn(styles.inlineButton)}
-                disabled={pending}
+                disabled={pending || checking}
                 onClick={() => {
                   setError(undefined);
                   void restore();
@@ -425,7 +434,10 @@ export function AuthDialog() {
         ) : (
           <>
             <form ref={form} onSubmit={submit} noValidate aria-busy={pending}>
-              <fieldset disabled={pending} className={cn(styles.formFields)}>
+              <fieldset
+                disabled={pending || (protectedEntry && checking)}
+                className={cn(styles.formFields)}
+              >
                 {mode === "register" && (
                   <div
                     id="auth-register-fields"

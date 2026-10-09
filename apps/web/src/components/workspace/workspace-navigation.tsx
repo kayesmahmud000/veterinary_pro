@@ -19,6 +19,7 @@ import {
   type WorkspaceNavItem,
 } from "@/lib/workspace/navigation";
 import { getWorkspaceShellMessages } from "@/lib/i18n/workspace-shell";
+import { WorkspaceAccount } from "./workspace-account";
 
 export function WorkspaceNavigation({
   mobile = false,
@@ -45,7 +46,7 @@ export function WorkspaceNavigation({
     <nav
       aria-label={t.navigation}
       data-workspace-nav={mobile ? "mobile" : "desktop"}
-      className="flex min-w-0 flex-col gap-1"
+      className="flex min-w-0 flex-1 flex-col gap-1"
     >
       {items.map((item) => {
         const Icon =
@@ -93,6 +94,7 @@ export function WorkspaceNavigation({
         <ArrowLeft size={18} aria-hidden="true" />
         {t.website}
       </Link>
+      <WorkspaceAccount onNavigate={onNavigate} />
     </nav>
   );
 }
