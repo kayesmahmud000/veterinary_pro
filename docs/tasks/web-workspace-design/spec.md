@@ -46,7 +46,9 @@ flowchart TD
   C --> D[/farm: select authorized farm]
   B -->|No| E{Valid protected return destination?}
   E -->|Yes| F[Resume destination through its access gate]
-  E -->|No| G[/dashboard: current-role overview]
+  E -->|No| K{LEARNER?}
+  K -->|Yes| L[/: public home; Profile account link]
+  K -->|No| G[/dashboard: current-role overview]
   G --> H[/account/profile]
   G --> D
   G --> I[Existing role application or admin review]
@@ -55,18 +57,24 @@ flowchart TD
 
 Proposed behavior:
 
-- After explicit successful login/register: pending FARMER setup wins, then a validated protected return destination, otherwise `/dashboard` for all six roles.
+- Per the user's 2026-10-09 navigation update, after explicit successful login/register: pending FARMER setup wins, then a validated protected return destination, otherwise `/` for LEARNER and `/dashboard` for other ready roles. A LEARNER return to `/dashboard` falls back to `/`; opening `/dashboard` as a restored LEARNER redirects to `/account/profile` without rendering the dashboard. Existing protected profile/application returns remain supported.
 - After setup, retain the current `/farm` destination. When the farm overview ships, `/farm` remains the farm discovery/selection entry and opens `/app/farms/[farmId]`. Existing member management stays reachable throughout the transition.
-- Restoring a session on `/`, `/blog` or another public page keeps that page open. Account controls gain Dashboard/Profile links; keep the modal account summary/logout as a compatible shortcut.
-- A protected page opened while signed out shows the existing login-required pattern. Completing its modal login resumes that page unless setup is mandatory. Never place private page content behind a cosmetic client-only role check.
+- Restoring a session on `/`, `/blog` or another public page keeps that page open. LEARNER public account controls link directly to Profile and all learner navigation omits Dashboard. Other roles keep Dashboard/Profile links and the modal account summary/logout shortcut. Workspace breadcrumbs use Profile as the learner entry.
+- Per the user's 2026-10-09 server-protection follow-up, a signed-out protected visit redirects before protected page delivery to public Home, where Sign in opens without waiting for restoration. Escape, backdrop and Close dismissal clear the entry query and remain at `/`; successful login/signup resumes the validated return under the existing role/setup rules. Login/register switching preserves protected-entry behavior. Pending mutations remain nondismissible; failed credentials keep the modal open. Session/network failures retain Retry. Public dialogs keep their ordinary dismissal behavior. Never place private page content behind a cosmetic client-only role check.
 - Validate return destinations against released workspace routes, normalize with a same-origin URL, reject absolute/external URLs, protocol-relative URLs, backslashes and API paths. An unauthorized destination still renders the ordinary denial state; return navigation grants no access.
 - Losing a role or membership clears protected data and refreshes the identity. Unknown roles fail closed. LEARNER cannot open operational farm/clinical work.
 
 ## Workspace shell and visual language
 
-Desktop at **1024px and wider**: centered `w-11/12` outer container, 240px sidebar and flexible content column with `min-w-0`. Below 1024px use a compact header and a labeled mobile navigation drawer. This is a separate application breakpoint; public navigation keeps its current 1280px breakpoint.
+### Server-enforced entry (2026-10-09 follow-up)
 
-The sidebar contains the localized SiteBrand, Dashboard, released role/domain destinations, Profile, role applications where supported, Help and Back to website. Header contains the page breadcrumb/title, a farm selector only in farm context, the existing language control and account menu. Do not show a decorative notification bell or search field without a working purpose. Retain sidebar labels rather than requiring icon recognition; collapse-to-icons and dark mode are deferred.
+Before rendering or delivering a protected workspace route, middleware requires a current active identity verified through backend `auth/me`; cookie presence/decoded client identity alone is insufficient. No access cookie, expired/forged/revoked/suspended identity, malformed responses or unavailable upstreams redirect to Home with `auth=required` and an allowlisted `returnTo`. Missing access skips upstream verification. Preserve private/no-store/noindex headers and all public/API route semantics. Middleware never rotates refresh tokens; browser Web Locks remain the owner of refresh/cookie rotation.
+
+Home immediately opens the protected sign-in dialog without waiting for the session API. Restore/refresh a viable existing session there and resume the allowed destination under the current role/setup policy. Do not auto-navigate on transient errors; show Retry. Closing while signed out removes the entry query and remains at Home, with no repeated prompt. Existing public login/signup and workspace role/tenant/API guards remain in place. Login refreshes the router cache to avoid a prefetched signed-out redirect surviving new auth cookies; successful logout also invalidates cached protected screens, including history navigation.
+
+Desktop at **1024px and wider**: full-width (`w-full`) outer container, 240px sidebar and flexible content column with `min-w-0`. Per the user's 2026-10-09 update, all workspace routes (dashboard, profile, account, admin and farm pages) use the full available width; the header also fills its content column. Use 16px horizontal content/header padding below 640px, 24px from 640px and 32px from 1024px; give the desktop sidebar 16px horizontal padding. Below 1024px use a compact header and a labeled mobile navigation drawer. This is a separate application breakpoint; public navigation keeps its current 1280px breakpoint and public containers retain `w-11/12`.
+
+The sidebar contains the localized SiteBrand, Dashboard, released role/domain destinations, Profile, role applications where supported, Help and Back to website. Per the user's 2026-10-09 account-placement update, its bottom contains a signed-in profile icon/name/link and a labeled Sign out icon button. Hide account identity while session restoration is pending, failed or signed out; preserve pending/error/retry logout behavior. The workspace top bar contains only the existing language control on desktop, plus the necessary drawer trigger below 1024px. Remove its breadcrumb, duplicate brand and account menu. Desktop sidebar and mobile drawer share the account controls; opening Profile closes the mobile drawer. Farm selection remains in the farm content. Public marketing navigation remains unchanged. Do not show a decorative notification bell or search field without a working purpose. Retain sidebar labels rather than requiring icon recognition; collapse-to-icons and dark mode are deferred.
 
 Use the existing palette: ink `#183f32`, green `#214e3a`, paper `#fafbf7`, line `#dfe5dc`, muted `#53655c`. Active navigation changes **only text** to `#a26913`, with `aria-current`; no active pill background or underline. Green is reserved for primary actions. Amber is an accent/status treatment, not low-contrast body text on white. Status always includes a readable label.
 
@@ -92,7 +100,7 @@ All rows below are **proposed**, with existing URLs explicitly marked.
 
 | Role | Dashboard emphasis | Destination set as the domains ship |
 | --- | --- | --- |
-| LEARNER | Free learning, account/profile, application status; paid content if actually entitled | `/learning` **existing**, `/account/role-requests` and `/account/role-requests/new` **existing**; later `/account/library`, `/account/orders`, `/catalog` |
+| LEARNER | Public home after login/signup, direct profile, application status; no dashboard | `/account/profile`, `/learning`, `/account/role-requests` and `/account/role-requests/new` **existing**; enrolled-course links ship with the enrollment feature (user-selected scope 2026-10-09); later `/account/library`, `/account/orders`, `/catalog` |
 | FARMER | Current farm, next operational action, setup/access feedback | `/account/farm-onboarding`, `/farm` **existing**; later selected-farm overview, animals, milk, health/vaccinations, finance/reports, members, billing, consultations |
 | BUYER | Owned resources and real order states; free discovery until commerce ships | Later `/account/library`, `/account/orders`; farm navigation only for confirmed memberships allowed by current backend rules |
 | VET | Assigned cases, availability and case actions | Later `/vet`, `/vet/availability`, `/vet/settlements`, authorized `/consultations/[id]` and prescription view; never self-assign privileges or imply every case is their patient |

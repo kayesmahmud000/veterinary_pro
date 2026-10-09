@@ -48,8 +48,8 @@ export function WorkspaceShell({
   return (
     <FarmContextProvider>
       <div data-workspace-shell className="min-h-screen bg-paper">
-        <div className="mx-auto grid w-11/12 grid-cols-[minmax(0,1fr)] min-[1024px]:grid-cols-[240px_minmax(0,1fr)]">
-          <aside className="sticky top-0 hidden h-screen min-w-0 flex-col gap-8 overflow-y-auto border-y-0 border-l-0 border-r border-solid border-line bg-white py-6 pr-4 min-[1024px]:flex">
+        <div className="grid w-full grid-cols-[minmax(0,1fr)] min-[1024px]:grid-cols-[240px_minmax(0,1fr)]">
+          <aside className="sticky top-0 hidden h-screen min-w-0 flex-col gap-8 overflow-y-auto border-y-0 border-l-0 border-r border-solid border-line bg-white px-4 py-6 min-[1024px]:flex">
             <SiteBrand
               name={messages.brand.name}
               homeLabel={messages.navigation.home}
@@ -58,13 +58,13 @@ export function WorkspaceShell({
           </aside>
           <div className="min-w-0">
             <WorkspaceHeader
-              brand={messages.brand}
-              homeLabel={messages.navigation.home}
               languageLabel={messages.navigation.language}
               onMenu={() => setOpen(true)}
               menuOpen={open}
             />
-            <div className="min-w-0 py-2 min-[1024px]:pl-8">{children}</div>
+            <div className="min-w-0 px-4 py-2 min-[640px]:px-6 min-[1024px]:px-8">
+              {children}
+            </div>
           </div>
         </div>
         <dialog
@@ -78,21 +78,23 @@ export function WorkspaceShell({
           }}
           className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[min(320px,calc(100vw_-_32px))] max-w-none rounded-r-2xl border-0 bg-white p-5 text-ink shadow-xl [&::backdrop]:bg-[#183f3280]"
         >
-          <div className="mb-7 flex items-center gap-2">
-            <SiteBrand
-              name={messages.brand.name}
-              homeLabel={messages.navigation.home}
-            />
-            <button
-              type="button"
-              aria-label={t.closeMenu}
-              onClick={() => setOpen(false)}
-              className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent"
-            >
-              <X size={21} aria-hidden="true" />
-            </button>
+          <div className="flex min-h-full flex-col">
+            <div className="mb-7 flex items-center gap-2">
+              <SiteBrand
+                name={messages.brand.name}
+                homeLabel={messages.navigation.home}
+              />
+              <button
+                type="button"
+                aria-label={t.closeMenu}
+                onClick={() => setOpen(false)}
+                className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent"
+              >
+                <X size={21} aria-hidden="true" />
+              </button>
+            </div>
+            <WorkspaceNavigation mobile onNavigate={() => setOpen(false)} />
           </div>
-          <WorkspaceNavigation mobile onNavigate={() => setOpen(false)} />
         </dialog>
       </div>
     </FarmContextProvider>

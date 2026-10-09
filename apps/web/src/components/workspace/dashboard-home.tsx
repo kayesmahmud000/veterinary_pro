@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowUpRight,
   BookOpen,
@@ -134,7 +136,13 @@ function Overview() {
   );
 }
 export function DashboardHome() {
-  const { locale } = useAuth();
+  const { locale, user, checking, error } = useAuth();
+  const router = useRouter();
+  const learner = user?.role === UserRole.LEARNER;
+  useEffect(() => {
+    if (!checking && !error && learner) router.replace("/account/profile");
+  }, [checking, error, learner, router]);
+  if (learner && !error) return null;
   return (
     <main id="main-content" className={styles.shell}>
       <h1 className={styles.heading}>

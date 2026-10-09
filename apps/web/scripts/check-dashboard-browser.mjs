@@ -118,8 +118,15 @@ const upstream = http.createServer(async (req, res) => {
     return req.headers.authorization
       ? send(200, users.get(role))
       : send(401, null);
-  if (route === "auth/login") {
-    const user = [...users.values()].find((u) => u.email === data.email);
+  if (route === "auth/login" || route === "auth/register") {
+    const user =
+      route === "auth/register"
+        ? {
+            ...users.get(data.role ?? "LEARNER"),
+            name: data.name,
+            email: data.email,
+          }
+        : [...users.values()].find((u) => u.email === data.email);
     if (!user || data.password !== "DemoPassword123!") return send(401, null);
     return send(200, {
       user,
@@ -319,6 +326,44 @@ try {
     "Next test server ready",
     30000,
   );
+  // Inspect the actual HTTP boundary without JavaScript or automatic redirects.
+  for (const cookie of [
+    undefined,
+    "vetralink_access=forged",
+    "vetralink_refresh=r-BUYER",
+  ]) {
+    const before = requests.length;
+    const response = await fetch(origin + "/account/profile?section=access", {
+      redirect: "manual",
+      headers: cookie ? { Cookie: cookie } : {},
+    });
+    assert.equal(response.status, 307);
+    const location = new URL(response.headers.get("location"), origin);
+    assert.equal(location.pathname, "/");
+    assert.equal(location.searchParams.get("auth"), "required");
+    assert.equal(
+      location.searchParams.get("returnTo"),
+      "/account/profile?section=access",
+    );
+    assert.match(response.headers.get("cache-control"), /no-store/);
+    assert.doesNotMatch(
+      await response.text(),
+      /data-workspace-shell|data-account-profile/,
+    );
+    assert.equal(
+      requests.slice(before).some((r) => r.route === "auth/refresh"),
+      false,
+    );
+    checks++;
+  }
+  const authorized = await fetch(origin + "/account/profile", {
+    redirect: "manual",
+    headers: { Cookie: "vetralink_access=a-BUYER" },
+  });
+  assert.equal(authorized.status, 200);
+  assert.match(authorized.headers.get("cache-control"), /no-store/);
+  assert.match(await authorized.text(), /data-workspace-shell/);
+  checks++;
   chrome = spawn(
     process.env.CHROME_PATH || "/usr/bin/google-chrome",
     [
@@ -410,14 +455,155 @@ try {
     await cookie("vetralink-locale", locale);
   }
   if (!focus) {
-    for (const locale of ["bn", "en"])
-      for (const role of roles) {
-        await seed(role, locale);
-        await go("/dashboard");
+    // Protected entry automatically prompts; signed-out dismissal leaves for home.
+    await cookie("vetralink_access", "a-LEARNER");
+    offline = true;
+    await go("/account/profile", "/");
+    await until(
+      () =>
+        evaluate(
+          `!!document.querySelector('dialog[open] [role="alert"] button')`,
+        ),
+      "Session failure retains retry",
+    );
+    assert.equal(
+      await evaluate(`!!document.querySelector('dialog[open]')`),
+      true,
+    );
+    assert.equal(
+      await evaluate(`!!document.querySelector('[data-workspace-account]')`),
+      false,
+      "Unknown session hides sidebar account",
+    );
+    offline = false;
+    await call("Network.deleteCookies", {
+      name: "vetralink_access",
+      url: origin,
+    });
+    await evaluate(
+      `document.querySelector('dialog[open] [role="alert"] button').click()`,
+    );
+    await until(
+      () =>
+        evaluate(
+          `!!document.querySelector('dialog[open] #auth-email:not(:disabled)')`,
+        ),
+      "Session retry opens protected login",
+    );
+    await evaluate(`document.querySelector('dialog[open] button').click()`);
+    await until(
+      () =>
+        evaluate(
+          `location.pathname==='/' && !document.querySelector('dialog[open]')`,
+        ),
+      "Retry modal dismissal returns home",
+    );
+    checks++;
+    for (const locale of ["bn", "en"]) {
+      await cookie("vetralink-locale", locale);
+      for (const [route, dismissal] of [
+        ["/account/profile?section=access", "close"],
+        ["/dashboard", "escape"],
+        ["/admin/role-requests", "backdrop"],
+        ["/farm", "register-close"],
+      ]) {
+        await go(route, "/");
+        await until(
+          () =>
+            evaluate(`!!document.querySelector('dialog[open] #auth-email')`),
+          "Automatic protected sign in " + locale + " " + dismissal,
+        );
+        if (dismissal === "close") {
+          const shot = await call("Page.captureScreenshot", { format: "png" });
+          await writeFile(
+            path.join(temp, `protected-entry-${locale}.png`),
+            Buffer.from(shot.data, "base64"),
+          );
+        }
+        assert.equal(
+          await evaluate(
+            `!!document.querySelector('[data-workspace-shell], [data-account-profile], [data-dashboard-role], [data-selected-farm]')`,
+          ),
+          false,
+        );
+        if (dismissal === "register-close") {
+          await evaluate(
+            `document.querySelector('dialog form').nextElementSibling.querySelector('button').click()`,
+          );
+          await until(
+            () => evaluate(`!!document.querySelector('#auth-name')`),
+            "Protected registration mode",
+          );
+        }
+        if (dismissal === "escape") await key("Escape", "Escape", 27);
+        else if (dismissal === "backdrop") {
+          for (const type of ["mousePressed", "mouseReleased"])
+            await call("Input.dispatchMouseEvent", {
+              type,
+              x: 1,
+              y: 1,
+              button: "left",
+              clickCount: 1,
+            });
+        } else
+          await evaluate(
+            `document.querySelector('dialog[open] button').click()`,
+          );
         await until(
           () =>
             evaluate(
-              `document.querySelector('[data-dashboard-role]')?.getAttribute('data-dashboard-role')===${JSON.stringify(role)}`,
+              `location.pathname==='/' && location.search==='' && !document.querySelector('dialog[open]')`,
+            ),
+          "Protected dismissal returns home",
+        );
+        await sleep(150);
+        assert.equal(
+          await evaluate(`!!document.querySelector('dialog[open]')`),
+          false,
+          "No repeated prompt after dismissal",
+        );
+        checks++;
+      }
+      await go("/learning");
+      await until(
+        () =>
+          evaluate(
+            `!!document.querySelector('[data-auth-trigger]:not(:disabled)')`,
+          ),
+        "Public auth controls ready",
+      );
+      await evaluate(`document.querySelector('[data-auth-trigger]').click()`);
+      await until(
+        () => evaluate(`!!document.querySelector('dialog[open] #auth-email')`),
+        "Public sign in",
+      );
+      await key("Escape", "Escape", 27);
+      await until(
+        () => evaluate(`!document.querySelector('dialog[open]')`),
+        "Public modal dismisses",
+      );
+      assert.equal(await evaluate(`location.pathname`), "/learning");
+      checks++;
+    }
+    await call("Emulation.setDeviceMetricsOverride", {
+      width: 1440,
+      height: 1000,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
+    for (const locale of ["bn", "en"])
+      for (const role of roles) {
+        await seed(role, locale);
+        await go(
+          "/dashboard",
+          role === "LEARNER" ? "/account/profile" : "/dashboard",
+        );
+        await until(
+          () =>
+            evaluate(
+              role === "LEARNER"
+                ? `!!document.querySelector('[data-account-profile]') && !document.querySelector('[data-dashboard-role]')`
+                : `document.querySelector('[data-dashboard-role]')?.getAttribute('data-dashboard-role')===${JSON.stringify(role)}`,
             ),
           "Role overview " + role,
         );
@@ -437,6 +623,26 @@ try {
         const hrefs = await evaluate(
           `Array.from(document.querySelectorAll('[data-workspace-nav="desktop"] a')).map(a=>a.getAttribute('href'))`,
         );
+        assert.equal(hrefs.includes("/dashboard"), role !== "LEARNER");
+        assert.equal(
+          await evaluate(
+            `!!document.querySelector('header a, header details')`,
+          ),
+          false,
+          "Workspace header contains no account or breadcrumb links",
+        );
+        assert.equal(
+          await evaluate(
+            `document.querySelectorAll('header form button[name="locale"]').length`,
+          ),
+          2,
+        );
+        assert.equal(
+          await evaluate(
+            `document.querySelector('[data-workspace-nav="desktop"] [data-workspace-profile]')?.getAttribute('href')`,
+          ),
+          "/account/profile",
+        );
         assert.equal(
           hrefs.includes("/admin/role-requests"),
           ["ADMIN", "SUPER_ADMIN"].includes(role),
@@ -448,6 +654,76 @@ try {
         assert.equal(
           hrefs.includes("/account/role-requests/new"),
           role === "LEARNER",
+        );
+        await go("/");
+        await until(
+          () => evaluate(`!!document.querySelector('[data-avatar-trigger]')`),
+          "Restored public avatar",
+        );
+        assert.equal(
+          await evaluate(
+            `document.querySelector('[data-avatar-trigger]').textContent.trim()`,
+          ),
+          "S" + role[0],
+          "Avatar has initials only",
+        );
+        const avatar = await evaluate(
+          `(()=>{const r=document.querySelector('[data-avatar-trigger]').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`,
+        );
+        await call("Input.dispatchMouseEvent", {
+          type: "mouseMoved",
+          ...avatar,
+        });
+        await until(
+          () =>
+            evaluate(`!!document.querySelector('[data-public-account-panel]')`),
+          "Hover opens avatar menu",
+        );
+        assert.equal(
+          await evaluate(
+            `document.querySelector('[data-account-destination]').getAttribute('href')`,
+          ),
+          role === "LEARNER" ? "/account/profile" : "/dashboard",
+        );
+        assert.equal(
+          await evaluate(
+            `document.querySelector('[data-account-destination]').textContent.trim()`,
+          ),
+          role === "LEARNER"
+            ? locale === "bn"
+              ? "আমার প্রোফাইল"
+              : "My profile"
+            : locale === "bn"
+              ? "ড্যাশবোর্ড"
+              : "Dashboard",
+        );
+        assert.equal(
+          await evaluate(
+            `document.querySelector('[data-public-signout]').textContent.trim()`,
+          ),
+          locale === "bn" ? "সাইন আউট" : "Sign out",
+        );
+        if (["LEARNER", "BUYER"].includes(role)) {
+          const menuShot = await call("Page.captureScreenshot", {
+            format: "png",
+          });
+          await writeFile(
+            path.join(
+              temp,
+              `avatar-${role.toLowerCase()}-${locale}-desktop.png`,
+            ),
+            Buffer.from(menuShot.data, "base64"),
+          );
+        }
+        await call("Input.dispatchMouseEvent", {
+          type: "mouseMoved",
+          x: 1,
+          y: 200,
+        });
+        await until(
+          () =>
+            evaluate(`!document.querySelector('[data-public-account-panel]')`),
+          "Pointer leave closes avatar menu",
         );
         await go("/account/profile");
         await until(
@@ -467,6 +743,36 @@ try {
         );
         checks++;
       }
+    await seed("LEARNER", "en");
+    users.get("LEARNER").avatarUrl = "/assets/brand/logo-green.jpeg";
+    await go("/");
+    await until(
+      () =>
+        evaluate(
+          `document.querySelector('[data-avatar-trigger] img')?.naturalWidth > 0`,
+        ),
+      "Account avatar photo loads",
+    );
+    users.get("LEARNER").avatarUrl = "/missing-synthetic-avatar.png";
+    await go("/");
+    await until(
+      () =>
+        evaluate(
+          `document.querySelector('[data-avatar-trigger]')?.textContent.trim()==='SL' && !document.querySelector('[data-avatar-trigger] img')`,
+        ),
+      "Broken avatar falls back to initials",
+    );
+    users.get("LEARNER").avatarUrl = "javascript:alert('unsafe-avatar')";
+    await go("/");
+    await until(
+      () =>
+        evaluate(
+          `document.querySelector('[data-avatar-trigger]')?.textContent.trim()==='SL' && !document.querySelector('[data-avatar-trigger] img')`,
+        ),
+      "Unsafe avatar source is rejected",
+    );
+    users.get("LEARNER").avatarUrl = null;
+    checks++;
     for (const responsiveLocale of ["bn", "en"]) {
       await seed("FARMER", responsiveLocale);
       for (const width of [320, 375, 768, 1024, 1440]) {
@@ -551,7 +857,7 @@ try {
             );
             if (width === 375) {
               await evaluate(
-                `document.querySelector('[data-workspace-drawer] a[href="/account/profile"]').click()`,
+                `document.querySelector('[data-workspace-drawer] [data-workspace-profile]').click()`,
               );
               await until(
                 () =>
@@ -613,18 +919,23 @@ try {
       bg: "rgba(0, 0, 0, 0)",
       decoration: "none",
     });
-    await evaluate(`document.querySelector('header details summary').focus()`);
+    await evaluate(
+      `document.querySelector('[data-workspace-nav="desktop"] [data-workspace-profile]').focus()`,
+    );
     await key("Enter", "Enter", 13);
     await until(
-      () => evaluate(`document.querySelector('header details').open`),
-      "Account menu keyboard",
+      () =>
+        evaluate(
+          `location.pathname==='/account/profile' && location.search==='' && !!document.querySelector('[data-account-profile]')`,
+        ),
+      "Sidebar profile keyboard navigation",
     );
-    await key("Escape", "Escape", 27);
     assert.equal(
       await evaluate(
-        `document.activeElement===document.querySelector('header details summary')`,
+        `(()=>{const a=document.querySelector('[data-workspace-nav="desktop"] [data-workspace-account]').getBoundingClientRect();const sidebar=document.querySelector('aside').getBoundingClientRect();return a.bottom <= innerHeight && sidebar.bottom-a.bottom < 40})()`,
       ),
       true,
+      "Profile account sits at the sidebar bottom within the viewport",
     );
     checks++;
     const farmerName = users.get("FARMER").name,
@@ -716,15 +1027,31 @@ try {
       name: "vetralink_refresh",
       url: origin,
     });
-    await go("/account/profile?section=access");
-    await until(
-      () => evaluate(`!!document.querySelector('[data-workspace-sign-in]')`),
-      "Protected login gate",
+    await go("/account/profile?section=access", "/");
+    assert.equal(
+      await evaluate(`new URLSearchParams(location.search).get('returnTo')`),
+      "/account/profile?section=access",
     );
-    await evaluate(`document.querySelector('[data-auth-trigger]').click()`);
     await until(
-      () => evaluate(`!!document.querySelector('dialog[open] #auth-email')`),
-      "Login modal",
+      () =>
+        evaluate(
+          `!!document.querySelector('dialog[open] #auth-email:not(:disabled)')`,
+        ),
+      "Automatic login modal",
+    );
+    await evaluate(
+      `(() => {const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;for(const [name,value] of Object.entries({email:'learner@example.test',password:'WrongPassword123!'})){const input=document.getElementById('auth-'+name);set.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}));}})()`,
+    );
+    await evaluate(`document.querySelector('dialog form').requestSubmit()`);
+    await until(
+      () => evaluate(`!!document.querySelector('dialog[open] [role="alert"]')`),
+      "Failed login retains protected modal",
+    );
+    assert.equal(
+      await evaluate(
+        `location.pathname==='/' && new URLSearchParams(location.search).get('returnTo')==='/account/profile?section=access'`,
+      ),
+      true,
     );
     await evaluate(
       `(() => {const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;for(const [name,value] of Object.entries({email:'learner@example.test',password:'DemoPassword123!'})){const input=document.getElementById('auth-'+name);set.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}));}})()`,
@@ -774,6 +1101,193 @@ try {
           `location.pathname==='/dashboard' && !!document.querySelector('[data-dashboard-role="BUYER"]')`,
         ),
       "Explicit login landing",
+    );
+    checks++;
+    // Learner public login/signup and avatar navigation at a real phone width.
+    await call("Emulation.setDeviceMetricsOverride", {
+      width: 375,
+      height: 900,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
+    for (const locale of ["bn", "en"]) {
+      for (const mode of ["login", "register"]) {
+        await seed("LEARNER", locale);
+        await call("Network.deleteCookies", {
+          name: "vetralink_access",
+          url: origin,
+        });
+        await call("Network.deleteCookies", {
+          name: "vetralink_refresh",
+          url: origin,
+        });
+        await go("/learning");
+        await until(
+          () =>
+            evaluate(
+              `!!document.querySelector('[data-auth-trigger]:not(:disabled)')`,
+            ),
+          "Signed-out public controls",
+        );
+        await evaluate(`document.querySelector('[data-auth-trigger]').click()`);
+        await until(
+          () => evaluate(`!!document.querySelector('#auth-email')`),
+          "Learner login dialog",
+        );
+        if (mode === "register") {
+          await evaluate(
+            `document.querySelector('dialog form').nextElementSibling.querySelector('button').click()`,
+          );
+          await until(
+            () => evaluate(`!!document.querySelector('#auth-name')`),
+            "Learner signup dialog",
+          );
+        }
+        await evaluate(
+          `(() => {const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;for(const [name,value] of Object.entries(${JSON.stringify(mode === "register" ? { name: "Synthetic Learner", email: "learner@example.test", password: "DemoPassword123!", confirmation: "DemoPassword123!" } : { email: "learner@example.test", password: "DemoPassword123!" })})){const input=document.getElementById('auth-'+name);set.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}));}})()`,
+        );
+        await evaluate(`document.querySelector('dialog form').requestSubmit()`);
+        await until(
+          () =>
+            evaluate(
+              `location.pathname==='/' && !document.querySelector('dialog[open]') && !!document.querySelector('[data-avatar-trigger]')`,
+            ),
+          "Learner " + mode + " home",
+        );
+        assert.equal(
+          await evaluate(`!!document.querySelector('a[href="/dashboard"]')`),
+          false,
+        );
+        if (await evaluate(`innerWidth < 1280`)) {
+          await evaluate(`document.querySelector('.menu-toggle').click()`);
+        }
+        await evaluate(
+          `Array.from(document.querySelectorAll('[data-avatar-trigger]')).find(b=>b.getClientRects().length).click()`,
+        );
+        await until(
+          () => evaluate(`!!document.querySelector('[data-profile-link]')`),
+          "Learner avatar menu",
+        );
+        if (mode === "login") {
+          assert.equal(
+            await evaluate(`document.documentElement.scrollWidth>innerWidth`),
+            false,
+            "Mobile account menu fits viewport",
+          );
+          await evaluate(
+            `new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))`,
+          );
+          const menuShot = await call("Page.captureScreenshot", {
+            format: "png",
+          });
+          await writeFile(
+            path.join(temp, `avatar-learner-${locale}-mobile.png`),
+            Buffer.from(menuShot.data, "base64"),
+          );
+        }
+        await evaluate(`document.querySelector('[data-profile-link]').click()`);
+        await until(
+          () =>
+            evaluate(
+              `location.pathname==='/account/profile' && !!document.querySelector('[data-account-profile]')`,
+            ),
+          "Direct learner profile",
+        );
+        assert.equal(
+          await evaluate(
+            `!!document.querySelector('[data-workspace-nav="desktop"] a[href="/dashboard"]')`,
+          ),
+          false,
+        );
+        if (await evaluate(`innerWidth < 1024`)) {
+          await evaluate(
+            `document.querySelector('[data-workspace-menu-trigger]').click()`,
+          );
+          await until(
+            () =>
+              evaluate(
+                `!!document.querySelector('[data-workspace-drawer][open]')`,
+              ),
+            "Drawer account access",
+          );
+        }
+        await evaluate(
+          `Array.from(document.querySelectorAll('[data-workspace-signout]')).find(b=>b.getClientRects().length).click()`,
+        );
+        await until(
+          () =>
+            evaluate(
+              `location.pathname==='/' && !document.querySelector('dialog[open]')`,
+            ),
+          "Explicit logout returns home without a protected prompt",
+        );
+        checks++;
+      }
+    }
+    await call("Emulation.setDeviceMetricsOverride", {
+      width: 1440,
+      height: 1000,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
+    // Cached client navigation must not restore a protected shell after logout.
+    await seed("LEARNER");
+    await go("/");
+    await until(
+      () => evaluate(`!!document.querySelector('[data-avatar-trigger]')`),
+      "Cached-route account ready",
+    );
+    await evaluate(`document.querySelector('[data-avatar-trigger]').click()`);
+    await until(
+      () => evaluate(`!!document.querySelector('[data-profile-link]')`),
+      "Cached-route profile link",
+    );
+    await evaluate(`document.querySelector('[data-profile-link]').click()`);
+    await until(
+      () =>
+        evaluate(
+          `location.pathname==='/account/profile' && !!document.querySelector('[data-account-profile]')`,
+        ),
+      "Cached-route profile loaded",
+    );
+    await evaluate(
+      `document.querySelector('[data-workspace-shell] a[href="/"]').click()`,
+    );
+    await until(
+      () =>
+        evaluate(
+          `location.pathname==='/' && !!document.querySelector('[data-avatar-trigger]')`,
+        ),
+      "Cached-route public home",
+    );
+    await evaluate(`document.querySelector('[data-avatar-trigger]').click()`);
+    await until(
+      () => evaluate(`!!document.querySelector('[data-public-signout]')`),
+      "Cached-route signout control",
+    );
+    await evaluate(`document.querySelector('[data-public-signout]').click()`);
+    await until(
+      () =>
+        evaluate(
+          `!!document.querySelector('[data-auth-trigger]:not(:disabled)')`,
+        ),
+      "Cached-route logout complete",
+    );
+    await evaluate(`history.back()`);
+    await until(
+      () =>
+        evaluate(
+          `location.pathname==='/' && !!document.querySelector('dialog[open] #auth-email') && !document.querySelector('[data-workspace-shell]')`,
+        ),
+      "Logout clears cached protected route on Back",
+    );
+    await evaluate(`document.querySelector('dialog[open] button').click()`);
+    await until(
+      () =>
+        evaluate(
+          `location.search==='' && !document.querySelector('dialog[open]')`,
+        ),
+      "Cached-route prompt dismisses",
     );
     checks++;
     // Farm context: route identity, professional membership and revocation.

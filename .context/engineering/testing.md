@@ -43,6 +43,8 @@ Load scripts in `infrastructure/load-testing/` cover auth, ERP, tele-vet and syn
 
 ## Completion evidence
 
+Added 2026-10-09: `pnpm --filter @vetralink/web test:api-diagnostics` verifies real diagnostic wrappers preserve fetch inputs, response streams and thrown errors while suppressing secrets and respecting production opt-in. API `common/middleware/api-response-logger.spec.ts` verifies completion timing, status severity and path redaction. Existing auth/workspace/farm transport checks still exercise request/error handling. See [diagnostic evidence](../../docs/tasks/api-request-diagnostics/plan.md); synthetic live requests establish connectivity, not successful real-account login.
+
 Added 2026-10-08: API `test:vercel` uses Node's runner and real temporary build
 fixtures to exercise the actual Vercel wrapper: flat/nested output discovery,
 flat precedence, workspace working directory and diagnostic discovery. These
@@ -68,3 +70,5 @@ Added 2026-10-08 public discovery: `pnpm --filter @vetralink/web test:public-con
 Extended 2026-10-08 signup role presentation: the auth browser harness verifies keyboard role changes and the corresponding bilingual description/association while preserving existing signup/session/pending checks. It now follows the header's 1280px menu breakpoint and defaults to Chrome on Linux or Windows. In an isolated Linux test container only, `CHROME_NO_SANDBOX=1` opts out of Chrome sandboxing when the host cannot supply it; normal runs keep the sandbox.
 
 Extended 2026-10-08 signup phone: `test:auth` now exercises real phone metadata, BD defaults, national/Bangla/international canonicalization, optional empties, malformed/mismatched/shared-code inputs, strict prefixes and web-boundary rejection before upstream. The controlled-upstream browser harness checks picker/locale/inline feedback/foreign paste, normalization in the exact payload, and pending disablement in both languages at 320/375/768/1440px. Metadata-backed validity is not phone ownership or deliverability verification; direct API/mobile validation remains the existing shared contract.
+
+Added 2026-10-09 server protection: `test:protected-routes` exercises the real middleware/session boundary for missing/invalid/inactive/unavailable identities, no-refresh handoff, public/API passthrough and validated return URLs. The controlled dashboard browser suite additionally inspects actual HTTP 307/no-store responses without JavaScript and checks public Home modal delivery, absence of protected markup, login return and cached-history logout behavior. The auth browser suite covers refresh-only protected entry and access expiry during client navigation; middleware does not consume refresh tokens. Both browser suites accept an isolated production copy via `WEB_TEST_BUILD_DIR`; see the [workspace ledger](../../docs/tasks/web-workspace-design/progress.md) for results and integration limits.

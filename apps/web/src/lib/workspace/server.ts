@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { fetchWithDiagnostics } from "../api-diagnostics";
 import { z } from "zod";
 import {
   addFarmMemberSchema,
@@ -349,7 +350,7 @@ export async function handleWorkspace(
       return reply({ code: "UNAVAILABLE" }, 503);
     const url = new URL(endpoint.upstream, base);
     if (endpoint.membershipRequired) {
-      const discovery = await fetch(new URL("farms/my", base), {
+      const discovery = await fetchWithDiagnostics(new URL("farms/my", base), {
         signal: controller.signal,
         cache: "no-store",
         redirect: "error",
@@ -379,7 +380,7 @@ export async function handleWorkspace(
         return reply({ code: "FORBIDDEN" }, 403);
     }
     if (endpoint.writeAccessRequired) {
-      const accessResponse = await fetch(
+      const accessResponse = await fetchWithDiagnostics(
         new URL(`subscriptions/farm/${endpoint.farmId}/access-status`, base),
         {
           signal: controller.signal,
@@ -420,7 +421,7 @@ export async function handleWorkspace(
     }
     for (const [key, value] of Object.entries(query.data))
       if (value !== undefined) url.searchParams.set(key, String(value));
-    const response = await fetch(url, {
+    const response = await fetchWithDiagnostics(url, {
       method: endpoint.method,
       signal: controller.signal,
       cache: "no-store",

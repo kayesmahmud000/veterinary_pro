@@ -11,6 +11,7 @@
     "test:planner": "node --test scripts/check-milk-projection.mjs",
     "test:public-content": "node --test scripts/check-public-content.mjs",
     "test:auth": "node --test scripts/check-auth.mjs",
+    "test:api-diagnostics": "node --test scripts/check-api-diagnostics.mjs",
     "test:auth:browser": "node scripts/check-auth-browser.mjs",
     "test:workspace": "node --test scripts/check-workspace.mjs",
     "test:workspace:browser": "node scripts/check-workspace-browser.mjs",
@@ -19,6 +20,7 @@
     "test:public-pages": "node scripts/check-public-pages.mjs",
     "test:public-navigation:browser": "node scripts/check-public-navigation-browser.mjs",
     "test:workspace-navigation": "node --test scripts/check-workspace-navigation.mjs",
+    "test:protected-routes": "node --test scripts/check-protected-routes.mjs",
     "test:farm-overview": "node --test scripts/check-farm-overview.mjs",
     "test:dashboard:browser": "node scripts/check-dashboard-browser.mjs"
   },

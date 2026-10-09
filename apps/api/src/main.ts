@@ -5,6 +5,7 @@ import helmet from "helmet";
 import { AppModule } from "./app.module";
 import { ResponseInterceptor } from "./common/interceptors/response.interceptor";
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
+import { apiResponseLogger } from "./common/middleware/api-response-logger";
 
 async function bootstrap() {
   const logger = new Logger("Bootstrap");
@@ -18,6 +19,7 @@ async function bootstrap() {
 
   // Security headers
   app.use(helmet());
+  app.use(apiResponseLogger);
 
   // CORS configuration
   app.enableCors({

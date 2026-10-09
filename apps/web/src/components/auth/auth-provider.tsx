@@ -13,9 +13,13 @@ import type { AuthUserSummary } from "@vetralink/shared-types";
 import type { AuthErrorCode, AuthMode, AuthResult } from "@/lib/auth/contracts";
 import type { AuthMessages } from "@/lib/i18n/auth";
 import type { Locale } from "@/lib/i18n/locale";
+import { usePathname } from "next/navigation";
 import { authRequest, withSessionLock } from "@/lib/auth/client";
 import { AuthDialog } from "./auth-dialog";
-import { validateWorkspaceReturnTo } from "@/lib/workspace/navigation";
+import {
+  readProtectedReturnTo,
+  validateWorkspaceReturnTo,
+} from "@/lib/workspace/navigation";
 
 type Modal = AuthMode | "account" | null;
 type AuthContextValue = {
@@ -24,9 +28,14 @@ type AuthContextValue = {
   error?: AuthErrorCode;
   modal: Modal;
   returnTo?: string;
+  protectedEntry: boolean;
   messages: AuthMessages;
   locale: Locale;
-  open: (mode: Exclude<Modal, null>, returnTo?: string) => void;
+  open: (
+    mode: Exclude<Modal, null>,
+    returnTo?: string,
+    protectedEntry?: boolean,
+  ) => void;
   close: () => void;
   restore: () => Promise<void>;
   mutate: (
@@ -56,18 +65,30 @@ export function AuthProvider({
   const [error, setError] = useState<AuthErrorCode>();
   const [modal, setModal] = useState<Modal>(null);
   const [returnTo, setReturnTo] = useState<string>();
+  const [protectedEntry, setProtectedEntry] = useState(false);
+  const pathname = usePathname();
   const channel = useRef<BroadcastChannel | null>(null);
   const close = useCallback(() => {
     setModal(null);
     setReturnTo(undefined);
+    setProtectedEntry(false);
   }, []);
   const open = useCallback(
-    (mode: Exclude<Modal, null>, destination?: string) => {
+    (mode: Exclude<Modal, null>, destination?: string, required = false) => {
       setReturnTo(validateWorkspaceReturnTo(destination) ?? undefined);
+      setProtectedEntry(required);
       setModal(mode);
     },
     [],
   );
+  useEffect(() => {
+    // Logout can clear identity before its Home transition finishes.
+    if (protectedEntry && pathname === "/") {
+      const query = new URLSearchParams(window.location.search);
+      if (!readProtectedReturnTo(query.get("auth"), query.get("returnTo")))
+        close();
+    }
+  }, [protectedEntry, pathname, close]);
 
   const restore = useCallback(async () => {
     setChecking(true);
@@ -129,6 +150,7 @@ export function AuthProvider({
         error,
         modal,
         returnTo,
+        protectedEntry,
         messages,
         locale,
         open,

@@ -35,6 +35,31 @@ export function WorkspaceGate({
   const visible = authorized && !auth.checking && !auth.error && !setup,
     previouslyAuthorized = useRef("");
   if (visible) previouslyAuthorized.current = key;
+  const promptedRoute = useRef<string>();
+  useEffect(() => {
+    if (auth.user) {
+      promptedRoute.current = undefined;
+      return;
+    }
+    if (auth.checking || (auth.error && auth.error !== "session_expired"))
+      return;
+    const destination = query ? `${pathname}?${query}` : pathname;
+    if (promptedRoute.current === destination) return;
+    promptedRoute.current = destination;
+    auth.open(
+      auth.modal === "register" ? "register" : "login",
+      destination,
+      true,
+    );
+  }, [
+    auth.user,
+    auth.checking,
+    auth.error,
+    auth.modal,
+    auth.open,
+    pathname,
+    query,
+  ]);
   useEffect(() => {
     if (!auth.checking && !auth.error && setup)
       router.replace("/account/farm-onboarding");
@@ -68,7 +93,11 @@ export function WorkspaceGate({
           <Button
             data-workspace-sign-in
             onClick={() =>
-              auth.open("login", query ? `${pathname}?${query}` : pathname)
+              auth.open(
+                "login",
+                query ? `${pathname}?${query}` : pathname,
+                true,
+              )
             }
           >
             {auth.messages.signIn}

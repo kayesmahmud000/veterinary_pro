@@ -34,6 +34,8 @@ pnpm --filter @vetralink/web dev
 
 API defaults to 3001, web to 3000. Configure the API's own environment separately to reach the backing services; Compose's env file is not automatically API configuration. Provision the intended MinIO buckets and any required provider tools. FFmpeg-based processing needs the executable in its runtime; a JavaScript dependency/build does not supply it. Avoid `down -v`, reset commands and root `clean` as routine troubleshooting.
 
+Next reads its server-only `API_BASE_URL` from web configuration such as `apps/web/.env.local`; root API configuration is not automatically loaded. Include `/api/v1` in that web upstream URL. Web auth/workspace routes and upstream calls emit `[api-response]` diagnostics; Nest main/serverless HTTP completion emits `[ApiResponse]`. Logs include status, timing and safe identifiers, exclude bodies/query values/credentials, and mask UUID and DRM-token path segments. Development logging defaults on; `API_DEBUG=0` disables it and production requires `API_DEBUG=1`. Web logs appear in the web process terminal; deployed API logs require the deployed logger version and hosting logs. See [diagnostic evidence](../../docs/tasks/api-request-diagnostics/plan.md).
+
 ## Entry points and deployment evidence
 
 Persistent Node: `src/main.ts` enables shutdown hooks, listens on a port, installs Helmet/CORS/validation/envelopes/Swagger. `start:prod` says `node dist/main`; verify emitted build layout before treating that command as a validated release launcher.

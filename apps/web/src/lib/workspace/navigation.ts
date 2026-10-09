@@ -8,6 +8,26 @@ import type { Locale } from "../i18n/locale";
 import { getWorkspaceShellMessages } from "../i18n/workspace-shell";
 
 export type WorkspaceNavItem = { label: string; href: string };
+export function isProtectedWorkspacePath(pathname: string): boolean {
+  return /^\/(?:dashboard|account|admin|app\/farms|farm)(?:\/|$)/.test(
+    pathname,
+  );
+}
+export function protectedEntryUrl(destination: string): string {
+  const returnTo =
+    validateWorkspaceReturnTo(destination) ??
+    validateWorkspaceReturnTo(destination.split("?")[0]) ??
+    "/dashboard";
+  return `/?${new URLSearchParams({ auth: "required", returnTo })}`;
+}
+export function readProtectedReturnTo(
+  auth: unknown,
+  returnTo: unknown,
+): string | null {
+  return auth === "required" && typeof returnTo === "string"
+    ? validateWorkspaceReturnTo(returnTo)
+    : null;
+}
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const released = new RegExp(
   `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin/(?:administrative-access|role-requests(?:/${uuid})?))$`,
@@ -78,7 +98,10 @@ export function getPostLoginDestination(
   if (!identity) throw new Error("An active identity is required");
   if (identity.role === UserRole.FARMER && identity.farmerOnboardingRequired)
     return "/account/farm-onboarding";
-  return validateWorkspaceReturnTo(returnTo) ?? "/dashboard";
+  const destination = validateWorkspaceReturnTo(returnTo);
+  if (identity.role === UserRole.LEARNER)
+    return destination && destination !== "/dashboard" ? destination : "/";
+  return destination ?? "/dashboard";
 }
 export function getWorkspaceNav(
   user: AuthUserSummary,
@@ -87,9 +110,10 @@ export function getWorkspaceNav(
   const identity = activeUser(user);
   if (!identity) return [];
   const t = getWorkspaceShellMessages(locale);
-  const items: WorkspaceNavItem[] = [
-    { label: t.dashboard, href: "/dashboard" },
-  ];
+  const items: WorkspaceNavItem[] =
+    identity.role === UserRole.LEARNER
+      ? []
+      : [{ label: t.dashboard, href: "/dashboard" }];
   if (identity.role === UserRole.FARMER)
     items.push({
       label: identity.farmerOnboardingRequired ? t.setup : t.farm,

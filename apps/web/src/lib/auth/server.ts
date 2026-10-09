@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
+import { fetchWithDiagnostics } from "../api-diagnostics";
 import type { AuthTokensDto } from "@vetralink/shared-types";
 import {
   readUser,
@@ -80,7 +81,7 @@ async function upstream(
       base.hash
     )
       throw new AuthFailure("unavailable", 503);
-    const response = await fetch(new URL(`auth/${action}`, base), {
+    const response = await fetchWithDiagnostics(new URL(`auth/${action}`, base), {
       method: action === "me" ? "GET" : "POST",
       cache: "no-store",
       redirect: "error",

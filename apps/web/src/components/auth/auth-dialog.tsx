@@ -32,6 +32,7 @@ export function AuthDialog() {
   const router = useRouter();
   const {
     user,
+    checking,
     modal,
     messages: t,
     locale,
@@ -41,6 +42,7 @@ export function AuthDialog() {
     error: sessionError,
     restore,
     returnTo,
+    protectedEntry,
   } = useAuth();
   const mode = modal === "register" ? "register" : "login";
   const dialog = useRef<HTMLDialogElement>(null);
@@ -105,7 +107,7 @@ export function AuthDialog() {
 
   function switchMode() {
     if (busy.current) return;
-    open(mode === "login" ? "register" : "login", returnTo);
+    open(mode === "login" ? "register" : "login", returnTo, protectedEntry);
     setValues((current) => ({ ...current, password: "", confirmation: "" }));
     setShowPassword(false);
     setError(undefined);
@@ -116,9 +118,15 @@ export function AuthDialog() {
     );
   }
 
+  function dismiss() {
+    if (busy.current) return;
+    close();
+    if (protectedEntry && !user) router.replace("/");
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy.current) return;
+    if (busy.current || (protectedEntry && checking)) return;
     const validation = validateAuthForm(mode, { ...values, phoneCountry });
     setFields(validation.fields);
     if (Object.keys(validation.fields).length || !validation.payload) {
@@ -139,6 +147,7 @@ export function AuthDialog() {
         const destination = getPostLoginDestination(result.user, returnTo);
         close();
         router.push(destination);
+        router.refresh();
       }
       setValues((current) => ({ ...current, password: "", confirmation: "" }));
       setShowPassword(false);
@@ -164,7 +173,11 @@ export function AuthDialog() {
     if (result.code) {
       setError(result.code);
       requestAnimationFrame(() => feedback.current?.focus());
-    } else close();
+    } else {
+      close();
+      if (protectedEntry) router.replace("/");
+      router.refresh();
+    }
   }
 
   function input(
@@ -256,7 +269,7 @@ export function AuthDialog() {
       aria-describedby="auth-description"
       onCancel={(event) => {
         event.preventDefault();
-        if (!busy.current) close();
+        dismiss();
       }}
       onClick={(event) => {
         if (event.target === event.currentTarget && !busy.current) {
@@ -267,7 +280,7 @@ export function AuthDialog() {
             event.clientY < rect.top ||
             event.clientY > rect.bottom
           )
-            close();
+            dismiss();
         }
       }}
     >
@@ -275,7 +288,7 @@ export function AuthDialog() {
         <button
           type="button"
           className={cn(styles.close)}
-          onClick={close}
+          onClick={dismiss}
           disabled={pending}
           aria-label={t.close}
         >
@@ -315,11 +328,14 @@ export function AuthDialog() {
             tabIndex={-1}
           >
             {t.errors[visibleError]}
-            {user && (
+            {(user ||
+              (protectedEntry &&
+                sessionError &&
+                sessionError !== "session_expired")) && (
               <button
                 type="button"
                 className={cn(styles.inlineButton)}
-                disabled={pending}
+                disabled={pending || checking}
                 onClick={() => {
                   setError(undefined);
                   void restore();
@@ -356,9 +372,11 @@ export function AuthDialog() {
             </div>
             <p className={cn(styles.sessionNote)}>{t.sessionNote}</p>
             <div className={cn(styles.accountLinks)}>
-              <Link href="/dashboard" onClick={close}>
-                {getWorkspaceShellMessages(locale).dashboard}
-              </Link>
+              {user.role !== "LEARNER" && (
+                <Link href="/dashboard" onClick={close}>
+                  {getWorkspaceShellMessages(locale).dashboard}
+                </Link>
+              )}
               <Link href="/account/profile" onClick={close}>
                 {getWorkspaceShellMessages(locale).profile}
               </Link>
@@ -416,7 +434,10 @@ export function AuthDialog() {
         ) : (
           <>
             <form ref={form} onSubmit={submit} noValidate aria-busy={pending}>
-              <fieldset disabled={pending} className={cn(styles.formFields)}>
+              <fieldset
+                disabled={pending || (protectedEntry && checking)}
+                className={cn(styles.formFields)}
+              >
                 {mode === "register" && (
                   <div
                     id="auth-register-fields"

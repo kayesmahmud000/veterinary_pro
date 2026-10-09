@@ -7,6 +7,7 @@ import express, { Express, Request, Response } from "express";
 import { AppModule } from "./app.module";
 import { ResponseInterceptor } from "./common/interceptors/response.interceptor";
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
+import { apiResponseLogger } from "./common/middleware/api-response-logger";
 
 let cachedServer: Express;
 
@@ -39,6 +40,8 @@ async function bootstrapServer(): Promise<Express> {
         crossOriginEmbedderPolicy: false,
       })
     );
+
+    app.use(apiResponseLogger);
 
     // CORS configuration
     const corsOrigins = process.env["CORS_ORIGINS"];
@@ -126,4 +129,3 @@ export default async function handler(req: Request, res: Response) {
     }
   }
 }
-

@@ -11,7 +11,7 @@
 ## Global constraints
 
 - User-selected order: common dashboard/profile → Farmer workspace. Preserve all unrelated edits and current route/locale/session compatibility.
-- Bangla default with complete English; `w-11/12` outer container, Tailwind-only styling, 44px controls, one main/H1 per page and private noindex/no-store responses.
+- Bangla default with complete English; full-width workspace outer container (user update 2026-10-09), Tailwind-only styling, 44px controls, one main/H1 per page and private noindex/no-store responses.
 - Active nav changes text to `#a26913`; no active background/underline. Application drawer breakpoint 1024px; public header retains 1280px.
 - One primary UserRole. FarmRole and entitlement are independent authorization dimensions. No role-switch control or UI-granted permission.
 - Reuse existing allowlist/session lock/refresh and error mapping. Never proxy arbitrary API URLs or put tokens/PII in browser persistent storage.
@@ -19,6 +19,16 @@
 - No automatic staging/commits, deployment, migration or unrelated package upgrades. Suggest a conventional commit for each reviewed batch.
 
 ## Review focus
+
+2026-10-09 server-protection follow-up: add failing middleware/session tests for missing/forged/expired/active/suspended/malformed/unavailable identities and unsafe return URLs. Verify access against backend before protected route delivery, with fast missing-cookie redirect, bounded no-store requests, safe diagnostics and no middleware refresh. Add a Home entry controller that opens the modal immediately and resumes only after fresh browser restoration succeeds; retain Retry/dismissal and role/setup policy. Update controlled browser/HTTP acceptance to require Home redirects and absence of workspace markup before login, including refresh-only sessions, expired access during client navigation, login return paths, errors and cached-history logout regressions. Invalidate auth-related router caches after login/logout. Run focused tests/style checks, isolated production build and auth/dashboard browser suites; record final evidence in progress.md.
+
+2026-10-09 sidebar account/top-bar follow-up: move profile identity and Sign out from the header to a shared sidebar footer. Keep direct Profile navigation, localized labels, pending logout disablement and recoverable errors; suppress unknown identity. Give navigation flexible height so the account sits at the desktop/sidebar drawer bottom. Simplify the workspace top bar to LanguageSwitcher with the mobile drawer trigger. Update existing browser acceptance for footer navigation, keyboard, bottom placement, session privacy and logout; run style suites, navigation/auth checks, isolated production build and bilingual responsive browser checks. Record outcomes in [progress.md](progress.md).
+
+2026-10-09 protected-entry follow-up: extend controlled browser acceptance first to require automatic login, signed-out dismissal → home (Close/Escape/backdrop), mode-switch preservation and failed-login retention. Observe RED against the previous build. Add an explicit protected-entry flag to auth modal state, preserve it across login/register switching, automatically open once per signed-out route in `WorkspaceGate`, and route dismissal through a shared dialog handler. Successful auth closes normally with the existing return policy. Update workspace header/fallback login callers to mark protected entry. Run unit/style checks, isolated build and browser suite; self-review restored sessions, network errors, duplicate prompts and public-dialog compatibility.
+
+2026-10-09 learner navigation follow-up: update `getPostLoginDestination` and `getWorkspaceNav` so LEARNER defaults to home and has no dashboard entry; preserve validated profile/application returns and Farmer setup precedence. Make public learner controls link directly to Profile; hide learner dashboard shortcuts in both account menus, use Profile breadcrumbs, and redirect learner `/dashboard` visits to Profile without mounting the overview. First update/run navigation tests (RED), implement and rerun (GREEN), extend controlled browser acceptance for learner login/signup/profile/direct dashboard behavior in both locales, then run style suites and an isolated production build. Enrolled-course links are explicitly deferred to the enrollment feature per the user's reply. No API/persistence contract changes.
+
+2026-10-09 width follow-up: replace the shared shell/header `w-11/12` with `w-full`, add responsive horizontal padding and balance sidebar padding. Review all workspace routes through their shared layout; run style checks, production build and the controlled dashboard/profile responsive browser suite. No API, persistence, auth or tenant-contract changes. Verification results are recorded in [progress.md](progress.md).
 
 1. Restored session versus explicit login: public browsing stays in place; setup and protected return paths get deterministic precedence (Task 1/3).
 2. Direct URLs and changed roles: generic shell access cannot expose private page/actions; a revoked membership invalidates the selected farm (Task 1/2/4).
