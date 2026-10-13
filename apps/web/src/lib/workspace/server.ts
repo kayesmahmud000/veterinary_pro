@@ -12,9 +12,12 @@ import {
   privilegedRoleSchema,
   authUserSchema,
   ProfessionalRole,
+  UserRole,
+  UserStatus,
 } from "@vetralink/shared-types";
 import {
   adminTargetSchema,
+  adminOverviewSchema,
   adminUserListSchema,
   adminUserQuerySchema,
   decisionResponseSchema,
@@ -58,6 +61,12 @@ export function resolveEndpoint(
   method: string,
 ): Endpoint | null {
   const key = path.join("/");
+  if (key === "admin/overview" && method === "GET")
+    return {
+      method,
+      upstream: "subscriptions/metrics/summary",
+      response: adminOverviewSchema,
+    };
   if (
     path[0] === "farms" &&
     uuid.safeParse(path[1]).success &&
@@ -302,7 +311,8 @@ export async function handleWorkspace(
   )
     return reply({ code: "FORBIDDEN" }, 403);
   const access = request.cookies.get("vetralink_access")?.value;
-  if (!access) return reply({ code: "UNAUTHORIZED" }, 401);
+  if (!access || access.length > 3800)
+    return reply({ code: "UNAUTHORIZED" }, 401);
   for (const key of Array.from(request.nextUrl.searchParams.keys()))
     if (request.nextUrl.searchParams.getAll(key).length > 1)
       return reply({ code: "VALIDATION_FAILED" }, 422);
@@ -349,6 +359,50 @@ export async function handleWorkspace(
     )
       return reply({ code: "UNAVAILABLE" }, 503);
     const url = new URL(endpoint.upstream, base);
+    if (path[0] === "admin") {
+      const identityResponse = await fetchWithDiagnostics(
+        new URL("auth/me", base),
+        {
+          signal: controller.signal,
+          cache: "no-store",
+          redirect: "error",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${access}`,
+          },
+        },
+      );
+      if (!identityResponse.ok) {
+        const status = [401, 403].includes(identityResponse.status)
+          ? identityResponse.status
+          : 503;
+        return reply(
+          {
+            code:
+              status === 401
+                ? "UNAUTHORIZED"
+                : status === 403
+                  ? "FORBIDDEN"
+                  : "UNAVAILABLE",
+          },
+          status,
+        );
+      }
+      const envelope = await identityResponse.json().catch(() => null);
+      const identity = authUserSchema.safeParse(
+        envelope?.success === true ? envelope.data : undefined,
+      );
+      if (!identity.success) return reply({ code: "INVALID_RESPONSE" }, 502);
+      const roles =
+        path[1] === "users"
+          ? [UserRole.SUPER_ADMIN]
+          : [UserRole.ADMIN, UserRole.SUPER_ADMIN];
+      if (
+        identity.data.status !== UserStatus.ACTIVE ||
+        !roles.includes(identity.data.role)
+      )
+        return reply({ code: "FORBIDDEN" }, 403);
+    }
     if (endpoint.membershipRequired) {
       const discovery = await fetchWithDiagnostics(new URL("farms/my", base), {
         signal: controller.signal,

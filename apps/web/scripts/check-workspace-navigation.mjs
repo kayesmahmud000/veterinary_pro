@@ -39,7 +39,7 @@ const user = (role, required = false) => ({
   roleVersion: 0,
   farmerOnboardingRequired: required,
 });
-test("learners land on home, other ready identities on dashboard; mandatory setup wins", () => {
+test("learners land on home, administrators use their own dashboard; mandatory setup wins", () => {
   assert.equal(typeof nav.getPostLoginDestination, "function");
   assert.equal(nav.getPostLoginDestination(user("LEARNER")), "/");
   assert.equal(nav.getPostLoginDestination(user("LEARNER"), "/dashboard"), "/");
@@ -58,7 +58,7 @@ test("learners land on home, other ready identities on dashboard; mandatory setu
     ),
     "/account/profile?section=access",
   );
-  for (const role of ["FARMER", "BUYER", "VET", "ADMIN", "SUPER_ADMIN"])
+  for (const role of ["FARMER", "BUYER", "VET"])
     assert.equal(nav.getPostLoginDestination(user(role)), "/dashboard");
   assert.equal(
     nav.getPostLoginDestination(user("FARMER", true), "/account/profile"),
@@ -112,12 +112,13 @@ test("navigation follows exact platform roles without inventing operational page
   ]) {
     const items = nav.getWorkspaceNav(user(role), "en");
     const hrefs = items.map((item) => item.href);
-    assert.equal(hrefs.includes("/dashboard"), role !== "LEARNER");
+    assert.equal(hrefs.includes("/dashboard"), ["FARMER", "BUYER", "VET"].includes(role));
+    assert.equal(hrefs.includes("/admin/dashboard"), ["ADMIN", "SUPER_ADMIN"].includes(role));
     assert.equal(
       hrefs[0],
-      role === "LEARNER" ? "/account/profile" : "/dashboard",
+      role === "LEARNER" ? "/account/profile" : ["ADMIN", "SUPER_ADMIN"].includes(role) ? "/admin/dashboard" : "/dashboard",
     );
-    assert.ok(hrefs.includes("/account/profile"));
+    if (!["ADMIN", "SUPER_ADMIN"].includes(role)) assert.ok(hrefs.includes("/account/profile"));
     assert.equal(
       hrefs.includes("/account/role-requests/new"),
       role === "LEARNER",
@@ -158,4 +159,23 @@ test("malformed or inactive identities never receive privileged navigation", () 
     assert.deepEqual(nav.getWorkspaceNav(identity, "en"), []);
     assert.throws(() => nav.getPostLoginDestination(identity));
   }
+});
+
+test("admin entry preserves authorized returns and rejects privilege-incompatible returns", () => {
+  for (const role of ["ADMIN", "SUPER_ADMIN"]) {
+    assert.equal(nav.getPostLoginDestination(user(role)), "/admin/dashboard");
+    assert.equal(nav.getPostLoginDestination(user(role), "/dashboard"), "/admin/dashboard");
+    assert.equal(nav.getPostLoginDestination(user(role), "/admin"), "/admin/dashboard");
+    assert.equal(nav.getPostLoginDestination(user(role), "/admin/role-requests?status=PENDING"), "/admin/role-requests?status=PENDING");
+    assert.equal(nav.getPostLoginDestination(user(role), "/account/profile"), "/account/profile");
+  }
+  assert.equal(nav.getPostLoginDestination(user("ADMIN"), "/admin/administrative-access"), "/admin/dashboard");
+  assert.equal(nav.getPostLoginDestination(user("SUPER_ADMIN"), "/admin/administrative-access"), "/admin/administrative-access");
+  for (const role of ["LEARNER", "FARMER", "VET", "BUYER"]) {
+    assert.equal(nav.getPostLoginDestination(user(role), "/admin/dashboard"), role === "LEARNER" ? "/" : "/dashboard");
+  }
+  for (const path of ["/admin", "/admin/dashboard"])
+    assert.equal(nav.validateWorkspaceReturnTo(path), path);
+  for (const path of ["/admin/users", "/admin/metrics", "/admin/dashboard?url=secret", "/admin/dashboard/unknown"])
+    assert.equal(nav.validateWorkspaceReturnTo(path), null);
 });

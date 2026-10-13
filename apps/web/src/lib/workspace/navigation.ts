@@ -7,7 +7,20 @@ import {
 import type { Locale } from "../i18n/locale";
 import { getWorkspaceShellMessages } from "../i18n/workspace-shell";
 
-export type WorkspaceNavItem = { label: string; href: string };
+export type WorkspaceNavItem = {
+  label: string;
+  href: string;
+  section?: string;
+};
+export function isAdministrativeRole(role: UserRole): boolean {
+  return role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN;
+}
+export function canAccessAdminPath(role: UserRole, pathname: string): boolean {
+  if (!/^\/admin(?:\/|$)/.test(pathname)) return true;
+  if (/^\/admin\/administrative-access(?:\/|$)/.test(pathname))
+    return role === UserRole.SUPER_ADMIN;
+  return isAdministrativeRole(role);
+}
 export function isProtectedWorkspacePath(pathname: string): boolean {
   return /^\/(?:dashboard|account|admin|app\/farms|farm)(?:\/|$)/.test(
     pathname,
@@ -30,7 +43,7 @@ export function readProtectedReturnTo(
 }
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const released = new RegExp(
-  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin/(?:administrative-access|role-requests(?:/${uuid})?))$`,
+  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin(?:/(?:dashboard|administrative-access|role-requests(?:/${uuid})?))?)$`,
   "i",
 );
 export function validateWorkspaceReturnTo(
@@ -98,7 +111,15 @@ export function getPostLoginDestination(
   if (!identity) throw new Error("An active identity is required");
   if (identity.role === UserRole.FARMER && identity.farmerOnboardingRequired)
     return "/account/farm-onboarding";
-  const destination = validateWorkspaceReturnTo(returnTo);
+  const validated = validateWorkspaceReturnTo(returnTo);
+  const destination =
+    validated && canAccessAdminPath(identity.role, validated.split("?")[0])
+      ? validated
+      : null;
+  if (isAdministrativeRole(identity.role))
+    return destination && !["/admin", "/dashboard"].includes(destination)
+      ? destination
+      : "/admin/dashboard";
   if (identity.role === UserRole.LEARNER)
     return destination && destination !== "/dashboard" ? destination : "/";
   return destination ?? "/dashboard";
@@ -110,6 +131,28 @@ export function getWorkspaceNav(
   const identity = activeUser(user);
   if (!identity) return [];
   const t = getWorkspaceShellMessages(locale);
+  if (isAdministrativeRole(identity.role))
+    return [
+      {
+        label: t.dashboard,
+        href: "/admin/dashboard",
+        section: t.adminOverview,
+      },
+      {
+        label: t.reviews,
+        href: "/admin/role-requests",
+        section: t.adminPeople,
+      },
+      ...(identity.role === UserRole.SUPER_ADMIN
+        ? [
+            {
+              label: t.access,
+              href: "/admin/administrative-access",
+              section: t.adminPlatform,
+            },
+          ]
+        : []),
+    ];
   const items: WorkspaceNavItem[] =
     identity.role === UserRole.LEARNER
       ? []

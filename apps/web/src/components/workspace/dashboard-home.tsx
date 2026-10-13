@@ -19,6 +19,7 @@ import { getWorkspaceShellMessages } from "@/lib/i18n/workspace-shell";
 import { WorkspaceGate } from "./workspace-gate";
 import styles from "./workspace.styles";
 import { farmWorkspaceRoles } from "@/lib/workspace/farm-navigation";
+import { isAdministrativeRole } from "@/lib/workspace/navigation";
 import { FarmDiscovery } from "./farm-discovery";
 
 function Overview() {
@@ -139,10 +140,12 @@ export function DashboardHome() {
   const { locale, user, checking, error } = useAuth();
   const router = useRouter();
   const learner = user?.role === UserRole.LEARNER;
+  const admin = !!user && isAdministrativeRole(user.role);
   useEffect(() => {
     if (!checking && !error && learner) router.replace("/account/profile");
-  }, [checking, error, learner, router]);
-  if (learner && !error) return null;
+    if (!checking && !error && admin) router.replace("/admin/dashboard");
+  }, [checking, error, learner, admin, router]);
+  if ((learner || admin) && !error) return null;
   return (
     <main id="main-content" className={styles.shell}>
       <h1 className={styles.heading}>

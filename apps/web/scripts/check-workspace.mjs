@@ -328,6 +328,7 @@ test("workspace boundary validation, privacy and upstream methods", async (t) =>
       async () => {
         globalThis.fetch = async (url, options) => {
           calls.push({ url: String(url), options });
+          if (String(url).endsWith("/auth/me")) return ok({ ...user, role: "ADMIN" });
           return fail(409, "ROLE_REQUEST_ALREADY_DECIDED");
         };
         const body = {
@@ -351,6 +352,7 @@ test("workspace boundary validation, privacy and upstream methods", async (t) =>
       async () => {
         globalThis.fetch = async (url) => {
           calls.push({ url: String(url) });
+          if (String(url).endsWith("/auth/me")) return ok({ ...user, role: "SUPER_ADMIN" });
           return ok({
             ...user,
             fallbackRole: "LEARNER",
@@ -373,8 +375,9 @@ test("workspace boundary validation, privacy and upstream methods", async (t) =>
     await t.test(
       "rejects malformed upstream records and unbounded filters",
       async () => {
-        globalThis.fetch = async () =>
-          ok({ requests: [{ id: "wrong" }], nextCursor: null });
+        globalThis.fetch = async (url) => String(url).endsWith("/auth/me")
+          ? ok({ ...user, role: "ADMIN" })
+          : ok({ requests: [{ id: "wrong" }], nextCursor: null });
         assert.equal(
           (
             await handleWorkspace(request("admin/role-requests"), [

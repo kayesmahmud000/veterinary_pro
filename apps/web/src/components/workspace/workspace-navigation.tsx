@@ -1,4 +1,5 @@
 "use client";
+import { Fragment } from "react";
 import { useFarmContext } from "./farm-context";
 import { getFarmWorkspaceNav } from "@/lib/workspace/farm-navigation";
 import Link from "next/link";
@@ -48,9 +49,9 @@ export function WorkspaceNavigation({
       data-workspace-nav={mobile ? "mobile" : "desktop"}
       className="flex min-w-0 flex-1 flex-col gap-1"
     >
-      {items.map((item) => {
+      {items.map((item, index) => {
         const Icon =
-          item.href === "/dashboard"
+          item.href === "/dashboard" || item.href === "/admin/dashboard"
             ? LayoutDashboard
             : item.href === "/account/profile"
               ? UserRound
@@ -64,17 +65,23 @@ export function WorkspaceNavigation({
             ? pathname === item.href
             : isWorkspaceNavActive(item.href, pathname);
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            aria-current={active ? "page" : undefined}
-            data-active={active ? "" : undefined}
-            className="flex min-h-11 min-w-0 items-center gap-3 rounded-lg px-3 py-2 text-[.95rem] text-muted hover:text-ink data-[active]:!text-[#a26913] focus-visible:outline-offset-2"
-          >
-            <Icon size={19} aria-hidden="true" className="shrink-0" />
-            <span className="[overflow-wrap:anywhere]">{item.label}</span>
-          </Link>
+          <Fragment key={item.href}>
+            {item.section && item.section !== items[index - 1]?.section && (
+              <p className="mb-1 mt-5 px-3 text-xs font-semibold tracking-wide text-muted">
+                {item.section}
+              </p>
+            )}
+            <Link
+              href={item.href}
+              onClick={onNavigate}
+              aria-current={active ? "page" : undefined}
+              data-active={active ? "" : undefined}
+              className="flex min-h-11 min-w-0 items-center gap-3 rounded-lg px-3 py-2 text-[.95rem] text-muted hover:text-ink data-[active]:!text-[#a26913] focus-visible:outline-offset-2"
+            >
+              <Icon size={19} aria-hidden="true" className="shrink-0" />
+              <span className="[overflow-wrap:anywhere]">{item.label}</span>
+            </Link>
+          </Fragment>
         );
       })}
       <div className="my-4 border-x-0 border-t-0 border-b border-solid border-line" />

@@ -33,6 +33,9 @@ export const workspaceShellEn = {
   overview: "Farm overview",
   home: "Home",
   accountStatus: "Account status",
+  adminOverview: "Overview",
+  adminPeople: "People",
+  adminPlatform: "Platform",
 };
 export type WorkspaceShellMessages = typeof workspaceShellEn;
 export const workspaceShellBn: WorkspaceShellMessages = {
@@ -68,6 +71,9 @@ export const workspaceShellBn: WorkspaceShellMessages = {
   overview: "খামারের সারসংক্ষেপ",
   home: "মূল পাতা",
   accountStatus: "অ্যাকাউন্টের অবস্থা",
+  adminOverview: "সারসংক্ষেপ",
+  adminPeople: "ব্যবহারকারী",
+  adminPlatform: "প্ল্যাটফর্ম",
 };
 export function getWorkspaceShellMessages(locale: Locale) {
   return locale === "bn" ? workspaceShellBn : workspaceShellEn;

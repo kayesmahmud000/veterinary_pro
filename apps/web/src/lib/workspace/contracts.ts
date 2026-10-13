@@ -26,6 +26,25 @@ export const adminUserQuerySchema = z
   })
   .strict();
 export const emptyQuerySchema = z.object({}).strict();
+const subscriptionCount = z
+  .number()
+  .int()
+  .nonnegative()
+  .max(Number.MAX_SAFE_INTEGER);
+// Only the count projection is exposed until financial metrics have a currency contract.
+export const adminOverviewSchema = z.object({
+  asOfDate: z
+    .string()
+    .datetime({ offset: true })
+    .refine((value) => Number.isFinite(Date.parse(value))),
+  totalSubscriptionsCount: subscriptionCount,
+  activeSubscriptionsCount: subscriptionCount,
+  activePayingSubscriptionsCount: subscriptionCount,
+  trialingSubscriptionsCount: subscriptionCount,
+  pastDueSubscriptionsCount: subscriptionCount,
+  canceledSubscriptionsCount: subscriptionCount,
+  expiredSubscriptionsCount: subscriptionCount,
+});
 export const questionSchema = z.object({
   key: z.string().regex(/^[a-zA-Z][a-zA-Z0-9]{0,49}$/),
   type: z.enum(["text", "number", "select", "multiselect", "consent"]),
