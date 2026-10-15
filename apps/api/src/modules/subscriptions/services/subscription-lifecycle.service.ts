@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { SubscriptionTier } from "@vetralink/shared-types";
-import { EntityNotFoundException } from "../../../common/exceptions/domain.exception";
+import { EntityNotFoundException, ForbiddenOperationException } from "../../../common/exceptions/domain.exception";
 import {
   CancelSubscriptionDto,
   CreateTrialSubscriptionDto,
@@ -155,12 +155,15 @@ export class SubscriptionLifecycleService
   async cancelSubscription(
     id: string,
     dto?: CancelSubscriptionDto,
+    actorUserId?: string,
   ): Promise<SubscriptionResponseDto> {
     const subscription = await this.subRepo.findById(id);
     if (!subscription) {
       throw new EntityNotFoundException("Subscription", id);
     }
 
+    if (actorUserId && subscription.userId !== actorUserId)
+      throw new ForbiddenOperationException("Subscription owner required.");
     const immediate = dto?.immediate ?? false;
     subscription.requestCancellation({ immediate });
 
@@ -172,12 +175,14 @@ export class SubscriptionLifecycleService
     return updated.toResponseDto();
   }
 
-  async reactivateSubscription(id: string): Promise<SubscriptionResponseDto> {
+  async reactivateSubscription(id: string, actorUserId?: string): Promise<SubscriptionResponseDto> {
     const subscription = await this.subRepo.findById(id);
     if (!subscription) {
       throw new EntityNotFoundException("Subscription", id);
     }
 
+    if (actorUserId && subscription.userId !== actorUserId)
+      throw new ForbiddenOperationException("Subscription owner required.");
     subscription.revokeCancellation();
     const updated = await this.subRepo.save(subscription);
     this.logger.log(`Subscription '${updated.id}' cancellation revoked.`);

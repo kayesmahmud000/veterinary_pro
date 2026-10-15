@@ -1,6 +1,7 @@
 // Local production browser acceptance with synthetic identities and a controlled API.
 // This checks real Next components/BFF behavior, not deployed provider/database readiness.
 import { handleDirectoryFixture, checkAdminDirectory } from "./admin-directory-browser-cases.mjs";
+import { handleBillingFixture, checkAdminBilling } from "./admin-billing-browser-cases.mjs";
 import {handleCourseFixture,checkLearnerCourses} from "./course-browser-cases.mjs";
 import { handleCatalogFixture, handleCatalogObject, checkAdminCatalog, checkAdminCourses } from "./admin-catalog-browser-cases.mjs";
 import assert from "node:assert/strict";
@@ -119,6 +120,7 @@ const upstream = http.createServer(async (req, res) => {
     res.end(JSON.stringify({ success: status < 400, data }));
   };
   if (offline) return send(503, null);
+  if (handleBillingFixture(req,res,data,route,role)) return;
   if (route === "auth/me")
     return req.headers.authorization
       ? send(200, users.get(role))
@@ -468,7 +470,10 @@ try {
     await cookie("vetralink_refresh", "r-" + role);
     await cookie("vetralink-locale", locale);
   }
-  if (process.env.WORKSPACE_BROWSER_FOCUS === "admin-courses") {
+  if (process.env.WORKSPACE_BROWSER_FOCUS === "billing") {
+    checks += await checkAdminBilling({seed,go,call,evaluate,until,temp,requests});
+    assert.deepEqual(exceptions, []);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "admin-courses") {
     checks += await checkAdminCourses({seed,go,call,evaluate,until,temp,requests});
     assert.deepEqual(exceptions, []);
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "courses") {

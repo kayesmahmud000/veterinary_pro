@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { getAdminMessages } from "@/lib/i18n/admin";
 import { getAdminCourseMessages } from "@/lib/i18n/admin-courses";
+import { getBillingMessages } from "@/lib/i18n/admin-billing";
 import {
   adminOverviewSchema,
   reviewQueueSchema,
@@ -37,7 +38,8 @@ function SectionError({ retry }: { retry: () => void }) {
 function Overview() {
   const auth = useAuth(),
     t = getAdminMessages(auth.locale),
-    courses = getAdminCourseMessages(auth.locale);
+    courses = getAdminCourseMessages(auth.locale),
+    billing = getBillingMessages(auth.locale);
   const overview = useRemote("admin/overview", adminOverviewSchema);
   const applications = useRemote(
     "admin/role-requests?status=PENDING&limit=5",
@@ -63,6 +65,10 @@ function Overview() {
           <p className="mb-0 mt-2 text-sm text-muted">{courses.intro}</p>
         </div>
         <Link className={styles.primary} href="/admin/courses">{courses.createAndContinue}</Link>
+      </Card>
+      <Card data-admin-billing-shortcut className="flex flex-wrap items-center justify-between gap-5 p-5">
+        <div className="min-w-0"><h2 className="m-0 text-xl font-semibold">{billing.billing}</h2><p className="mb-0 mt-2 text-sm text-muted">{billing.intro}</p></div>
+        <Link className={styles.primary} href="/admin/orders">{billing.details}</Link>
       </Card>
       <section
         data-admin-overview

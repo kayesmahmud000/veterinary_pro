@@ -208,11 +208,11 @@ describe("SubscriptionController", () => {
 
       const result = await controller.cancelSubscription(mockResponse.id, {
         immediate: false,
-      });
+      }, mockUser);
 
       expect(mockService.cancelSubscription).toHaveBeenCalledWith(mockResponse.id, {
         immediate: false,
-      });
+      }, mockUser.sub);
       expect(result.cancelAtPeriodEnd).toBe(true);
     });
   });
@@ -221,9 +221,9 @@ describe("SubscriptionController", () => {
     it("should revoke cancellation", async () => {
       mockService.reactivateSubscription.mockResolvedValue(mockResponse);
 
-      const result = await controller.reactivateSubscription(mockResponse.id);
+      const result = await controller.reactivateSubscription(mockResponse.id, mockUser);
 
-      expect(mockService.reactivateSubscription).toHaveBeenCalledWith(mockResponse.id);
+      expect(mockService.reactivateSubscription).toHaveBeenCalledWith(mockResponse.id, mockUser.sub);
       expect(result.cancelAtPeriodEnd).toBe(false);
     });
   });

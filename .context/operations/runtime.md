@@ -48,6 +48,8 @@ Do not assume a serverless HTTP handler provides a durable worker scheduler or l
 
 ## Release expectations
 
+Observed 2026-10-16: the selected admin billing release is deployed to `https://veterinary-pro-web.vercel.app` and `https://veterinary-api-mocha.vercel.app/api/v1`. [Deployment IDs, prior rollback targets and actual smoke evidence](../../docs/features/admin-billing/plan.md) include healthy database/Redis, live owner billing reads/password rejection and learner enrollment/actual sample playback. CLI 39 uploads are rejected; temporary official-registry `npx --package vercel@64.2.0 vercel ...` works from the monorepo root with the appropriate project link. Generated env credentials and dependencies/build outputs are excluded from uploaded source; no Git history/index change is needed for CLI release.
+
 Use [release review](../workflows/release-review.md). Require identified release revision, runtime/build paths, secure config, migrated schema, compatible worker/realtime hosting, smoke/negative tests, provider delivery evidence and rollback/restore plan. Prisma `db:deploy` applies migrations; never use `db:migrate`/reset against production.
 
 Probe `health`, `health/liveness`, `health/readiness` under `/api/v1`; inspect their controller/indicator behavior. Test actual authenticated and tenant-scoped flows too. Monitor latency/errors, DB connection pressure, queue backlog/retries, webhook duplicate/failure rates and sync conflicts. Correlate trace IDs and job IDs without logging tokens, PII, medical payloads or signed URLs. No monitoring backend or alerting SLA is established merely by Nest logs or these requirements.

@@ -6,3 +6,4 @@ export * from './validation/admin-directory.js';
 export * from './validation/admin-catalog.js';
 
 export * from "./validation/youtube-courses.js";
+export * from "./validation/admin-billing.js";

@@ -247,3 +247,35 @@ for(const role of ['LEARNER','VET','FARMER','BUYER']) test(`${role} cannot read 
  const path=['admin','products',id,'curriculum'];
  assert.equal((await handleWorkspace(request(path.join('/')),path)).status,403);
 });
+
+const billingDate="2026-10-16T00:00:00Z",revision="a".repeat(64);
+const billingRows={
+ orders:{kind:"orders",id,owner:{id,name:"Synthetic owner"},status:"COMPLETED",totalCents:1200,currency:"USD",paymentGateway:"STRIPE",providerReferencePresent:true,itemCount:1,createdAt:billingDate,updatedAt:billingDate},
+ subscriptions:{kind:"subscriptions",id,owner:{id,name:"Synthetic owner"},farm:null,plan:{id,name:"Synthetic plan",tier:"PRO"},status:"ACTIVE",currentPeriodStart:billingDate,currentPeriodEnd:"2026-12-16T00:00:00Z",cancelAtPeriodEnd:false,providerManaged:false,createdAt:billingDate,updatedAt:billingDate},
+ plans:{kind:"plans",id,name:"Synthetic plan",tier:"PRO",currency:"USD",priceMonthlyCents:1200,priceAnnualCents:12000,maxAnimals:30,isActive:true,createdAt:billingDate},
+ dunning:{kind:"dunning",id,subscriptionId:id,owner:null,stage:"DAY_1",status:"FAILED",channel:"EMAIL",attemptCount:1,dispatchedDate:"2026-10-16",dispatchedAt:billingDate},
+};
+for(const role of ["ADMIN","SUPER_ADMIN"])for(const kind of Object.keys(billingRows))test(`${role} reads only safe ${kind} billing projections`,async t=>{
+ const calls=setup(t,role,{items:[{...billingRows[kind],password:"MUST_NOT_RENDER",recipientEmail:"private@example.test"}],nextCursor:null});
+ const path=["admin","billing",kind],response=await handleWorkspace(request(path.join("/")),path);
+ assert.equal(response.status,200);const payload=await response.json();assert.equal(payload.data.items[0].kind,kind);assert.equal(JSON.stringify(payload).includes("MUST_NOT_RENDER"),false);assert.equal(JSON.stringify(payload).includes("private@example.test"),false);assert.equal(calls[1].init.headers["x-farm-id"],undefined);
+});
+for(const role of ["LEARNER","FARMER","VET","BUYER"])test(`${role} cannot use any billing directory or action`,async t=>{
+ const calls=setup(t,role,{items:[],nextCursor:null});for(const kind of Object.keys(billingRows)){const path=["admin","billing",kind];assert.equal((await handleWorkspace(request(path.join("/")),path)).status,403);}assert.equal(calls.some(call=>call.url.pathname.includes("/admin/billing")),false);
+});
+test("billing disallows unimplemented financial writes and cross-kind status filters",async t=>{
+ setup(t,"ADMIN");for(const path of [["admin","billing","orders",id,"refund"],["admin","billing","dunning","scan"],["admin","billing","plans","seed"]])assert.equal(resolveEndpoint(path,"POST"),null);
+ for(const query of ["status=ACTIVE","limit=101","status=PENDING&status=COMPLETED"]){const path=["admin","billing","orders"];assert.equal((await handleWorkspace(request(`${path.join("/")}?${query}`),path)).status,422);}
+});
+test("billing plan confirmation forwards only supported fields and verifies response identity",async t=>{
+ const row={...billingRows.plans,revision,history:[],historyTruncated:false},calls=setup(t,"SUPER_ADMIN",row),path=["admin","billing","plans",id];
+ const body={expectedRevision:revision,name:"Updated synthetic plan",priceMonthlyCents:1500,priceAnnualCents:15000,maxAnimals:40,isActive:true,reason:"Reviewed catalogue change",actorPassword:"synthetic password"};
+ assert.equal((await handleWorkspace(request(path.join("/"),"PATCH",body),path)).status,200);assert.equal(calls[1].init.method,"PATCH");
+ assert.equal((await handleWorkspace(request(path.join("/"),"PATCH",{...body,refund:true}),path)).status,422);
+ setup(t,"SUPER_ADMIN",{...row,id:"550e8400-e29b-41d4-a716-446655440002"});assert.equal((await handleWorkspace(request(path.join("/")),path)).status,502);
+});
+test("billing rejects a response for another directory kind",async t=>{setup(t,"ADMIN",{items:[billingRows.plans],nextCursor:null});const path=["admin","billing","orders"];assert.equal((await handleWorkspace(request(path.join("/")),path)).status,502);});
+test("billing preserves the specific stale-record error",async t=>{
+ const original=globalThis.fetch;t.after(()=>globalThis.fetch=original);globalThis.fetch=async url=>new URL(url).pathname.endsWith("auth/me")?Response.json({success:true,data:identity}):Response.json({errorDetails:{title:"BILLING_VERSION_CONFLICT"}},{status:409});
+ const path=["admin","billing","subscriptions",id,"actions"],body={expectedRevision:revision,action:"SCHEDULE_CANCELLATION",reason:"Reviewed support request",actorPassword:"synthetic password"};const response=await handleWorkspace(request(path.join("/"),"POST",body),path);assert.equal(response.status,409);assert.equal((await response.json()).code,"BILLING_VERSION_CONFLICT");
+});

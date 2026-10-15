@@ -1,5 +1,7 @@
 # Validation and command reference
 
+Added 2026-10-16 ADM-4: `BILLING_TEST_DATABASE_URL` enables `billing.database.spec.ts` only for an explicitly loopback `adm4_test` database. The focused four-suite API run passes 55 tests, including 13 real PostgreSQL concurrency/rollback/redaction cases. `WORKSPACE_BROWSER_FOCUS=billing` uses the existing production browser harness with `WEB_TEST_BUILD_DIR`/`CHROME_PATH`; 163 bilingual mobile/desktop checks pass. The CRLF-compatible Tailwind guard and its 14 style tests pass directly on Windows. [Evidence](../../docs/features/admin-billing/plan.md) distinguishes controlled financial mutations from actual production reads, password rejection and learner/provider playback checks.
+
 Adopt [Senior QA/Test Engineer and Code Reviewer](../roles/quality.md) perspectives for validation. Derive edge/regression cases from affected callers and risks; use the [mandatory self-review cycle](../workflows/self-review.md) and [evidence labels](evidence.md). Passing checks establish only the behavior and environment they actually cover.
 
 Commands are from repository root unless a working directory is shown. Inspect package scripts before running them: a script name alone is not proof of working tooling. Use the pinned pnpm version. No install/build/test was needed to author the initial documentation snapshot.

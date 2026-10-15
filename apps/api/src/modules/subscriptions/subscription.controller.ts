@@ -172,8 +172,9 @@ export class SubscriptionController {
   async cancelSubscription(
     @Param("id", new ParseUUIDPipe()) id: string,
     @Body() dto: CancelSubscriptionDto,
+    @CurrentUser() user: JwtPayload,
   ): Promise<SubscriptionResponseDto> {
-    return this.subService.cancelSubscription(id, dto);
+    return this.subService.cancelSubscription(id, dto, user.sub);
   }
 
   @Post(":id/reactivate")
@@ -192,8 +193,9 @@ export class SubscriptionController {
   @ResponseMessage("Subscription cancellation revoked successfully")
   async reactivateSubscription(
     @Param("id", new ParseUUIDPipe()) id: string,
+    @CurrentUser() user: JwtPayload,
   ): Promise<SubscriptionResponseDto> {
-    return this.subService.reactivateSubscription(id);
+    return this.subService.reactivateSubscription(id, user.sub);
   }
 
   @Patch(":id/status")

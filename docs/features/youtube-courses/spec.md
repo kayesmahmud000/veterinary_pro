@@ -1,6 +1,6 @@
 # YouTube courses with public demos and free enrollment
 
-Status: **Admin and learner slices implemented locally; live schema repair verified; authenticated writes/YouTube release acceptance pending.**
+Status: **Admin and learner slices implemented locally; live schema and real-database local-web course demonstration verified; team-owned YouTube release acceptance pending.**
 Date: 2026-10-15. Original planning inspected 82d857a plus ADM-3; admin execution baseline is ab18a9f. [Execution plan](plan.md).
 
 ## Admin-first delivery history
@@ -24,6 +24,12 @@ Add `/admin/courses` for ADMIN/SUPER_ADMIN, with an inline course title/slug/des
 Reuse the existing `admin/products` create/list/detail/action and curriculum GET/PUT contracts, schemas and audit/version rules. No new API, database model, provider or migration is required for this UI extension. The initial live course `DATABASE_ERROR` was subsequently repaired by the separately authorized deployment of the three existing migrations; [repair evidence](../../tasks/web-live-api-routing/plan.md) verifies successful public reads and data preservation. Controlled UI verification must still be distinguished from real authenticated course writes and provider playback.
 
 Acceptance: navigate from the admin dashboard/sidebar, create a course with labeled inputs, add and save demo/enrolled YouTube lessons, reload and reopen from the course list, preserve drafts on failures/conflicts, retain publication behavior, and deny nonadmins. Verify role-scoped navigation/BFF, both languages at 320/1440px, meaningful form errors and the existing product/media paths.
+
+### Requested live course demonstration - 2026-10-15
+
+The user explicitly requests creating one course from the local website in the real configured database and displaying it on the website and dashboard. This authorizes normal saved-owner login, one clearly labeled demonstration course with official YouTube sample lessons, publication through existing admin controls and verification reads. Keep existing account roles/passwords unchanged. Use the real local web BFF/live API with no authentication, repository or response mocks; never expose saved credentials or session tokens. Do not present the sample as veterinary instruction. Retain the course so the user can open the verified public and admin links.
+
+Acceptance: browser creation, lesson save and publish succeed; refresh shows the same persisted course and lessons; the real database contains that exact course with publication/audit evidence; public course discovery/detail and administrative course management display it. Record screenshots, URLs and any actual provider/auth limitation.
 
 The user wants course videos hosted on YouTube and watched inside this website. Confirmed in this conversation: some videos are public demos, other lessons require enrollment, and enrollment is **free for now**. Anonymous visitors can watch demo lessons; active signed-in users can register for a course and watch its main lessons without leaving the site. ADMIN/SUPER_ADMIN manage courses and their ordered video lessons.
 

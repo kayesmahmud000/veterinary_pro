@@ -54,6 +54,12 @@ describe("SubscriptionLifecycleService", () => {
 
     service = new SubscriptionLifecycleService(mockSubRepo, mockPlanRepo);
   });
+  it("denies cancellation and reactivation of another caller's subscription",async()=>{
+    mockSubRepo.findById.mockResolvedValue(mockSub);
+    await expect(service.cancelSubscription(mockSub.id,{immediate:true},"another-user")).rejects.toThrow("Subscription owner required");
+    await expect(service.reactivateSubscription(mockSub.id,"another-user")).rejects.toThrow("Subscription owner required");
+    expect(mockSubRepo.save).not.toHaveBeenCalled();
+  });
 
   describe("createTrialSubscription()", () => {
     it("should provision a new trial subscription if no active one exists for the farm", async () => {

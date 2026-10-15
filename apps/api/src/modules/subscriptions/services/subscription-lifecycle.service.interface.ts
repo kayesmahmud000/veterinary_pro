@@ -30,9 +30,10 @@ export interface ISubscriptionLifecycleService {
   cancelSubscription(
     id: string,
     dto?: CancelSubscriptionDto,
+    actorUserId?: string,
   ): Promise<SubscriptionResponseDto>;
 
-  reactivateSubscription(id: string): Promise<SubscriptionResponseDto>;
+  reactivateSubscription(id: string, actorUserId?: string): Promise<SubscriptionResponseDto>;
 
   processExpiredSubscriptions(): Promise<{ processedCount: number }>;
 }

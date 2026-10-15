@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchWithDiagnostics } from "../api-diagnostics";
 import { z } from "zod";
 import {
+  billingKinds, billingQueries, billingLists, billingDetails, billingSubscriptionActionSchema, billingPlanEditSchema,
   courseLibrarySchema, courseLibraryQuerySchema, courseEnrollmentSchema, myCourseSchema, coursePlaybackSchema,
   addFarmMemberSchema,
   farmMemberSchema,
@@ -68,6 +69,15 @@ export function resolveEndpoint(
   method: string,
 ): Endpoint | null {
   const key = path.join("/");
+  if(path[0]==="admin"&&path[1]==="billing"&&billingKinds.includes(path[2] as typeof billingKinds[number])){
+    const kind=path[2] as typeof billingKinds[number];
+    if(path.length===3&&method==="GET")return{method,upstream:key,response:billingLists[kind],query:billingQueries[kind]};
+    if(uuid.safeParse(path[3]).success){
+      if(path.length===4&&method==="GET")return{method,upstream:key,entityId:path[3],response:billingDetails[kind]};
+      if(path.length===4&&kind==="plans"&&method==="PATCH")return{method,upstream:key,entityId:path[3],response:billingDetails.plans,body:billingPlanEditSchema,bodyLimit:16384};
+      if(path.length===5&&kind==="subscriptions"&&path[4]==="actions"&&method==="POST")return{method,upstream:key,entityId:path[3],response:billingDetails.subscriptions,body:billingSubscriptionActionSchema,bodyLimit:16384};
+    }
+  }
   if(key==="me/courses" && method==="GET")return{method,upstream:key,response:courseLibrarySchema,query:courseLibraryQuerySchema};
   if(path[0]==="me"&&path[1]==="courses"&&uuid.safeParse(path[2]).success){
     if(path.length===3&&method==="GET")return{method,upstream:key,response:myCourseSchema,entityId:path[2]};
@@ -304,6 +314,7 @@ export function resolveEndpoint(
   return null;
 }
 const errorCodes = new Set([
+  "BILLING_VERSION_CONFLICT", "BILLING_ACTION_UNAVAILABLE",
   "CONTENT_PROVIDER_MISMATCH", "COURSE_MUST_BE_UNPUBLISHED", "INVALID_CURRICULUM", "INVALID_YOUTUBE_PRICING",
   "COURSE_ENROLLMENT_REQUIRED",
   "ACCOUNT_VERSION_CONFLICT",

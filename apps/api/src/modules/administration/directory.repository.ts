@@ -38,6 +38,7 @@ const auditSelect = {
 } as const;
 // Unknown and security events require SUPER_ADMIN; never rely on a denylist.
 const operationalActions = [
+  "SUBSCRIPTION_CANCELLATION_SCHEDULED", "SUBSCRIPTION_CANCELLATION_REVOKED", "SUBSCRIPTION_PLAN_UPDATED",
   "USER_SUSPENDED",
   "USER_REACTIVATED",
   "USER_SESSIONS_REVOKED",

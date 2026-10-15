@@ -10,6 +10,9 @@ import { PrivilegedRolesController } from "./privileged-roles.controller";
 import { DirectoryRepository } from "./directory.repository";
 import { DirectoryService } from "./directory.service";
 import { DirectoryController } from "./directory.controller";
+import { BillingRepository } from "./billing.repository";
+import { BillingService } from "./billing.service";
+import { BillingController } from "./billing.controller";
 @Module({
   imports: [
     AuthModule,
@@ -19,7 +22,7 @@ import { DirectoryController } from "./directory.controller";
     RoleEventsModule,
     WorkflowRateLimitModule,
   ],
-  providers: [PrivilegedRoleService, DirectoryRepository, DirectoryService],
-  controllers: [PrivilegedRolesController, DirectoryController],
+  providers: [PrivilegedRoleService, DirectoryRepository, DirectoryService, BillingRepository, BillingService],
+  controllers: [PrivilegedRolesController, DirectoryController, BillingController],
 })
 export class AdministrationModule {}

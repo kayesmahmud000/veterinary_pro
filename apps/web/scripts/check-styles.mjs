@@ -16,7 +16,7 @@ export async function checkStyles(root) {
       const relative = path.relative(root, file);
       const source = await readFile(file, "utf8");
       if (/\.(css|scss|sass|less|styl)$/.test(file)) {
-        const directives = source.replace(/\/\*[\s\S]*?\*\//g, "").trim();
+        const directives = source.replace(/\r\n/g, "\n").replace(/\/\*[\s\S]*?\*\//g, "").trim();
         if (
           relative !== path.join("src", "app", "globals.css") ||
           directives !==

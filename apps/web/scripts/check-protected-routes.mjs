@@ -238,7 +238,7 @@ test("admin pages require current administrative role before delivery, with Supe
   t.after(() => { globalThis.fetch = original; });
   for (const role of ["LEARNER", "FARMER", "BUYER", "VET", "ADMIN", "SUPER_ADMIN"]) {
     globalThis.fetch = async () => Response.json({ success: true, data: { ...user, role } });
-    for (const path of ["/admin/dashboard", "/admin/role-requests", "/admin/administrative-access"]) {
+    for (const path of ["/admin/dashboard", "/admin/role-requests", "/admin/administrative-access", "/admin/orders", "/admin/subscriptions", "/admin/plans", "/admin/dunning"]) {
       const response = await middleware(request(path, "vetralink_access=synthetic-access"));
       const allowed = path === "/admin/administrative-access" ? role === "SUPER_ADMIN" : ["ADMIN", "SUPER_ADMIN"].includes(role);
       assert.equal(response.headers.get("x-middleware-next") === "1", allowed, `${role} ${path}`);

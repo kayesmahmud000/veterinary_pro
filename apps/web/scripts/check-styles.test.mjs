@@ -33,6 +33,12 @@ test("accepts utilities, static class maps and native SVG attributes", async (t)
     [],
   );
 });
+test("accepts the exact Tailwind entry with Windows CRLF endings", async(t)=>{
+  assert.deepEqual(await fixture(t,"",{name:"globals.css",content:"@tailwind base;\r\n@tailwind components;\r\n@tailwind utilities;\r\n"}),[]);
+});
+test("still rejects custom rules in a CRLF Tailwind entry",async(t)=>{
+  assert((await fixture(t,"",{name:"globals.css",content:"@tailwind base;\r\n@tailwind components;\r\n@tailwind utilities;\r\n.card { color:red; }\r\n"})).some(error=>error.includes("custom stylesheets")));
+});
 for (const [name, source, message] of [
   [
     "inline styles",
