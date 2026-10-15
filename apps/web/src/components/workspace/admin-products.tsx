@@ -445,7 +445,7 @@ function ProductDetail({ id, edit }: { id: string; edit: boolean }) {
             timeZone: "Asia/Dhaka",
           }).format(new Date(p.updatedAt))}
         </p>
-        {p.type === ProductType.VIDEO_COURSE && <p>{p.contentProvider === ProductContentProvider.YOUTUBE ? course.pending : t.curriculum}</p>}
+        {p.type === ProductType.VIDEO_COURSE && <p>{p.contentProvider === ProductContentProvider.YOUTUBE ? course.free : t.curriculum}</p>}
       </section>
       <form
         className={styles.card}

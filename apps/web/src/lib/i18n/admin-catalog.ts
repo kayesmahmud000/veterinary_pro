@@ -1,5 +1,6 @@
 import type { Locale } from "./locale";
 const copy = {
+  viewCourses: ["View course catalog", "কোর্সের তালিকা দেখুন"],
   products: ["Products", "পণ্য"],
   media: ["Media uploads", "মিডিয়া আপলোড"],
   newProduct: ["Create product", "পণ্য তৈরি করুন"],

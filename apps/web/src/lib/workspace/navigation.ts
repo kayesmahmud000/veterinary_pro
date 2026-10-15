@@ -43,7 +43,7 @@ export function readProtectedReturnTo(
 }
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const released = new RegExp(
-  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin(?:/(?:dashboard|administrative-access|products(?:/new|/${uuid}(?:/edit|/curriculum)?)?|media(?:/uploads/${uuid})?|(?:users|veterinarians|farms|audit)(?:/${uuid})?|role-requests(?:/${uuid})?))?)$`,
+  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:courses(?:/${uuid}/lessons/${uuid})?|profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin(?:/(?:dashboard|administrative-access|products(?:/new|/${uuid}(?:/edit|/curriculum)?)?|media(?:/uploads/${uuid})?|(?:users|veterinarians|farms|audit)(?:/${uuid})?|role-requests(?:/${uuid})?))?)$`,
   "i",
 );
 export function validateWorkspaceReturnTo(
@@ -147,6 +147,7 @@ export function getWorkspaceNav(
       },
       ...(["users", "veterinarians", "farms", "audit"] as const).map(kind => ({ label: t[kind], href: `/admin/${kind}`, section: kind === "audit" ? t.adminPlatform : t.adminPeople })),
       ...(["products", "media"] as const).map(kind => ({ label: t[kind], href: `/admin/${kind}`, section: t.adminPlatform })),
+      {label:t.courses,href:"/account/courses",section:t.account},
       ...(identity.role === UserRole.SUPER_ADMIN
         ? [
             {
@@ -173,6 +174,7 @@ export function getWorkspaceNav(
   if (identity.role === UserRole.SUPER_ADMIN)
     items.push({ label: t.access, href: "/admin/administrative-access" });
   items.push(
+    {label:t.courses,href:"/account/courses"},
     { label: t.profile, href: "/account/profile" },
     { label: t.applications, href: "/account/role-requests" },
   );

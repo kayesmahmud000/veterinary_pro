@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchWithDiagnostics } from "../api-diagnostics";
 import { z } from "zod";
 import {
+  courseLibrarySchema, courseLibraryQuerySchema, courseEnrollmentSchema, myCourseSchema, coursePlaybackSchema,
   addFarmMemberSchema,
   farmMemberSchema,
   farmOnboardingSchema,
@@ -57,6 +58,7 @@ type Endpoint = {
   membershipRequired?: boolean;
   entityId?: string;
   productId?: string;
+  lessonId?: string;
   writeAccessRequired?: boolean;
   bodyLimit?: number;
 };
@@ -66,6 +68,13 @@ export function resolveEndpoint(
   method: string,
 ): Endpoint | null {
   const key = path.join("/");
+  if(key==="me/courses" && method==="GET")return{method,upstream:key,response:courseLibrarySchema,query:courseLibraryQuerySchema};
+  if(path[0]==="me"&&path[1]==="courses"&&uuid.safeParse(path[2]).success){
+    if(path.length===3&&method==="GET")return{method,upstream:key,response:myCourseSchema,entityId:path[2]};
+    if(path.length===4&&path[3]==="enrollment"&&method==="POST")return{method,upstream:key,response:courseEnrollmentSchema,body:emptyQuerySchema,productId:path[2]};
+    if(path.length===6&&path[3]==="lessons"&&uuid.safeParse(path[4]).success&&path[5]==="playback"&&method==="GET")return{method,upstream:key,response:coursePlaybackSchema,productId:path[2],lessonId:path[4]};
+  }
+
   if (key === "admin/products" && ["GET","POST"].includes(method)) return {method,upstream:key,response:method==="GET"?adminProductListSchema:adminProductSchema,...(method==="GET"?{query:adminProductQuerySchema}:{body:adminProductCreateSchema})};
   if (path[0]==="admin" && path[1]==="products" && uuid.safeParse(path[2]).success) {
     if(path.length===3 && ["GET","PATCH"].includes(method)) return {method,upstream:key,entityId:path[2],response:adminProductSchema,...(method==="PATCH"?{body:adminProductEditSchema}:{})};
@@ -296,6 +305,7 @@ export function resolveEndpoint(
 }
 const errorCodes = new Set([
   "CONTENT_PROVIDER_MISMATCH", "COURSE_MUST_BE_UNPUBLISHED", "INVALID_CURRICULUM", "INVALID_YOUTUBE_PRICING",
+  "COURSE_ENROLLMENT_REQUIRED",
   "ACCOUNT_VERSION_CONFLICT",
   "INVALID_ACCOUNT_TRANSITION",
   "ACCOUNT_ACTION_FORBIDDEN",
@@ -387,7 +397,7 @@ export async function handleWorkspace(
     )
       return reply({ code: "UNAVAILABLE" }, 503);
     const url = new URL(endpoint.upstream, base);
-    if (path[0] === "admin") {
+    if (path[0] === "admin" || (path[0] === "me" && path[1] === "courses")) {
       const identityResponse = await fetchWithDiagnostics(
         new URL("auth/me", base),
         {
@@ -421,7 +431,7 @@ export async function handleWorkspace(
         envelope?.success === true ? envelope.data : undefined,
       );
       if (!identity.success) return reply({ code: "INVALID_RESPONSE" }, 502);
-      const roles =
+      const roles = path[0] === "me" ? Object.values(UserRole) :
         path[1] === "users"
           ? [UserRole.SUPER_ADMIN]
           : [UserRole.ADMIN, UserRole.SUPER_ADMIN];
@@ -549,6 +559,7 @@ export async function handleWorkspace(
       record?.success === true ? record.data : undefined,
     );
     if (!parsed.success) return reply({ code: "INVALID_RESPONSE" }, 502);
+    if (endpoint.lessonId && parsed.data.lessonId !== endpoint.lessonId) return reply({code:"INVALID_RESPONSE"},502);
     if (endpoint.productId && parsed.data.productId !== endpoint.productId) return reply({code:"INVALID_RESPONSE"},502);
     if (endpoint.entityId && parsed.data.id !== endpoint.entityId)
       return reply({ code: "INVALID_RESPONSE" }, 502);

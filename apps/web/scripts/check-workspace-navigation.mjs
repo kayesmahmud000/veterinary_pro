@@ -116,7 +116,7 @@ test("navigation follows exact platform roles without inventing operational page
     assert.equal(hrefs.includes("/admin/dashboard"), ["ADMIN", "SUPER_ADMIN"].includes(role));
     assert.equal(
       hrefs[0],
-      role === "LEARNER" ? "/account/profile" : ["ADMIN", "SUPER_ADMIN"].includes(role) ? "/admin/dashboard" : "/dashboard",
+      role === "LEARNER" ? "/account/courses" : ["ADMIN", "SUPER_ADMIN"].includes(role) ? "/admin/dashboard" : "/dashboard",
     );
     if (!["ADMIN", "SUPER_ADMIN"].includes(role)) assert.ok(hrefs.includes("/account/profile"));
     assert.equal(

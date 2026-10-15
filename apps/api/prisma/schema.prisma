@@ -343,6 +343,7 @@ model User {
   deletedAt       DateTime?  @map("deleted_at") @db.Timestamptz(6)
 
   // Relations
+  courseEnrollments CourseEnrollment[]
   adminMediaUploads AdminMediaUpload[]
   refreshTokens        RefreshToken[]
   ownedFarms           Farm[]            @relation("FarmOwner")
@@ -874,6 +875,18 @@ enum CourseLessonAccess {
   ENROLLED
 }
 
+model CourseEnrollment {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  productId String @map("product_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  @@unique([userId, productId])
+  @@index([userId, id])
+  @@map("course_enrollments")
+}
+
 model CourseLesson {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   productId String @map("product_id") @db.Uuid
@@ -893,6 +906,7 @@ model CourseLesson {
 model Product {
   contentProvider ProductContentProvider @default(INTERNAL) @map("content_provider")
   courseLessons CourseLesson[]
+  courseEnrollments CourseEnrollment[]
   id                  String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title               String           @db.VarChar(255)
   slug                String           @unique @db.VarChar(200)

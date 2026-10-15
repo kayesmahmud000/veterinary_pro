@@ -190,7 +190,7 @@ function Editor({
         {common.back}
       </Link>
       <p>{t.hint}</p>
-      <p className={styles.notice}>{t.pending}</p>
+      <Link className={styles.secondary} href="/courses">{getCatalogMessages(auth.locale).viewCourses}</Link>
       {initial.isPublished && (
         <p role="status" className={styles.notice}>
           {t.published}

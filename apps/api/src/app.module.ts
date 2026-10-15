@@ -1,3 +1,4 @@
+import { CoursesModule } from "./modules/courses/courses.module";
 import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
 import { AppConfigModule, EnvService } from "./config";
@@ -63,6 +64,7 @@ import { AdministrationModule } from "./modules/administration/administration.mo
     SubscriptionsModule,
     ConsultationsModule,
     ProductsModule,
+    CoursesModule,
     MediaModule,
     IdempotencyModule,
     OrdersModule,

@@ -111,3 +111,66 @@ export function isProductAssetReady(
     (product.type !== "VIDEO_COURSE" || product.contentS3Key.endsWith(".m3u8"))
   );
 }
+
+const courseId = z.string().uuid();
+const courseDate = z.string().datetime({ offset: true });
+export const courseQuerySchema = z
+  .object({
+    limit: z.coerce.number().int().min(1).max(50).default(20),
+    cursor: courseId.optional(),
+    search: z.string().trim().max(100).optional(),
+  })
+  .strict();
+export const courseLibraryQuerySchema = courseQuerySchema.omit({
+  search: true,
+});
+export const courseCardSchema = z.object({
+  id: courseId,
+  title: z.string(),
+  slug: z.string(),
+  description: z.string(),
+  provider: z.literal("YOUTUBE"),
+  access: z.literal("FREE_ENROLLMENT"),
+  lessonCount: z.number().int().min(0).max(100),
+  demoCount: z.number().int().min(0).max(100),
+  firstLessonId: courseId.nullable(),
+});
+export const courseSchema = courseCardSchema.extend({
+  lessons: z
+    .array(
+      z.object({
+        ...lessonFields,
+        id: courseId,
+        position: z.number().int().positive(),
+      }),
+    )
+    .max(100),
+});
+export const courseListSchema = z.object({
+  items: z.array(courseCardSchema).max(50),
+  nextCursor: courseId.nullable(),
+});
+export const courseEnrollmentSchema = z.object({
+  id: courseId,
+  productId: courseId,
+  createdAt: courseDate,
+});
+export const myCourseSchema = courseSchema.extend({
+  enrollment: courseEnrollmentSchema.nullable(),
+});
+export const courseLibrarySchema = z.object({
+  items: z
+    .array(courseCardSchema.extend({ enrollment: courseEnrollmentSchema }))
+    .max(50),
+  nextCursor: courseId.nullable(),
+});
+export const coursePlaybackSchema = z.object({
+  productId: courseId,
+  lessonId: courseId,
+  title: z.string(),
+  provider: z.literal("YOUTUBE"),
+  videoId: z.string().regex(/^[A-Za-z0-9_-]{11}$/),
+});
+export type CourseQuery = z.infer<typeof courseQuerySchema>;
+export type Course = z.infer<typeof courseSchema>;
+export type CoursePlayback = z.infer<typeof coursePlaybackSchema>;

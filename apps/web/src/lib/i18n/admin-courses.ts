@@ -6,8 +6,8 @@ const copy = {
   YOUTUBE: ["YouTube · free enrollment", "YouTube · ফ্রি এনরোলমেন্ট"],
   manage: ["Manage course lessons", "কোর্সের লেসন পরিচালনা করুন"],
   hint: [
-    "Add individual YouTube links. Demo lessons will be public; other lessons will require free enrollment when learner access is available.",
-    "প্রতিটি লেসনের YouTube লিংক দিন। ডেমো সবার জন্য থাকবে; ব্যবহারকারীর দেখার ব্যবস্থা চালু হলে অন্য লেসনে ফ্রি এনরোলমেন্ট লাগবে।",
+    "Add individual YouTube links. Demo lessons will be public; other lessons will require free enrollment after signing in.",
+    "প্রতিটি লেসনের YouTube লিংক দিন। ডেমো সবার জন্য থাকবে; অন্য লেসন দেখতে সাইন ইন করে ফ্রি এনরোলমেন্ট লাগবে।",
   ],
   pending: [
     "Learner enrollment and course viewing are the next delivery step. This screen prepares the course content.",

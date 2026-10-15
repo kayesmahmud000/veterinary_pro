@@ -1,6 +1,7 @@
 // Local production browser acceptance with synthetic identities and a controlled API.
 // This checks real Next components/BFF behavior, not deployed provider/database readiness.
 import { handleDirectoryFixture, checkAdminDirectory } from "./admin-directory-browser-cases.mjs";
+import {handleCourseFixture,checkLearnerCourses} from "./course-browser-cases.mjs";
 import { handleCatalogFixture, handleCatalogObject, checkAdminCatalog } from "./admin-catalog-browser-cases.mjs";
 import assert from "node:assert/strict";
 import { handleAdminFixture, checkAdminDashboard } from "./admin-dashboard-browser-cases.mjs";
@@ -285,6 +286,7 @@ const upstream = http.createServer(async (req, res) => {
   }
   if (route === "users/me/role-requests")
     return send(200, { requests: [], nextCursor: null });
+  if(handleCourseFixture(route,role,send,query,req.method,data,res))return;
   if (handleCatalogFixture(route, role, send, query, req.method, data, res)) return;
   if (handleDirectoryFixture(route, role, send, query, req.method, data, res)) return;
   if (handleAdminFixture(route, role, send)) return;
@@ -466,7 +468,10 @@ try {
     await cookie("vetralink_refresh", "r-" + role);
     await cookie("vetralink-locale", locale);
   }
-  if (process.env.WORKSPACE_BROWSER_FOCUS === "catalog") {
+  if (process.env.WORKSPACE_BROWSER_FOCUS === "courses") {
+    checks += await checkLearnerCourses({seed,go,call,evaluate,until,temp,requests,origin});
+    assert.deepEqual(exceptions, []);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "catalog") {
     checks += await checkAdminCatalog({seed,go,call,evaluate,until,temp,requests});
     assert.deepEqual(exceptions, []);
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "directory") {
@@ -766,6 +771,7 @@ try {
     checks += await checkAdminDashboard({ seed, go, call, evaluate, until, requests, origin, temp, users });
     checks += await checkAdminDirectory({seed,go,call,evaluate,until,temp,requests});
     checks += await checkAdminCatalog({seed,go,call,evaluate,until,temp,requests});
+    checks += await checkLearnerCourses({seed,go,call,evaluate,until,temp,requests,origin});
     await seed("LEARNER", "en");
     users.get("LEARNER").avatarUrl = "/assets/brand/logo-green.jpeg";
     await go("/");

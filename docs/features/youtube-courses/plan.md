@@ -1,6 +1,6 @@
 # YouTube Courses Implementation Plan
 
-> **For agentic workers:** Use executing-plans to implement this plan inline, task by task. The user authorized the admin slice first; remaining learner tasks require their own continuation instruction.
+> **For agentic workers:** Use executing-plans to implement this plan inline, task by task. The user authorized the admin slice first; the subsequent user continuation also authorized the learner slice.
 
 **Goal:** Let visitors watch public course demos and active users freely enroll and watch YouTube lessons inside the website.
 
@@ -8,7 +8,7 @@
 
 **Tech stack:** Existing NestJS, Prisma/PostgreSQL, shared Zod/TypeScript, Next.js14/React, Tailwind and official YouTube IFrame API. No new runtime package required.
 
-**Spec:** [spec.md](spec.md). Planning baseline: 82d857a plus ADM-3; admin execution baseline: ab18a9f. Status: **Admin slice implemented locally; learner implementation pending.**
+**Spec:** [spec.md](spec.md). Planning baseline: 82d857a plus ADM-3; admin execution baseline: ab18a9f. Status: **Admin and learner slices implemented locally; release acceptance pending.**
 
 ## Global constraints
 
@@ -138,3 +138,40 @@ Suggested eventual implementation commit: `feat(courses): add YouTube lessons an
 **Completion and rollout:** all four admin acceptance ledger items are complete locally. Broad task checkboxes above remain open where they include deferred learner functionality; no CourseEnrollment or learner/public delivery is claimed. Apply `20261015120000_youtube_course_curriculum` after ADM-3 before starting the updated API, then upgrade/drain writers/workers before the web flow. No live database migration or deployment was performed. Real YouTube playback/privacy/embedding/Referer/fullscreen acceptance with actual team-owned video links on the configured origin remains a release check. Preserve the provider-aware API for recovery; hiding UI alone does not make an old API compatible with published empty-key YouTube courses.
 
 Suggested human-managed implementation commit: `feat(admin): add YouTube course curriculum`.
+
+## Learner continuation — 2026-10-15
+
+User selected “go with next” after the admin delivery. Execution baseline d8e41c3, clean checkout; retain inline execution and human-managed Git. Complete public catalog/demos, persisted free enrollment, own library and protected in-site player now; progress/certificates/paid enrollment remain deferred.
+
+Ruling: add `GET me/courses/:id` returning the source-free course outline plus the caller's nullable enrollment. This lets direct lesson/auth-return routes offer explicit enrollment, and public details show Continue for existing members, without searching a paginated library or exposing membership publicly. It is authenticated, private/no-store, active-user and published-course checked like the other me/* routes.
+
+- [x] Enrollment schema/shared contracts and source-safe public/member API with atomic idempotent registration.
+- [x] Fixed public/protected BFF, course discovery/demos/auth-return/library/player and bilingual navigation.
+- [x] Real database concurrency/rollback and controlled player/browser/security/regression verification.
+- [x] Review fixes, final docs/roadmaps and release limits; no live migration/deployment/Git integration.
+
+
+## Learner verification evidence — 2026-10-15
+
+**Confirmed from code:** new additive migration `20261015150000_course_enrollment` follows the admin curriculum migration. CoursesModule uses repository projections for public outlines/cards, active own membership for protected sources, and actor→product locks for registration. Duplicate POST retries reuse one enrollment/audit, with no payment or subscription effect. Course removal/unpublication hides access without deleting membership history. Public BFF is a fixed GET table with no forwarded cookies/auth/farm headers; me/courses uses current identity, exact associations, existing CSRF rules and private/no-store responses. Course-specific identity checks do not alter legacy me/role-requests behavior.
+
+**Review:** fresh-context reviewer found a player readiness hang after SDK resolution and a public-container policy mismatch. Added a15-second iframe readiness deadline/error/Retry and used the shared public container. The reviewer saw the readiness fix in source and independently ran the10 course boundary/player tests and diff check; final layout/browser verification is the implementer's re-review. No other material findings were returned. Player DOM is isolated under a React-owned container so official destroy/iframe replacement cannot remove React-owned children during lesson switches.
+
+**Observed checks:**
+
+- Shared/API builds and web TypeScript/Tailwind checks pass. Isolated production build lives at `/tmp/web-learner-courses-he9xr4oq`, with no copied env files (`/tmp/ytl-web-build.log`). No new application dependencies or lockfile edits.
+- Full API regression passes223 suites /1,995 tests with explicit disposable database URLs (`/tmp/ytl-api-full.log`). One existing opt-in Redis suite /26 tests remains skipped. The suite includes five new real-PostgreSQL learner tests, seven service boundary tests and the prior admin/database regressions.
+- New learner PostgreSQL tests prove source-free public projections/demo separation, concurrent idempotent registration with one audit, own-user library/playback, audit failure rollback/retry, publication withdrawal, and current-version/suspension denial (`/tmp/ytl-db.log`). Migration applied only to disposable loopback PostgreSQL16.14/adm3_test on55439; schema diff is empty (`/tmp/ytl-migration.log`, `/tmp/ytl-schema-diff.log`). No configured database migrated.
+- Twelve relevant web Node regression scripts pass125 tests (`/tmp/ytl-web-regression.log`), including all six roles on own enrollment, no arbitrary userId/farm headers, public source stripping, strict route/query mapping and validated player origin/parameters. Existing navigation assertions were updated for released Courses/My courses destinations; legacy hash navigation remains covered.
+- Focused controlled browser run passes53 learner checks before the strengthened explicit-after-login assertions (`/tmp/ytl-browser-focused.log`). Official player is stubbed and external frame requests blocked for deterministic error/hang/cleanup tests; screenshots verify layout only. Full final browser evidence follows below. No real team-owned video or configured-origin playback acceptance was available.
+
+Ruling: extend the existing browser fixture/harness with `course-browser-cases.mjs` and `WORKSPACE_BROWSER_FOCUS=courses` instead of cloning the harness. The full dashboard run includes these course checks along with admin/internal media/farm/profile/auth regressions. Source-free server projections and controlled player tests do not establish DRM/privacy of YouTube links or actual external video delivery.
+
+
+**Final learner acceptance:** the full isolated production browser run passes **536 checks**, including56 learner checks,118 YouTube admin checks and the existing directory/internal media/farm/profile/auth flows (`/tmp/ytl-browser-final.log`, screenshots `/tmp/khamar-workspace-qa-KSjVtl`). The strengthened sign-in case verifies no enrollment is created by login/GET, then registers only after the explicit action. Both languages and320/1440px layouts pass, as do lost-ack retry, own-library separation, lesson player cleanup, unavailable-video retry and15-second iframe readiness recovery. Inspected public mobile and enrolled desktop/mobile screenshots. Controlled playback uses a stub official API and blocked external frames; it does not claim real YouTube delivery.
+
+Documentation context validation passes48 documents /325 local links /95 source entries; changed Markdown links, new-file whitespace and `git diff --check` pass. The temporary PostgreSQL cluster is stopped after verification. Changes remain uncommitted; no live migration/deployment/provider account writes occurred.
+
+**Release order and limitations:** apply `20261015150000_course_enrollment` after both earlier admin migrations before deploying CoursesModule/web. Preserve enrollment rows/audit history during rollback; roll back UI/routes while retaining compatible API/schema, without dropping data. Real team-owned Public/Unlisted video playback, Referer/fullscreen/privacy on the configured release origin remains pending. One existing opt-in Redis suite /26 tests is skipped; no progress persistence, certificates, paid enrollment or general ADM-4 work was started. The requested local admin + learner free-course scope is complete.
+
+Suggested human-managed commit: `feat(courses): add free enrollment and YouTube learner playback`.

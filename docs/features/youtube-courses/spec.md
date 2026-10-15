@@ -1,13 +1,17 @@
 # YouTube courses with public demos and free enrollment
 
-Status: **Admin slice implemented locally; learner/public enrollment and playback remain proposed.**
+Status: **Admin and learner slices implemented locally; live migration/YouTube release acceptance pending.**
 Date: 2026-10-15. Original planning inspected 82d857a plus ADM-3; admin execution baseline is ab18a9f. [Execution plan](plan.md).
 
-## Admin-first delivery update
+## Admin-first delivery history
 
 The user subsequently requested the admin dashboard first. The current slice implements Product.contentProvider, CourseLesson persistence, admin curriculum GET/PUT, YouTube create/edit/publication rules and the bilingual editor/preview. Existing internal upload/transcode/DRM/checkout paths reject YouTube course assets. Curriculum read DTO also includes `isPublished` for read-only UI behavior. The versioned editor guards unsaved internal/history/document exits.
 
-CourseEnrollment, public catalog/demo APIs, learner library/player and free enrollment are still future work. Admin copy states this explicitly; publication prepares content and does not establish a working learner journey. Preview is a manually selected official iframe; IFrame API event integration remains with learner delivery. No external dependencies or live database deployment were added. See the admin execution evidence in [plan.md](plan.md).
+At that admin-first handoff, CourseEnrollment, public catalog/demo APIs, learner library/player and free enrollment were future work. Admin copy states this explicitly; publication prepares content and does not establish a working learner journey. Preview is a manually selected official iframe; IFrame API event integration remains with learner delivery. No external dependencies or live database deployment were added. See the admin execution evidence in [plan.md](plan.md).
+
+## Learner delivery update
+
+The user's next continuation authorized the learner slice. CourseEnrollment, public catalog and source-free outline/demo APIs, own enrollment/library/playback APIs and bilingual in-site player are implemented locally. `GET me/courses/:id` additionally returns the source-free outline plus the caller's nullable enrollment, so direct auth-return links can offer explicit registration without searching a paginated library. Enrollment is idempotent and audited in the same transaction. The public BFF omits credentials; personalized responses are private/no-store. Player readiness has a15-second deadline, official IFrame events, retry and cleanup. Public layout follows the shared container. No paid access, progress/certificates or live deployment is implied; see [execution evidence](plan.md).
 
 ## Outcome and user decisions
 
@@ -58,7 +62,7 @@ Admin curriculum writes require the product to be unpublished, current active ad
 
 Enrollment rechecks active identity and published/nondeleted YOUTUBE product under locks. Insert once using the unique membership constraint; repeat requests return the same enrollment. Audit creation in the same transaction, with no duplicate audit on retry. Unpublication/deletion blocks subsequent lesson reads but retains lesson/enrollment history. Suspension/session invalidation blocks authenticated access. No farm membership/header is relevant to this global course catalog.
 
-## Proposed API contracts
+## API contracts
 
 All paths below are under `/api/v1`. Responses use the existing envelope and strict shared Zod projections. UUID/path association is checked server-side; requests have bounded bodies/queries. No new generic proxy.
 
@@ -71,6 +75,7 @@ All paths below are under `/api/v1`. Responses use the existing envelope and str
 | GET courses/slug/:slug | Public published course overview, ordered lesson outline `{id,title,summary,access,position}` and FREE_ENROLLMENT label. No video IDs, embed URLs or personalized enrollment state. |
 | GET courses/:id/lessons/:lessonId/demo-playback | Public; published course and active PUBLIC_DEMO lesson belonging to it. Return `{productId,lessonId,title,provider:"YOUTUBE",videoId}`. An ENROLLED lesson returns404 without source data. |
 | POST me/courses/:id/enrollment | Current active user, any platform role; empty body, idempotent200 `{id,productId,createdAt}`. No purchase or subscription check; no enrollment into drafts/deleted/internal products. |
+| GET me/courses/:id | Current active user; published source-free course outline plus own nullable enrollment. No lesson sources; private/no-store. |
 | GET me/courses | Current active user only; keyset limit1..50/default20. Published, nondeleted enrolled YouTube course summaries plus enrollment ID/time. No other user's membership, no draft content. |
 | GET me/courses/:id/lessons/:lessonId/playback | Current active user and own enrollment; published course, active matching lesson. Return same safe playback DTO. Admin draft preview uses the protected admin curriculum screen, not a learner authorization bypass. |
 
@@ -105,4 +110,4 @@ Only mount/load the player for a selected authorized/demo source; no hidden play
 
 Deploy ADM-3 migration first, then the new additive migration. Upgrade/drain API writers and workers with provider checks before enabling YouTube creation/publication; deploy web last. Old API binaries do not understand published empty-key YouTube products. No automatic conversion, cleanup or change to existing paid products/orders. Before API rollback, unpublish YouTube products and stop new writes; retain an API version that understands the provider or execute a reviewed forward recovery. Hiding the feature's web links alone is not a safe old-API rollback. Preserve lessons, enrollments and audit history.
 
-The later user instruction authorized the admin implementation described above. Remaining learner implementation, live migrations, deployment and Git integration are not performed by this slice.
+The later user instructions authorized both implementation slices. Live migrations, deployment and Git integration were not performed; retain the deployment acceptance limits in the plan.
