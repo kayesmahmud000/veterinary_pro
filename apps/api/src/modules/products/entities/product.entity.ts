@@ -7,6 +7,7 @@ import {
 import { ValidationDomainException } from "../../../common/exceptions/domain.exception";
 
 export interface ProductEntityProps {
+  version?: number;
   id: string;
   title: string;
   slug: string;
@@ -41,6 +42,7 @@ export interface CreateProductProps {
 
 export class ProductEntity {
   private readonly _id: string;
+  private readonly _version: number;
   private _title: string;
   private _slug: string;
   private _type: ProductType;
@@ -58,6 +60,7 @@ export class ProductEntity {
 
   private constructor(props: ProductEntityProps) {
     this._id = props.id;
+    this._version = props.version ?? 0;
     this._title = props.title.trim();
     this._slug = props.slug.trim().toLowerCase();
     this._type = props.type;
@@ -131,7 +134,7 @@ export class ProductEntity {
       }
     }
 
-    if (!this._contentS3Key || this._contentS3Key.trim().length === 0) {
+    if (this._isPublished && (!this._contentS3Key || this._contentS3Key.trim().length === 0)) {
       throw new ValidationDomainException(
         "Product content S3 storage key cannot be empty."
       );
@@ -185,6 +188,7 @@ export class ProductEntity {
   // GETTERS
   // ==========================================
 
+  public get version(): number { return this._version; }
   public get id(): string {
     return this._id;
   }
@@ -278,6 +282,7 @@ export class ProductEntity {
   }
 
   public publish(): void {
+    if (!this._contentS3Key.trim()) throw new ValidationDomainException("Attach an asset before publication.");
     this._isPublished = true;
     this._updatedAt = new Date();
   }
@@ -355,6 +360,14 @@ export class ProductEntity {
   // PRESENTATION MAPPERS
   // ==========================================
 
+  private publicMetadata(): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+    for (const key of ["durationMinutes", "durationSeconds", "moduleCount", "instructor", "language", "pageCount", "resolutions"]) {
+      const v = this._metadata[key];
+      if (typeof v === "string" || typeof v === "number" || (Array.isArray(v) && v.every(x => typeof x === "string"))) result[key] = v;
+    }
+    return result;
+  }
   public toResponse(includeAssetKey = false): ProductResponseDto {
     return {
       id: this._id,
@@ -368,7 +381,7 @@ export class ProductEntity {
       currency: this._currency,
       minSubscriptionTier: this._minSubscriptionTier,
       isPublished: this._isPublished,
-      metadata: this._metadata,
+      metadata: includeAssetKey ? this._metadata : this.publicMetadata(),
       contentS3Key: includeAssetKey ? this._contentS3Key : undefined,
       createdAt: this._createdAt.toISOString(),
       updatedAt: this._updatedAt.toISOString(),
@@ -387,7 +400,7 @@ export class ProductEntity {
       currency: this._currency,
       minSubscriptionTier: this._minSubscriptionTier,
       isPublished: this._isPublished,
-      metadata: this._metadata,
+      metadata: this.publicMetadata(),
       createdAt: this._createdAt.toISOString(),
     };
   }

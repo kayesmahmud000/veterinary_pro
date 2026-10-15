@@ -23,6 +23,7 @@ import {
   ENTITLEMENT_SERVICE,
 } from "./entitlement.service.interface";
 import { EnvService } from "../../../config/env.service";
+import { z } from "zod";
 
 @Injectable()
 export class StreamDeliveryService implements IStreamDeliveryService {
@@ -73,6 +74,26 @@ export class StreamDeliveryService implements IStreamDeliveryService {
       );
     }
 
+    // Claimed legacy products retain their existing playlist; new uploads use
+    // an isolated prefix so a session cannot authorize another asset version.
+    let playlistKey = `hls/${productId}/master.m3u8`;
+    const metadata = product.metadata;
+    if (
+      metadata && typeof metadata === "object" &&
+      !Array.isArray(metadata) && metadata.adminManaged === true
+    ) {
+      const segments = product.contentS3Key.split("/");
+      const validPrefix = segments[0] === "hls" && segments[1] === productId;
+      const legacyPlaylist = segments.length === 3 && segments[2] === "master.m3u8";
+      const managedPlaylist = segments.length === 4 &&
+        z.string().uuid().safeParse(segments[2]).success &&
+        segments[3] === "master.m3u8";
+      if (!validPrefix || (!legacyPlaylist && !managedPlaylist)) {
+        throw new ValidationDomainException("This video does not have a ready attached playlist.");
+      }
+      playlistKey = product.contentS3Key;
+    }
+
     // 2. Validate entitlement
     const isEntitled = await this.entitlementService.checkEntitlement(
       userId,
@@ -100,8 +121,8 @@ export class StreamDeliveryService implements IStreamDeliveryService {
 
     // 4. Construct CloudFront streaming paths
     const cdnBaseUrl = this.cloudfrontSignerService.getStreamBaseUrl();
-    const resourcePattern = `${cdnBaseUrl}/hls/${productId}/*`;
-    const masterPlaylistUrl = `${cdnBaseUrl}/hls/${productId}/master.m3u8`;
+    const resourcePattern = `${cdnBaseUrl}/${playlistKey.slice(0, playlistKey.lastIndexOf("/"))}/*`;
+    const masterPlaylistUrl = `${cdnBaseUrl}/${playlistKey}`;
 
     // 5. Generate signed URL (with custom wildcard policy) and signed cookies
     const signedStreamUrl = this.cloudfrontSignerService.signUrlCustomPolicy(

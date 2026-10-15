@@ -29,6 +29,9 @@ import { MediaUploadController } from "./media-upload.controller";
 import { DrmKeyController } from "./drm-key.controller";
 import { StreamDeliveryController } from "./stream-delivery.controller";
 
+import { AdminMediaRepository } from "./admin-media.repository";
+import { AdminMediaService } from "./admin-media.service";
+import { AdminMediaController } from "./admin-media.controller";
 @Module({
   imports: [
     PrismaModule,
@@ -38,12 +41,12 @@ import { StreamDeliveryController } from "./stream-delivery.controller";
       name: VIDEO_TRANSCODE_QUEUE,
     }),
   ],
-  controllers: [
+  controllers: [AdminMediaController,
     MediaUploadController,
     DrmKeyController,
     StreamDeliveryController,
   ],
-  providers: [
+  providers: [AdminMediaRepository, AdminMediaService,
     S3StorageService,
     {
       provide: S3_STORAGE_SERVICE,

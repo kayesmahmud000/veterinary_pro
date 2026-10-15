@@ -22,6 +22,7 @@ import {
 } from "../../prisma/interfaces/transaction.interface";
 import { ProductEntity } from "../entities/product.entity";
 import {
+  WorkflowException,
   EntityConflictException,
   EntityNotFoundException,
   ValidationDomainException,
@@ -41,11 +42,15 @@ export class ProductsService implements IProductsService {
     private readonly transactionManager: ITransactionManager
   ) {}
 
+  private rejectManaged(key?: string, metadata?: Record<string, unknown>): void {
+    if (key?.startsWith("admin-assets/") || /^hls\/[0-9a-f-]{36}\/[0-9a-f-]{36}\//i.test(key ?? "") || metadata?.adminManaged !== undefined || metadata?.adminUploadId !== undefined) throw new WorkflowException("MANAGED_PRODUCT", "Managed assets require administrative product contracts.");
+  }
   public async createProduct(
     dto: CreateProductRequestDto,
     actorUserId?: string,
     traceId?: string
   ): Promise<ProductResponseDto> {
+    this.rejectManaged(dto.contentS3Key, dto.metadata);
     const rawSlug = dto.slug
       ? dto.slug.toLowerCase().trim()
       : ProductEntity.formatSlug(dto.title);
@@ -121,6 +126,8 @@ export class ProductsService implements IProductsService {
       }
     }
 
+    if (product.metadata.adminManaged === true) throw new WorkflowException("MANAGED_PRODUCT", "Use the versioned administrative product contract.");
+    this.rejectManaged(dto.contentS3Key, dto.metadata);
     const oldSnapshot = product.toResponse(true);
 
     if (
@@ -298,11 +305,12 @@ export class ProductsService implements IProductsService {
       throw new EntityNotFoundException("Product", id);
     }
 
+    if (product.metadata.adminManaged === true) throw new WorkflowException("MANAGED_PRODUCT", "Use the versioned administrative product contract.");
     const oldSnapshot = product.toResponse(true);
     const activeTraceId = traceId ?? crypto.randomUUID();
 
     await this.transactionManager.run(async (tx) => {
-      await this.productRepository.softDelete(id, new Date(), tx);
+      await this.productRepository.softDelete(id, new Date(), tx, product.version);
       await this.auditLogRepository.record(
         {
           userId: actorUserId,

@@ -14,6 +14,7 @@ import {
   ProfessionalRole,
   UserRole,
   UserStatus,
+  adminProductCreateSchema,adminProductEditSchema,adminProductActionSchema,adminProductSchema,adminProductListSchema,adminProductQuerySchema,adminAssetAttachSchema,adminUploadCreateSchema,adminUploadQuerySchema,adminUploadSchema,adminUploadListSchema,adminPartSchema,adminPartUrlSchema,adminCompleteSchema,
   directoryKinds, directoryQueries, directoryLists, directoryDetails, accountActionSchema, accountActionResultSchema,
 } from "@vetralink/shared-types";
 import {
@@ -55,6 +56,7 @@ type Endpoint = {
   membershipRequired?: boolean;
   entityId?: string;
   writeAccessRequired?: boolean;
+  bodyLimit?: number;
 };
 const uuid = z.string().uuid();
 export function resolveEndpoint(
@@ -62,6 +64,17 @@ export function resolveEndpoint(
   method: string,
 ): Endpoint | null {
   const key = path.join("/");
+  if (key === "admin/products" && ["GET","POST"].includes(method)) return {method,upstream:key,response:method==="GET"?adminProductListSchema:adminProductSchema,...(method==="GET"?{query:adminProductQuerySchema}:{body:adminProductCreateSchema})};
+  if (path[0]==="admin" && path[1]==="products" && uuid.safeParse(path[2]).success) {
+    if(path.length===3 && ["GET","PATCH"].includes(method)) return {method,upstream:key,entityId:path[2],response:adminProductSchema,...(method==="PATCH"?{body:adminProductEditSchema}:{})};
+    if(path.length===4 && method==="POST" && ["actions","asset"].includes(path[3])) return {method,upstream:key,entityId:path[2],response:adminProductSchema,body:path[3]==="actions"?adminProductActionSchema:adminAssetAttachSchema};
+  }
+  if(key==="admin/media" && method==="GET") return {method,upstream:key,response:adminUploadListSchema,query:adminUploadQuerySchema};
+  if(key==="admin/media/uploads" && method==="POST") return {method,upstream:key,response:adminUploadSchema,body:adminUploadCreateSchema};
+  if(path[0]==="admin" && path[1]==="media" && path[2]==="uploads" && uuid.safeParse(path[3]).success) {
+    if(path.length===4 && method==="GET") return {method,upstream:key,entityId:path[3],response:adminUploadSchema};
+    if(path.length===5 && method==="POST" && ["part-url","complete","abort","process"].includes(path[4])) return {method,upstream:key,...(path[4]!=="part-url"?{entityId:path[3]}:{}),response:path[4]==="part-url"?adminPartUrlSchema:adminUploadSchema,body:path[4]==="part-url"?adminPartSchema:path[4]==="complete"?adminCompleteSchema:emptyQuerySchema,...(path[4]==="complete"?{bodyLimit:524288}:{})};
+  }
   if (path[0] === "admin" && path[1] === "directory" && directoryKinds.includes(path[2] as typeof directoryKinds[number])) {
     const kind = path[2] as typeof directoryKinds[number];
     if (path.length === 3 && method === "GET") return { method, upstream: key, response: directoryLists[kind], query: directoryQueries[kind] };
@@ -282,6 +295,7 @@ const errorCodes = new Set([
   "ACCOUNT_VERSION_CONFLICT",
   "INVALID_ACCOUNT_TRANSITION",
   "ACCOUNT_ACTION_FORBIDDEN",
+  "PRODUCT_VERSION_CONFLICT","ASSET_NOT_READY","UPLOAD_STATE_CONFLICT","UPLOAD_BUSY","UPLOAD_REQUEST_CONFLICT","UPLOAD_VERIFICATION_FAILED","INVALID_UPLOAD","MEDIA_UNAVAILABLE",
   "ROLE_REQUEST_PENDING",
   "SUBMISSION_KEY_CONFLICT",
   "ROLE_REQUEST_ALREADY_DECIDED",
@@ -332,10 +346,10 @@ export async function handleWorkspace(
   if (!query.success) return reply({ code: "VALIDATION_FAILED" }, 422);
   let body: unknown;
   if (endpoint.body) {
-    if (Number(request.headers.get("content-length")) > 32768)
+    if (Number(request.headers.get("content-length")) > (endpoint.bodyLimit ?? 32768))
       return reply({ code: "VALIDATION_FAILED" }, 413);
     const raw = await request.text();
-    if (new TextEncoder().encode(raw).length > 32768)
+    if (new TextEncoder().encode(raw).length > (endpoint.bodyLimit ?? 32768))
       return reply({ code: "VALIDATION_FAILED" }, 413);
     let parsed: unknown;
     try {

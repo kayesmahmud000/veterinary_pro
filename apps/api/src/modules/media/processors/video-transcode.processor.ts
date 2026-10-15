@@ -47,26 +47,30 @@ export class VideoTranscodeProcessor extends WorkerHost {
     job: Job<VideoTranscodeJobData, VideoTranscodeResultDto>
   ): Promise<VideoTranscodeResultDto> {
     const { productId, rawS3Key, bucket } = job.data;
+    const managed = !!job.id?.startsWith("admin-transcode-");
+    const uploadId = job.id?.slice("admin-transcode-".length);
+    if (managed && (!uploadId || !/^[0-9a-f-]{36}$/i.test(uploadId) || !rawS3Key.startsWith(`admin-assets/${productId}/${uploadId}.`))) throw new ValidationDomainException("Invalid managed source.");
     this.logger.log(
       `Starting video transcode job [${job.id}] for product [${productId}] -> S3: ${bucket}/${rawS3Key}`
     );
 
     await job.updateProgress(5);
 
-    const product = await this.productRepository.findById(productId);
+    let product = await this.productRepository.findById(productId);
     if (!product) {
       throw new ValidationDomainException(
         `Cannot transcode video: Product [${productId}] not found in catalog.`
       );
     }
 
-    product.updateDetails({
+    if (!managed && product.metadata.adminManaged === true) throw new ValidationDomainException("Managed products require the administrative processing session.");
+    if (!managed) product.updateDetails({
       metadata: {
         ...product.metadata,
         transcodeStatus: TranscodeStatus.PROCESSING,
       },
     });
-    await this.productRepository.update(product);
+    if (!managed) product = await this.productRepository.update(product);
 
     const tempDir = join(
       tmpdir(),
@@ -93,7 +97,7 @@ export class VideoTranscodeProcessor extends WorkerHost {
 
       // 3. Upload all generated HLS artifacts to S3
       await job.updateProgress(70);
-      const targetPrefix = `hls/${productId}`;
+      const targetPrefix = managed ? `hls/${productId}/${uploadId}` : `hls/${productId}`;
 
       for (const relFile of transcodeResult.generatedFiles) {
         const localFilePath = join(hlsOutputDir, relFile);
@@ -112,7 +116,7 @@ export class VideoTranscodeProcessor extends WorkerHost {
       await job.updateProgress(90);
       const masterPlaylistS3Key = `${targetPrefix}/master.m3u8`;
 
-      product.updateDetails({
+      if (!managed) product.updateDetails({
         contentS3Key: masterPlaylistS3Key,
         metadata: {
           ...product.metadata,
@@ -124,7 +128,7 @@ export class VideoTranscodeProcessor extends WorkerHost {
           sourceMasterKey: rawS3Key,
         },
       });
-      await this.productRepository.update(product);
+      if (!managed) product = await this.productRepository.update(product);
 
       await job.updateProgress(100);
 
@@ -152,7 +156,7 @@ export class VideoTranscodeProcessor extends WorkerHost {
 
       try {
         const currentProduct = await this.productRepository.findById(productId);
-        if (currentProduct) {
+        if (currentProduct && !managed) {
           currentProduct.updateDetails({
             metadata: {
               ...currentProduct.metadata,

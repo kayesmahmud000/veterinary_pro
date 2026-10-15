@@ -196,6 +196,7 @@ describe("ProductRepository", () => {
         where: { id: mockEntity.id },
         data: {
           deletedAt: expect.any(Date),
+          version: { increment: 1 },
           updatedAt: expect.any(Date),
         },
       });
@@ -216,5 +217,16 @@ describe("ProductRepository", () => {
       const exists = await repository.existsBySlug("available-slug");
       expect(exists).toBe(false);
     });
+  });
+
+  it("uses the read version for legacy updates so stale writes cannot erase managed state",async()=>{
+    const entity=ProductEntity.reconstitute({...mockDbRow,version:7});
+    (prisma.product.update as jest.Mock).mockResolvedValue({...mockDbRow,version:8});
+    await repository.update(entity);
+    expect(prisma.product.update).toHaveBeenCalledWith(expect.objectContaining({where:{id:entity.id,version:7,deletedAt:null},data:expect.objectContaining({version:{increment:1}})}));
+  });
+  it("maps stale legacy deletion to a conflict rather than an internal error",async()=>{
+    (prisma.product.update as jest.Mock).mockRejectedValue(new Prisma.PrismaClientKnownRequestError('missing',{code:'P2025',clientVersion:'test'}));
+    await expect(repository.softDelete(mockEntity.id,new Date(),undefined,2)).rejects.toBeInstanceOf(EntityConflictException);
   });
 });

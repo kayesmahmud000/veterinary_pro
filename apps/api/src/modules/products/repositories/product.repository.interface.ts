@@ -48,7 +48,8 @@ export interface IProductRepository {
   softDelete(
     id: string,
     deletedAt?: Date,
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
+    expectedVersion?: number
   ): Promise<void>;
 
   existsBySlug(

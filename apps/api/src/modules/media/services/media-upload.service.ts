@@ -130,6 +130,7 @@ export class MediaUploadService implements IMediaUploadService {
   public async getPresignedPartUrl(
     dto: GetPresignedPartUrlRequestDto
   ): Promise<GetPresignedPartUrlResponseDto> {
+    if (dto.key.startsWith("admin-assets/")) throw new ValidationDomainException("Managed assets require the administrative upload session.");
     const bucket = this.envService.s3BucketMedia;
     const expiresInSeconds = 3600; // 1 hour validity per part
 
@@ -152,6 +153,7 @@ export class MediaUploadService implements IMediaUploadService {
     dto: CompleteMultipartUploadRequestDto,
     userId: string
   ): Promise<CompleteMultipartUploadResponseDto> {
+    if (dto.key.startsWith("admin-assets/")) throw new ValidationDomainException("Managed assets require the administrative upload session.");
     if (!dto.parts || dto.parts.length === 0) {
       throw new ValidationDomainException(
         "Cannot complete multipart upload without parts."
@@ -205,6 +207,7 @@ export class MediaUploadService implements IMediaUploadService {
     dto: AbortMultipartUploadRequestDto,
     userId: string
   ): Promise<void> {
+    if (dto.key.startsWith("admin-assets/")) throw new ValidationDomainException("Managed assets require the administrative upload session.");
     const bucket = this.envService.s3BucketMedia;
     await this.s3Storage.abortMultipartUpload(bucket, dto.key, dto.uploadId);
     this.logger.log(`User [${userId}] aborted multipart upload '${dto.key}' [${dto.uploadId}]`);

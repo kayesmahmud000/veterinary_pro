@@ -343,6 +343,7 @@ model User {
   deletedAt       DateTime?  @map("deleted_at") @db.Timestamptz(6)
 
   // Relations
+  adminMediaUploads AdminMediaUpload[]
   refreshTokens        RefreshToken[]
   ownedFarms           Farm[]            @relation("FarmOwner")
   farmMemberships      FarmMember[]
@@ -880,6 +881,8 @@ model Product {
   updatedAt           DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt           DateTime?        @map("deleted_at") @db.Timestamptz(6)
 
+  version Int @default(0)
+  adminMediaUploads AdminMediaUpload[]
   orderItems OrderItem[]
 
   @@index([type, isPublished])
@@ -1217,4 +1220,25 @@ model AuditLog {
   @@index([userId, createdAt])
   @@index([traceId])
   @@map("audit_logs")
+}
+
+
+model AdminMediaUpload {
+  id String @id @db.Uuid
+  productId String @map("product_id") @db.Uuid
+  ownerId String @map("owner_id") @db.Uuid
+  filename String @db.VarChar(255)
+  contentType String @map("content_type") @db.VarChar(150)
+  fileSizeBytes BigInt @map("file_size_bytes")
+  partSizeBytes Int @default(10485760) @map("part_size_bytes")
+  key String @unique @db.Text
+  uploadId String? @map("upload_id") @db.Text
+  state String @default("INITIALIZING") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  product Product @relation(fields:[productId], references:[id], onDelete:Restrict)
+  owner User @relation(fields:[ownerId], references:[id], onDelete:Restrict)
+  @@index([productId,id])
+  @@index([ownerId,id])
+  @@map("admin_media_uploads")
 }

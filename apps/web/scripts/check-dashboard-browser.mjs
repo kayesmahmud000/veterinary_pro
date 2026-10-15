@@ -1,6 +1,7 @@
 // Local production browser acceptance with synthetic identities and a controlled API.
 // This checks real Next components/BFF behavior, not deployed provider/database readiness.
 import { handleDirectoryFixture, checkAdminDirectory } from "./admin-directory-browser-cases.mjs";
+import { handleCatalogFixture, handleCatalogObject, checkAdminCatalog } from "./admin-catalog-browser-cases.mjs";
 import assert from "node:assert/strict";
 import { handleAdminFixture, checkAdminDashboard } from "./admin-dashboard-browser-cases.mjs";
 import { randomUUID } from "node:crypto";
@@ -96,6 +97,7 @@ let checks = 0;
 const focus = process.env.WORKSPACE_BROWSER_FOCUS === "history";
 const requests = [];
 const upstream = http.createServer(async (req, res) => {
+  if (await handleCatalogObject(req, res, requests)) return;
   let text = "";
   for await (const chunk of req) text += chunk;
   const data = text ? JSON.parse(text) : {};
@@ -283,6 +285,7 @@ const upstream = http.createServer(async (req, res) => {
   }
   if (route === "users/me/role-requests")
     return send(200, { requests: [], nextCursor: null });
+  if (handleCatalogFixture(route, role, send, query, req.method, data, res)) return;
   if (handleDirectoryFixture(route, role, send, query, req.method, data, res)) return;
   if (handleAdminFixture(route, role, send)) return;
   if (route === "admin/role-requests")
@@ -463,7 +466,10 @@ try {
     await cookie("vetralink_refresh", "r-" + role);
     await cookie("vetralink-locale", locale);
   }
-  if (process.env.WORKSPACE_BROWSER_FOCUS === "directory") {
+  if (process.env.WORKSPACE_BROWSER_FOCUS === "catalog") {
+    checks += await checkAdminCatalog({seed,go,call,evaluate,until,temp,requests});
+    assert.deepEqual(exceptions, []);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "directory") {
     checks += await checkAdminDirectory({seed,go,call,evaluate,until,temp,requests});
     assert.deepEqual(exceptions, []);
   } else {
@@ -759,6 +765,7 @@ try {
       }
     checks += await checkAdminDashboard({ seed, go, call, evaluate, until, requests, origin, temp, users });
     checks += await checkAdminDirectory({seed,go,call,evaluate,until,temp,requests});
+    checks += await checkAdminCatalog({seed,go,call,evaluate,until,temp,requests});
     await seed("LEARNER", "en");
     users.get("LEARNER").avatarUrl = "/assets/brand/logo-green.jpeg";
     await go("/");
