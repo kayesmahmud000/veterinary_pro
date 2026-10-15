@@ -1,6 +1,10 @@
 // Local production browser acceptance with synthetic identities and a controlled API.
 // This checks real Next components/BFF behavior, not deployed provider/database readiness.
+import { handleDirectoryFixture, checkAdminDirectory } from "./admin-directory-browser-cases.mjs";
+import {handleCourseFixture,checkLearnerCourses} from "./course-browser-cases.mjs";
+import { handleCatalogFixture, handleCatalogObject, checkAdminCatalog } from "./admin-catalog-browser-cases.mjs";
 import assert from "node:assert/strict";
+import { handleAdminFixture, checkAdminDashboard } from "./admin-dashboard-browser-cases.mjs";
 import { randomUUID } from "node:crypto";
 import http from "node:http";
 import { spawn } from "node:child_process";
@@ -94,6 +98,7 @@ let checks = 0;
 const focus = process.env.WORKSPACE_BROWSER_FOCUS === "history";
 const requests = [];
 const upstream = http.createServer(async (req, res) => {
+  if (await handleCatalogObject(req, res, requests)) return;
   let text = "";
   for await (const chunk of req) text += chunk;
   const data = text ? JSON.parse(text) : {};
@@ -281,6 +286,10 @@ const upstream = http.createServer(async (req, res) => {
   }
   if (route === "users/me/role-requests")
     return send(200, { requests: [], nextCursor: null });
+  if(handleCourseFixture(route,role,send,query,req.method,data,res))return;
+  if (handleCatalogFixture(route, role, send, query, req.method, data, res)) return;
+  if (handleDirectoryFixture(route, role, send, query, req.method, data, res)) return;
+  if (handleAdminFixture(route, role, send)) return;
   if (route === "admin/role-requests")
     return ["ADMIN", "SUPER_ADMIN"].includes(role)
       ? send(200, { requests: [], nextCursor: null })
@@ -363,6 +372,11 @@ try {
   assert.equal(authorized.status, 200);
   assert.match(authorized.headers.get("cache-control"), /no-store/);
   assert.match(await authorized.text(), /data-workspace-shell/);
+  checks++;
+  const adminPage = await fetch(origin + "/admin/dashboard", {
+    redirect: "manual", headers: { Cookie: "vetralink_access=a-ADMIN" },
+  });
+  assert.equal(adminPage.status, 200, "Admin dashboard route must be delivered to ADMIN");
   checks++;
   chrome = spawn(
     process.env.CHROME_PATH || "/usr/bin/google-chrome",
@@ -454,6 +468,16 @@ try {
     await cookie("vetralink_refresh", "r-" + role);
     await cookie("vetralink-locale", locale);
   }
+  if (process.env.WORKSPACE_BROWSER_FOCUS === "courses") {
+    checks += await checkLearnerCourses({seed,go,call,evaluate,until,temp,requests,origin});
+    assert.deepEqual(exceptions, []);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "catalog") {
+    checks += await checkAdminCatalog({seed,go,call,evaluate,until,temp,requests});
+    assert.deepEqual(exceptions, []);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "directory") {
+    checks += await checkAdminDirectory({seed,go,call,evaluate,until,temp,requests});
+    assert.deepEqual(exceptions, []);
+  } else {
   if (!focus) {
     // Protected entry automatically prompts; signed-out dismissal leaves for home.
     await cookie("vetralink_access", "a-LEARNER");
@@ -596,7 +620,7 @@ try {
         await seed(role, locale);
         await go(
           "/dashboard",
-          role === "LEARNER" ? "/account/profile" : "/dashboard",
+          role === "LEARNER" ? "/account/profile" : ["ADMIN", "SUPER_ADMIN"].includes(role) ? "/admin/dashboard" : "/dashboard",
         );
         await until(
           () =>
@@ -623,7 +647,8 @@ try {
         const hrefs = await evaluate(
           `Array.from(document.querySelectorAll('[data-workspace-nav="desktop"] a')).map(a=>a.getAttribute('href'))`,
         );
-        assert.equal(hrefs.includes("/dashboard"), role !== "LEARNER");
+        assert.equal(hrefs.includes("/dashboard"), ["FARMER", "BUYER", "VET"].includes(role));
+        assert.equal(hrefs.includes("/admin/dashboard"), ["ADMIN", "SUPER_ADMIN"].includes(role));
         assert.equal(
           await evaluate(
             `!!document.querySelector('header a, header details')`,
@@ -683,7 +708,7 @@ try {
           await evaluate(
             `document.querySelector('[data-account-destination]').getAttribute('href')`,
           ),
-          role === "LEARNER" ? "/account/profile" : "/dashboard",
+          role === "LEARNER" ? "/account/profile" : ["ADMIN", "SUPER_ADMIN"].includes(role) ? "/admin/dashboard" : "/dashboard",
         );
         assert.equal(
           await evaluate(
@@ -743,6 +768,10 @@ try {
         );
         checks++;
       }
+    checks += await checkAdminDashboard({ seed, go, call, evaluate, until, requests, origin, temp, users });
+    checks += await checkAdminDirectory({seed,go,call,evaluate,until,temp,requests});
+    checks += await checkAdminCatalog({seed,go,call,evaluate,until,temp,requests});
+    checks += await checkLearnerCourses({seed,go,call,evaluate,until,temp,requests,origin});
     await seed("LEARNER", "en");
     users.get("LEARNER").avatarUrl = "/assets/brand/logo-green.jpeg";
     await go("/");
@@ -1000,16 +1029,16 @@ try {
     );
     users.get("FARMER").farmerOnboardingRequired = false;
     checks++;
-    // Direct denied routes retain the shell but never render privileged forms.
+    // Administrative denial redirects before any private page is delivered.
     await seed("BUYER", "en");
-    await go("/admin/administrative-access");
+    await go("/admin/administrative-access", "/account/profile");
     await until(
       () =>
-        evaluate(`document.querySelector('[data-workspace-denied]')!==null`),
+        evaluate(`document.querySelector('[data-account-profile]')!==null`),
       "Admin direct denial",
     );
     assert.equal(
-      await evaluate(`!!document.querySelector('#target-email')`),
+      await evaluate(`!!document.querySelector('#email')`),
       false,
     );
     checks++;
@@ -1707,6 +1736,7 @@ try {
   console.log(
     `Passed ${checks} ${focus ? "history draft/confirmation and access" : "dashboard/profile, responsive, farm, registry and login"} checks. Screenshots: ${temp}`,
   );
+  }
 } finally {
   ws?.close();
   chrome?.kill();

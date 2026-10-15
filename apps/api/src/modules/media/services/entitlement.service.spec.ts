@@ -22,7 +22,7 @@ describe("EntitlementService (Unit)", () => {
 
   beforeEach(async () => {
     prisma = {
-      product: { findUnique: jest.fn() },
+      product: { findUnique: jest.fn().mockResolvedValue({id:mockProductId,contentProvider:"INTERNAL",deletedAt:null}) },
       orderItem: { findFirst: jest.fn() },
       subscription: { findFirst: jest.fn() },
     };
@@ -41,7 +41,7 @@ describe("EntitlementService (Unit)", () => {
   });
 
   describe("checkEntitlement", () => {
-    it("should grant access immediately for SUPER_ADMIN role without querying database", async () => {
+    it("should grant access for SUPER_ADMIN after validating the internal product", async () => {
       const result = await service.checkEntitlement(
         mockUserId,
         UserRole.SUPER_ADMIN,
@@ -49,10 +49,10 @@ describe("EntitlementService (Unit)", () => {
       );
 
       expect(result).toBe(true);
-      expect(prisma.product.findUnique).not.toHaveBeenCalled();
+      expect(prisma.product.findUnique).toHaveBeenCalled();
     });
 
-    it("should grant access immediately for ADMIN role without querying database", async () => {
+    it("should grant access for ADMIN after validating the internal product", async () => {
       const result = await service.checkEntitlement(
         mockUserId,
         UserRole.ADMIN,
@@ -60,7 +60,7 @@ describe("EntitlementService (Unit)", () => {
       );
 
       expect(result).toBe(true);
-      expect(prisma.product.findUnique).not.toHaveBeenCalled();
+      expect(prisma.product.findUnique).toHaveBeenCalled();
     });
 
     it("should throw EntityNotFoundException if product does not exist", async () => {
@@ -206,4 +206,10 @@ describe("EntitlementService (Unit)", () => {
       expect(result).toBe(false);
     });
   });
+  it.each([UserRole.ADMIN,UserRole.SUPER_ADMIN,UserRole.LEARNER])("does not grant internal media access for YouTube content to %s",async role=>{
+    prisma.product.findUnique.mockResolvedValue({id:mockProductId,contentProvider:"YOUTUBE",isPublished:true,deletedAt:null});
+    await expect(service.checkEntitlement(mockUserId,role,mockProductId)).resolves.toBe(false);
+    expect(prisma.orderItem.findFirst).not.toHaveBeenCalled();
+  });
+
 });

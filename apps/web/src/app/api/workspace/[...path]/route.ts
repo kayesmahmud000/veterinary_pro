@@ -8,4 +8,4 @@ function handle(request: NextRequest, context: { params: { path: string[] } }) {
     handleWorkspace(request, context.params.path),
   );
 }
-export { handle as GET, handle as POST, handle as PATCH };
+export { handle as GET, handle as POST, handle as PUT, handle as PATCH };

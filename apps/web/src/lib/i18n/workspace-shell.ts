@@ -1,6 +1,7 @@
 import type { Locale } from "./locale";
 
 export const workspaceShellEn = {
+  courses: "My courses",
   dashboard: "Dashboard",
   profile: "My profile",
   applications: "My role applications",
@@ -33,9 +34,15 @@ export const workspaceShellEn = {
   overview: "Farm overview",
   home: "Home",
   accountStatus: "Account status",
+  adminOverview: "Overview",
+  adminPeople: "People",
+  adminPlatform: "Platform",
+  products: "Products", media: "Media uploads",
+  users: "Users", veterinarians: "Veterinarians", farms: "Farms", audit: "Audit trail",
 };
 export type WorkspaceShellMessages = typeof workspaceShellEn;
 export const workspaceShellBn: WorkspaceShellMessages = {
+  courses: "আমার কোর্স",
   dashboard: "ড্যাশবোর্ড",
   profile: "আমার প্রোফাইল",
   applications: "আমার ভূমিকার আবেদন",
@@ -68,6 +75,11 @@ export const workspaceShellBn: WorkspaceShellMessages = {
   overview: "খামারের সারসংক্ষেপ",
   home: "মূল পাতা",
   accountStatus: "অ্যাকাউন্টের অবস্থা",
+  adminOverview: "সারসংক্ষেপ",
+  adminPeople: "ব্যবহারকারী",
+  adminPlatform: "প্ল্যাটফর্ম",
+  products: "পণ্য", media: "মিডিয়া আপলোড",
+  users: "ব্যবহারকারী", veterinarians: "পশুচিকিৎসক", farms: "খামার", audit: "অডিট ইতিহাস",
 };
 export function getWorkspaceShellMessages(locale: Locale) {
   return locale === "bn" ? workspaceShellBn : workspaceShellEn;

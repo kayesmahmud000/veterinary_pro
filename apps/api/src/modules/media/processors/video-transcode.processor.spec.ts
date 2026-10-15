@@ -183,4 +183,22 @@ describe("VideoTranscodeProcessor", () => {
       expect(mockProductRepository.update).toHaveBeenCalled();
     });
   });
+
+  it("managed jobs isolate output and never overwrite product edits", async () => {
+    const productId="550e8400-e29b-41d4-a716-446655440001",uploadId="550e8400-e29b-41d4-a716-446655440002";
+    const product=ProductEntity.create({id:productId,title:"Managed video",slug:"managed-video",type:ProductType.VIDEO_COURSE,description:"Managed course description.",priceCents:1000,contentS3Key:"",metadata:{adminManaged:true}});
+    mockProductRepository.findById.mockResolvedValue(product);
+    mockJob.id=`admin-transcode-${uploadId}`;
+    mockJob.data={...jobData,productId,rawS3Key:`admin-assets/${productId}/${uploadId}.mp4`};
+    const result=await processor.process(mockJob);
+    expect(result.masterPlaylistS3Key).toBe(`hls/${productId}/${uploadId}/master.m3u8`);
+    expect(mockProductRepository.update).not.toHaveBeenCalled();
+    expect(product.contentS3Key).toBe("");
+  });
+  it("legacy jobs cannot change a managed product", async () => {
+    mockProductRepository.findById.mockResolvedValue(ProductEntity.create({title:"Managed video",slug:"managed-video",type:ProductType.VIDEO_COURSE,description:"Managed course description.",priceCents:1000,contentS3Key:"",metadata:{adminManaged:true}}));
+    await expect(processor.process(mockJob)).rejects.toThrow();
+    expect(mockProductRepository.update).not.toHaveBeenCalled();
+    expect(mockS3Storage.downloadFile).not.toHaveBeenCalled();
+  });
 });

@@ -8,10 +8,15 @@ import { ProductsService } from "./services/products.service";
 import { PRODUCTS_SERVICE } from "./services/products.service.interface";
 import { ProductsController } from "./products.controller";
 
+import { UsersModule } from "../users/users.module";
+import { AdminProductsRepository } from "./admin-products.repository";
+import { AdminProductsService } from "./admin-products.service";
+import { AdminCourseCurriculumService } from "./admin-course-curriculum.service";
+import { AdminProductsController } from "./admin-products.controller";
 @Module({
-  imports: [PrismaModule, AuditModule, AuthModule],
-  controllers: [ProductsController],
-  providers: [
+  imports: [PrismaModule, AuditModule, AuthModule, UsersModule],
+  controllers: [ProductsController, AdminProductsController],
+  providers: [AdminCourseCurriculumService, AdminProductsRepository, AdminProductsService,
     ProductRepository,
     {
       provide: PRODUCT_REPOSITORY,
@@ -23,7 +28,7 @@ import { ProductsController } from "./products.controller";
       useClass: ProductsService,
     },
   ],
-  exports: [
+  exports: [AdminProductsService,
     ProductRepository,
     PRODUCT_REPOSITORY,
     ProductsService,

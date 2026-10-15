@@ -132,6 +132,8 @@ Proposed BFF GET mappings, each with a UUID `farmId` in its allowlisted path:
 
 ## Later domain handoffs — separate plans
 
+**Sequencing override, 2026-10-13:** the user now prioritizes the [Admin/Super Admin roadmap](../../../apps/web/ROADMAP.md#admin-and-super-admin-delivery-roadmap), starting with ADM-1 dashboard/navigation and continuing through the administrative batches. The C/D handoffs below retain their domain scope, but no longer select the next task. C1's [milk proposal](../web-milk-production/spec.md) is deferred without implementation. Completed Tasks 1–6 and their evidence remain historical facts.
+
 | Order | Scope / roadmap IDs | Required acceptance before showing dashboard links/widgets |
 | --- | --- | --- |
 | C1 | Milk logs/analytics, WEB-4 / API-MILK | Actual recording/bulk semantics, dates/units, duplicate/retry handling, authorized export; seven-day chart with text alternative. |

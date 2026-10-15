@@ -49,7 +49,7 @@ export function getPublicNavGroups(
         { label: t.guides, href: "/learning#guides" },
       ],
     },
-    { label: t.courses, href: "/learning#courses" },
+    { label: t.courses, href: "/courses" },
     {
       label: t.veterinary,
       href: "/veterinary-care",

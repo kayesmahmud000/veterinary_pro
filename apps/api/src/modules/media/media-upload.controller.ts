@@ -50,7 +50,7 @@ import {
   VIDEO_TRANSCODE_QUEUE_SERVICE,
 } from "./services/video-transcode-queue.service.interface";
 import { EnvService } from "../../config/env.service";
-import { EntityNotFoundException } from "../../common/exceptions/domain.exception";
+import { EntityNotFoundException, ValidationDomainException } from "../../common/exceptions/domain.exception";
 
 @ApiTags("Media Uploads")
 @ApiBearerAuth()
@@ -198,6 +198,7 @@ export class MediaUploadController {
     @Body() dto: QueueTranscodeDto,
     @CurrentUser() user: JwtPayload
   ): Promise<QueueTranscodeResponseDto> {
+    if (dto.rawS3Key.startsWith("admin-assets/")) throw new ValidationDomainException("Managed assets require the administrative upload session.");
     const result = await this.transcodeQueueService.dispatchTranscodeJob({
       productId: dto.productId,
       rawS3Key: dto.rawS3Key,
@@ -230,6 +231,7 @@ export class MediaUploadController {
   public async getTranscodeStatus(
     @Param("jobId") jobId: string
   ): Promise<TranscodeJobStatusResponseDto> {
+    if (jobId.startsWith("admin-transcode-")) throw new EntityNotFoundException("TranscodeJob", jobId);
     const status = await this.transcodeQueueService.getJobStatus(jobId);
     if (!status) {
       throw new EntityNotFoundException("TranscodeJob", jobId);

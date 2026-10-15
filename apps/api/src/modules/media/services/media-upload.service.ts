@@ -23,6 +23,7 @@ import {
 } from "./video-transcode-queue.service.interface";
 import { EnvService } from "../../../config/env.service";
 import { ValidationDomainException } from "../../../common/exceptions/domain.exception";
+import { PRODUCT_REPOSITORY, IProductRepository } from "../../products/repositories/product.repository.interface";
 import { IMediaUploadService } from "./media-upload.service.interface";
 
 interface CategoryPolicy {
@@ -85,6 +86,7 @@ export class MediaUploadService implements IMediaUploadService {
     @Inject(S3_STORAGE_SERVICE)
     private readonly s3Storage: IS3StorageService,
     private readonly envService: EnvService,
+    @Inject(PRODUCT_REPOSITORY) private readonly products: IProductRepository,
     @Optional()
     @Inject(VIDEO_TRANSCODE_QUEUE_SERVICE)
     private readonly transcodeQueueService?: IVideoTranscodeQueueService
@@ -95,6 +97,7 @@ export class MediaUploadService implements IMediaUploadService {
     userId: string
   ): Promise<InitiateMultipartUploadResponseDto> {
     this.validateUploadRequest(dto.filename, dto.contentType, dto.fileSizeBytes, dto.category);
+    if (dto.category === MediaCategory.VIDEO_COURSE) await this.assertInternalCourse(dto.entityId);
 
     const bucket = this.envService.s3BucketMedia;
     const key = this.generateS3Key(dto.filename, dto.category, dto.entityId);
@@ -130,6 +133,8 @@ export class MediaUploadService implements IMediaUploadService {
   public async getPresignedPartUrl(
     dto: GetPresignedPartUrlRequestDto
   ): Promise<GetPresignedPartUrlResponseDto> {
+    if (dto.key.startsWith("admin-assets/")) throw new ValidationDomainException("Managed assets require the administrative upload session.");
+    await this.assertInternalRawKey(dto.key);
     const bucket = this.envService.s3BucketMedia;
     const expiresInSeconds = 3600; // 1 hour validity per part
 
@@ -152,12 +157,14 @@ export class MediaUploadService implements IMediaUploadService {
     dto: CompleteMultipartUploadRequestDto,
     userId: string
   ): Promise<CompleteMultipartUploadResponseDto> {
+    if (dto.key.startsWith("admin-assets/")) throw new ValidationDomainException("Managed assets require the administrative upload session.");
     if (!dto.parts || dto.parts.length === 0) {
       throw new ValidationDomainException(
         "Cannot complete multipart upload without parts."
       );
     }
 
+    await this.assertInternalRawKey(dto.key);
     const bucket = this.envService.s3BucketMedia;
 
     const result = await this.s3Storage.completeMultipartUpload(
@@ -205,6 +212,7 @@ export class MediaUploadService implements IMediaUploadService {
     dto: AbortMultipartUploadRequestDto,
     userId: string
   ): Promise<void> {
+    if (dto.key.startsWith("admin-assets/")) throw new ValidationDomainException("Managed assets require the administrative upload session.");
     const bucket = this.envService.s3BucketMedia;
     await this.s3Storage.abortMultipartUpload(bucket, dto.key, dto.uploadId);
     this.logger.log(`User [${userId}] aborted multipart upload '${dto.key}' [${dto.uploadId}]`);
@@ -215,6 +223,7 @@ export class MediaUploadService implements IMediaUploadService {
     userId: string
   ): Promise<DirectUploadResponseDto> {
     this.validateUploadRequest(dto.filename, dto.contentType, dto.fileSizeBytes, dto.category);
+    if (dto.category === MediaCategory.VIDEO_COURSE) await this.assertInternalCourse(dto.entityId);
 
     const bucket = this.envService.s3BucketMedia;
     const key = this.generateS3Key(dto.filename, dto.category, dto.entityId);
@@ -237,6 +246,13 @@ export class MediaUploadService implements IMediaUploadService {
       bucket,
       expiresInSeconds,
     };
+  }
+
+  private async assertInternalCourse(id?: string): Promise<void> {
+    if (id && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id) && (await this.products.findById(id))?.contentProvider === "YOUTUBE") throw new ValidationDomainException("YouTube courses do not accept uploaded video assets.");
+  }
+  private async assertInternalRawKey(key: string): Promise<void> {
+    if (key.startsWith("raw-videos/")) await this.assertInternalCourse(key.split("/")[1]);
   }
 
   private validateUploadRequest(

@@ -1,4 +1,4 @@
-import { ProductType, SubscriptionTier } from "@vetralink/shared-types";
+import { ProductType, SubscriptionTier, ProductContentProvider } from "@vetralink/shared-types";
 import { ProductEntity } from "./product.entity";
 import { ValidationDomainException } from "../../../common/exceptions/domain.exception";
 
@@ -20,6 +20,15 @@ describe("ProductEntity", () => {
     updatedAt: new Date(),
     deletedAt: null,
   };
+
+  it("rehydrates a published free YouTube course without a storage key and requires curriculum facts to publish", () => {
+    const product = ProductEntity.reconstitute({...validProps,contentProvider:ProductContentProvider.YOUTUBE,priceCents:0,discountPriceCents:null,contentS3Key:""});
+    expect(product.isPublished).toBe(true);
+    product.unpublish();
+    expect(()=>product.publish()).toThrow();
+    product.publish(1);
+    expect(product.isPublished).toBe(true);
+  });
 
   it("should create and reconstitute a valid product entity", () => {
     const product = ProductEntity.reconstitute(validProps);
@@ -128,5 +137,21 @@ describe("ProductEntity", () => {
 
     const adminResp = product.toResponse(true);
     expect(adminResp.contentS3Key).toBe(validProps.contentS3Key);
+  });
+});
+
+describe('ADM-3 draft and public asset boundaries', () => {
+  const props = { title: 'Synthetic course', slug: 'synthetic-course', type: ProductType.VIDEO_COURSE, description: 'Synthetic course description.', priceCents: 1000, contentS3Key: '' };
+  it('allows an asset-free draft but refuses publication', () => {
+    const product=ProductEntity.create(props);
+    expect(product.isPublished).toBe(false);
+    expect(()=>product.publish()).toThrow();
+    expect(product.isPublished).toBe(false);
+  });
+  it('strips private metadata from every public projection', () => {
+    const product=ProductEntity.create({...props,contentS3Key:'private/master.m3u8',metadata:{durationMinutes:10,sourceMasterKey:'private/raw.mp4',hlsMasterKey:'private/master.m3u8',transcodeError:'secret error',adminUploadId:'private',custom:{token:'secret'}}});
+    expect(product.toResponse(false).metadata).toEqual({durationMinutes:10});
+    expect(product.toListItem().metadata).toEqual({durationMinutes:10});
+    expect(product.toResponse(true).metadata.sourceMasterKey).toBe('private/raw.mp4');
   });
 });

@@ -34,11 +34,6 @@ export class EntitlementService implements IEntitlementService {
     userRole: string,
     productId: string
   ): Promise<boolean> {
-    // 1. Admin bypass: SUPER_ADMIN and ADMIN have universal preview access
-    if (userRole === UserRole.SUPER_ADMIN || userRole === UserRole.ADMIN) {
-      return true;
-    }
-
     // 2. Fetch product from database
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
@@ -48,6 +43,13 @@ export class EntitlementService implements IEntitlementService {
       throw new EntityNotFoundException(
         `Product with ID [${productId}] was not found.`
       );
+    }
+
+    if (product.contentProvider === "YOUTUBE") return false;
+
+    // 1. Admin bypass: SUPER_ADMIN and ADMIN have universal preview access
+    if (userRole === UserRole.SUPER_ADMIN || userRole === UserRole.ADMIN) {
+      return true;
     }
 
     // If product is unpublished and user is not admin, deny access

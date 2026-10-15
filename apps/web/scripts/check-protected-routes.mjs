@@ -230,3 +230,28 @@ test("entry URLs validate return destinations and reject duplicate/unsafe public
   );
   assert.equal(nav.readProtectedReturnTo("login", "/dashboard"), null);
 });
+
+test("admin pages require current administrative role before delivery, with Super-only access", async (t) => {
+  const original = globalThis.fetch;
+  t.after(() => { globalThis.fetch = original; });
+  for (const role of ["LEARNER", "FARMER", "BUYER", "VET", "ADMIN", "SUPER_ADMIN"]) {
+    globalThis.fetch = async () => Response.json({ success: true, data: { ...user, role } });
+    for (const path of ["/admin/dashboard", "/admin/role-requests", "/admin/administrative-access"]) {
+      const response = await middleware(request(path, "vetralink_access=synthetic-access"));
+      const allowed = path === "/admin/administrative-access" ? role === "SUPER_ADMIN" : ["ADMIN", "SUPER_ADMIN"].includes(role);
+      assert.equal(response.headers.get("x-middleware-next") === "1", allowed, `${role} ${path}`);
+      if (!allowed) {
+        assert.equal(response.status, 307);
+        assert.equal(new URL(response.headers.get("location")).pathname, role === "ADMIN" ? "/admin/dashboard" : "/account/profile");
+      }
+      assert.match(response.headers.get("cache-control"), /no-store/);
+    }
+    for (const path of ["/admin", "/dashboard"]) {
+      const response = await middleware(request(path, "vetralink_access=synthetic-access"));
+      if (["ADMIN", "SUPER_ADMIN"].includes(role)) {
+        assert.equal(response.status, 307);
+        assert.equal(new URL(response.headers.get("location")).pathname, "/admin/dashboard");
+      }
+    }
+  }
+});

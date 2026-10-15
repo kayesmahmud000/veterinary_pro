@@ -6,6 +6,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   PutObjectCommand,
+  HeadObjectCommand,
   S3Client,
   S3ClientConfig,
   UploadPartCommand,
@@ -51,6 +52,10 @@ export class S3StorageService implements IS3StorageService {
     this.s3Client = new S3Client(clientConfig);
   }
 
+  public async statObject(bucket: string, key: string): Promise<{size: number; contentType?: string} | null> {
+    try { const result = await this.s3Client.send(new HeadObjectCommand({Bucket: bucket, Key: key})); return {size: result.ContentLength ?? 0, contentType: result.ContentType}; }
+    catch (error) { const e = error as {name?: string; $metadata?: {httpStatusCode?: number}}; if (e.name === "NotFound" || e.$metadata?.httpStatusCode === 404) return null; throw error; }
+  }
   public async createMultipartUpload(
     bucket: string,
     key: string,

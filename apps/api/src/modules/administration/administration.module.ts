@@ -7,6 +7,9 @@ import { RoleRequestsModule } from "../role-requests/role-requests.module";
 import { RoleEventsModule } from "../role-notifications/role-events.module";
 import { PrivilegedRoleService } from "./privileged-role.service";
 import { PrivilegedRolesController } from "./privileged-roles.controller";
+import { DirectoryRepository } from "./directory.repository";
+import { DirectoryService } from "./directory.service";
+import { DirectoryController } from "./directory.controller";
 @Module({
   imports: [
     AuthModule,
@@ -16,7 +19,7 @@ import { PrivilegedRolesController } from "./privileged-roles.controller";
     RoleEventsModule,
     WorkflowRateLimitModule,
   ],
-  providers: [PrivilegedRoleService],
-  controllers: [PrivilegedRolesController],
+  providers: [PrivilegedRoleService, DirectoryRepository, DirectoryService],
+  controllers: [PrivilegedRolesController, DirectoryController],
 })
 export class AdministrationModule {}

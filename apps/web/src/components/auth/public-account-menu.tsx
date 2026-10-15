@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, LogOut, UserRound } from "lucide-react";
 import { getWorkspaceShellMessages } from "@/lib/i18n/workspace-shell";
+import { isAdministrativeRole } from "@/lib/workspace/navigation";
 import { useAuth } from "./auth-provider";
 
 function avatarSource(value: string | null) {
@@ -173,7 +174,13 @@ export function PublicAccountMenu({
             <Link
               data-profile-link={learner ? "" : undefined}
               data-account-destination
-              href={learner ? "/account/profile" : "/dashboard"}
+              href={
+                learner
+                  ? "/account/profile"
+                  : isAdministrativeRole(user.role)
+                    ? "/admin/dashboard"
+                    : "/dashboard"
+              }
               onClick={() => {
                 close();
                 onNavigate?.();
@@ -183,6 +190,7 @@ export function PublicAccountMenu({
               <DestinationIcon size={18} aria-hidden="true" />
               {learner ? t.profile : t.dashboard}
             </Link>
+            <Link data-my-courses href="/account/courses" className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-ink hover:bg-paper" onClick={()=>{close();onNavigate?.();}}>{t.courses}</Link>
             <button
               data-public-signout
               type="button"

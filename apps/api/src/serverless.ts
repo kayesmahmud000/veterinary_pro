@@ -1,3 +1,4 @@
+import { NestExpressApplication } from "@nestjs/platform-express";
 import { NestFactory, Reflector } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { ExpressAdapter } from "@nestjs/platform-express";
@@ -22,7 +23,7 @@ async function bootstrapServer(): Promise<Express> {
       res.redirect("/api/docs");
     });
 
-    const app = await NestFactory.create(
+    const app = await NestFactory.create<NestExpressApplication>(
       AppModule,
       new ExpressAdapter(expressApp),
       {
@@ -30,6 +31,8 @@ async function bootstrapServer(): Promise<Express> {
         rawBody: true,
       }
     );
+
+    app.useBodyParser("json", { limit: "512kb" });
 
     // Serverless mode: do not enable shutdown hooks as Lambda manages lifecycle
 

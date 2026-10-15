@@ -177,4 +177,64 @@ describe("StreamDeliveryService", () => {
       service.createPlaybackSession(validUserId, UserRole.FARMER, validProductId)
     ).rejects.toThrow(ForbiddenOperationException);
   });
+
+  it("signs the attached managed upload playlist and scopes cookies to that upload", async () => {
+    const uploadId = "33333333-3333-4333-8333-333333333333";
+    const prefix = `hls/${validProductId}/${uploadId}`;
+    mockPrisma.product.findUnique.mockResolvedValue({
+      ...mockProduct,
+      metadata: { adminManaged: true },
+      contentS3Key: `${prefix}/master.m3u8`,
+    });
+
+    await service.createPlaybackSession(validUserId, UserRole.FARMER, validProductId);
+
+    expect(mockCloudFrontSignerService.signUrlCustomPolicy).toHaveBeenCalledWith(
+      `https://cdn.vetralink.pro/${prefix}/*`,
+      `https://cdn.vetralink.pro/${prefix}/master.m3u8`,
+      600
+    );
+    expect(mockCloudFrontSignerService.generateSignedCookies).toHaveBeenCalledWith(
+      `https://cdn.vetralink.pro/${prefix}/*`,
+      600
+    );
+  });
+
+  it("preserves an existing playlist when a legacy product is claimed by administration", async () => {
+    mockPrisma.product.findUnique.mockResolvedValue({
+      ...mockProduct,
+      metadata: { adminManaged: true },
+      contentS3Key: `hls/${validProductId}/master.m3u8`,
+    });
+    await service.createPlaybackSession(validUserId, UserRole.FARMER, validProductId);
+    expect(mockCloudFrontSignerService.signUrlCustomPolicy).toHaveBeenCalledWith(
+      `https://cdn.vetralink.pro/hls/${validProductId}/*`,
+      `https://cdn.vetralink.pro/hls/${validProductId}/master.m3u8`,
+      600
+    );
+  });
+
+  it.each(["", "admin-assets/raw.mp4", "hls/another-product/master.m3u8", `hls/${validProductId}/../master.m3u8`])(
+    "does not sign an unready or foreign managed asset: %s",
+    async (contentS3Key) => {
+      mockPrisma.product.findUnique.mockResolvedValue({
+        ...mockProduct,
+        metadata: { adminManaged: true },
+        contentS3Key,
+      });
+
+      await expect(
+        service.createPlaybackSession(validUserId, UserRole.ADMIN, validProductId)
+      ).rejects.toThrow(ValidationDomainException);
+      expect(mockCloudFrontSignerService.signUrlCustomPolicy).not.toHaveBeenCalled();
+      expect(mockDrmTokenService.generatePlaybackToken).not.toHaveBeenCalled();
+    }
+  );
+  it("rejects YouTube content before signing or generating DRM tokens", async () => {
+    mockPrisma.product.findUnique.mockResolvedValue({...mockProduct,contentProvider:"YOUTUBE"});
+    await expect(service.createPlaybackSession(validUserId,UserRole.ADMIN,validProductId)).rejects.toThrow();
+    expect(mockCloudFrontSignerService.signUrlCustomPolicy).not.toHaveBeenCalled();
+    expect(mockDrmTokenService.generatePlaybackToken).not.toHaveBeenCalled();
+  });
+
 });

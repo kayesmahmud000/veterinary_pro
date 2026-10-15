@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import {
+  ProductContentProvider,
   ProductSortBy,
   ProductType,
   SubscriptionTier,
@@ -29,6 +30,7 @@ export class ProductRepository implements IProductRepository {
       const created = await client.product.create({
         data: {
           id: product.id,
+          contentProvider: product.contentProvider,
           title: product.title,
           slug: product.slug,
           type: product.type,
@@ -212,8 +214,9 @@ export class ProductRepository implements IProductRepository {
 
     try {
       const updated = await client.product.update({
-        where: { id: product.id },
+        where: { id: product.id, version: product.version, deletedAt: null },
         data: {
+          version: { increment: 1 },
           title: product.title,
           slug: product.slug,
           type: product.type,
@@ -241,6 +244,7 @@ export class ProductRepository implements IProductRepository {
           "slug"
         );
       }
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") throw new EntityConflictException("Product changed. Reload and retry.", "version");
       throw error;
     }
   }
@@ -248,17 +252,24 @@ export class ProductRepository implements IProductRepository {
   public async softDelete(
     id: string,
     deletedAt = new Date(),
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
+    expectedVersion?: number
   ): Promise<void> {
     const client = tx ?? this.prisma;
 
+    try {
     await client.product.update({
-      where: { id },
+      where: { id, ...(expectedVersion !== undefined ? {version: expectedVersion} : {}) },
       data: {
         deletedAt,
+        version: { increment: 1 },
         updatedAt: deletedAt,
       },
     });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") throw new EntityConflictException("Product changed. Reload and retry.", "version");
+      throw error;
+    }
   }
 
   public async existsBySlug(
@@ -284,6 +295,8 @@ export class ProductRepository implements IProductRepository {
   ): ProductEntity {
     return ProductEntity.reconstitute({
       id: row.id,
+      version: row.version,
+      contentProvider: row.contentProvider as ProductContentProvider,
       title: row.title,
       slug: row.slug,
       type: row.type as ProductType,

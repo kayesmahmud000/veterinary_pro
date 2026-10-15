@@ -264,7 +264,8 @@ describe("ProductsService", () => {
       expect(productRepository.softDelete).toHaveBeenCalledWith(
         mockProductEntity.id,
         expect.any(Date),
-        expect.anything()
+        expect.anything(),
+        mockProductEntity.version
       );
       expect(auditLogRepository.record).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -274,5 +275,14 @@ describe("ProductsService", () => {
         expect.anything()
       );
     });
+  });
+  it("legacy mutations cannot change managed products or attach their private assets", async () => {
+    const managed=ProductEntity.reconstitute({...mockProductProps,metadata:{adminManaged:true}});
+    productRepository.findById.mockResolvedValue(managed);
+    await expect(service.updateProduct(managed.id,{isPublished:true},"admin")).rejects.toThrow();
+    await expect(service.deleteProduct(managed.id,"admin")).rejects.toThrow();
+    expect(productRepository.update).not.toHaveBeenCalled();
+    productRepository.findById.mockResolvedValue(ProductEntity.reconstitute(mockProductProps));
+    await expect(service.updateProduct(managed.id,{contentS3Key:"admin-assets/product/upload.pdf"},"admin")).rejects.toThrow();
   });
 });

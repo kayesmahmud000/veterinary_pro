@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchWithDiagnostics } from "../api-diagnostics";
 import { z } from "zod";
 import {
+  courseLibrarySchema, courseLibraryQuerySchema, courseEnrollmentSchema, myCourseSchema, coursePlaybackSchema,
   addFarmMemberSchema,
   farmMemberSchema,
   farmOnboardingSchema,
@@ -10,11 +11,17 @@ import {
   roleRequestSchema,
   roleDecisionSchema,
   privilegedRoleSchema,
+  adminCurriculumSchema, adminCurriculumWriteSchema,
   authUserSchema,
   ProfessionalRole,
+  UserRole,
+  UserStatus,
+  adminProductCreateSchema,adminProductEditSchema,adminProductActionSchema,adminProductSchema,adminProductListSchema,adminProductQuerySchema,adminAssetAttachSchema,adminUploadCreateSchema,adminUploadQuerySchema,adminUploadSchema,adminUploadListSchema,adminPartSchema,adminPartUrlSchema,adminCompleteSchema,
+  directoryKinds, directoryQueries, directoryLists, directoryDetails, accountActionSchema, accountActionResultSchema,
 } from "@vetralink/shared-types";
 import {
   adminTargetSchema,
+  adminOverviewSchema,
   adminUserListSchema,
   adminUserQuerySchema,
   decisionResponseSchema,
@@ -50,7 +57,10 @@ type Endpoint = {
   farmId?: string;
   membershipRequired?: boolean;
   entityId?: string;
+  productId?: string;
+  lessonId?: string;
   writeAccessRequired?: boolean;
+  bodyLimit?: number;
 };
 const uuid = z.string().uuid();
 export function resolveEndpoint(
@@ -58,6 +68,37 @@ export function resolveEndpoint(
   method: string,
 ): Endpoint | null {
   const key = path.join("/");
+  if(key==="me/courses" && method==="GET")return{method,upstream:key,response:courseLibrarySchema,query:courseLibraryQuerySchema};
+  if(path[0]==="me"&&path[1]==="courses"&&uuid.safeParse(path[2]).success){
+    if(path.length===3&&method==="GET")return{method,upstream:key,response:myCourseSchema,entityId:path[2]};
+    if(path.length===4&&path[3]==="enrollment"&&method==="POST")return{method,upstream:key,response:courseEnrollmentSchema,body:emptyQuerySchema,productId:path[2]};
+    if(path.length===6&&path[3]==="lessons"&&uuid.safeParse(path[4]).success&&path[5]==="playback"&&method==="GET")return{method,upstream:key,response:coursePlaybackSchema,productId:path[2],lessonId:path[4]};
+  }
+
+  if (key === "admin/products" && ["GET","POST"].includes(method)) return {method,upstream:key,response:method==="GET"?adminProductListSchema:adminProductSchema,...(method==="GET"?{query:adminProductQuerySchema}:{body:adminProductCreateSchema})};
+  if (path[0]==="admin" && path[1]==="products" && uuid.safeParse(path[2]).success) {
+    if(path.length===3 && ["GET","PATCH"].includes(method)) return {method,upstream:key,entityId:path[2],response:adminProductSchema,...(method==="PATCH"?{body:adminProductEditSchema}:{})};
+    if(path.length===4 && path[3]==="curriculum" && ["GET","PUT"].includes(method)) return {method,upstream:key,productId:path[2],response:adminCurriculumSchema,...(method==="PUT"?{body:adminCurriculumWriteSchema,bodyLimit:524288}:{})};
+    if(path.length===4 && method==="POST" && ["actions","asset"].includes(path[3])) return {method,upstream:key,entityId:path[2],response:adminProductSchema,body:path[3]==="actions"?adminProductActionSchema:adminAssetAttachSchema};
+  }
+  if(key==="admin/media" && method==="GET") return {method,upstream:key,response:adminUploadListSchema,query:adminUploadQuerySchema};
+  if(key==="admin/media/uploads" && method==="POST") return {method,upstream:key,response:adminUploadSchema,body:adminUploadCreateSchema};
+  if(path[0]==="admin" && path[1]==="media" && path[2]==="uploads" && uuid.safeParse(path[3]).success) {
+    if(path.length===4 && method==="GET") return {method,upstream:key,entityId:path[3],response:adminUploadSchema};
+    if(path.length===5 && method==="POST" && ["part-url","complete","abort","process"].includes(path[4])) return {method,upstream:key,...(path[4]!=="part-url"?{entityId:path[3]}:{}),response:path[4]==="part-url"?adminPartUrlSchema:adminUploadSchema,body:path[4]==="part-url"?adminPartSchema:path[4]==="complete"?adminCompleteSchema:emptyQuerySchema,...(path[4]==="complete"?{bodyLimit:524288}:{})};
+  }
+  if (path[0] === "admin" && path[1] === "directory" && directoryKinds.includes(path[2] as typeof directoryKinds[number])) {
+    const kind = path[2] as typeof directoryKinds[number];
+    if (path.length === 3 && method === "GET") return { method, upstream: key, response: directoryLists[kind], query: directoryQueries[kind] };
+    if (path.length === 4 && uuid.safeParse(path[3]).success && method === "GET") return { method, upstream: key, entityId: path[3], response: directoryDetails[kind] };
+    if (kind === "users" && path.length === 5 && uuid.safeParse(path[3]).success && path[4] === "actions" && method === "POST") return { method, upstream: key, entityId: path[3], response: accountActionResultSchema, body: accountActionSchema };
+  }
+  if (key === "admin/overview" && method === "GET")
+    return {
+      method,
+      upstream: "subscriptions/metrics/summary",
+      response: adminOverviewSchema,
+    };
   if (
     path[0] === "farms" &&
     uuid.safeParse(path[1]).success &&
@@ -263,6 +304,12 @@ export function resolveEndpoint(
   return null;
 }
 const errorCodes = new Set([
+  "CONTENT_PROVIDER_MISMATCH", "COURSE_MUST_BE_UNPUBLISHED", "INVALID_CURRICULUM", "INVALID_YOUTUBE_PRICING",
+  "COURSE_ENROLLMENT_REQUIRED",
+  "ACCOUNT_VERSION_CONFLICT",
+  "INVALID_ACCOUNT_TRANSITION",
+  "ACCOUNT_ACTION_FORBIDDEN",
+  "PRODUCT_VERSION_CONFLICT","ASSET_NOT_READY","UPLOAD_STATE_CONFLICT","UPLOAD_BUSY","UPLOAD_REQUEST_CONFLICT","UPLOAD_VERIFICATION_FAILED","INVALID_UPLOAD","MEDIA_UNAVAILABLE",
   "ROLE_REQUEST_PENDING",
   "SUBMISSION_KEY_CONFLICT",
   "ROLE_REQUEST_ALREADY_DECIDED",
@@ -302,7 +349,8 @@ export async function handleWorkspace(
   )
     return reply({ code: "FORBIDDEN" }, 403);
   const access = request.cookies.get("vetralink_access")?.value;
-  if (!access) return reply({ code: "UNAUTHORIZED" }, 401);
+  if (!access || access.length > 3800)
+    return reply({ code: "UNAUTHORIZED" }, 401);
   for (const key of Array.from(request.nextUrl.searchParams.keys()))
     if (request.nextUrl.searchParams.getAll(key).length > 1)
       return reply({ code: "VALIDATION_FAILED" }, 422);
@@ -312,10 +360,10 @@ export async function handleWorkspace(
   if (!query.success) return reply({ code: "VALIDATION_FAILED" }, 422);
   let body: unknown;
   if (endpoint.body) {
-    if (Number(request.headers.get("content-length")) > 32768)
+    if (Number(request.headers.get("content-length")) > (endpoint.bodyLimit ?? 32768))
       return reply({ code: "VALIDATION_FAILED" }, 413);
     const raw = await request.text();
-    if (new TextEncoder().encode(raw).length > 32768)
+    if (new TextEncoder().encode(raw).length > (endpoint.bodyLimit ?? 32768))
       return reply({ code: "VALIDATION_FAILED" }, 413);
     let parsed: unknown;
     try {
@@ -349,6 +397,50 @@ export async function handleWorkspace(
     )
       return reply({ code: "UNAVAILABLE" }, 503);
     const url = new URL(endpoint.upstream, base);
+    if (path[0] === "admin" || (path[0] === "me" && path[1] === "courses")) {
+      const identityResponse = await fetchWithDiagnostics(
+        new URL("auth/me", base),
+        {
+          signal: controller.signal,
+          cache: "no-store",
+          redirect: "error",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${access}`,
+          },
+        },
+      );
+      if (!identityResponse.ok) {
+        const status = [401, 403].includes(identityResponse.status)
+          ? identityResponse.status
+          : 503;
+        return reply(
+          {
+            code:
+              status === 401
+                ? "UNAUTHORIZED"
+                : status === 403
+                  ? "FORBIDDEN"
+                  : "UNAVAILABLE",
+          },
+          status,
+        );
+      }
+      const envelope = await identityResponse.json().catch(() => null);
+      const identity = authUserSchema.safeParse(
+        envelope?.success === true ? envelope.data : undefined,
+      );
+      if (!identity.success) return reply({ code: "INVALID_RESPONSE" }, 502);
+      const roles = path[0] === "me" ? Object.values(UserRole) :
+        path[1] === "users"
+          ? [UserRole.SUPER_ADMIN]
+          : [UserRole.ADMIN, UserRole.SUPER_ADMIN];
+      if (
+        identity.data.status !== UserStatus.ACTIVE ||
+        !roles.includes(identity.data.role)
+      )
+        return reply({ code: "FORBIDDEN" }, 403);
+    }
     if (endpoint.membershipRequired) {
       const discovery = await fetchWithDiagnostics(new URL("farms/my", base), {
         signal: controller.signal,
@@ -467,6 +559,8 @@ export async function handleWorkspace(
       record?.success === true ? record.data : undefined,
     );
     if (!parsed.success) return reply({ code: "INVALID_RESPONSE" }, 502);
+    if (endpoint.lessonId && parsed.data.lessonId !== endpoint.lessonId) return reply({code:"INVALID_RESPONSE"},502);
+    if (endpoint.productId && parsed.data.productId !== endpoint.productId) return reply({code:"INVALID_RESPONSE"},502);
     if (endpoint.entityId && parsed.data.id !== endpoint.entityId)
       return reply({ code: "INVALID_RESPONSE" }, 502);
     if (endpoint.farmId) {
