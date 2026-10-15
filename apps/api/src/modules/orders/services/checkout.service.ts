@@ -80,6 +80,7 @@ export class CheckoutService implements ICheckoutService {
             `Product with ID '${item.productId}' does not exist or has been removed.`
           );
         }
+        if (product.contentProvider === "YOUTUBE") throw new ValidationDomainException("YouTube courses use free enrollment, not checkout.");
         if (!product.isPublished) {
           throw new ValidationDomainException(
             `Product '${product.title}' is currently not available for purchase.`

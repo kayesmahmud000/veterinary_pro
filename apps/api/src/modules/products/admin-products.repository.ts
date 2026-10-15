@@ -10,6 +10,7 @@ export class AdminProductsRepository {
     const rows = await this.prisma.product.findMany({
       where: {
         deletedAt: null,
+        ...(q.contentProvider ? {contentProvider:q.contentProvider} : {}),
         ...(q.cursor ? { id: { gt: q.cursor } } : {}),
         ...(q.type ? { type: q.type } : {}),
         ...(q.publication
@@ -66,6 +67,20 @@ export class AdminProductsRepository {
     } catch (e) {
       this.translate(e);
     }
+  }
+  lessons(id: string, tx?: Prisma.TransactionClient) {
+    return (tx ?? this.prisma).courseLesson.findMany({where:{productId:id,deletedAt:null},orderBy:{position:"asc"},take:100});
+  }
+  async replaceLessons(id: string, lessons: Array<{id:string;title:string;summary:string;access:"PUBLIC_DEMO"|"ENROLLED";youtubeVideoId:string;position:number}>, tx: Prisma.TransactionClient) {
+    const previous = await this.lessons(id,tx);
+    for (const [index, lesson] of previous.entries()) await tx.courseLesson.update({where:{id:lesson.id},data:{position:-(index+1)}});
+    await tx.courseLesson.updateMany({where:{productId:id,deletedAt:null,id:{notIn:lessons.map(lesson=>lesson.id)}},data:{deletedAt:new Date()}});
+    const active = new Set(previous.map(lesson=>lesson.id));
+    for (const lesson of lessons) {
+      if (active.has(lesson.id)) await tx.courseLesson.update({where:{id:lesson.id},data:lesson});
+      else await tx.courseLesson.create({data:{...lesson,productId:id}});
+    }
+    return this.lessons(id,tx);
   }
   private translate(e: unknown): never {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")

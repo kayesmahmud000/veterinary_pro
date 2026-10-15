@@ -1,12 +1,15 @@
+import { checkAdminYouTube } from "./admin-youtube-browser-cases.mjs";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 const productId = "bb0e8400-e29b-41d4-a716-446655440001",
   products = new Map(),
+  curricula = new Map(),
   uploads = new Map();
 const state = { conflict: false, transferFailure: false, processing: "idle" };
 const base = () => ({
+  contentProvider: "INTERNAL",
   id: productId,
   version: 0,
   title: "Synthetic catalog guide",
@@ -111,6 +114,15 @@ export function handleCatalogFixture(
       send(404, null);
       return true;
     }
+    if (p[3] === "curriculum") {
+      const view = () => ({productId:row.id,version:row.version,isPublished:row.isPublished,lessons:curricula.get(row.id)??[]});
+      if(row.contentProvider!=="YOUTUBE"){send(404,null);return true;}
+      if(method==="GET"){send(200,view());return true;}
+      if(body.expectedVersion!==row.version||state.conflict){conflict(res,"PRODUCT_VERSION_CONFLICT");return true;}
+      if(row.isPublished){conflict(res,"COURSE_MUST_BE_UNPUBLISHED");return true;}
+      curricula.set(row.id,body.lessons.map((lesson,index)=>({id:lesson.id??randomUUID(),title:lesson.title,summary:lesson.summary,access:lesson.access,position:index+1,youtubeVideoId:new URL(lesson.videoUrl).searchParams.get("v")??new URL(lesson.videoUrl).pathname.split("/").pop()})));
+      row.version++;send(200,view());return true;
+    }
     if (method === "GET") {
       send(200, { ...row, metadata: { secret: "MUST_NOT_RENDER" } });
       return true;
@@ -120,7 +132,7 @@ export function handleCatalogFixture(
       return true;
     }
     if (p[3] === "actions") {
-      if (body.action === "PUBLISH" && !row.contentS3Key) {
+      if (body.action === "PUBLISH" && (row.contentProvider==="YOUTUBE" ? !(curricula.get(row.id)??[]).some(lesson=>lesson.access==="ENROLLED") : !row.contentS3Key)) {
         conflict(res, "ASSET_NOT_READY");
         return true;
       }
@@ -338,7 +350,7 @@ export async function checkAdminCatalog({
   await until(
     () =>
       evaluate(
-        `document.querySelector('main [role="alert"]')?.textContent.includes('Unpublish the matching product')`,
+        `document.querySelector('main [role="alert"]')?.textContent.includes('Save at least one enrolled lesson')`,
       ),
     "Asset publication gate",
   );
@@ -562,7 +574,9 @@ export async function checkAdminCatalog({
     true,
   );
   checks++;
+  checks += await checkAdminYouTube({seed,go,call,evaluate,until,temp,set,products,curricula,state});
   products.clear();
+  curricula.clear();
   products.set(productId, base());
   uploads.clear();
   console.log(`Passed ${checks} admin catalog/media checks.`);

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ProductType, SubscriptionTier } from "../enums/index.js";
+import { ProductContentProvider } from "./youtube-courses.js";
 const uuid = z.string().uuid(),
   version = z.number().int().nonnegative();
 const date = z
@@ -25,9 +26,10 @@ const pricing = (v: {
   discountPriceCents: number | null;
 }) => v.discountPriceCents === null || v.discountPriceCents < v.priceCents;
 export const adminProductCreateSchema = z
-  .object({ ...productFields, type: z.nativeEnum(ProductType) })
+  .object({ ...productFields, type: z.nativeEnum(ProductType), contentProvider: z.nativeEnum(ProductContentProvider).optional() })
   .strict()
-  .refine(pricing, { path: ["discountPriceCents"] });
+  .refine(pricing, { path: ["discountPriceCents"] })
+  .refine(v => v.contentProvider !== ProductContentProvider.YOUTUBE || (v.type === ProductType.VIDEO_COURSE && v.priceCents === 0 && v.discountPriceCents === null), {path:["contentProvider"]});
 export const adminProductEditSchema = z
   .object({ ...productFields, expectedVersion: version })
   .strict()
@@ -43,6 +45,7 @@ export const adminAssetAttachSchema = z
   .object({ uploadId: uuid, expectedVersion: version })
   .strict();
 export const adminProductSchema = z.object({
+  contentProvider: z.nativeEnum(ProductContentProvider).default(ProductContentProvider.INTERNAL),
   id: uuid,
   version,
   ...productFields,
@@ -54,6 +57,7 @@ export const adminProductSchema = z.object({
 });
 export const adminProductQuerySchema = z
   .object({
+    contentProvider: z.nativeEnum(ProductContentProvider).optional(),
     limit: z.coerce.number().int().min(1).max(100).default(20),
     cursor: uuid.optional(),
     search: z.string().trim().max(100).optional(),

@@ -1,7 +1,13 @@
 # YouTube courses with public demos and free enrollment
 
-Status: **Proposed; planning complete, implementation not started.**
-Date: 2026-10-15. Inspected baseline: 82d857a plus the uncommitted ADM-3 working tree. [Execution plan](plan.md).
+Status: **Admin slice implemented locally; learner/public enrollment and playback remain proposed.**
+Date: 2026-10-15. Original planning inspected 82d857a plus ADM-3; admin execution baseline is ab18a9f. [Execution plan](plan.md).
+
+## Admin-first delivery update
+
+The user subsequently requested the admin dashboard first. The current slice implements Product.contentProvider, CourseLesson persistence, admin curriculum GET/PUT, YouTube create/edit/publication rules and the bilingual editor/preview. Existing internal upload/transcode/DRM/checkout paths reject YouTube course assets. Curriculum read DTO also includes `isPublished` for read-only UI behavior. The versioned editor guards unsaved internal/history/document exits.
+
+CourseEnrollment, public catalog/demo APIs, learner library/player and free enrollment are still future work. Admin copy states this explicitly; publication prepares content and does not establish a working learner journey. Preview is a manually selected official iframe; IFrame API event integration remains with learner delivery. No external dependencies or live database deployment were added. See the admin execution evidence in [plan.md](plan.md).
 
 ## Outcome and user decisions
 
@@ -13,9 +19,9 @@ Success: publish a free course containing at least one enrollment-only lesson an
 
 Phase 1 includes an ordered lesson list, not nested chapters, watch-history persistence, completion percentages, certificates, quizzes, resource downloads, paid enrollment, YouTube uploads/search/playlist synchronization, or mobile-app implementation. Those remain separate scope. Never seed fictional course videos as real content.
 
-## Current implementation and implications
+## Pre-implementation baseline and implications
 
-**Confirmed from code, working-tree inspection:**
+**Confirmed from code at admin execution baseline ab18a9f; the delivery update above describes subsequent changes:**
 
 - `apps/api/prisma/schema.prisma` has Product/Order/OrderItem and ADM-3 Product.version/AdminMediaUpload. There are no course lesson or enrollment models. Product.contentS3Key is one internal asset, not a multi-video curriculum.
 - `products/admin-products.service.ts` currently requires an attached key, and `.m3u8` for video publication. ProductEntity also rejects published empty-key products. Both checks must become provider-aware together.
@@ -24,7 +30,7 @@ Phase 1 includes an ordered lesson list, not nested chapters, watch-history pers
 - `/learning` provides three static record guides; the Courses navigation points to `/learning#courses`. There is no dynamic course catalog, enrolled library, or learner video player. Learners land on Home and have no Dashboard entry. Their earlier deferred enrolled-course navigation can now be added.
 - The cookie BFF is a fixed mapping in `apps/web/src/lib/workspace/server.ts`; protected return URLs and middleware are explicit allowlists. Public and enrolled responses need distinct mappings and cache behavior.
 
-These are source observations, not deployed behavior. ADM-3 changes remain uncommitted and must be preserved; its migration precedes this feature's migration.
+These are baseline source observations, not deployed behavior. ADM-3 was committed before admin execution; its migration still precedes this feature's migration.
 
 ## Approach and limits
 
@@ -99,4 +105,4 @@ Only mount/load the player for a selected authorized/demo source; no hidden play
 
 Deploy ADM-3 migration first, then the new additive migration. Upgrade/drain API writers and workers with provider checks before enabling YouTube creation/publication; deploy web last. Old API binaries do not understand published empty-key YouTube products. No automatic conversion, cleanup or change to existing paid products/orders. Before API rollback, unpublish YouTube products and stop new writes; retain an API version that understands the provider or execute a reviewed forward recovery. Hiding the feature's web links alone is not a safe old-API rollback. Preserve lessons, enrollments and audit history.
 
-Planning creates no runtime capability. Implement only after a separate user instruction; this request authorizes the plan, not migration, deployment or Git integration.
+The later user instruction authorized the admin implementation described above. Remaining learner implementation, live migrations, deployment and Git integration are not performed by this slice.

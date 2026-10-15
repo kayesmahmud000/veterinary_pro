@@ -72,6 +72,7 @@ const en = {
     "Only permitted fields are shown. Security and privileged events require Super Admin access.",
   values: {
     PRODUCT_CREATED: "Product created",
+    COURSE_CURRICULUM_UPDATED: "Course lessons updated",
     PRODUCT_UPDATED: "Product updated",
     PRODUCT_PUBLISHED: "Product published",
     PRODUCT_UNPUBLISHED: "Product unpublished",
@@ -215,6 +216,7 @@ const bn: typeof en = {
     "শুধু অনুমোদিত তথ্য দেখানো হয়। নিরাপত্তা ও বিশেষ প্রবেশাধিকারের তথ্যের জন্য সুপার অ্যাডমিন প্রয়োজন।",
   values: {
     PRODUCT_CREATED: "পণ্য তৈরি",
+    COURSE_CURRICULUM_UPDATED: "কোর্সের লেসন পরিবর্তন",
     PRODUCT_UPDATED: "পণ্য পরিবর্তন",
     PRODUCT_PUBLISHED: "পণ্য প্রকাশিত",
     PRODUCT_UNPUBLISHED: "পণ্য অপ্রকাশিত",

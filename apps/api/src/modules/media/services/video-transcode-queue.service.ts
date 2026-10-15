@@ -1,5 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
+import { PRODUCT_REPOSITORY, IProductRepository } from "../../products/repositories/product.repository.interface";
+import { ValidationDomainException } from "../../../common/exceptions/domain.exception";
 import { Queue } from "bullmq";
 import {
   TranscodeJobState,
@@ -21,12 +23,15 @@ export class VideoTranscodeQueueService implements IVideoTranscodeQueueService {
     private readonly transcodeQueue: Queue<
       VideoTranscodeJobData,
       VideoTranscodeResultDto
-    >
+    >,
+    @Inject(PRODUCT_REPOSITORY) private readonly products: IProductRepository
   ) {}
 
   public async dispatchTranscodeJob(
     data: VideoTranscodeJobData
   ): Promise<{ jobId: string }> {
+    const product = await this.products.findById(data.productId);
+    if (!product || product.contentProvider === "YOUTUBE") throw new ValidationDomainException("Only internal products support transcoding.");
     const customJobId = `transcode-${data.productId}-${Date.now()}`;
 
     const job = await this.transcodeQueue.add("transcode", data, {

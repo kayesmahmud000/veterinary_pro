@@ -74,6 +74,8 @@ export class StreamDeliveryService implements IStreamDeliveryService {
       );
     }
 
+    if (product.contentProvider === "YOUTUBE") throw new ValidationDomainException("YouTube courses do not use internal streaming.");
+
     // Claimed legacy products retain their existing playlist; new uploads use
     // an isolated prefix so a session cannot authorize another asset version.
     let playlistKey = `hls/${productId}/master.m3u8`;

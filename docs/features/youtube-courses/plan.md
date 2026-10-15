@@ -1,6 +1,6 @@
 # YouTube Courses Implementation Plan
 
-> **For agentic workers:** Use executing-plans to implement this plan inline, task by task. This is a planning-only handoff; do not start implementation from the existence of this file.
+> **For agentic workers:** Use executing-plans to implement this plan inline, task by task. The user authorized the admin slice first; remaining learner tasks require their own continuation instruction.
 
 **Goal:** Let visitors watch public course demos and active users freely enroll and watch YouTube lessons inside the website.
 
@@ -8,9 +8,20 @@
 
 **Tech stack:** Existing NestJS, Prisma/PostgreSQL, shared Zod/TypeScript, Next.js14/React, Tailwind and official YouTube IFrame API. No new runtime package required.
 
-**Spec:** [spec.md](spec.md). Baseline: 82d857a plus uncommitted ADM-3. Status: **Proposed; implementation not started.**
+**Spec:** [spec.md](spec.md). Planning baseline: 82d857a plus ADM-3; admin execution baseline: ab18a9f. Status: **Admin slice implemented locally; learner implementation pending.**
 
 ## Global constraints
+
+### Execution update — admin first, 2026-10-15
+
+User explicitly selected implementation of the admin dashboard first. Execute provider/schema and admin curriculum/publication/editor work now, with the internal-media/payment safeguards necessary for safe new products. Learner/public APIs, enrollment model, library and learner playback remain deferred. Reuse ProductsModule for the admin curriculum service to avoid an unnecessary module/circular dependency. Preview uses an authored privacy-enhanced iframe; player event/progress integration belongs to the later learner slice. Work inline in this clean user-managed checkout (HEAD ab18a9f); preserve the human-managed Git policy and use /tmp for isolated builds. No automatic worktree/commit is needed for this existing workflow.
+
+Admin acceptance ledger:
+
+- [x] Provider/parser/schema and provider-aware product/read/publication rules, with RED→GREEN coverage.
+- [x] Guarded atomic versioned curriculum GET/PUT and internal-media/checkout safeguards, including disposable PostgreSQL checks.
+- [x] Bilingual admin product/editor/preview/media eligibility and fixed BFF/return-path mappings.
+- [x] Review, full API/relevant web/build/browser verification and evidence/roadmap handoff.
 
 - User-confirmed: public demos + free enrollment for main lessons; video stays on YouTube and plays in the site.
 - Preserve ADM-3 working changes and its additive migration; use only `apps/api/prisma/schema.prisma`. No automatic Git add/commit/merge/push or production migration/deployment.
@@ -99,9 +110,31 @@
 
 **Performed:** inspected current product/media/entitlement/schema, public learning/navigation and auth/BFF boundaries; checked official YouTube embedding/player/privacy/policy documentation; incorporated both user clarifications; self-reviewed this spec/plan for public-source leakage, immutable provider, empty-key compatibility, concurrency, private caches and mobile viewport requirements. Documentation links and context validation are recorded below after checking.
 
-**Not performed:** implementation, runtime tests for this feature, new migrations or deployments. All implementation checkboxes remain open; historical ADM-3 evidence does not establish YouTube-course readiness.
+**At the planning handoff:** implementation, feature runtime tests, migrations and deployments had not been performed. The later admin-first execution update/evidence supersedes this planning-time status for the admin slice only; learner tasks remain open.
 
 **Observed documentation validation, 2026-10-15:** `.context/scripts/validate.py` passes (48 documents / 324 local links / 95 source entries). Local Markdown target checks across the eight planning/context documents pass, as do new-file whitespace/placeholder checks and `git diff --check`. Application tests were not rerun for this documentation-only planning task. Roadmaps/context label the feature proposed, retain ADM-3's local evidence and keep ADM-4 unstarted.
 
 Suggested planning commit: `docs(courses): plan YouTube demos and free enrollment`.
 Suggested eventual implementation commit: `feat(courses): add YouTube lessons and free enrollment`.
+
+
+## Admin execution evidence — 2026-10-15
+
+**Confirmed from code:** admin routes and UI from the execution update are implemented. New files live with ProductsModule rather than a separate CoursesModule; `CourseEnrollment` and all learner/public APIs remain deferred. CourseLesson writes are bounded complete replacements under actor/product locks with Product.version and atomic audit. The same endpoint returns a consistent version/lesson snapshot. Source normalization is pure, persisted IDs remain stable and removed rows stay soft-deleted. Per-route validation permits512KiB curriculum bodies while default SchemaValidationPipe limits stay32KiB; standalone and serverless JSON parsers permit512KiB and retain raw-body handling.
+
+**Review:** a fresh-context read-only reviewer found two P2 issues: legacy raw upload requests could initiate storage for a YouTube product, and internal/history navigation could discard unsaved lessons. Added provider checks before legacy initiation, direct URL, part URL and completion calls, with a failing regression then22 focused media tests passing. The browser reproduced sidebar draft loss before the correction; the editor now uses the existing NavigationGuardProvider pattern for internal links/history plus beforeunload. Final re-review and tests are the implementer's verification, not a second independent sign-off.
+
+**Observed verification:**
+
+- Shared package and API builds pass (`/tmp/yt-shared.log`, `/tmp/yt-api-build.log`). Isolated web production build passes at `/tmp/web-youtube-md0ctiz_`, without copied env files (`/tmp/yt-web-build.log`). Web TypeScript and Tailwind checks pass.
+- Full API run with explicit synthetic disposable `DATABASE_URL`, `ADM3_TEST_DATABASE_URL` and `YT_TEST_DATABASE_URL` passes 221 suites / 1,983 tests (`/tmp/yt-api-final.log`). One existing opt-in Redis role-workflow suite /26 tests remains skipped. Initial full-suite attempts without DATABASE_URL were environment setup failures; the explicit disposable URL resolved them.
+- Ten relevant web regression scripts pass109 tests (`/tmp/yt-web-regression.log`), including strict fixed curriculum GET/PUT, safe response projection, wrong-product response rejection and all four nonadmin roles denied. No farm header is forwarded.
+- The additive migration was applied only to the prior populated disposable PostgreSQL16.14 database at loopback55439, after ADM-3. Schema diff is empty (`/tmp/yt-migration.log`, `/tmp/yt-schema-diff.log`). Five new real-DB tests pass: existing INTERNAL default preserved, ordered identity/publication/rehydration, audit rollback, concurrent version conflict and removed-ID reuse denial. Existing six ADM-3 database tests pass in the final full suite. External storage/queue responses remain controlled where those tests need them.
+
+- Full isolated production browser run passes **480 checks**, including118 new YouTube admin checks across ADMIN/SUPER_ADMIN, bn/en,320/1440px; catalog/media subtotal177 and directory171 (`/tmp/yt-browser-final.log`, screenshots `/tmp/khamar-workspace-qa-uChUPp`). Source selection/free pricing, lesson create/save/reorder/remove/reload, inline preview URL/minimum height, stale conflict retention, confirmed publication/read-only state, cancelled sidebar navigation and browser Back all pass. Inspected narrow Bangla and wide English screenshots. These are controlled API/browser checks; they do not establish actual team-video playback from YouTube on the release origin.
+- A final compatibility regression reproduced failure on unscoped legacy raw-video keys being mistaken for UUID product IDs. Product lookup now applies only to UUID partitions, preserving those existing upload paths; the final API suite includes this RED→GREEN regression. The YouTube browser fixture initially used an invalid underscore in SUPER_ADMIN-derived slugs; fixed the synthetic fixture to use valid hyphens, retaining product slug validation.
+- Context validation passes48 documents /324 local links /95 source entries; changed Markdown targets, new-file whitespace and `git diff --check` pass. Temporary PostgreSQL was stopped after tests. Application manifests/lockfile and root Prisma tree are unchanged; work remains uncommitted.
+
+**Completion and rollout:** all four admin acceptance ledger items are complete locally. Broad task checkboxes above remain open where they include deferred learner functionality; no CourseEnrollment or learner/public delivery is claimed. Apply `20261015120000_youtube_course_curriculum` after ADM-3 before starting the updated API, then upgrade/drain writers/workers before the web flow. No live database migration or deployment was performed. Real YouTube playback/privacy/embedding/Referer/fullscreen acceptance with actual team-owned video links on the configured origin remains a release check. Preserve the provider-aware API for recovery; hiding UI alone does not make an old API compatible with published empty-key YouTube courses.
+
+Suggested human-managed implementation commit: `feat(admin): add YouTube course curriculum`.

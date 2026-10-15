@@ -2,6 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { Prisma, Product } from "@prisma/client";
 import { randomUUID } from "crypto";
 import {
+  isProductAssetReady,
   AdminProductAction,
   AdminProductCreate,
   AdminProductEdit,
@@ -121,6 +122,7 @@ export class AdminProductsService {
     return this.transactions.run(async (tx) => {
       await this.authorize(claims, tx);
       const current = await this.locked(id, expectedVersion, tx);
+      if (current.contentProvider === "YOUTUBE" && (input.priceCents !== 0 || input.discountPriceCents !== null)) throw new WorkflowException("INVALID_YOUTUBE_PRICING", "YouTube courses require free enrollment.",400);
       const meta =
         current?.metadata &&
         typeof current.metadata === "object" &&
@@ -140,16 +142,11 @@ export class AdminProductsService {
     return this.transactions.run(async (tx) => {
       await this.authorize(claims, tx);
       const current = await this.locked(id, input.expectedVersion, tx);
-      if (
-        input.action === "PUBLISH" &&
-        (!current.contentS3Key ||
-          (current.type === "VIDEO_COURSE" &&
-            !current.contentS3Key.endsWith(".m3u8")))
-      )
-        throw new WorkflowException(
-          "ASSET_NOT_READY",
-          "Attach a ready asset before publication.",
-        );
+      if (input.action === "PUBLISH") {
+        const lessons = current.contentProvider === "YOUTUBE" ? await this.repo.lessons(id,tx) : [];
+        if (!isProductAssetReady(current, lessons.filter(lesson=>lesson.access === "ENROLLED").length))
+          throw new WorkflowException("ASSET_NOT_READY", "Save a ready asset or a free course curriculum with an enrolled lesson before publication.");
+      }
       const data =
         input.action === "DELETE"
           ? { deletedAt: new Date(), isPublished: false }
@@ -208,6 +205,7 @@ export class AdminProductsService {
       await this.authorize(claims, tx);
       const current = await this.locked(id, expectedVersion, tx);
       if (
+        current.contentProvider === "YOUTUBE" ||
         current.isPublished ||
         asset.productId !== id ||
         asset.type !== current.type

@@ -2,7 +2,7 @@
 
 Status: Implemented locally; verified scope and release limits in [plan.md](plan.md). Baseline: 2026-10-15 / 82d857a. User selected the next administration batch after ADM-2.
 
-Proposed follow-up, 2026-10-15: the user now selected [YouTube courses with public demos and free enrollment](../youtube-courses/spec.md). That shared proposal adds an explicit course provider and curriculum/enrollment contracts before ADM-4; it will refine the asset-only publication rule for new YOUTUBE courses. This ADM-3 record still describes the implemented INTERNAL asset behavior; the follow-up is not implemented.
+Admin follow-up, 2026-10-15: the user now selected [YouTube courses with public demos and free enrollment](../youtube-courses/spec.md). That feature adds an explicit course provider and curriculum/enrollment contracts before ADM-4; its admin slice refines the asset-only publication rule for new YOUTUBE courses. This ADM-3 record still describes the implemented INTERNAL asset behavior; the YouTube admin editor/provider/publication slice is now implemented locally under that feature's plan; learner enrollment/playback remains pending.
 
 ## Outcome and baseline
 

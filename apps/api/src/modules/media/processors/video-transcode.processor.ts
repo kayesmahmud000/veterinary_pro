@@ -63,6 +63,7 @@ export class VideoTranscodeProcessor extends WorkerHost {
       );
     }
 
+    if (product.contentProvider === "YOUTUBE") throw new ValidationDomainException("YouTube videos cannot be transcoded by the internal worker.");
     if (!managed && product.metadata.adminManaged === true) throw new ValidationDomainException("Managed products require the administrative processing session.");
     if (!managed) product.updateDetails({
       metadata: {

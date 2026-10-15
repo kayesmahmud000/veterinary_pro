@@ -158,9 +158,12 @@ const copy = {
     "The product changed. Reload and review before saving again.",
     "পণ্যের তথ্য বদলেছে। আবার সংরক্ষণের আগে তথ্য লোড করে পর্যালোচনা করুন।",
   ],
+  CONTENT_PROVIDER_MISMATCH: ["This product uses a different content source.","এই পণ্যের ভিডিওর উৎস আলাদা।"],
+  COURSE_MUST_BE_UNPUBLISHED: ["Unpublish this course before changing lessons.","লেসন বদলানোর আগে কোর্স অপ্রকাশিত করুন।"],
+  INVALID_YOUTUBE_PRICING: ["YouTube courses require free enrollment.","YouTube কোর্সে ফ্রি এনরোলমেন্ট প্রয়োজন।"],
   ASSET_NOT_READY: [
-    "Unpublish the matching product and attach a completed asset before publishing. Video processing must finish first.",
-    "মিল থাকা পণ্য অপ্রকাশিত করুন এবং প্রকাশের আগে সম্পন্ন ফাইল সংযুক্ত করুন। ভিডিও প্রক্রিয়া আগে শেষ হতে হবে।",
+    "Save at least one enrolled lesson for a YouTube course, or attach a completed asset for an uploaded product before publishing.",
+    "YouTube কোর্সে অন্তত একটি এনরোলড লেসন সংরক্ষণ করুন। আপলোড করা পণ্যের ক্ষেত্রে প্রকাশের আগে সম্পন্ন ফাইল সংযুক্ত করুন।",
   ],
   UPLOAD_STATE_CONFLICT: [
     "The upload changed. Refresh its status.",

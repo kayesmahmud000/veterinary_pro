@@ -864,7 +864,35 @@ model FarmTransaction {
 // LMS & DIGITAL ASSETS DOMAIN
 // ==========================================
 
+enum ProductContentProvider {
+  INTERNAL
+  YOUTUBE
+}
+
+enum CourseLessonAccess {
+  PUBLIC_DEMO
+  ENROLLED
+}
+
+model CourseLesson {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId String @map("product_id") @db.Uuid
+  title String @db.VarChar(200)
+  summary String @db.Text
+  youtubeVideoId String @map("youtube_video_id") @db.VarChar(11)
+  access CourseLessonAccess
+  position Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  @@index([productId, deletedAt, position])
+  @@map("course_lessons")
+}
+
 model Product {
+  contentProvider ProductContentProvider @default(INTERNAL) @map("content_provider")
+  courseLessons CourseLesson[]
   id                  String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title               String           @db.VarChar(255)
   slug                String           @unique @db.VarChar(200)

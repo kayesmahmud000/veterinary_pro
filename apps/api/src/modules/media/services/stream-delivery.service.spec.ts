@@ -230,4 +230,11 @@ describe("StreamDeliveryService", () => {
       expect(mockDrmTokenService.generatePlaybackToken).not.toHaveBeenCalled();
     }
   );
+  it("rejects YouTube content before signing or generating DRM tokens", async () => {
+    mockPrisma.product.findUnique.mockResolvedValue({...mockProduct,contentProvider:"YOUTUBE"});
+    await expect(service.createPlaybackSession(validUserId,UserRole.ADMIN,validProductId)).rejects.toThrow();
+    expect(mockCloudFrontSignerService.signUrlCustomPolicy).not.toHaveBeenCalled();
+    expect(mockDrmTokenService.generatePlaybackToken).not.toHaveBeenCalled();
+  });
+
 });

@@ -43,7 +43,7 @@ export function readProtectedReturnTo(
 }
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const released = new RegExp(
-  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin(?:/(?:dashboard|administrative-access|products(?:/new|/${uuid}(?:/edit)?)?|media(?:/uploads/${uuid})?|(?:users|veterinarians|farms|audit)(?:/${uuid})?|role-requests(?:/${uuid})?))?)$`,
+  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin(?:/(?:dashboard|administrative-access|products(?:/new|/${uuid}(?:/edit|/curriculum)?)?|media(?:/uploads/${uuid})?|(?:users|veterinarians|farms|audit)(?:/${uuid})?|role-requests(?:/${uuid})?))?)$`,
   "i",
 );
 export function validateWorkspaceReturnTo(

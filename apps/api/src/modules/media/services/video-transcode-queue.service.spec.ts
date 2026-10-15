@@ -3,6 +3,7 @@ import { VideoTranscodeJobData, VideoTranscodeResultDto } from "@vetralink/share
 import { VideoTranscodeQueueService } from "./video-transcode-queue.service";
 
 describe("VideoTranscodeQueueService", () => {
+  const products = {findById:jest.fn(async()=>({contentProvider:"INTERNAL"}))};
   let service: VideoTranscodeQueueService;
   let mockQueue: jest.Mocked<Partial<Queue<VideoTranscodeJobData, VideoTranscodeResultDto>>>;
 
@@ -20,10 +21,15 @@ describe("VideoTranscodeQueueService", () => {
     };
 
     service = new VideoTranscodeQueueService(
-      mockQueue as Queue<VideoTranscodeJobData, VideoTranscodeResultDto>
+      mockQueue as Queue<VideoTranscodeJobData, VideoTranscodeResultDto>, products as never
     );
   });
 
+  it("rejects YouTube jobs before queueing",async()=>{
+    products.findById.mockResolvedValueOnce({contentProvider:"YOUTUBE"});
+    await expect(service.dispatchTranscodeJob(mockJobData)).rejects.toThrow();
+    expect(mockQueue.add).not.toHaveBeenCalled();
+  });
   describe("dispatchTranscodeJob", () => {
     it("should enqueue a transcode job with exponential retry backoff", async () => {
       const mockJob = { id: "job-12345" };

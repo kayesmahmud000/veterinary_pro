@@ -1,4 +1,4 @@
-import { ProductType, SubscriptionTier } from "@vetralink/shared-types";
+import { ProductType, SubscriptionTier, ProductContentProvider } from "@vetralink/shared-types";
 import { ProductEntity } from "./product.entity";
 import { ValidationDomainException } from "../../../common/exceptions/domain.exception";
 
@@ -20,6 +20,15 @@ describe("ProductEntity", () => {
     updatedAt: new Date(),
     deletedAt: null,
   };
+
+  it("rehydrates a published free YouTube course without a storage key and requires curriculum facts to publish", () => {
+    const product = ProductEntity.reconstitute({...validProps,contentProvider:ProductContentProvider.YOUTUBE,priceCents:0,discountPriceCents:null,contentS3Key:""});
+    expect(product.isPublished).toBe(true);
+    product.unpublish();
+    expect(()=>product.publish()).toThrow();
+    product.publish(1);
+    expect(product.isPublished).toBe(true);
+  });
 
   it("should create and reconstitute a valid product entity", () => {
     const product = ProductEntity.reconstitute(validProps);

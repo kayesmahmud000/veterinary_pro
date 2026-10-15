@@ -122,7 +122,7 @@ function MediaInventory() {
   const requestId = useRef(""),
     transfer = useTransfer();
   const drafts = useRemote(
-      `admin/products?publication=DRAFT&limit=100${draftSearch ? `&search=${encodeURIComponent(draftSearch)}` : ""}`,
+      `admin/products?publication=DRAFT&contentProvider=INTERNAL&limit=100${draftSearch ? `&search=${encodeURIComponent(draftSearch)}` : ""}`,
       adminProductListSchema,
     ),
     chosen = useRemote(
@@ -226,7 +226,7 @@ function MediaInventory() {
                 {drafts.loading ? t.loading : t.selectProduct}
               </option>
               {[...extra, ...options]
-                .filter((p) => !p.isPublished)
+                .filter((p) => !p.isPublished && p.contentProvider !== "YOUTUBE")
                 .map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.title} · {catalogLabel(t, p.type)}

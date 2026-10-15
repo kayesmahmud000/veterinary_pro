@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import {
+  ProductContentProvider,
   ProductSortBy,
   ProductType,
   SubscriptionTier,
@@ -29,6 +30,7 @@ export class ProductRepository implements IProductRepository {
       const created = await client.product.create({
         data: {
           id: product.id,
+          contentProvider: product.contentProvider,
           title: product.title,
           slug: product.slug,
           type: product.type,
@@ -294,6 +296,7 @@ export class ProductRepository implements IProductRepository {
     return ProductEntity.reconstitute({
       id: row.id,
       version: row.version,
+      contentProvider: row.contentProvider as ProductContentProvider,
       title: row.title,
       slug: row.slug,
       type: row.type as ProductType,

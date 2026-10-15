@@ -130,6 +130,7 @@ describe("Managed media boundaries and recovery", () => {
     const old = new MediaUploadService(
       store as any,
       { s3BucketMedia: "synthetic" } as any,
+      {findById:async()=>null} as never,
     );
     await expect(
       old.getPresignedPartUrl({

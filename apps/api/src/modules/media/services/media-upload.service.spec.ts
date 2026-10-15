@@ -26,9 +26,25 @@ describe("MediaUploadService", () => {
       s3BucketMedia: "vetralink-media-test",
     } as unknown as jest.Mocked<EnvService>;
 
-    service = new MediaUploadService(s3Storage, envService);
+    service = new MediaUploadService(s3Storage, envService, {findById:async()=>null} as never);
   });
 
+  it("rejects YouTube video initiation and direct URLs before storage calls",async()=>{
+    const service = new MediaUploadService(s3Storage,envService,{findById:async()=>({contentProvider:"YOUTUBE"})} as never);
+    const dto={filename:"video.mp4",contentType:"video/mp4",fileSizeBytes:52428800,category:MediaCategory.VIDEO_COURSE,entityId:"550e8400-e29b-41d4-a716-446655440001"};
+    await expect(service.initiateMultipartUpload(dto,"admin")).rejects.toThrow();
+    await expect(service.generateDirectUploadUrl(dto,"admin")).rejects.toThrow();
+    await expect(service.completeMultipartUpload({key:`raw-videos/${dto.entityId}/video.mp4`,uploadId:"synthetic",parts:[{partNumber:1,etag:'"etag"'}]},"admin")).rejects.toThrow();
+    await expect(service.getPresignedPartUrl({key:`raw-videos/${dto.entityId}/video.mp4`,uploadId:"synthetic",partNumber:1})).rejects.toThrow();
+    expect(s3Storage.createMultipartUpload).not.toHaveBeenCalled();expect(s3Storage.getPresignedPutUrl).not.toHaveBeenCalled();expect(s3Storage.completeMultipartUpload).not.toHaveBeenCalled();expect(s3Storage.getPresignedPartUploadUrl).not.toHaveBeenCalled();
+  });
+  it("preserves unscoped legacy raw keys without querying a non-UUID product ID",async()=>{
+    const products={findById:jest.fn(async()=>{throw new Error("Invalid UUID query");})};
+    const legacy=new MediaUploadService(s3Storage,envService,products as never);
+    s3Storage.completeMultipartUpload.mockResolvedValueOnce({location:"synthetic",etag:'"etag"'});
+    await expect(legacy.completeMultipartUpload({key:"raw-videos/1725540000-file.mp4",uploadId:"synthetic",parts:[{partNumber:1,etag:'"etag"'}]},"admin")).resolves.toMatchObject({location:"synthetic"});
+    expect(products.findById).not.toHaveBeenCalled();
+  });
   describe("initiateMultipartUpload", () => {
     const validVideoDto = {
       filename: "lecture-1.mp4",
@@ -150,6 +166,7 @@ describe("MediaUploadService", () => {
       const serviceWithQueue = new MediaUploadService(
         s3Storage,
         envService,
+        {findById:async()=>null} as never,
         mockQueue
       );
 

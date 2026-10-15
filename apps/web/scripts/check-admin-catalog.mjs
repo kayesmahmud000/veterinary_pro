@@ -34,6 +34,7 @@ const contracts = compile("../src/lib/workspace/contracts.ts"),
 
 const id = "550e8400-e29b-41d4-a716-446655440001";
 const product = {
+  contentProvider: "INTERNAL",
   id,
   version: 2,
   title: "Synthetic guide",
@@ -207,4 +208,29 @@ test("multipart completion accepts a bounded manifest above the ordinary form li
   );
   assert.equal(res.status, 200);
   assert.deepEqual(await res.json(), { data: upload });
+});
+
+test('admin curriculum has fixed GET/PUT mappings and source-safe projections', async (t) => {
+  const path = ['admin','products',id,'curriculum'];
+  assert.ok(resolveEndpoint(path,'PUT'));
+  assert.equal(resolveEndpoint(path,'POST'),null);
+  const source = {productId:id,version:1,isPublished:false,lessons:[{id,title:'Demo lesson',summary:'',access:'PUBLIC_DEMO',position:1,youtubeVideoId:'M7lc1UVf-VE',privateKey:'MUST_NOT_RENDER'}]};
+  const calls=setup(t,'ADMIN',source);
+  const response=await handleWorkspace(request(path.join('/'),'PUT',{expectedVersion:0,lessons:[{title:'Demo lesson',summary:'',access:'PUBLIC_DEMO',videoUrl:'https://youtu.be/M7lc1UVf-VE'}]}),path);
+  assert.equal(response.status,200);
+  const data=await response.json();
+  assert.equal(data.data.productId,id);
+  assert.equal(data.data.lessons[0].privateKey,undefined);
+  assert.equal(calls[1].init.method,'PUT');
+  assert.equal(calls[1].init.headers['x-farm-id'],undefined);
+});
+test('curriculum rejects a response for another course',async t=>{
+  setup(t,'SUPER_ADMIN',{productId:'550e8400-e29b-41d4-a716-446655440002',version:0,isPublished:false,lessons:[]});
+  const path=['admin','products',id,'curriculum'];
+  assert.equal((await handleWorkspace(request(path.join('/')),path)).status,502);
+});
+for(const role of ['LEARNER','VET','FARMER','BUYER']) test(`${role} cannot read or write curriculum`,async t=>{
+ setup(t,role,{productId:id,version:0,isPublished:false,lessons:[]});
+ const path=['admin','products',id,'curriculum'];
+ assert.equal((await handleWorkspace(request(path.join('/')),path)).status,403);
 });

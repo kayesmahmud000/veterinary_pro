@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  ProductContentProvider,
   UserRole,
   ProductType,
   SubscriptionTier,
@@ -21,6 +22,7 @@ import {
   catalogLabel,
   type CatalogMessages,
 } from "@/lib/i18n/admin-catalog";
+import { getAdminCourseMessages } from "@/lib/i18n/admin-courses";
 import { workspaceBn, workspaceEn } from "@/lib/i18n/workspace";
 import { workspaceRequest } from "@/lib/workspace/client";
 import { WorkspaceGate } from "./workspace-gate";
@@ -176,6 +178,7 @@ function ProductList() {
   );
 }
 const empty = {
+  contentProvider: ProductContentProvider.INTERNAL,
   title: "",
   slug: "",
   description: "",
@@ -194,6 +197,7 @@ function ProductForm({
 }) {
   const auth = useAuth(),
     t = getCatalogMessages(auth.locale),
+    course = getAdminCourseMessages(auth.locale),
     router = useRouter(),
     [values, setValues] = useState(() =>
       product
@@ -231,7 +235,7 @@ function ProductForm({
       ...fields,
       ...(product
         ? { expectedVersion: product.version }
-        : { type: values.type }),
+        : { type: values.type, contentProvider: values.contentProvider }),
     });
     if (!parsed.success) {
       setCode("VALIDATION_FAILED");
@@ -250,7 +254,12 @@ function ProductForm({
     else setCode(result.code ?? "DEFAULT");
   }
   const change = (key: string, value: string) => {
-    setValues((v) => ({ ...v, [key]: value }));
+    setValues((v) => {
+      const next = {...v,[key]:value};
+      if (key === "type" && value !== ProductType.VIDEO_COURSE) next.contentProvider = ProductContentProvider.INTERNAL;
+      if (key === "contentProvider" && value === ProductContentProvider.YOUTUBE) { next.priceCents="0"; next.discountPriceCents=""; }
+      return next;
+    });
     setCode("");
   };
   return (
@@ -267,6 +276,12 @@ function ProductForm({
         </button>
       )}
       <fieldset disabled={busy} className={cn(styles.formFields, "space-y-5")}>
+        {values.type === ProductType.VIDEO_COURSE && <Field name="product-provider" label={course.source}>
+          <select id="product-provider" disabled={!!product} value={values.contentProvider} onChange={e=>change("contentProvider",e.target.value)}>
+            <option value="INTERNAL">{course.INTERNAL}</option><option value="YOUTUBE">{course.YOUTUBE}</option>
+          </select>
+        </Field>}
+        {values.contentProvider === ProductContentProvider.YOUTUBE && <p>{course.free}</p>}
         <div className={styles.grid}>
           {(
             [
@@ -292,6 +307,7 @@ function ProductForm({
                 <input
                   id={`product-${key}`}
                   type={key.endsWith("Cents") ? "number" : "text"}
+                  disabled={key.endsWith("Cents") && values.contentProvider === ProductContentProvider.YOUTUBE}
                   min={0}
                   max={key.endsWith("Cents") ? 2147483647 : undefined}
                   step={1}
@@ -307,7 +323,7 @@ function ProductForm({
             <Field key={key} name={`product-${key}`} label={t[key]}>
               <select
                 id={`product-${key}`}
-                disabled={key === "type" && !!product}
+                disabled={(key === "type" && !!product) || (key === "minSubscriptionTier" && values.contentProvider === ProductContentProvider.YOUTUBE)}
                 value={values[key]}
                 onChange={(e) => change(key, e.target.value)}
               >
@@ -345,6 +361,7 @@ function ProductForm({
 function ProductDetail({ id, edit }: { id: string; edit: boolean }) {
   const auth = useAuth(),
     t = getCatalogMessages(auth.locale),
+    course = getAdminCourseMessages(auth.locale),
     common = auth.locale === "bn" ? workspaceBn : workspaceEn,
     router = useRouter(),
     data = useRemote(`admin/products/${id}`, adminProductSchema),
@@ -395,9 +412,7 @@ function ProductDetail({ id, edit }: { id: string; edit: boolean }) {
         <Link className={styles.secondary} href={`/admin/products/${id}/edit`}>
           {t.edit}
         </Link>
-        <Link className={styles.primary} href={`/admin/media?productId=${id}`}>
-          {t.upload}
-        </Link>
+        {p.contentProvider === ProductContentProvider.YOUTUBE ? <Link className={styles.primary} href={`/admin/products/${id}/curriculum`}>{course.manage}</Link> : <Link className={styles.primary} href={`/admin/media?productId=${id}`}>{t.upload}</Link>}
       </div>
       {code && <CatalogError code={code} />}
       {saved && <p role="status">{t.saved}</p>}
@@ -415,8 +430,8 @@ function ProductDetail({ id, edit }: { id: string; edit: boolean }) {
           }).format((p.discountPriceCents ?? p.priceCents) / 100)}
         </p>
         <p>
-          {t.asset}:{" "}
-          {p.contentS3Key ? (
+          {p.contentProvider === ProductContentProvider.YOUTUBE ? course.source : t.asset}:{" "}
+          {p.contentProvider === ProductContentProvider.YOUTUBE ? course.YOUTUBE : p.contentS3Key ? (
             <code className="break-all">{p.contentS3Key}</code>
           ) : (
             t.noAsset
@@ -430,7 +445,7 @@ function ProductDetail({ id, edit }: { id: string; edit: boolean }) {
             timeZone: "Asia/Dhaka",
           }).format(new Date(p.updatedAt))}
         </p>
-        {p.type === ProductType.VIDEO_COURSE && <p>{t.curriculum}</p>}
+        {p.type === ProductType.VIDEO_COURSE && <p>{p.contentProvider === ProductContentProvider.YOUTUBE ? course.pending : t.curriculum}</p>}
       </section>
       <form
         className={styles.card}

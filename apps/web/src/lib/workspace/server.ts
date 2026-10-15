@@ -10,6 +10,7 @@ import {
   roleRequestSchema,
   roleDecisionSchema,
   privilegedRoleSchema,
+  adminCurriculumSchema, adminCurriculumWriteSchema,
   authUserSchema,
   ProfessionalRole,
   UserRole,
@@ -55,6 +56,7 @@ type Endpoint = {
   farmId?: string;
   membershipRequired?: boolean;
   entityId?: string;
+  productId?: string;
   writeAccessRequired?: boolean;
   bodyLimit?: number;
 };
@@ -67,6 +69,7 @@ export function resolveEndpoint(
   if (key === "admin/products" && ["GET","POST"].includes(method)) return {method,upstream:key,response:method==="GET"?adminProductListSchema:adminProductSchema,...(method==="GET"?{query:adminProductQuerySchema}:{body:adminProductCreateSchema})};
   if (path[0]==="admin" && path[1]==="products" && uuid.safeParse(path[2]).success) {
     if(path.length===3 && ["GET","PATCH"].includes(method)) return {method,upstream:key,entityId:path[2],response:adminProductSchema,...(method==="PATCH"?{body:adminProductEditSchema}:{})};
+    if(path.length===4 && path[3]==="curriculum" && ["GET","PUT"].includes(method)) return {method,upstream:key,productId:path[2],response:adminCurriculumSchema,...(method==="PUT"?{body:adminCurriculumWriteSchema,bodyLimit:524288}:{})};
     if(path.length===4 && method==="POST" && ["actions","asset"].includes(path[3])) return {method,upstream:key,entityId:path[2],response:adminProductSchema,body:path[3]==="actions"?adminProductActionSchema:adminAssetAttachSchema};
   }
   if(key==="admin/media" && method==="GET") return {method,upstream:key,response:adminUploadListSchema,query:adminUploadQuerySchema};
@@ -292,6 +295,7 @@ export function resolveEndpoint(
   return null;
 }
 const errorCodes = new Set([
+  "CONTENT_PROVIDER_MISMATCH", "COURSE_MUST_BE_UNPUBLISHED", "INVALID_CURRICULUM", "INVALID_YOUTUBE_PRICING",
   "ACCOUNT_VERSION_CONFLICT",
   "INVALID_ACCOUNT_TRANSITION",
   "ACCOUNT_ACTION_FORBIDDEN",
@@ -545,6 +549,7 @@ export async function handleWorkspace(
       record?.success === true ? record.data : undefined,
     );
     if (!parsed.success) return reply({ code: "INVALID_RESPONSE" }, 502);
+    if (endpoint.productId && parsed.data.productId !== endpoint.productId) return reply({code:"INVALID_RESPONSE"},502);
     if (endpoint.entityId && parsed.data.id !== endpoint.entityId)
       return reply({ code: "INVALID_RESPONSE" }, 502);
     if (endpoint.farmId) {

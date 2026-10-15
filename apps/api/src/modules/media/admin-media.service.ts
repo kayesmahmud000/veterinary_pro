@@ -150,6 +150,7 @@ export class AdminMediaService {
     const input = validateWorkflow(adminUploadCreateSchema, raw),
       product = await this.catalog.detail(claims, input.productId);
     if (
+      product.contentProvider === "YOUTUBE" ||
       product.isPublished ||
       !validateAdminFile(
         product.type,

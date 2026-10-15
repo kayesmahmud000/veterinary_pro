@@ -1,3 +1,4 @@
+import { NestExpressApplication } from "@nestjs/platform-express";
 import { NestFactory, Reflector } from "@nestjs/core";
 import { ValidationPipe, Logger } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
@@ -9,10 +10,12 @@ import { apiResponseLogger } from "./common/middleware/api-response-logger";
 
 async function bootstrap() {
   const logger = new Logger("Bootstrap");
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
     rawBody: true,
   });
+
+  app.useBodyParser("json", { limit: "512kb" });
 
   // Enable graceful shutdown hooks for Prisma and async teardown
   app.enableShutdownHooks();
