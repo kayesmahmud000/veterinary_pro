@@ -189,3 +189,27 @@ test("directory detail returns are released and permission-scoped", () => {
     assert.equal(nav.getPostLoginDestination(user("BUYER"),path),"/dashboard");
   }
 });
+
+test("administrators manage courses separately from their personal library", () => {
+  const id = "550e8400-e29b-41d4-a716-446655440001";
+  for (const role of ["ADMIN", "SUPER_ADMIN"]) {
+    for (const locale of ["bn", "en"]) {
+      const items = nav.getWorkspaceNav(user(role), locale);
+      const management = items.find(item => item.href === "/admin/courses");
+      const library = items.find(item => item.href === "/account/courses");
+      assert.ok(management && library);
+      assert.notEqual(management.label, library.label);
+    }
+    for (const path of ["/admin/courses", `/admin/courses/${id}`]) {
+      assert.equal(nav.validateWorkspaceReturnTo(path), path);
+      assert.equal(nav.getPostLoginDestination(user(role), path), path);
+    }
+    assert.equal(nav.isWorkspaceNavActive("/admin/courses", `/admin/courses/${id}`), true);
+  }
+  for (const role of ["LEARNER", "FARMER", "VET", "BUYER"]) {
+    assert.equal(nav.getWorkspaceNav(user(role), "en").some(item => item.href === "/admin/courses"), false);
+    assert.notEqual(nav.getPostLoginDestination(user(role), `/admin/courses/${id}`), `/admin/courses/${id}`);
+  }
+  for (const path of ["/admin/courses/not-an-id", "/admin/courses/new", `/admin/courses/${id}/unknown`, "/admin/courses?userId=another-user"])
+    assert.equal(nav.validateWorkspaceReturnTo(path), null);
+});

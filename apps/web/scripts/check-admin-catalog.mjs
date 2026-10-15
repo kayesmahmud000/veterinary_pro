@@ -90,6 +90,19 @@ function request(path, method = "GET", body) {
   });
 }
 for (const role of ["ADMIN", "SUPER_ADMIN"])
+  test(`${role} can list only the requested YouTube video courses`, async (t) => {
+    const course = { ...product, type: "VIDEO_COURSE", contentProvider: "YOUTUBE", priceCents: 0, contentS3Key: "" };
+    const calls = setup(t, role, { items: [course], nextCursor: null });
+    const response = await handleWorkspace(request("admin/products?type=VIDEO_COURSE&contentProvider=YOUTUBE&publication=DRAFT&search=care&limit=20"), ["admin", "products"]);
+    assert.equal(response.status, 200);
+    assert.deepEqual((await response.json()).data.items, [course]);
+    assert.equal(calls[1].url.searchParams.get("type"), "VIDEO_COURSE");
+    assert.equal(calls[1].url.searchParams.get("contentProvider"), "YOUTUBE");
+    assert.equal(calls[1].url.searchParams.get("publication"), "DRAFT");
+    assert.equal(calls[1].url.searchParams.get("search"), "care");
+    assert.equal(calls[1].init.headers["x-farm-id"], undefined);
+  });
+for (const role of ["ADMIN", "SUPER_ADMIN"])
   test(`${role} gets guarded draft details with only approved fields`, async (t) => {
     const calls = setup(t, role, {
       ...product,

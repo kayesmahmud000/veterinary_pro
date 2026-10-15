@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  BookOpen,
   UserRound,
   ClipboardList,
   Sprout,
@@ -55,6 +56,8 @@ export function WorkspaceNavigation({
             ? LayoutDashboard
             : item.href === "/account/profile"
               ? UserRound
+              : item.href === "/admin/courses" || item.href === "/account/courses"
+                ? BookOpen
               : item.href.startsWith("/admin/")
                 ? ShieldCheck
                 : item.href === "/farm" || item.href.includes("farm-onboarding")

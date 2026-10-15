@@ -1,4 +1,5 @@
 import { checkAdminYouTube } from "./admin-youtube-browser-cases.mjs";
+import { checkAdminCourseWorkspace } from "./admin-course-workspace-browser-cases.mjs";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
@@ -7,7 +8,7 @@ const productId = "bb0e8400-e29b-41d4-a716-446655440001",
   products = new Map(),
   curricula = new Map(),
   uploads = new Map();
-const state = { conflict: false, transferFailure: false, processing: "idle" };
+const state = { conflict: false, transferFailure: false, processing: "idle", createFailure: false };
 const base = () => ({
   contentProvider: "INTERNAL",
   id: productId,
@@ -93,15 +94,15 @@ export function handleCatalogFixture(
       const rows = [...products.values()].filter(
         (v) =>
           (!query.get("search") ||
-            v.title
-              .toLowerCase()
-              .includes(query.get("search").toLowerCase())) &&
+            [v.title, v.slug].some(value => value.toLowerCase().includes(query.get("search").toLowerCase()))) &&
           (!query.get("publication") ||
             (query.get("publication") === "PUBLISHED") === v.isPublished) &&
-          (!query.get("type") || query.get("type") === v.type),
+          (!query.get("type") || query.get("type") === v.type) &&
+          (!query.get("contentProvider") || query.get("contentProvider") === v.contentProvider),
       );
       send(200, { items: rows, nextCursor: null });
     } else {
+      if (state.createFailure) { send(503, null); return true; }
       const row = { ...base(), ...body, id: randomUUID() };
       products.set(row.id, row);
       send(201, { ...row, metadata: { secret: "MUST_NOT_RENDER" } });
@@ -575,10 +576,15 @@ export async function checkAdminCatalog({
   );
   checks++;
   checks += await checkAdminYouTube({seed,go,call,evaluate,until,temp,set,products,curricula,state});
+  checks += await checkAdminCourses({seed,go,call,evaluate,until,temp,requests});
   products.clear();
   curricula.clear();
   products.set(productId, base());
   uploads.clear();
   console.log(`Passed ${checks} admin catalog/media checks.`);
   return checks;
+}
+
+export function checkAdminCourses(context) {
+  return checkAdminCourseWorkspace({ ...context, products, curricula, state });
 }

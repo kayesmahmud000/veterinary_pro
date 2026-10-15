@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   adminCurriculumSchema,
   adminCurriculumWriteSchema,
+  adminProductSchema,
   normalizeYouTubeVideoId,
   UserRole,
   type AdminCurriculum,
@@ -28,9 +29,13 @@ type Row = {
 function Editor({
   initial,
   reload,
+  courseWorkspace = false,
+  courseTitle,
 }: {
   initial: AdminCurriculum;
   reload: () => void;
+  courseWorkspace?: boolean;
+  courseTitle?: string;
 }) {
   const auth = useAuth(),
     t = getAdminCourseMessages(auth.locale),
@@ -183,12 +188,14 @@ function Editor({
   }
   return (
     <div data-course-editor className="space-y-6">
+      {courseTitle && <h2 className="text-xl font-semibold">{courseTitle}</h2>}
       <Link
         className={styles.secondary}
-        href={`/admin/products/${initial.productId}`}
+        href={courseWorkspace ? "/admin/courses" : `/admin/products/${initial.productId}`}
       >
-        {common.back}
+        {courseWorkspace ? t.backCourses : common.back}
       </Link>
+      {courseWorkspace && <Link className={styles.secondary} href={`/admin/products/${initial.productId}`}>{t.courseDetails}</Link>}
       <p>{t.hint}</p>
       <Link className={styles.secondary} href="/courses">{getCatalogMessages(auth.locale).viewCourses}</Link>
       {initial.isPublished && (
@@ -424,24 +431,27 @@ function Editor({
     </div>
   );
 }
-function Curriculum({ id }: { id: string }) {
+function Curriculum({ id, courseWorkspace }: { id: string; courseWorkspace: boolean }) {
   const data = useRemote(
       `admin/products/${id}/curriculum`,
       adminCurriculumSchema,
     ),
+    product = useRemote(courseWorkspace ? `admin/products/${id}` : null, adminProductSchema),
     t = getCatalogMessages(useAuth().locale);
-  if (data.loading) return <p role="status">{t.loading}</p>;
+  if (data.loading || product.loading) return <p role="status">{t.loading}</p>;
+  if (courseWorkspace && (product.code || !product.data))
+    return <CatalogError code={product.code ?? "NOT_FOUND"} retry={product.reload} />;
   if (data.code || !data.data)
     return <CatalogError code={data.code ?? "NOT_FOUND"} retry={data.reload} />;
-  return <Editor initial={data.data} reload={data.reload} />;
+  return <Editor initial={data.data} reload={data.reload} courseWorkspace={courseWorkspace} courseTitle={product.data?.title} />;
 }
-export function AdminCourseCurriculum({ id }: { id: string }) {
+export function AdminCourseCurriculum({ id, courseWorkspace = false }: { id: string; courseWorkspace?: boolean }) {
   const t = getAdminCourseMessages(useAuth().locale);
   return (
-    <main id="main-content" className={styles.shell}>
+    <main id="main-content" data-admin-course-workspace={courseWorkspace || undefined} className={styles.shell}>
       <h1 className={styles.heading}>{t.heading}</h1>
       <WorkspaceGate allowedRoles={[UserRole.ADMIN, UserRole.SUPER_ADMIN]}>
-        <Curriculum id={id} />
+        <Curriculum id={id} courseWorkspace={courseWorkspace} />
       </WorkspaceGate>
     </main>
   );

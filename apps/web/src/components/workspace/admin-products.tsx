@@ -47,22 +47,23 @@ export function CatalogError({
     </div>
   );
 }
-function ProductList() {
+function ProductList({ coursesOnly = false }: { coursesOnly?: boolean }) {
   const auth = useAuth(),
     t = getCatalogMessages(auth.locale),
+    course = getAdminCourseMessages(auth.locale),
     [filter, setFilter] = useState({ search: "", type: "", publication: "" }),
     [query, setQuery] = useState(""),
     [cursors, setCursors] = useState([""]);
   const cursor = cursors[cursors.length - 1],
     data = useRemote(
-      `admin/products?limit=20${query ? `&${query}` : ""}${cursor ? `&cursor=${cursor}` : ""}`,
+      `admin/products?limit=20${coursesOnly ? "&type=VIDEO_COURSE&contentProvider=YOUTUBE" : ""}${query ? `&${query}` : ""}${cursor ? `&cursor=${cursor}` : ""}`,
       adminProductListSchema,
     );
   return (
-    <div data-admin-products className="space-y-6">
-      <Link className={styles.primary} href="/admin/products/new">
+    <div data-admin-products data-admin-courses-list={coursesOnly || undefined} className="space-y-6">
+      {!coursesOnly && <Link className={styles.primary} href="/admin/products/new">
         {t.newProduct}
-      </Link>
+      </Link>}
       <form
         className={styles.card}
         onSubmit={(e) => {
@@ -86,7 +87,7 @@ function ProductList() {
               }
             />
           </Field>
-          {(["type", "publication"] as const).map((key) => (
+          {(coursesOnly ? (["publication"] as const) : (["type", "publication"] as const)).map((key) => (
             <Field name={`catalog-${key}`} key={key} label={t[key]}>
               <select
                 id={`catalog-${key}`}
@@ -119,7 +120,7 @@ function ProductList() {
       ) : (
         <section className={styles.card}>
           {!data.data?.items.length ? (
-            <p>{t.empty}</p>
+            <p>{coursesOnly ? course.emptyCourses : t.empty}</p>
           ) : (
             <ul className={styles.list}>
               {data.data.items.map((p) => (
@@ -130,19 +131,19 @@ function ProductList() {
                       {catalogLabel(t, p.type)} ·{" "}
                       {p.isPublished ? t.PUBLISHED : t.DRAFT}
                     </small>
-                    <small>
+                    {coursesOnly ? <small>{course.YOUTUBE}</small> : <small>
                       {p.currency}{" "}
                       {new Intl.NumberFormat(
                         auth.locale === "bn" ? "bn-BD" : "en-GB",
                         { minimumFractionDigits: 2, maximumFractionDigits: 2 },
                       ).format((p.discountPriceCents ?? p.priceCents) / 100)}
-                    </small>
+                    </small>}
                   </div>
                   <Link
                     className={styles.secondary}
-                    href={`/admin/products/${p.id}`}
+                    href={coursesOnly ? `/admin/courses/${p.id}` : `/admin/products/${p.id}`}
                   >
-                    {t.details}
+                    {coursesOnly ? course.manage : t.details}
                   </Link>
                 </li>
               ))}
@@ -191,9 +192,11 @@ const empty = {
 function ProductForm({
   product,
   reload,
+  coursesOnly = false,
 }: {
   product?: AdminProduct;
   reload?: () => void;
+  coursesOnly?: boolean;
 }) {
   const auth = useAuth(),
     t = getCatalogMessages(auth.locale),
@@ -210,7 +213,9 @@ function ProductForm({
                 ? ""
                 : String(product.discountPriceCents),
           }
-        : empty,
+        : coursesOnly
+          ? { ...empty, type: ProductType.VIDEO_COURSE, contentProvider: ProductContentProvider.YOUTUBE, priceCents: "0" }
+          : empty,
     ),
     [busy, setBusy] = useState(false),
     [code, setCode] = useState("");
@@ -250,7 +255,7 @@ function ProductForm({
       parsed.data,
     );
     setBusy(false);
-    if (result.data) router.push(`/admin/products/${result.data.id}`);
+    if (result.data) router.push(coursesOnly ? `/admin/courses/${result.data.id}` : `/admin/products/${result.data.id}`);
     else setCode(result.code ?? "DEFAULT");
   }
   const change = (key: string, value: string) => {
@@ -266,25 +271,26 @@ function ProductForm({
     <form
       className={styles.card}
       data-product-form
+      data-admin-course-form={coursesOnly || undefined}
       onSubmit={submit}
       aria-busy={busy}
     >
-      {code && <CatalogError code={code} />}
+      {code && (coursesOnly && code === "VALIDATION_FAILED" ? <p role="alert" className={styles.error}>{course.invalidDetails}</p> : <CatalogError code={code} />)}
       {code === "PRODUCT_VERSION_CONFLICT" && reload && (
         <button type="button" className={styles.secondary} onClick={reload}>
           {t.refresh}
         </button>
       )}
       <fieldset disabled={busy} className={cn(styles.formFields, "space-y-5")}>
-        {values.type === ProductType.VIDEO_COURSE && <Field name="product-provider" label={course.source}>
+        {!coursesOnly && values.type === ProductType.VIDEO_COURSE && <Field name="product-provider" label={course.source}>
           <select id="product-provider" disabled={!!product} value={values.contentProvider} onChange={e=>change("contentProvider",e.target.value)}>
             <option value="INTERNAL">{course.INTERNAL}</option><option value="YOUTUBE">{course.YOUTUBE}</option>
           </select>
         </Field>}
-        {values.contentProvider === ProductContentProvider.YOUTUBE && <p>{course.free}</p>}
-        <div className={styles.grid}>
+        {values.contentProvider === ProductContentProvider.YOUTUBE && <p>{coursesOnly ? course.draftHint : course.free}</p>}
+        <div className={cn(styles.grid, coursesOnly && "[&>div:last-child]:col-span-full")}>
           {(
-            [
+            coursesOnly ? ["title", "slug", "description"] as const : [
               "title",
               "slug",
               "description",
@@ -312,6 +318,8 @@ function ProductForm({
                   max={key.endsWith("Cents") ? 2147483647 : undefined}
                   step={1}
                   required={key !== "discountPriceCents"}
+                  minLength={key === "title" || key === "slug" ? 3 : undefined}
+                  pattern={key === "slug" ? "[a-z0-9]+(?:-[a-z0-9]+)*" : undefined}
                   maxLength={key === "title" ? 255 : 200}
                   value={values[key]}
                   onChange={(e) => change(key, e.target.value)}
@@ -319,7 +327,7 @@ function ProductForm({
               )}
             </Field>
           ))}
-          {(["type", "currency", "minSubscriptionTier"] as const).map((key) => (
+          {!coursesOnly && (["type", "currency", "minSubscriptionTier"] as const).map((key) => (
             <Field key={key} name={`product-${key}`} label={t[key]}>
               <select
                 id={`product-${key}`}
@@ -345,14 +353,14 @@ function ProductForm({
         </div>
         <div className={styles.actions}>
           <button className={styles.primary} type="submit" disabled={busy}>
-            {busy ? t.saving : t.save}
+            {busy ? t.saving : coursesOnly ? course.createAndContinue : t.save}
           </button>
-          <Link
+          {!coursesOnly && <Link
             className={styles.secondary}
             href={product ? `/admin/products/${product.id}` : "/admin/products"}
           >
             {t.back}
-          </Link>
+          </Link>}
         </div>
       </fieldset>
     </form>
@@ -538,6 +546,28 @@ export function AdminProducts({
         ) : (
           <ProductDetail id={id!} edit={view === "edit"} />
         )}
+      </WorkspaceGate>
+    </main>
+  );
+}
+
+export function AdminCourses() {
+  const t = getAdminCourseMessages(useAuth().locale);
+  return (
+    <main id="main-content" data-admin-courses className={styles.shell}>
+      <h1 className={styles.heading}>{t.courses}</h1>
+      <p className={styles.intro}>{t.intro}</p>
+      <WorkspaceGate allowedRoles={[UserRole.ADMIN, UserRole.SUPER_ADMIN]}>
+        <div className="space-y-10">
+          <section aria-labelledby="create-course-heading">
+            <h2 id="create-course-heading" className="text-xl font-semibold">{t.createHeading}</h2>
+            <ProductForm coursesOnly />
+          </section>
+          <section aria-labelledby="manage-courses-heading">
+            <h2 id="manage-courses-heading" className="text-xl font-semibold">{t.listHeading}</h2>
+            <ProductList coursesOnly />
+          </section>
+        </div>
       </WorkspaceGate>
     </main>
   );

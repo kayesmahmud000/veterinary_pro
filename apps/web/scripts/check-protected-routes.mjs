@@ -62,6 +62,8 @@ test("missing cookies redirect every workspace boundary before page delivery wit
     "/farm",
     "/account/profile?section=access",
     "/admin/role-requests",
+    "/admin/courses",
+    "/admin/courses/550e8400-e29b-41d4-a716-446655440001",
     "/app/farms/660e8400-e29b-41d4-a716-446655440001",
   ]) {
     const response = await middleware(request(path));

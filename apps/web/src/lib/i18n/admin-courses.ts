@@ -1,5 +1,21 @@
 import type { Locale } from "./locale";
 const copy = {
+  courses: ["Courses", "কোর্সসমূহ"],
+  intro: [
+    "Create a free YouTube course, add video lessons, then publish it when it is ready.",
+    "ফ্রি YouTube কোর্স তৈরি করুন, ভিডিও লেসন যোগ করুন, তারপর প্রস্তুত হলে প্রকাশ করুন।",
+  ],
+  createHeading: ["Add a course", "কোর্স যোগ করুন"],
+  createAndContinue: ["Create course and add videos", "কোর্স তৈরি করে ভিডিও যোগ করুন"],
+  draftHint: [
+    "This saves a draft course. Next, add YouTube video links and choose who can watch each lesson.",
+    "কোর্সটি খসড়া হিসেবে সংরক্ষিত হবে। এরপর লেসনের YouTube লিংক দিন ও কারা দেখতে পারবেন তা বেছে নিন।",
+  ],
+  listHeading: ["Manage existing courses", "আগের কোর্স পরিচালনা করুন"],
+  backCourses: ["Back to courses", "কোর্সের তালিকায় ফিরুন"],
+  courseDetails: ["Course details and publication", "কোর্সের তথ্য ও প্রকাশনা"],
+  emptyCourses: ["No matching courses yet. Create a course using the form above.", "কোনো কোর্স পাওয়া যায়নি। উপরের ফর্ম থেকে কোর্স তৈরি করুন।"],
+  invalidDetails: ["Check the course title, slug and description.", "কোর্সের শিরোনাম, স্লাগ ও বিবরণ পরীক্ষা করুন।"],
   heading: ["YouTube course lessons", "YouTube কোর্সের লেসন"],
   source: ["Content source", "ভিডিওর উৎস"],
   INTERNAL: ["Uploaded asset", "আপলোড করা ফাইল"],

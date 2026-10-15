@@ -1,6 +1,6 @@
 # YouTube courses with public demos and free enrollment
 
-Status: **Admin and learner slices implemented locally; live migration/YouTube release acceptance pending.**
+Status: **Admin and learner slices implemented locally; live schema repair verified; authenticated writes/YouTube release acceptance pending.**
 Date: 2026-10-15. Original planning inspected 82d857a plus ADM-3; admin execution baseline is ab18a9f. [Execution plan](plan.md).
 
 ## Admin-first delivery history
@@ -14,6 +14,16 @@ At that admin-first handoff, CourseEnrollment, public catalog/demo APIs, learner
 The user's next continuation authorized the learner slice. CourseEnrollment, public catalog and source-free outline/demo APIs, own enrollment/library/playback APIs and bilingual in-site player are implemented locally. `GET me/courses/:id` additionally returns the source-free outline plus the caller's nullable enrollment, so direct auth-return links can offer explicit registration without searching a paginated library. Enrollment is idempotent and audited in the same transaction. The public BFF omits credentials; personalized responses are private/no-store. Player readiness has a15-second deadline, official IFrame events, retry and cleanup. Public layout follows the shared container. No paid access, progress/certificates or live deployment is implied; see [execution evidence](plan.md).
 
 ## Outcome and user decisions
+
+### Dedicated administrator course workspace — 2026-10-15
+
+The user requested course input fields in the admin dashboard so administrators can create courses and add videos. **Confirmed from code before this extension:** administrative navigation exposes only the learner-facing My courses library; course creation is buried in the generic product form and lesson editing is under product details.
+
+Add `/admin/courses` for ADMIN/SUPER_ADMIN, with an inline course title/slug/description form and a searchable publication-filtered list of free YouTube courses. Creation fixes the existing VIDEO_COURSE/YOUTUBE/free defaults and continues to `/admin/courses/[id]` to add, save, reorder and preview videos through the existing versioned curriculum editor. Keep explicit access labels and existing publication confirmation from course/product details. Add a dashboard shortcut and distinct Courses navigation while retaining My courses for personal enrollment. Both locales and mobile/desktop must work; nonadministrative roles must not receive these screens or mutation access.
+
+Reuse the existing `admin/products` create/list/detail/action and curriculum GET/PUT contracts, schemas and audit/version rules. No new API, database model, provider or migration is required for this UI extension. The initial live course `DATABASE_ERROR` was subsequently repaired by the separately authorized deployment of the three existing migrations; [repair evidence](../../tasks/web-live-api-routing/plan.md) verifies successful public reads and data preservation. Controlled UI verification must still be distinguished from real authenticated course writes and provider playback.
+
+Acceptance: navigate from the admin dashboard/sidebar, create a course with labeled inputs, add and save demo/enrolled YouTube lessons, reload and reopen from the course list, preserve drafts on failures/conflicts, retain publication behavior, and deny nonadmins. Verify role-scoped navigation/BFF, both languages at 320/1440px, meaningful form errors and the existing product/media paths.
 
 The user wants course videos hosted on YouTube and watched inside this website. Confirmed in this conversation: some videos are public demos, other lessons require enrollment, and enrollment is **free for now**. Anonymous visitors can watch demo lessons; active signed-in users can register for a course and watch its main lessons without leaving the site. ADMIN/SUPER_ADMIN manage courses and their ordered video lessons.
 

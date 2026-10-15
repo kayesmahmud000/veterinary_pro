@@ -1,6 +1,7 @@
 import type { Locale } from "./locale";
 
 export const workspaceShellEn = {
+  adminCourses: "Courses",
   courses: "My courses",
   dashboard: "Dashboard",
   profile: "My profile",
@@ -42,6 +43,7 @@ export const workspaceShellEn = {
 };
 export type WorkspaceShellMessages = typeof workspaceShellEn;
 export const workspaceShellBn: WorkspaceShellMessages = {
+  adminCourses: "কোর্সসমূহ",
   courses: "আমার কোর্স",
   dashboard: "ড্যাশবোর্ড",
   profile: "আমার প্রোফাইল",

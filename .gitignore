@@ -32,6 +32,9 @@ pnpm-debug.log*
 # Database & Uploads
 data/
 uploads/
+# Keep the administrative upload-detail route in source control.
+!apps/web/src/app/(workspace)/admin/media/uploads/
+!apps/web/src/app/(workspace)/admin/media/uploads/**
 
 # OS Files
 .DS_Store

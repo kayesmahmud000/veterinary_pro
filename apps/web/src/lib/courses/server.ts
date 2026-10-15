@@ -74,7 +74,7 @@ export async function handleCourses(request: NextRequest, path: string[] = []) {
     timer = setTimeout(() => controller.abort(), 12000);
   try {
     const base = new URL(
-      `${(process.env.API_BASE_URL || "http://localhost:3001/api/v1").replace(/\/$/, "")}/`,
+      `${(process.env.API_BASE_URL || "https://veterinary-api-mocha.vercel.app/api/v1").replace(/\/$/, "")}/`,
     );
     if (
       !["http:", "https:"].includes(base.protocol) ||
