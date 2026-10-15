@@ -14,6 +14,7 @@ import {
   ProfessionalRole,
   UserRole,
   UserStatus,
+  directoryKinds, directoryQueries, directoryLists, directoryDetails, accountActionSchema, accountActionResultSchema,
 } from "@vetralink/shared-types";
 import {
   adminTargetSchema,
@@ -61,6 +62,12 @@ export function resolveEndpoint(
   method: string,
 ): Endpoint | null {
   const key = path.join("/");
+  if (path[0] === "admin" && path[1] === "directory" && directoryKinds.includes(path[2] as typeof directoryKinds[number])) {
+    const kind = path[2] as typeof directoryKinds[number];
+    if (path.length === 3 && method === "GET") return { method, upstream: key, response: directoryLists[kind], query: directoryQueries[kind] };
+    if (path.length === 4 && uuid.safeParse(path[3]).success && method === "GET") return { method, upstream: key, entityId: path[3], response: directoryDetails[kind] };
+    if (kind === "users" && path.length === 5 && uuid.safeParse(path[3]).success && path[4] === "actions" && method === "POST") return { method, upstream: key, entityId: path[3], response: accountActionResultSchema, body: accountActionSchema };
+  }
   if (key === "admin/overview" && method === "GET")
     return {
       method,
@@ -272,6 +279,9 @@ export function resolveEndpoint(
   return null;
 }
 const errorCodes = new Set([
+  "ACCOUNT_VERSION_CONFLICT",
+  "INVALID_ACCOUNT_TRANSITION",
+  "ACCOUNT_ACTION_FORBIDDEN",
   "ROLE_REQUEST_PENDING",
   "SUBMISSION_KEY_CONFLICT",
   "ROLE_REQUEST_ALREADY_DECIDED",

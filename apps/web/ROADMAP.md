@@ -1,12 +1,12 @@
 # VETRALINK PRO — Web Roadmap
 
-Planning updated **2026-10-13**, inspected Git revision **d0385ec**. Current priority: **Admin/Super Admin dashboard and administration routes**, per user direction. [Project coordination](../../ROADMAP.md) · [Documentation authority](../../docs/README.md) · [Backend roadmap and API readiness](../api/ROADMAP.md#api-dependency-register).
+Planning updated **2026-10-15**, inspected Git revision **d0385ec**. Current priority: **Admin/Super Admin dashboard and administration routes**, per user direction. [Project coordination](../../ROADMAP.md) · [Documentation authority](../../docs/README.md) · [Backend roadmap and API readiness](../api/ROADMAP.md#api-dependency-register).
 
 ## Current priority — administration first
 
 **User direction, 2026-10-13:** build the Admin/Super Admin dashboard, its navigation and complete administrative workflows before continuing the Farmer milk-production task. The [admin delivery roadmap](#admin-and-super-admin-delivery-roadmap) below owns this sequence. The [milk specification](../../docs/tasks/web-milk-production/spec.md) is deferred, with no implementation started. Existing Farmer/learner/buyer/vet journeys remain part of the product backlog.
 
-**ADM-1 is implemented locally:** administrative entry, shared navigation, subscription counts and recent applications, with evidence in the [ADM-1 plan](../../docs/tasks/web-admin-dashboard/plan.md). Live API/database acceptance remains unavailable. **Next: ADM-2**, starting with the missing API-ADMIN-U/A contracts before user/vet/farm directories and audit UI. Later routes remain proposed until their owning slices pass acceptance.
+**ADM-1 is implemented locally:** administrative entry, shared navigation, subscription counts and recent applications, with evidence in the [ADM-1 plan](../../docs/tasks/web-admin-dashboard/plan.md). Live API/database acceptance remains unavailable. **ADM-2 is implemented locally:** bilingual user/vet/farm directories, account status/session actions and redacted audit list/detail, using new API-ADMIN-U/A contracts. [Spec](../../docs/features/admin-directory-audit/spec.md) / [verification](../../docs/features/admin-directory-audit/plan.md) distinguish controlled browser/unit evidence from pending real database acceptance. **Next planned batch: ADM-3**, beginning with API-ADMIN-P; ADM-2 live acceptance remains pending. Later routes remain proposed until their owning slices pass acceptance.
 
 ## Actual baseline
 
@@ -129,10 +129,10 @@ These are roadmap defaults for new contracts; current backend permissions remain
 | --- | --- | --- | --- |
 | Dashboard, professional reviews, products, plans, triage, settlement processing, review moderation | Allowed within exact API rules | Allowed within exact API rules | Existing controller permissions; preserve service-level conditions |
 | Assign/remove administrative privilege | Denied | Allowed with reauthentication/reason/version checks | Existing privilege service; no self-change, protect last active Super Admin, revoke affected sessions |
-| General account/farm support | Proposed scoped access | Proposed scoped access plus administrative-account governance | New APIs required; platform role does not create farm membership |
-| Ordinary user status/session administration | Proposed for ordinary accounts only | Proposed, with administrative-account/last-Super protection | API-ADMIN-U; audited transaction and current identity checks |
+| General account/farm support | Scoped directory/support reads implemented locally | Same scoped reads; privilege governance remains separate | API-ADMIN-U; no farm membership or clinical-data access is granted |
+| Ordinary user status/session administration | Ordinary accounts only | Ordinary accounts only; administrative targets protected | API-ADMIN-U implemented locally; password/version checks, audited transaction and revocation; live acceptance pending |
 | CMS and support operations | Proposed operational access | Proposed operational access | API-ADMIN-C/N; per-action policy in the shared spec |
-| Audit access | Proposed operational subset | Proposed privileged/security subset as well | API-ADMIN-A; read-only and redacted |
+| Audit access | Explicit operational subset | Privileged/security events as well | API-ADMIN-A list/detail implemented locally; redacted and read-only; exports remain ADM-8 |
 | Platform settings, integration and system controls | Denied by default | Proposed explicit allowlist | API-ADMIN-S; no blanket authorization bypass |
 | Clinical notes/prescription signing or another user's entitlement | Existing domain-specific policy only | Existing domain-specific policy only | No new right from the admin shell |
 
@@ -141,7 +141,7 @@ These are roadmap defaults for new contracts; current backend permissions remain
 | Order | Batch | Scope and dependency | Completion gate | Current status |
 | --- | --- | --- | --- | --- |
 | **ADM-1** | Admin entry, navigation and overview | Scoped design/plan; `/admin` and `/admin/dashboard`; shared shell; ADMIN/SUPER login routing; existing review/access pages; count cards, recent applications and available shortcuts. Money/global totals wait for API-ADMIN-M. | Both roles reach the correct home; all other roles are denied at the server and API boundaries; existing protected returns/logout/demotion work; bilingual responsive browser checks pass | **Implemented; local checks passed.** [Spec](../../docs/tasks/web-admin-dashboard/spec.md) / [evidence](../../docs/tasks/web-admin-dashboard/plan.md). Isolated live services unavailable; deployed acceptance pending. |
-| **ADM-2** | Users, veterinarians, farms and audit foundation | API-ADMIN-U/A first; directories/details, ordinary-account status/session actions, support read boundaries and read-only audit. Preserve professional review and restricted privileged access. | Search/pagination/detail/actions use real contracts; last-Super protection, concurrent changes, session revocation, audit and cross-tenant denial pass against isolated services | **Next implementation slice**; API-ADMIN-U/A contracts required first |
+| **ADM-2** | Users, veterinarians, farms and audit foundation | API-ADMIN-U/A first; directories/details, ordinary-account status/session actions, support read boundaries and read-only audit. Preserve professional review and restricted privileged access. | Search/pagination/detail/actions use real contracts; last-Super protection, concurrent changes, session revocation, audit and cross-tenant denial pass against isolated services | **Implemented locally; live database acceptance pending.** [Spec](../../docs/features/admin-directory-audit/spec.md) / [evidence](../../docs/features/admin-directory-audit/plan.md). No export/publication/clinical access included. |
 | **ADM-3** | Product, media and learning administration | API-ADMIN-P; existing product/upload APIs; draft access, product edits/publication, uploads and processing status. Curriculum follows API-B2. | Drafts stay private, upload ownership and publication work, persisted edits survive reload, storage/worker failures recover; curriculum remains visibly pending in roadmap until its own acceptance | Not started; partial API support |
 | **ADM-4** | Orders, subscriptions, plans and dunning | API-ADMIN-B plus existing API-STORE/BILLING; directories, supported lifecycle/support actions and payment follow-up | Money units/currency, transition permissions, confirmation, audit, repeat handling and real configured payment/mail/worker flows verified for enabled operations | Not started; partial API support |
 | **ADM-5** | Consultation operations | Existing API-TRIAGE plus API-ADMIN-V history gaps; queue, detail, vet selection, assignment/cancellation and operational history | Concurrent assignment, stale state, role/participant boundaries, payment state and notification outcomes verified; mock SMS/push not presented as delivered | Not started; provider acceptance separate |
@@ -174,6 +174,8 @@ Later shared API/web modules use their own `docs/features/<slug>/spec.md` and pa
 2026-10-13 / `d0385ec`: read current admin web navigation/BFF, dashboard, role/privilege controllers and service safeguards, products/media, subscription metrics/plans/dunning, orders, triage, settlements, moderation and module bindings. Current APIs and missing contracts are recorded in the owning [API register](../api/ROADMAP.md#admin-dashboard-dependency-register). This documentation update does not certify those APIs in production or mark a new dashboard feature implemented. Documentation validation is recorded in the task handoff.
 
 ## Selecting the next work
+
+**Current handoff (2026-10-15):** ADM-1/ADM-2 are implemented locally; real database/deployed acceptance remains pending in their evidence plans. ADM-3 is the next planned implementation batch, gated by API-ADMIN-P contracts. The dated entries below preserve prior sequencing.
 
 **Priority override (2026-10-13):** start ADM-1 above. The older Farmer-domain handoffs and the milk proposal are deferred by the user's admin-first direction. The dated entries below preserve completed implementation history and do not override that priority.
 

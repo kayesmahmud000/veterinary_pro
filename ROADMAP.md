@@ -1,6 +1,6 @@
 # VETRALINK PRO — Project Roadmap
 
-Updated: **2026-10-13**. This is the project entry point and coordination guide. Delivery status has one owner per workstream; do not copy their checklists here.
+Updated: **2026-10-15**. This is the project entry point and coordination guide. Delivery status has one owner per workstream; do not copy their checklists here.
 
 VETRALINK PRO combines farm ERP, educational courses/digital assets and tele-veterinary care. Shared product intent remains in the [platform specification](vetralink_platform_specification.pdf) and its [blueprint summary](vetralink_pro_blueprint.md). Read the [documentation guide](docs/README.md) for authority, requirement refinements and historical phase differences.
 
@@ -10,7 +10,7 @@ VETRALINK PRO combines farm ERP, educational courses/digital assets and tele-vet
 | --- | --- |
 | What backend work was completed, and what remains? | [Backend/API roadmap](apps/api/ROADMAP.md): preserved Sprints 0–15, API dependency register and open API-B items |
 | What must be built on the web, and what blocks it? | [Web roadmap](apps/web/ROADMAP.md): public-site delivery, Bangla-default bilingual requirements, WEB backlog and API dependencies |
-| What is the next priority? | [Admin/Super Admin delivery roadmap](apps/web/ROADMAP.md#admin-and-super-admin-delivery-roadmap): administration first; ADM-1 is locally implemented, ADM-2 directory/audit contracts are next; [API dependencies](apps/api/ROADMAP.md#admin-dashboard-dependency-register). Farmer milk work is deferred by user direction on 2026-10-13 |
+| What is the next priority? | [Admin/Super Admin delivery roadmap](apps/web/ROADMAP.md#admin-and-super-admin-delivery-roadmap): administration first; ADM-1/ADM-2 are locally implemented with live acceptance pending; ADM-3 product/media administration is the next planned batch; [API dependencies](apps/api/ROADMAP.md#admin-dashboard-dependency-register). Farmer milk work is deferred by user direction on 2026-10-13 |
 | What should the product do? | [Specification and planning guide](docs/README.md): product baseline and shared feature/task acceptance criteria |
 | What actually exists and what is risky? | [Current context](.context/README.md), [known gaps](.context/known-gaps.md), source and verification evidence |
 | Where is shared/mobile/operational history? | API roadmap's explicitly labeled shared history; [offline sync context](.context/features/offline-sync.md), [deployment plan](docs/tasks/monorepo-ci-cd-platform-deployment/plan.md) and [runtime guide](.context/operations/runtime.md) |

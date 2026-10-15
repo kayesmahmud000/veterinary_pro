@@ -174,8 +174,18 @@ test("admin entry preserves authorized returns and rejects privilege-incompatibl
   for (const role of ["LEARNER", "FARMER", "VET", "BUYER"]) {
     assert.equal(nav.getPostLoginDestination(user(role), "/admin/dashboard"), role === "LEARNER" ? "/" : "/dashboard");
   }
-  for (const path of ["/admin", "/admin/dashboard"])
+  for (const path of ["/admin", "/admin/dashboard", "/admin/users", "/admin/veterinarians", "/admin/farms", "/admin/audit"])
     assert.equal(nav.validateWorkspaceReturnTo(path), path);
-  for (const path of ["/admin/users", "/admin/metrics", "/admin/dashboard?url=secret", "/admin/dashboard/unknown"])
+  for (const path of ["/admin/metrics", "/admin/dashboard?url=secret", "/admin/dashboard/unknown"])
     assert.equal(nav.validateWorkspaceReturnTo(path), null);
+});
+
+test("directory detail returns are released and permission-scoped", () => {
+  const id="550e8400-e29b-41d4-a716-446655440001";
+  for(const kind of ["users","veterinarians","farms","audit"]){
+    const path=`/admin/${kind}/${id}`;
+    assert.equal(nav.validateWorkspaceReturnTo(path),path);
+    assert.equal(nav.getPostLoginDestination(user("ADMIN"),path),path);
+    assert.equal(nav.getPostLoginDestination(user("BUYER"),path),"/dashboard");
+  }
 });

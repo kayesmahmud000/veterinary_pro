@@ -1,5 +1,6 @@
 // Local production browser acceptance with synthetic identities and a controlled API.
 // This checks real Next components/BFF behavior, not deployed provider/database readiness.
+import { handleDirectoryFixture, checkAdminDirectory } from "./admin-directory-browser-cases.mjs";
 import assert from "node:assert/strict";
 import { handleAdminFixture, checkAdminDashboard } from "./admin-dashboard-browser-cases.mjs";
 import { randomUUID } from "node:crypto";
@@ -282,6 +283,7 @@ const upstream = http.createServer(async (req, res) => {
   }
   if (route === "users/me/role-requests")
     return send(200, { requests: [], nextCursor: null });
+  if (handleDirectoryFixture(route, role, send, query, req.method, data, res)) return;
   if (handleAdminFixture(route, role, send)) return;
   if (route === "admin/role-requests")
     return ["ADMIN", "SUPER_ADMIN"].includes(role)
@@ -461,6 +463,10 @@ try {
     await cookie("vetralink_refresh", "r-" + role);
     await cookie("vetralink-locale", locale);
   }
+  if (process.env.WORKSPACE_BROWSER_FOCUS === "directory") {
+    checks += await checkAdminDirectory({seed,go,call,evaluate,until,temp,requests});
+    assert.deepEqual(exceptions, []);
+  } else {
   if (!focus) {
     // Protected entry automatically prompts; signed-out dismissal leaves for home.
     await cookie("vetralink_access", "a-LEARNER");
@@ -752,6 +758,7 @@ try {
         checks++;
       }
     checks += await checkAdminDashboard({ seed, go, call, evaluate, until, requests, origin, temp, users });
+    checks += await checkAdminDirectory({seed,go,call,evaluate,until,temp,requests});
     await seed("LEARNER", "en");
     users.get("LEARNER").avatarUrl = "/assets/brand/logo-green.jpeg";
     await go("/");
@@ -1716,6 +1723,7 @@ try {
   console.log(
     `Passed ${checks} ${focus ? "history draft/confirmation and access" : "dashboard/profile, responsive, farm, registry and login"} checks. Screenshots: ${temp}`,
   );
+  }
 } finally {
   ws?.close();
   chrome?.kill();

@@ -36,6 +36,7 @@ export const workspaceShellEn = {
   adminOverview: "Overview",
   adminPeople: "People",
   adminPlatform: "Platform",
+  users: "Users", veterinarians: "Veterinarians", farms: "Farms", audit: "Audit trail",
 };
 export type WorkspaceShellMessages = typeof workspaceShellEn;
 export const workspaceShellBn: WorkspaceShellMessages = {
@@ -74,6 +75,7 @@ export const workspaceShellBn: WorkspaceShellMessages = {
   adminOverview: "সারসংক্ষেপ",
   adminPeople: "ব্যবহারকারী",
   adminPlatform: "প্ল্যাটফর্ম",
+  users: "ব্যবহারকারী", veterinarians: "পশুচিকিৎসক", farms: "খামার", audit: "অডিট ইতিহাস",
 };
 export function getWorkspaceShellMessages(locale: Locale) {
   return locale === "bn" ? workspaceShellBn : workspaceShellEn;
