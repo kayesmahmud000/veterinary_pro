@@ -40,16 +40,22 @@ export class VetPayoutLedgerService implements IVetPayoutLedgerService {
     private readonly auditLogRepo: IAuditLogRepository,
   ) {}
 
+  public async getConsultationSettlement(consultationId: string): Promise<ConsultationPayoutLedgerDto> {
+    const ledger = await this.payoutLedgerRepo.findByConsultationId(consultationId);
+    if (!ledger) throw new EntityNotFoundException('Settlement', consultationId);
+    return ledger.toDto();
+  }
+
   public calculateSplit(
     totalFeeCents: number,
     platformRate = 0.2,
   ): FeeSplitCalculationDto {
-    if (totalFeeCents < 0) {
+    if (!Number.isSafeInteger(totalFeeCents) || totalFeeCents < 0) {
       throw new ValidationDomainException(
         "Total fee cents cannot be negative.",
       );
     }
-    if (platformRate < 0 || platformRate > 1) {
+    if (!Number.isFinite(platformRate) || platformRate < 0 || platformRate > 1) {
       throw new ValidationDomainException(
         "Platform fee rate must be between 0 and 1.",
       );

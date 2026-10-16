@@ -1,6 +1,7 @@
 import type { Locale } from "./locale";
 
 export const workspaceShellEn = {
+  settlements: "Settlements", moderation: "Review moderation",
   consultationOperations: "Consultation operations", triage: "Triage queue", consultations: "Consultation history",
   billing: "Orders and billing", orders: "Orders", subscriptions: "Subscriptions", plans: "Plans", dunning: "Payment reminders",
   adminCourses: "Courses",
@@ -45,6 +46,7 @@ export const workspaceShellEn = {
 };
 export type WorkspaceShellMessages = typeof workspaceShellEn;
 export const workspaceShellBn: WorkspaceShellMessages = {
+  settlements: "নিষ্পত্তি খতিয়ান", moderation: "রিভিউ পর্যালোচনা",
   consultationOperations: "পরামর্শ ব্যবস্থাপনা", triage: "প্রাথমিক বাছাই", consultations: "পরামর্শের ইতিহাস",
   billing: "অর্ডার ও বিলিং", orders: "অর্ডারসমূহ", subscriptions: "সাবস্ক্রিপশন", plans: "প্ল্যানসমূহ", dunning: "পেমেন্টের রিমাইন্ডার",
   adminCourses: "কোর্সসমূহ",

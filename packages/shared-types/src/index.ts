@@ -9,3 +9,5 @@ export * from "./validation/youtube-courses.js";
 export * from "./validation/admin-billing.js";
 
 export * from "./validation/admin-consultations.js";
+export * from "./validation/admin-settlements.js";
+export * from "./validation/admin-reviews.js";

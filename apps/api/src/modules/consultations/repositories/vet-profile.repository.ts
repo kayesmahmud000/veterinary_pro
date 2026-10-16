@@ -116,8 +116,9 @@ export class VetProfileRepository implements IVetProfileRepository {
     userId: string,
     averageRating: number,
     totalReviews: number,
+    tx?: Prisma.TransactionClient,
   ): Promise<void> {
-    await this.prisma.vetProfile.updateMany({
+    await (tx ?? this.prisma).vetProfile.updateMany({
       where: { userId },
       data: {
         averageRating,
@@ -125,4 +126,17 @@ export class VetProfileRepository implements IVetProfileRepository {
       },
     });
   }
+  public async lockReviewFence(userId: string, tx: Prisma.TransactionClient): Promise<void> {
+    // Shared with every review writer. A real MVCC write prevents a stale
+    // serializable snapshot from committing an aggregate after waiting here.
+    await tx.$executeRaw`UPDATE users SET updated_at=updated_at WHERE id=${userId}::uuid`;
+  }
+  public async recomputeRatingAggregates(userId: string, tx: Prisma.TransactionClient): Promise<void> {
+    const aggregate = await tx.consultationReview.aggregate({
+      where: {vetId:userId,moderationStatus:"APPROVED",isPublic:true},
+      _avg:{rating:true},_count:{_all:true},
+    });
+    await this.updateRatingAggregates(userId, Math.round((aggregate._avg.rating ?? 0)*100)/100,aggregate._count._all,tx);
+  }
+
 }

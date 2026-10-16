@@ -34,7 +34,7 @@ import {
   ResponseMessage,
   Roles,
 } from "../../../common/decorators";
-import { ForbiddenOperationException } from "../../../common/exceptions/domain.exception";
+import { EntityNotFoundException, ValidationDomainException, ForbiddenOperationException } from "../../../common/exceptions/domain.exception";
 import { JwtAuthGuard, RolesGuard } from "../../../common/guards";
 import {
   IVetPayoutLedgerService,
@@ -148,6 +148,7 @@ export class ConsultationSettlementController {
     @CurrentUser() user: JwtPayload,
   ): Promise<ConsultationPayoutLedgerDto> {
     const consultation = await this.consultationRepo.findById(id);
+    if (!consultation) throw new EntityNotFoundException("Consultation", id);
     if (consultation) {
       const isSuperOrAdmin =
         user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN;
@@ -161,7 +162,7 @@ export class ConsultationSettlementController {
       }
     }
 
-    return this.payoutService.recordConsultationSettlement(id);
+    return this.payoutService.getConsultationSettlement(id);
   }
 
   @Post(":id/settlement/calculate")
@@ -174,12 +175,15 @@ export class ConsultationSettlementController {
   @ResponseMessage("Fee split calculated successfully")
   public async previewFeeSplit(
     @Param("id", ParseUUIDPipe) id: string,
-    @Query("platformRate") platformRate?: string,
+    @Query("platformRate") platformRate: string | undefined,
+    @CurrentUser() user: JwtPayload,
   ): Promise<FeeSplitCalculationDto> {
     const consultation = await this.consultationRepo.findById(id);
-    const feeCents = consultation?.feeCents ?? 0;
-    const rate = platformRate ? parseFloat(platformRate) : undefined;
-    return this.payoutService.calculateSplit(feeCents, rate);
+    if (!consultation) throw new EntityNotFoundException("Consultation", id);
+    if (![UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(user.role) && consultation.vetId !== user.sub && consultation.farmerId !== user.sub) throw new ForbiddenOperationException();
+    const rate = platformRate === undefined ? undefined : Number(platformRate);
+    if (platformRate !== undefined && (!platformRate.trim() || !Number.isFinite(rate))) throw new ValidationDomainException("Invalid platform fee rate.");
+    return {...this.payoutService.calculateSplit(consultation.feeCents, rate), currency: consultation.currency};
   }
 
   @Post("settlements/:id/process")

@@ -71,6 +71,8 @@ describe("ConsultationReviewService", () => {
 
   beforeEach(() => {
     mockReviewRepo = {
+      lock: jest.fn(),
+      lockConsultation: jest.fn().mockResolvedValue(mockConsultation),
       create: jest.fn().mockImplementation(async (e) => e),
       save: jest.fn().mockImplementation(async (e) => e),
       findById: jest.fn(),
@@ -99,6 +101,8 @@ describe("ConsultationReviewService", () => {
     };
 
     mockVetProfileRepo = {
+      lockReviewFence: jest.fn(),
+      recomputeRatingAggregates: jest.fn(),
       findByUserId: jest.fn(),
       save: jest.fn(),
       findAllActiveVetsWithProfiles: jest.fn(),
@@ -114,6 +118,7 @@ describe("ConsultationReviewService", () => {
       mockConsultationRepo,
       mockVetProfileRepo,
       mockAuditLogRepo,
+      {run: async (fn: any) => fn({marker:"tx"})},
     );
   });
 
@@ -140,17 +145,14 @@ describe("ConsultationReviewService", () => {
       expect(result.farmerId).toBe("farmer-1");
       expect(result.vetId).toBe("vet-1");
       expect(mockReviewRepo.create).toHaveBeenCalled();
-      expect(mockVetProfileRepo.updateRatingAggregates).toHaveBeenCalledWith(
-        "vet-1",
-        4.8,
-        12,
-      );
+      expect(mockVetProfileRepo.recomputeRatingAggregates).toHaveBeenCalledWith("vet-1",expect.objectContaining({marker:"tx"}));
       expect(mockAuditLogRepo.record).toHaveBeenCalledWith(
         expect.objectContaining({
           action: "CONSULTATION_REVIEW_SUBMITTED",
           userId: "farmer-1",
           traceId: "trace-rev-1",
         }),
+        expect.objectContaining({marker:"tx"}),
       );
     });
 
@@ -338,18 +340,28 @@ describe("ConsultationReviewService", () => {
 
       expect(result.moderationStatus).toBe(ReviewModerationStatus.REJECTED);
       expect(mockReviewRepo.save).toHaveBeenCalled();
-      expect(mockVetProfileRepo.updateRatingAggregates).toHaveBeenCalledWith(
-        "vet-1",
-        4.8,
-        12,
-      );
+      expect(mockVetProfileRepo.recomputeRatingAggregates).toHaveBeenCalledWith("vet-1",expect.objectContaining({marker:"tx"}));
       expect(mockAuditLogRepo.record).toHaveBeenCalledWith(
         expect.objectContaining({
           action: "CONSULTATION_REVIEW_MODERATED",
           userId: "admin-1",
           traceId: "trace-mod-1",
         }),
+        expect.objectContaining({marker:"tx"}),
       );
     });
   });
+  it("forces approved public discovery even with caller status override", async () => {
+    await service.getVetReviews("vet-1", {moderationStatus:ReviewModerationStatus.REJECTED});
+    expect(mockReviewRepo.findMany).toHaveBeenCalledWith(expect.objectContaining({moderationStatus:ReviewModerationStatus.APPROVED,isPublic:true}));
+  });
+  it("hides private approved and public pending reviews from unrelated users", async () => {
+    for (const isPublic of [false,true]) {
+      const review=ConsultationReviewEntity.create({consultationId:"consult-101",farmerId:"farmer-1",vetId:"vet-1",rating:4,isPublic});
+      if (!isPublic) review.approve("admin-1");
+      mockReviewRepo.findByConsultationId.mockResolvedValue(review);
+      expect(await service.getConsultationReview("consult-101",otherUser)).toBeNull();
+    }
+  });
+
 });

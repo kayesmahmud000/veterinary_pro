@@ -1,4 +1,5 @@
 import {
+  adminSettlementQuerySchema, adminReviewQuerySchema,
   adminConsultationQuerySchema,
   authUserSchema,
   UserRole,
@@ -44,7 +45,7 @@ export function readProtectedReturnTo(
 }
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const released = new RegExp(
-  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:courses(?:/${uuid}/lessons/${uuid})?|profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin(?:/(?:dashboard|administrative-access|courses(?:/${uuid})?|(?:triage|consultations)(?:/${uuid})?|(?:orders|subscriptions|plans|dunning)(?:/${uuid})?|products(?:/new|/${uuid}(?:/edit|/curriculum)?)?|media(?:/uploads/${uuid})?|(?:users|veterinarians|farms|audit)(?:/${uuid})?|role-requests(?:/${uuid})?))?)$`,
+  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:courses(?:/${uuid}/lessons/${uuid})?|profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin(?:/(?:dashboard|administrative-access|settlements(?:/vets/${uuid}|/${uuid})?|reviews(?:/${uuid})?|courses(?:/${uuid})?|(?:triage|consultations)(?:/${uuid})?|(?:orders|subscriptions|plans|dunning)(?:/${uuid})?|products(?:/new|/${uuid}(?:/edit|/curriculum)?)?|media(?:/uploads/${uuid})?|(?:users|veterinarians|farms|audit)(?:/${uuid})?|role-requests(?:/${uuid})?))?)$`,
   "i",
 );
 export function validateWorkspaceReturnTo(
@@ -74,6 +75,7 @@ export function validateWorkspaceReturnTo(
     )
       return null;
     const allowed =
+      /^\/admin\/settlements(?:/vets/[^/]+)?$/.test(url.pathname) ? ["limit","cursor","search","status","vetId","currency"] : url.pathname === "/admin/reviews" ? ["limit","cursor","search","status","vetId","rating"] :
       /^\/admin\/(?:triage|consultations)$/.test(url.pathname)
         ? ["limit", "cursor", "search", "status", "type"]
         : url.pathname === "/admin/media"
@@ -97,6 +99,12 @@ export function validateWorkspaceReturnTo(
     for (const key of Array.from(url.searchParams.keys()))
       if (!allowed.includes(key) || url.searchParams.getAll(key).length > 1)
         return null;
+    if (/^\/admin\/settlements(?:/vets/[^/]+)?$/.test(url.pathname) || url.pathname === "/admin/reviews") {
+      const filters=Object.fromEntries(url.searchParams);
+      const fixedVet=/^\/admin\/settlements\/vets\/([^/]+)$/.exec(url.pathname)?.[1];
+      if (fixedVet && filters.vetId && filters.vetId !== fixedVet) return null;
+      if (!(url.pathname === "/admin/reviews" ? adminReviewQuerySchema : adminSettlementQuerySchema).safeParse(filters).success) return null;
+    }
     if (/^\/admin\/(?:triage|consultations)$/.test(url.pathname)) {
       const filters = Object.fromEntries(url.searchParams);
       if (filters.status === "") delete filters.status;
@@ -159,6 +167,8 @@ export function getWorkspaceNav(
       { label: t.triage, href: "/admin/triage", section: t.consultationOperations },
       { label: t.consultations, href: "/admin/consultations", section: t.consultationOperations },
       ...(["orders", "subscriptions", "plans", "dunning"] as const).map(kind => ({label:t[kind],href:`/admin/${kind}`,section:t.billing})),
+      {label:t.settlements,href:"/admin/settlements",section:t.billing},
+      {label:t.moderation,href:"/admin/reviews",section:t.consultationOperations},
       {label:t.courses,href:"/account/courses",section:t.account},
       ...(identity.role === UserRole.SUPER_ADMIN
         ? [

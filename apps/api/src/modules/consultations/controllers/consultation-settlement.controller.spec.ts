@@ -69,6 +69,7 @@ describe("ConsultationSettlementController", () => {
         vetPayoutCents: 4000,
         currency: "USD",
       }),
+      getConsultationSettlement: jest.fn().mockResolvedValue({id:"ledger-1"} as any),
       recordConsultationSettlement: jest.fn().mockResolvedValue({
         id: "ledger-1",
         consultationId: "consult-1",
@@ -173,7 +174,7 @@ describe("ConsultationSettlementController", () => {
         mockVetUser,
       );
       expect(result.consultationId).toBe("consult-1");
-      expect(mockPayoutService.recordConsultationSettlement).toHaveBeenCalledWith(
+      expect(mockPayoutService.getConsultationSettlement).toHaveBeenCalledWith(
         "consult-1",
       );
     });
@@ -195,7 +196,7 @@ describe("ConsultationSettlementController", () => {
 
   describe("previewFeeSplit", () => {
     it("should calculate and preview fee split", async () => {
-      const result = await controller.previewFeeSplit("consult-1", "0.25");
+      const result = await controller.previewFeeSplit("consult-1", "0.25", mockVetUser);
       expect(result).toBeDefined();
       expect(mockPayoutService.calculateSplit).toHaveBeenCalledWith(5000, 0.25);
     });
@@ -232,5 +233,22 @@ describe("ConsultationSettlementController", () => {
         "admin-1",
       );
     });
+  });
+});
+
+describe('Legacy settlement reads must remain read-only', () => {
+  const make = (consultation:any) => {
+    const service:any = {recordConsultationSettlement:jest.fn(async()=>({id:'created'})),getConsultationSettlement:jest.fn(async()=>({id:'existing'})),calculateSplit:jest.fn(()=>({currency:'USD'}))};
+    return {service,controller:new ConsultationSettlementController(service,{findById:async()=>consultation} as never)};
+  };
+  const user:any = {sub:'farmer',role:UserRole.FARMER};
+  it('never invokes capture-triggered creation on GET',async()=>{
+    const {controller,service}=make({farmerId:'farmer'});
+    expect(await controller.getConsultationSettlement('id',user)).toEqual({id:'existing'});
+    expect(service.recordConsultationSettlement).not.toHaveBeenCalled();
+  });
+  it('returns missing consultation before ledger lookup',async()=>{
+    const {controller}=make(null);
+    await expect(controller.getConsultationSettlement('missing',user)).rejects.toThrow();
   });
 });

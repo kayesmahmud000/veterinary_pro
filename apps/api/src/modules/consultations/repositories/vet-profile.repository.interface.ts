@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { VetProfileEntity } from "../entities/vet-profile.entity";
 
 export const VET_PROFILE_REPOSITORY = Symbol("VET_PROFILE_REPOSITORY");
@@ -15,6 +16,8 @@ export interface VetWithProfileRecord {
 }
 
 export interface IVetProfileRepository {
+  lockReviewFence(userId: string, tx: Prisma.TransactionClient): Promise<void>;
+  recomputeRatingAggregates(userId: string, tx: Prisma.TransactionClient): Promise<void>;
   findByUserId(userId: string): Promise<VetProfileEntity | null>;
   save(entity: VetProfileEntity): Promise<VetProfileEntity>;
   findAllActiveVetsWithProfiles(): Promise<VetWithProfileRecord[]>;
@@ -22,5 +25,6 @@ export interface IVetProfileRepository {
     userId: string,
     averageRating: number,
     totalReviews: number,
+    tx?: Prisma.TransactionClient,
   ): Promise<void>;
 }

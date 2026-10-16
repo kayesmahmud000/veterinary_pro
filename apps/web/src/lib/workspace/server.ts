@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchWithDiagnostics } from "../api-diagnostics";
 import { z } from "zod";
 import {
+  adminSettlementQuerySchema, adminSettlementSummaryQuerySchema, adminSettlementListSchema, adminSettlementSummarySchema, adminSettlementDetailSchema, adminSettlementPreviewSchema, adminSettlementReconcileSchema, adminSettlementBulkSchema, adminSettlementBulkResultSchema,
+  adminReviewQuerySchema, adminReviewListSchema, adminReviewDetailSchema, adminReviewModerateSchema,
   adminConsultationQuerySchema, adminConsultationListSchema, adminConsultationDetailSchema, adminConsultationCandidatesSchema, adminConsultationActionSchema,
   billingKinds, billingQueries, billingLists, billingDetails, billingSubscriptionActionSchema, billingPlanEditSchema,
   courseLibrarySchema, courseLibraryQuerySchema, courseEnrollmentSchema, myCourseSchema, coursePlaybackSchema,
@@ -71,6 +73,23 @@ export function resolveEndpoint(
   method: string,
 ): Endpoint | null {
   const key = path.join("/");
+  if (path[0] === "admin" && path[1] === "settlements") {
+    if (path.length === 2 && method === "GET") return {method, upstream:key, response:adminSettlementListSchema, query:adminSettlementQuerySchema};
+    if (path.length === 3 && path[2] === "summary" && method === "GET") return {method, upstream:key, response:adminSettlementSummarySchema, query:adminSettlementSummaryQuerySchema};
+    if (path.length === 3 && path[2] === "bulk-reconcile" && method === "POST") return {method, upstream:key, response:adminSettlementBulkResultSchema, body:adminSettlementBulkSchema, bodyLimit:32768};
+    if (uuid.safeParse(path[2]).success) {
+      if (path.length === 3 && method === "GET") return {method, upstream:key, entityId:path[2], response:adminSettlementDetailSchema};
+      if (path.length === 4 && path[3] === "preview" && method === "GET") return {method, upstream:key, entityId:path[2], response:adminSettlementPreviewSchema};
+      if (path.length === 4 && path[3] === "reconcile" && method === "POST") return {method, upstream:key, entityId:path[2], response:adminSettlementDetailSchema, body:adminSettlementReconcileSchema, bodyLimit:16384};
+    }
+  }
+  if (path[0] === "admin" && path[1] === "reviews") {
+    if (path.length === 2 && method === "GET") return {method, upstream:key, response:adminReviewListSchema, query:adminReviewQuerySchema};
+    if (uuid.safeParse(path[2]).success) {
+      if (path.length === 3 && method === "GET") return {method, upstream:key, entityId:path[2], response:adminReviewDetailSchema};
+      if (path.length === 4 && path[3] === "moderate" && method === "POST") return {method, upstream:key, entityId:path[2], response:adminReviewDetailSchema, body:adminReviewModerateSchema, bodyLimit:16384};
+    }
+  }
   if (path[0] === "admin" && path[1] === "consultations") {
     if (path.length === 2 && method === "GET") return {method, upstream:key, response:adminConsultationListSchema, query:adminConsultationQuerySchema};
     if (uuid.safeParse(path[2]).success) {
@@ -324,6 +343,7 @@ export function resolveEndpoint(
   return null;
 }
 const errorCodes = new Set([
+  "SETTLEMENT_VERSION_CONFLICT", "SETTLEMENT_ACTION_UNAVAILABLE", "REVIEW_VERSION_CONFLICT", "REVIEW_ACTION_UNAVAILABLE",
   "CONSULTATION_VERSION_CONFLICT", "CONSULTATION_ACTION_UNAVAILABLE",
   "BILLING_VERSION_CONFLICT", "BILLING_ACTION_UNAVAILABLE",
   "CONTENT_PROVIDER_MISMATCH", "COURSE_MUST_BE_UNPUBLISHED", "INVALID_CURRICULUM", "INVALID_YOUTUBE_PRICING",
@@ -586,6 +606,16 @@ export async function handleWorkspace(
     if (endpoint.productId && parsed.data.productId !== endpoint.productId) return reply({code:"INVALID_RESPONSE"},502);
     if (endpoint.entityId && parsed.data.id !== endpoint.entityId)
       return reply({ code: "INVALID_RESPONSE" }, 502);
+    if (path[0] === "admin" && ["settlements", "reviews"].includes(path[1])) {
+      const data = parsed.data as { items?: Array<Record<string, any>> };
+      const filters = query.data as Record<string, unknown>;
+      const items = data.items ?? [];
+      if (items.some(item => (filters.vetId && path[2] !== "summary" && item.vet?.id !== filters.vetId) || (filters.currency && item.currency !== filters.currency) || (filters.status && path[2] !== "summary" && (item.status ?? item.moderationStatus) !== filters.status) || (filters.rating && item.rating !== filters.rating))) return reply({code:"INVALID_RESPONSE"},502);
+      if (path[2] === "bulk-reconcile") {
+        const input = body as {items:Array<{id:string}>;vetId:string;currency:string};
+        if (items.length !== input.items.length || new Set(items.map(item=>item.id)).size !== items.length || items.some(item => !input.items.some(expected=>expected.id===item.id) || item.vet?.id!==input.vetId || item.currency!==input.currency)) return reply({code:"INVALID_RESPONSE"},502);
+      }
+    }
     if (endpoint.farmId) {
       const data = parsed.data as Record<string, unknown>;
       const items = (data.items ?? data.upcomingEvents ?? []) as Record<
