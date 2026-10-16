@@ -1,5 +1,7 @@
 # Web and mobile architecture
 
+Added 2026-10-16 ADM-5: `/admin/triage`, `/admin/consultations` and UUID details share current-identity ADMIN/SUPER_ADMIN protection, strict same-origin BFF projections, bilingual filters/history/candidates and password-confirmed operational actions. [Local implementation/evidence](../../docs/features/admin-consultations/plan.md) separates controlled browser and disposable PostgreSQL verification from deployment/provider acceptance. Clinical authorship, settlement processing and provider cancellation are not added by these screens.
+
 Client work uses the applicable [senior client engineer](../roles/frontend-ui.md) with [UI/UX Designer and UI Reviewer](../roles/ui-ux.md). Use the [UI workflow](../workflows/ui-change.md); the implementation facts below constrain design choices and must not be replaced by generic assumptions.
 
 ## Web: public site and modal account access; application UI pending

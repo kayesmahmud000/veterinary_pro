@@ -266,3 +266,20 @@ describe("Deleted owner privacy", () => {
     ).toBeNull();
   });
 });
+
+describe("Known operational audit reasons", () => {
+  it.each([
+    "USER_SUSPENDED", "USER_REACTIVATED", "USER_SESSIONS_REVOKED",
+    "SUBSCRIPTION_CANCELLATION_SCHEDULED", "SUBSCRIPTION_CANCELLATION_REVOKED", "SUBSCRIPTION_PLAN_UPDATED",
+    "CONSULTATION_ADMIN_ASSIGNED", "CONSULTATION_ADMIN_AUTO_ASSIGNED", "CONSULTATION_ADMIN_CANCELLED",
+  ])("preserves only the safe reason for %s", async action => {
+    const repo = new DirectoryRepository({auditLog:{findFirst:async()=>({
+      id:targetId,userId:actorId,action,entityType:"Consultation",entityId:targetId,traceId:targetId,
+      createdAt:new Date("2026-10-16T00:00:00Z"),oldValues:null,
+      newValues:{reason:"Reviewed support request",actorPassword:"PRIVATE-PASSWORD",providerError:"PRIVATE-PROVIDER"},
+    })}} as any);
+    const row = await repo.detail("audit",targetId,false);
+    expect((row as any).newValues).toEqual({reason:"Reviewed support request"});
+    expect(JSON.stringify(row)).not.toContain("PRIVATE-");
+  });
+});

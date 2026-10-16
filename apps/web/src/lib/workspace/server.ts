@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchWithDiagnostics } from "../api-diagnostics";
 import { z } from "zod";
 import {
+  adminConsultationQuerySchema, adminConsultationListSchema, adminConsultationDetailSchema, adminConsultationCandidatesSchema, adminConsultationActionSchema,
   billingKinds, billingQueries, billingLists, billingDetails, billingSubscriptionActionSchema, billingPlanEditSchema,
   courseLibrarySchema, courseLibraryQuerySchema, courseEnrollmentSchema, myCourseSchema, coursePlaybackSchema,
   addFarmMemberSchema,
@@ -58,6 +59,7 @@ type Endpoint = {
   farmId?: string;
   membershipRequired?: boolean;
   entityId?: string;
+  consultationId?: string;
   productId?: string;
   lessonId?: string;
   writeAccessRequired?: boolean;
@@ -69,6 +71,14 @@ export function resolveEndpoint(
   method: string,
 ): Endpoint | null {
   const key = path.join("/");
+  if (path[0] === "admin" && path[1] === "consultations") {
+    if (path.length === 2 && method === "GET") return {method, upstream:key, response:adminConsultationListSchema, query:adminConsultationQuerySchema};
+    if (uuid.safeParse(path[2]).success) {
+      if (path.length === 3 && method === "GET") return {method, upstream:key, entityId:path[2], response:adminConsultationDetailSchema};
+      if (path.length === 4 && path[3] === "candidates" && method === "GET") return {method, upstream:key, consultationId:path[2], response:adminConsultationCandidatesSchema};
+      if (path.length === 4 && path[3] === "actions" && method === "POST") return {method, upstream:key, entityId:path[2], response:adminConsultationDetailSchema, body:adminConsultationActionSchema, bodyLimit:16384};
+    }
+  }
   if(path[0]==="admin"&&path[1]==="billing"&&billingKinds.includes(path[2] as typeof billingKinds[number])){
     const kind=path[2] as typeof billingKinds[number];
     if(path.length===3&&method==="GET")return{method,upstream:key,response:billingLists[kind],query:billingQueries[kind]};
@@ -314,6 +324,7 @@ export function resolveEndpoint(
   return null;
 }
 const errorCodes = new Set([
+  "CONSULTATION_VERSION_CONFLICT", "CONSULTATION_ACTION_UNAVAILABLE",
   "BILLING_VERSION_CONFLICT", "BILLING_ACTION_UNAVAILABLE",
   "CONTENT_PROVIDER_MISMATCH", "COURSE_MUST_BE_UNPUBLISHED", "INVALID_CURRICULUM", "INVALID_YOUTUBE_PRICING",
   "COURSE_ENROLLMENT_REQUIRED",
@@ -570,6 +581,7 @@ export async function handleWorkspace(
       record?.success === true ? record.data : undefined,
     );
     if (!parsed.success) return reply({ code: "INVALID_RESPONSE" }, 502);
+    if (endpoint.consultationId && parsed.data.consultationId !== endpoint.consultationId) return reply({code:"INVALID_RESPONSE"},502);
     if (endpoint.lessonId && parsed.data.lessonId !== endpoint.lessonId) return reply({code:"INVALID_RESPONSE"},502);
     if (endpoint.productId && parsed.data.productId !== endpoint.productId) return reply({code:"INVALID_RESPONSE"},502);
     if (endpoint.entityId && parsed.data.id !== endpoint.entityId)

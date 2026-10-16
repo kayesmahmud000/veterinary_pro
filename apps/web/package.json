@@ -23,6 +23,7 @@
     "test:protected-routes": "node --test scripts/check-protected-routes.mjs",
     "test:farm-overview": "node --test scripts/check-farm-overview.mjs",
     "test:dashboard:browser": "node scripts/check-dashboard-browser.mjs",
+    "test:admin-consultations": "node --test scripts/check-admin-consultations.mjs",
     "test:admin-dashboard": "node --test scripts/check-admin-dashboard.mjs"
   },
   "dependencies": {

@@ -49,6 +49,46 @@ export interface CreateConsultationProps {
 }
 
 export class ConsultationEntity {
+  private readonly _persisted: ReturnType<
+    ConsultationEntity["persistenceState"]
+  >;
+
+  /** Original mutable fields let repositories persist intent without stale entity snapshots. */
+  public persistenceState() {
+    return {
+      vetId: this._vetId,
+      animalId: this._animalId,
+      chiefComplaint: this._chiefComplaint,
+      mediaUrls: [...this._mediaUrls],
+      type: this._type,
+      status: this._status,
+      roomSessionId: this._roomSessionId,
+      feeCents: this._feeCents,
+      scheduledAt: this._scheduledAt,
+      assignedAt: this._assignedAt,
+      paymentStatus: this._paymentStatus,
+      paymentIntentId: this._paymentIntentId,
+      paymentHeldAt: this._paymentHeldAt,
+      paymentCapturedAt: this._paymentCapturedAt,
+      paymentReleasedAt: this._paymentReleasedAt,
+      currency: this._currency,
+    };
+  }
+  public get persistedState() {
+    return { ...this._persisted, mediaUrls: [...this._persisted.mediaUrls] };
+  }
+  public persistenceChanges() {
+    const current = this.persistenceState();
+    const changes: Partial<typeof current> = {};
+    for (const key of Object.keys(current) as Array<keyof typeof current>) {
+      if (
+        JSON.stringify(current[key]) !== JSON.stringify(this._persisted[key])
+      ) {
+        Object.assign(changes, { [key]: current[key] });
+      }
+    }
+    return changes;
+  }
   private readonly _id: string;
   private readonly _farmerId: string;
   private _vetId: string | null;
@@ -106,6 +146,7 @@ export class ConsultationEntity {
     this._vet = props.vet ?? null;
     this._animal = props.animal ?? null;
     this._farm = props.farm ?? null;
+    this._persisted = this.persistenceState();
   }
 
   public static create(props: CreateConsultationProps): ConsultationEntity {

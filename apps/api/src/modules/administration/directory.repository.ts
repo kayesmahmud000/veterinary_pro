@@ -37,7 +37,13 @@ const auditSelect = {
   createdAt: true,
 } as const;
 // Unknown and security events require SUPER_ADMIN; never rely on a denylist.
+const reasonBearingActions = [
+  "USER_SUSPENDED", "USER_REACTIVATED", "USER_SESSIONS_REVOKED",
+  "SUBSCRIPTION_CANCELLATION_SCHEDULED", "SUBSCRIPTION_CANCELLATION_REVOKED", "SUBSCRIPTION_PLAN_UPDATED",
+  "CONSULTATION_ADMIN_ASSIGNED", "CONSULTATION_ADMIN_AUTO_ASSIGNED", "CONSULTATION_ADMIN_CANCELLED",
+];
 const operationalActions = [
+  "CONSULTATION_ADMIN_ASSIGNED", "CONSULTATION_ADMIN_AUTO_ASSIGNED", "CONSULTATION_ADMIN_CANCELLED",
   "SUBSCRIPTION_CANCELLATION_SCHEDULED", "SUBSCRIPTION_CANCELLATION_REVOKED", "SUBSCRIPTION_PLAN_UPDATED",
   "USER_SUSPENDED",
   "USER_REACTIVATED",
@@ -178,7 +184,7 @@ export class DirectoryRepository {
       const oldValues = snapshot(r.oldValues),
         newValues = snapshot(r.newValues);
       if (
-        operationalActions.slice(0, 3).includes(row.action) &&
+        reasonBearingActions.includes(row.action) &&
         newValues &&
         r.newValues &&
         typeof r.newValues === "object" &&

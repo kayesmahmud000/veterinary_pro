@@ -54,6 +54,12 @@ describe("ConsultationRepository", () => {
       },
     };
 
+    mockPrisma.$transaction = jest.fn(async (fn: any) => fn(mockPrisma));
+    mockPrisma.$queryRaw = jest.fn(async () => []);
+    mockPrisma.$executeRaw = jest.fn(async () => 1);
+    mockPrisma.user = {findUnique: jest.fn(async () => ({role:"VET",status:"ACTIVE",deletedAt:null,vetProfile:{isAvailable:true,maxActiveCases:5}}))};
+    mockPrisma.consultation.findUnique.mockResolvedValue({...mockDbRecord,scheduledAt:null,assignedAt:null});
+    mockPrisma.consultation.count.mockResolvedValue(0);
     repository = new ConsultationRepository(mockPrisma as unknown as PrismaService);
   });
 
