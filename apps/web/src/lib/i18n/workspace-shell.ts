@@ -1,6 +1,7 @@
 import type { Locale } from "./locale";
 
 export const workspaceShellEn = {
+  content: "Public content", notifications: "Notification history", support: "Support",
   settlements: "Settlements",
   moderation: "Review moderation",
   consultationOperations: "Consultation operations",
@@ -57,6 +58,7 @@ export const workspaceShellEn = {
 };
 export type WorkspaceShellMessages = typeof workspaceShellEn;
 export const workspaceShellBn: WorkspaceShellMessages = {
+  content: "প্রকাশ্য কনটেন্ট", notifications: "নোটিফিকেশনের ইতিহাস", support: "সহায়তা",
   settlements: "নিষ্পত্তি খতিয়ান",
   moderation: "রিভিউ পর্যালোচনা",
   consultationOperations: "পরামর্শ ব্যবস্থাপনা",

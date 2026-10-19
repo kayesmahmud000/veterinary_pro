@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { PublishedCatalog } from "@/components/marketing/published-content";
+import { communicationsMessages } from "@/lib/i18n/admin-communications";
+import { communicationsLabel } from "@/lib/i18n/admin-communications";
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 import { getLocalization } from "@/lib/i18n/server";
 import { PublicPage } from "@/components/marketing/public-page";
@@ -17,8 +20,8 @@ export function generateMetadata() {
     description: messages.publicPages.help.description,
   };
 }
-export default function HelpPage() {
-  const { messages } = getLocalization();
+export default function HelpPage({ searchParams }: { searchParams: { cursor?: string } }) {
+  const { messages, locale } = getLocalization();
   const t = messages.publicPages;
   const h = t.help;
   const destinations = ["/#farm-demo", "/learning#guides", "/"];
@@ -29,6 +32,12 @@ export default function HelpPage() {
       eyebrow={t.helpEyebrow}
     >
       <p className="mb-8 text-lg">{h.intro}</p>
+      <Link className={buttonVariants({ variant: "outline" })} href="/account/support">{communicationsMessages(locale).ownSupport}</Link>
+      <nav className="my-6 flex flex-wrap gap-4" aria-label={communicationsMessages(locale).publicContent}>
+        <Link href="/pages">{communicationsLabel(locale, "PAGE")}</Link>
+        <Link href="/guides">{communicationsLabel(locale, "GUIDE")}</Link>
+      </nav>
+      <PublishedCatalog embedded kind="FAQ" cursor={searchParams.cursor} />
       <div className="mb-12 grid gap-6 md:grid-cols-3">
         {h.steps.map((step, i) => (
           <Card key={step.title} className="flex flex-col">

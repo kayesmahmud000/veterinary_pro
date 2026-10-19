@@ -1,4 +1,7 @@
 import { Module } from "@nestjs/common";
+import { CommunicationsRepository } from "./communications.repository";
+import { CommunicationsService } from "./communications.service";
+import { CommunicationsController, OwnSupportController, PublicContentController } from "./communications.controller";
 import { WorkflowRateLimitModule } from "../../common/security/workflow-rate-limiter";
 import { AuthModule } from "../auth/auth.module";
 import { UsersModule } from "../users/users.module";
@@ -34,6 +37,7 @@ import { AdminConsultationsController } from "./consultations.controller";
     ConsultationsModule,
   ],
   providers: [
+    CommunicationsRepository, CommunicationsService,
     PrivilegedRoleService,
     DirectoryRepository,
     DirectoryService,
@@ -47,6 +51,7 @@ import { AdminConsultationsController } from "./consultations.controller";
     AdminReviewsService,
   ],
   controllers: [
+    CommunicationsController, OwnSupportController, PublicContentController,
     PrivilegedRolesController,
     DirectoryController,
     BillingController,

@@ -21,6 +21,8 @@ Paths below are relative to `apps/api/src/modules/` unless stated. “Present”
 
 ## Domain invariants to preserve
 
+Added 2026-10-19: [ADM-7 contracts and local evidence](../../docs/features/admin-communications/plan.md) cover content publication, verified public veterinarian biographies, safe domain notification history/retry generations and own/admin support. Draft/public snapshots and internal/requester-visible messages are distinct. These scoped support/publication contracts grant no clinical, membership, financial or external-dispatch rights.
+
 Updated 2026-10-16: `administration/billing.*` and web `/admin/orders`, `/admin/subscriptions`, `/admin/plans`, `/admin/dunning` provide guarded global financial support reads and confirmed/audited local-plan/eligible period-end changes. [Contracts, tests and actual API/web releases](../../docs/features/admin-billing/plan.md) record redaction/concurrency/provider boundaries and live learner/course acceptance. Page loads do not dispatch reminders, seed plans or invoke downloads.
 
 Added 2026-10-16: `administration/consultations.*` and web `/admin/triage`, `/admin/consultations` provide guarded operational discovery/detail, bounded candidate ranking and confirmed assignment/local cancellation with atomic audit and IN_APP records. [Specification and local evidence](../../docs/features/admin-consultations/plan.md) cover legacy changed-field persistence and mixed-writer capacity protection. Payment-linked cancellation and external notification delivery remain separate; no release is implied by local implementation.

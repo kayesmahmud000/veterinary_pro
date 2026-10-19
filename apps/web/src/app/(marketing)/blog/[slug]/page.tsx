@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { PublishedDetail } from "@/components/marketing/published-content";
+import { publishedEntry } from "@/lib/editorial";
 import { PublicNotFound } from "@/components/marketing/public-not-found";
 import { ArrowLeft } from "lucide-react";
 import { getLocalization } from "@/lib/i18n/server";
@@ -7,15 +9,18 @@ import { PublicPage } from "@/components/marketing/public-page";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 
-export function generateMetadata({ params }: { params: { slug: string } }) {
+export async function generateMetadata({ params }: { params: { slug: string } }) {
   const post = findBlogPost(params.slug);
   const { locale, messages } = getLocalization();
-  if (!post)
+  if (!post) {
+    const managed = await publishedEntry("BLOG", params.slug);
+    if (managed.data) return { title: managed.data.content[locale].title, description: managed.data.content[locale].summary };
     return {
       title: messages.notFound.title,
       description: messages.notFound.body,
       robots: { index: false, follow: true },
     };
+  }
   return {
     title: post.content[locale].title,
     description: post.content[locale].summary,
@@ -27,7 +32,7 @@ export default function BlogArticlePage({
   params: { slug: string };
 }) {
   const post = findBlogPost(params.slug);
-  if (!post) return <PublicNotFound />;
+  if (!post) return <PublishedDetail kind="BLOG" slug={params.slug} />;
   const { locale, messages } = getLocalization();
   const t = messages.publicPages;
   const article = post.content[locale];

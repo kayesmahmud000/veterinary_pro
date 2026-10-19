@@ -46,7 +46,7 @@ export function readProtectedReturnTo(
 }
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const released = new RegExp(
-  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:courses(?:/${uuid}/lessons/${uuid})?|profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin(?:/(?:dashboard|administrative-access|settlements(?:/vets/${uuid}|/${uuid})?|reviews(?:/${uuid})?|courses(?:/${uuid})?|(?:triage|consultations)(?:/${uuid})?|(?:orders|subscriptions|plans|dunning)(?:/${uuid})?|products(?:/new|/${uuid}(?:/edit|/curriculum)?)?|media(?:/uploads/${uuid})?|(?:users|veterinarians|farms|audit)(?:/${uuid})?|role-requests(?:/${uuid})?))?)$`,
+  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:support(?:/${uuid})?|courses(?:/${uuid}/lessons/${uuid})?|profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin(?:/(?:notifications|(?:content|support)(?:/${uuid})?|dashboard|administrative-access|settlements(?:/vets/${uuid}|/${uuid})?|reviews(?:/${uuid})?|courses(?:/${uuid})?|(?:triage|consultations)(?:/${uuid})?|(?:orders|subscriptions|plans|dunning)(?:/${uuid})?|products(?:/new|/${uuid}(?:/edit|/curriculum)?)?|media(?:/uploads/${uuid})?|(?:users|veterinarians|farms|audit)(?:/${uuid})?|role-requests(?:/${uuid})?))?)$`,
   "i",
 );
 export function validateWorkspaceReturnTo(
@@ -195,6 +195,7 @@ export function getWorkspaceNav(
         href: `/admin/${kind}`,
         section: t.adminPlatform,
       })),
+      ...(["content", "notifications", "support"] as const).map((kind) => ({ label: t[kind], href: `/admin/${kind}`, section: t.adminPlatform })),
       {
         label: t.triage,
         href: "/admin/triage",
@@ -246,6 +247,7 @@ export function getWorkspaceNav(
     items.push({ label: t.access, href: "/admin/administrative-access" });
   items.push(
     { label: t.courses, href: "/account/courses" },
+    { label: t.support, href: "/account/support" },
     { label: t.profile, href: "/account/profile" },
     { label: t.applications, href: "/account/role-requests" },
   );

@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchWithDiagnostics } from "../api-diagnostics";
 import { z } from "zod";
 import {
+  editorialQuerySchema, editorialListSchema, editorialCreateSchema, editorialDetailSchema, editorialSaveSchema, editorialActionSchema,
+  notificationQuerySchema, notificationListSchema, notificationRetrySchema, notificationRowSchema,
+  supportQuerySchema, supportListSchema, supportDetailSchema, supportCreateSchema, supportReplySchema, supportActionSchema,
+} from "@vetralink/shared-types";
+import {
   adminSettlementQuerySchema,
   adminSettlementSummaryQuerySchema,
   adminSettlementListSchema,
@@ -116,6 +121,27 @@ export function resolveEndpoint(
   method: string,
 ): Endpoint | null {
   const key = path.join("/");
+  if (path[0] === "admin" && path[1] === "content") {
+    if (path.length === 2 && method === "GET") return { method, upstream: key, query: editorialQuerySchema, response: editorialListSchema };
+    if (path.length === 2 && method === "POST") return { method, upstream: key, body: editorialCreateSchema, response: editorialDetailSchema, bodyLimit: 262144 };
+    if (uuid.safeParse(path[2]).success) {
+      if (path.length === 3 && method === "GET") return { method, upstream: key, entityId: path[2], response: editorialDetailSchema };
+      if (path.length === 4 && method === "POST" && ["save", "actions"].includes(path[3])) return { method, upstream: key, entityId: path[2], response: editorialDetailSchema, body: path[3] === "save" ? editorialSaveSchema : editorialActionSchema, bodyLimit: path[3] === "save" ? 262144 : 16384 };
+    }
+  }
+  if (path[0] === "admin" && path[1] === "notifications") {
+    if (path.length === 2 && method === "GET") return { method, upstream: key, query: notificationQuerySchema, response: notificationListSchema };
+    if (path.length === 4 && uuid.safeParse(path[2]).success && path[3] === "retry" && method === "POST") return { method, upstream: key, entityId: path[2], body: notificationRetrySchema, response: notificationRowSchema, bodyLimit: 16384 };
+  }
+  const ownSupport = path[0] === "support" && path[1] === "tickets";
+  if ((path[0] === "admin" && path[1] === "support") || ownSupport) {
+    if (path.length === 2 && method === "GET") return { method, upstream: key, query: supportQuerySchema, response: supportListSchema };
+    if (path.length === 2 && method === "POST" && ownSupport) return { method, upstream: key, body: supportCreateSchema, response: supportDetailSchema };
+    if (uuid.safeParse(path[2]).success) {
+      if (path.length === 3 && method === "GET") return { method, upstream: key, entityId: path[2], response: supportDetailSchema };
+      if (path.length === 4 && method === "POST" && path[3] === (ownSupport ? "messages" : "actions")) return { method, upstream: key, entityId: path[2], body: ownSupport ? supportReplySchema : supportActionSchema, response: supportDetailSchema };
+    }
+  }
   if (path[0] === "admin" && path[1] === "settlements") {
     if (path.length === 2 && method === "GET")
       return {
@@ -705,6 +731,7 @@ const errorCodes = new Set([
   "AUTHORIZATION_CHANGED",
   "QUOTA_EXCEEDED",
   "PASSWORD_CONFIRMATION_FAILED",
+  "COMMUNICATION_CONFLICT", "CONTENT_INCOMPLETE", "CONTENT_RESERVED_SLUG", "SUPPORT_LINK_FORBIDDEN",
 ]);
 function reply(body: unknown, status = 200) {
   return NextResponse.json(body, {
@@ -716,9 +743,10 @@ export async function handleWorkspace(
   request: NextRequest,
   path: string[],
 ): Promise<NextResponse> {
+  const communicationsRoute = (path[0] === "admin" && ["content", "notifications", "support"].includes(path[1])) || (path[0] === "support" && path[1] === "tickets");
   const financeRoute =
     path[0] === "admin" && ["settlements", "reviews"].includes(path[1]);
-  if (financeRoute)
+  if (financeRoute || communicationsRoute)
     path = path.map((value) =>
       uuid.safeParse(value).success ? value.toLowerCase() : value,
     );
@@ -790,6 +818,7 @@ export async function handleWorkspace(
   }
   const controller = new AbortController(),
     timer = setTimeout(() => controller.abort(), 12000);
+  let currentUserId: string | undefined;
   try {
     const base = new URL(
       `${(process.env.API_BASE_URL || "https://veterinary-api-mocha.vercel.app/api/v1").replace(/\/$/, "")}/`,
@@ -803,7 +832,7 @@ export async function handleWorkspace(
     )
       return reply({ code: "UNAVAILABLE" }, 503);
     const url = new URL(endpoint.upstream, base);
-    if (path[0] === "admin" || (path[0] === "me" && path[1] === "courses")) {
+    if (path[0] === "admin" || communicationsRoute || (path[0] === "me" && path[1] === "courses")) {
       const identityResponse = await fetchWithDiagnostics(
         new URL("auth/me", base),
         {
@@ -838,6 +867,8 @@ export async function handleWorkspace(
       );
       if (!identity.success) return reply({ code: "INVALID_RESPONSE" }, 502);
       const expectedActor = request.headers.get("X-Workspace-Actor");
+      if (communicationsRoute && request.method !== "GET" && expectedActor === null) return reply({ code: "AUTHORIZATION_CHANGED" }, 403);
+      currentUserId = identity.data.id;
       if (
         expectedActor !== null &&
         expectedActor !==
@@ -845,7 +876,7 @@ export async function handleWorkspace(
       )
         return reply({ code: "AUTHORIZATION_CHANGED" }, 403);
       const roles =
-        path[0] === "me"
+        path[0] === "me" || path[0] === "support"
           ? Object.values(UserRole)
           : path[1] === "users"
             ? [UserRole.SUPER_ADMIN]
@@ -974,6 +1005,20 @@ export async function handleWorkspace(
       record?.success === true ? record.data : undefined,
     );
     if (!parsed.success) return reply({ code: "INVALID_RESPONSE" }, 502);
+    if (communicationsRoute) {
+      const data = parsed.data as Record<string, any>;
+      const input = body as Record<string, any> | undefined;
+      const rows = (data.items ?? [data]) as Array<Record<string, any>>;
+      const filters = query.data as Record<string, unknown>;
+      if (data.items && (rows.length > Number(filters.limit ?? 20) || new Set(rows.map((r) => r.id)).size !== rows.length || rows.some((r) => (filters.cursor && r.id <= String(filters.cursor)) || (filters.kind && r.kind !== filters.kind) || (filters.status && r.status !== filters.status) || (filters.source && r.source !== filters.source)))) return reply({ code: "INVALID_RESPONSE" }, 502);
+      if (path[0] === "support" && rows.some((r) => r.requester?.id !== currentUserId || r.messages?.some((m: { internal: boolean }) => m.internal) || r.events?.length)) return reply({ code: "INVALID_RESPONSE" }, 502);
+      if (request.method === "POST" && input) {
+        if (input.id && data.id !== input.id) return reply({ code: "INVALID_RESPONSE" }, 502);
+        if (input.expectedVersion && data.version !== input.expectedVersion + 1) return reply({ code: "INVALID_RESPONSE" }, 502);
+        if (input.expectedGeneration !== undefined && (data.generation !== input.expectedGeneration + 1 || data.status !== "PENDING" || data.canRetry || data.source !== "ROLE_EMAIL")) return reply({ code: "INVALID_RESPONSE" }, 502);
+        if (path[1] === "content" && ((input.action === "PUBLISH" && (!data.published || !data.publishedAt)) || (input.action === "UNPUBLISH" && (data.published !== null || data.publishedAt !== null)))) return reply({ code: "INVALID_RESPONSE" }, 502);
+      }
+    }
     if (
       endpoint.consultationId &&
       parsed.data.consultationId !== endpoint.consultationId

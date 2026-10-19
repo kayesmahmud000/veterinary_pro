@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PublishedCatalog } from "@/components/marketing/published-content";
 import { ArrowUpRight } from "lucide-react";
 import { getLocalization } from "@/lib/i18n/server";
 import { formatNumber } from "@/lib/i18n/locale";
@@ -28,7 +29,7 @@ export function generateMetadata() {
 export default function BlogPage({
   searchParams,
 }: {
-  searchParams: { q?: string | string[]; topic?: string | string[] };
+  searchParams: { q?: string | string[]; topic?: string | string[]; cursor?: string };
 }) {
   const { messages, locale } = getLocalization();
   const t = messages.publicPages;
@@ -56,6 +57,7 @@ export default function BlogPage({
         allLabel={t.all}
         options={topics.map((value) => ({ value, label: t.topics[value] }))}
       />
+      {!topic && <PublishedCatalog embedded kind="BLOG" search={textQuery(searchParams.q)} cursor={searchParams.cursor} />}
       <p aria-live="polite" className="mb-6 text-sm">
         {formatNumber(posts.length, locale)} {t.results}
       </p>

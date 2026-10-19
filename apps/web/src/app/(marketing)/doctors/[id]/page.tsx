@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { PublishedDetail } from "@/components/marketing/published-content";
+import { publishedEntry } from "@/lib/editorial";
 import { PublicNotFound } from "@/components/marketing/public-not-found";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { getLocalization } from "@/lib/i18n/server";
@@ -11,15 +13,18 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 
-export function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: { params: { id: string } }) {
   const p = findDoctor(doctorProfiles, params.id);
   const { locale, messages } = getLocalization();
-  if (!p)
+  if (!p) {
+    const managed = await publishedEntry("VET", params.id);
+    if (managed.data) return { title: managed.data.content[locale].title, description: managed.data.content[locale].summary };
     return {
       title: messages.notFound.title,
       description: messages.notFound.body,
       robots: { index: false, follow: true },
     };
+  }
   return {
     title: p.name[locale],
     description: p.biography[locale],
@@ -28,7 +33,7 @@ export function generateMetadata({ params }: { params: { id: string } }) {
 }
 export default function DoctorPage({ params }: { params: { id: string } }) {
   const p = findDoctor(doctorProfiles, params.id);
-  if (!p) return <PublicNotFound />;
+  if (!p) return <PublishedDetail kind="VET" slug={params.id} />;
   const { locale, messages } = getLocalization();
   const t = messages.publicPages;
   const others = doctorProfiles.filter(

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { findBlogPost } from "@/lib/public-content";
+import { publishedEntry } from "@/lib/editorial";
 import { doctorProfiles } from "@/lib/doctor-data";
 import { findDoctor } from "@/lib/doctor-directory";
 import { getProtectedIdentity } from "@/lib/auth/route-session";
@@ -49,10 +50,18 @@ export async function middleware(request: NextRequest) {
     parts.length === 2 &&
     ((parts[0] === "blog" && !findBlogPost(id)) ||
       (parts[0] === "doctors" && !findDoctor(doctorProfiles, id)));
+  const cmsKind: Record<string, string> = { blog: "BLOG", doctors: "VET", pages: "PAGE", guides: "GUIDE", faq: "FAQ" };
+  if (parts.length === 2 && cmsKind[parts[0]] && (missing || !["blog", "doctors"].includes(parts[0]))) {
+    const result = await publishedEntry(cmsKind[parts[0]], id);
+    const response = NextResponse.next(result.status === 200 ? undefined : { status: result.status === 404 ? 404 : 503 });
+    response.headers.set("Cache-Control", "no-store");
+    return response;
+  }
   return NextResponse.next(missing ? { status: 404 } : undefined);
 }
 export const config = {
   matcher: [
+    "/pages/:path*", "/guides/:path*", "/faq/:path*",
     "/blog/:path*",
     "/doctors/:path*",
     "/dashboard/:path*",

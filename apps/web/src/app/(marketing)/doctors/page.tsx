@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PublishedCatalog } from "@/components/marketing/published-content";
 import { getLocalization } from "@/lib/i18n/server";
 import { doctorProfiles } from "@/lib/doctor-data";
 import { doctorSpecialties, listDoctors } from "@/lib/doctor-directory";
@@ -19,7 +20,7 @@ export function generateMetadata() {
 export default function DoctorsPage({
   searchParams,
 }: {
-  searchParams: { q?: string | string[]; specialty?: string | string[] };
+  searchParams: { q?: string | string[]; specialty?: string | string[]; cursor?: string };
 }) {
   const { locale, messages } = getLocalization();
   const t = messages.publicPages;
@@ -55,6 +56,7 @@ export default function DoctorsPage({
           label: t.areas[value],
         }))}
       />
+      {!specialty && <PublishedCatalog embedded kind="VET" search={textQuery(searchParams.q)} cursor={searchParams.cursor} />}
       <p className="mb-6 text-sm" aria-live="polite">
         {formatNumber(profiles.length, locale)} {t.results}
       </p>

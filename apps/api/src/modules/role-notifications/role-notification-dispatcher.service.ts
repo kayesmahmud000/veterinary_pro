@@ -48,9 +48,13 @@ export class RoleNotificationDispatcher
               continue;
             await this.queue.add(
               "role-email",
-              { deliveryId: delivery.id },
+              { deliveryId: delivery.id, generation: delivery.retryGeneration ?? 0 },
               {
-                jobId: `role-mail-${delivery.id}`,
+                // Preserve generation-zero IDs so deployment cannot duplicate an
+                // already queued legacy job. Explicit retries use a fresh ID.
+                jobId: delivery.retryGeneration
+                  ? `role-mail-${delivery.id}-${delivery.retryGeneration}`
+                  : `role-mail-${delivery.id}`,
                 attempts: 5,
                 backoff: { type: "exponential", delay: 2000 },
                 removeOnComplete: true,

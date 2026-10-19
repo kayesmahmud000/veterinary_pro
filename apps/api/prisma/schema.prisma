@@ -378,6 +378,10 @@ model User {
   reviewedRoleRequests RoleUpgradeRequest[] @relation("Reviewer")
   farmerOnboarding     FarmerOnboarding?
   roleNotificationDeliveries RoleNotificationDelivery[]
+  editorialProfiles EditorialDocument[]
+  supportRequests SupportTicket[] @relation("SupportRequester")
+  supportAssignments SupportTicket[] @relation("SupportAssignee")
+  supportMessages SupportMessage[]
 
   @@index([email])
   @@index([phoneHash])
@@ -478,6 +482,69 @@ model RoleUpgradeRequest {
   @@map("role_upgrade_requests")
 }
 
+model EditorialDocument {
+  id String @id @db.Uuid
+  kind String @db.VarChar(10)
+  slug String @db.VarChar(120)
+  subjectUserId String? @unique @map("subject_user_id") @db.Uuid
+  draft Json
+  published Json?
+  publishedAt DateTime? @map("published_at") @db.Timestamptz(6)
+  publishedSubjectVersion Int? @map("published_subject_version")
+  version Int @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  subject User? @relation(fields: [subjectUserId], references: [id], onDelete: Restrict)
+  revisions EditorialRevision[]
+  @@unique([kind, slug])
+  @@index([kind, publishedAt, id])
+  @@map("editorial_documents")
+}
+
+model EditorialRevision {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId String @map("document_id") @db.Uuid
+  version Int
+  draft Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  document EditorialDocument @relation(fields: [documentId], references: [id], onDelete: Restrict)
+  @@unique([documentId, version])
+  @@map("editorial_revisions")
+}
+
+model SupportTicket {
+  id String @id @db.Uuid
+  requesterId String @map("requester_id") @db.Uuid
+  assigneeId String? @map("assignee_id") @db.Uuid
+  subject String @db.VarChar(160)
+  category String @db.VarChar(10)
+  status String @default("OPEN") @db.VarChar(20)
+  farmId String? @map("farm_id") @db.Uuid
+  orderId String? @map("order_id") @db.Uuid
+  version Int @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  requester User @relation("SupportRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  assignee User? @relation("SupportAssignee", fields: [assigneeId], references: [id], onDelete: Restrict)
+  messages SupportMessage[]
+  @@index([requesterId, id])
+  @@index([status, id])
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id String @id @db.Uuid
+  ticketId String @map("ticket_id") @db.Uuid
+  authorId String @map("author_id") @db.Uuid
+  internal Boolean @default(false)
+  body String @db.VarChar(4000)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+  author User @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  @@index([ticketId, createdAt, id])
+  @@map("support_messages")
+}
+
 model RoleNotificationOutbox {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   eventKey String @unique @map("event_key") @db.VarChar(200)
@@ -503,6 +570,7 @@ model RoleNotificationDelivery {
   recipientUserId String @map("recipient_user_id") @db.Uuid
   status String @default("PENDING") @db.VarChar(20)
   attempts Int @default(0)
+  retryGeneration Int @default(0) @map("retry_generation")
   nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
   sentAt DateTime? @map("sent_at") @db.Timestamptz(6)
   providerMessageId String? @map("provider_message_id") @db.VarChar(255)

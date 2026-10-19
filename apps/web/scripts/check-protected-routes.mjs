@@ -32,6 +32,7 @@ const { middleware } = compile("../src/middleware.ts", {
   "@/lib/auth/route-session": session,
   "@/lib/workspace/navigation": nav,
   "@/lib/public-content": { findBlogPost: (id) => id === "known" },
+  "@/lib/editorial": { publishedEntry: async () => ({ status: 404 }) },
   "@/lib/doctor-data": { doctorProfiles: [] },
   "@/lib/doctor-directory": { findDoctor: (_, id) => id === "known" },
 });

@@ -95,6 +95,7 @@ export class RoleNotificationRepository {
             role: true,
             status: true,
             deletedAt: true,
+            authorizationVersion: true,
           },
         },
       },
@@ -113,10 +114,10 @@ export class RoleNotificationRepository {
       : null;
     return { delivery, request };
   }
-  async sent(id: string, messageId?: string) {
+  async sent(id: string, messageId?: string, generation = 0) {
     await this.prisma.$transaction(async (tx) => {
       const changed = await tx.roleNotificationDelivery.updateMany({
-        where: { id, status: { not: "SENT" } },
+        where: { id, retryGeneration: generation, status: { not: "SENT" } },
         data: {
           status: "SENT",
           sentAt: new Date(),
@@ -136,15 +137,15 @@ export class RoleNotificationRepository {
         );
     });
   }
-  async skip(id: string) {
-    await this.prisma.roleNotificationDelivery.update({
-      where: { id },
+  async skip(id: string, generation = 0) {
+    await this.prisma.roleNotificationDelivery.updateMany({
+      where: { id, retryGeneration: generation, status: { not: "SENT" } },
       data: { status: "SKIPPED" },
     });
   }
-  async failed(id: string, exhausted: boolean) {
-    await this.prisma.roleNotificationDelivery.update({
-      where: { id },
+  async failed(id: string, exhausted: boolean, generation = 0) {
+    await this.prisma.roleNotificationDelivery.updateMany({
+      where: { id, retryGeneration: generation, status: { not: "SENT" } },
       data: {
         status: exhausted ? "FAILED" : "PENDING",
         attempts: { increment: 1 },

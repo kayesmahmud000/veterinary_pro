@@ -63,6 +63,7 @@ describe("Durable role notification recovery and privacy", () => {
     expect(records.sent).toHaveBeenCalledWith(
       "delivery",
       "synthetic-provider-id",
+      0,
     );
   });
   it("does not resend a durable accepted delivery", async () => {
@@ -73,6 +74,12 @@ describe("Durable role notification recovery and privacy", () => {
     await processor.process(job());
     expect(mail.sendEmail).not.toHaveBeenCalled();
   });
+  it("discards an old generation job before sending and uses a new generation on completion", async () => {
+    records.context.mockResolvedValue({ ...context(), delivery: { ...context().delivery, retryGeneration: 1 } });
+    await processor.process(job()); expect(mail.sendEmail).not.toHaveBeenCalled();
+    await processor.process({ ...job(), data: { deliveryId: "delivery", generation: 1 } });
+    expect(records.sent).toHaveBeenCalledWith("delivery", "synthetic-provider-id", 1);
+  });
   it.each(["demoted", "decided", "suspended"])(
     "skips an obsolete %s reviewer notification",
     async (state) => {
@@ -82,7 +89,7 @@ describe("Durable role notification recovery and privacy", () => {
       if (state === "suspended") value.delivery.recipient.status = "SUSPENDED";
       records.context.mockResolvedValue(value);
       await processor.process(job());
-      expect(records.skip).toHaveBeenCalledWith("delivery");
+      expect(records.skip).toHaveBeenCalledWith("delivery", 0);
       expect(mail.sendEmail).not.toHaveBeenCalled();
     },
   );
@@ -95,7 +102,7 @@ describe("Durable role notification recovery and privacy", () => {
       await expect(processor.process(job(attempt))).rejects.toThrow(
         "ROLE_EMAIL_PROVIDER_FAILURE",
       );
-      expect(records.failed).toHaveBeenCalledWith("delivery", attempt === 4);
+      expect(records.failed).toHaveBeenCalledWith("delivery", attempt === 4, 0);
       expect(records.sent).not.toHaveBeenCalled();
     },
   );
@@ -130,6 +137,12 @@ describe("Durable role notification recovery and privacy", () => {
       queue as any,
     ).dispatch();
     expect(repository.retry).toHaveBeenCalledWith("event", "DISPATCH_FAILED");
+  });
+  it.each([0, 2])("preserves legacy queue IDs and separates explicit retry generation %s", async (generation) => {
+    const repository = { claim: jest.fn().mockResolvedValue([{ id: "event" }]), recipients: jest.fn().mockResolvedValue({ ids: ["reviewer"] }), delivery: jest.fn().mockResolvedValue({ id: "delivery", status: "PENDING", retryGeneration: generation }), unsettled: jest.fn().mockResolvedValue(1), retry: jest.fn() };
+    const queue = { add: jest.fn() };
+    await new RoleNotificationDispatcher(repository as never, queue as never).dispatch();
+    expect(queue.add).toHaveBeenCalledWith("role-email", { deliveryId: "delivery", generation }, expect.objectContaining({ jobId: generation ? "role-mail-delivery-2" : "role-mail-delivery" }));
   });
   it("retains submissions until an active reviewer exists", async () => {
     const repository = {

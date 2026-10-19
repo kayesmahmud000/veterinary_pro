@@ -17,20 +17,24 @@ export class RoleNotificationProcessor extends WorkerHost {
   ) {
     super();
   }
-  async process(job: Job<{ deliveryId: string }>): Promise<void> {
+  async process(job: Job<{ deliveryId: string; generation?: number }>): Promise<void> {
     const context = await this.records.context(job.data.deliveryId);
     if (!context || ["SENT", "SKIPPED"].includes(context.delivery.status))
       return;
     const { delivery, request } = context;
+    const generation = job.data.generation ?? 0;
+    if (generation !== (delivery.retryGeneration ?? 0)) return;
     const reviewer = delivery.outbox.eventType === "ROLE_REQUEST_SUBMITTED";
     if (
       delivery.recipient.deletedAt ||
       delivery.recipient.status !== "ACTIVE" ||
+      (!["ROLE_REQUEST_SUBMITTED", "ROLE_REQUEST_APPROVED", "ROLE_REQUEST_REJECTED", "PRIVILEGED_ROLE_CHANGED"].includes(delivery.outbox.eventType)) ||
+      (!reviewer && (delivery.outbox.targetUserId !== delivery.recipient.id || (delivery.outbox.authorizationVersion != null && delivery.outbox.authorizationVersion !== delivery.recipient.authorizationVersion))) ||
       (reviewer &&
         (!["ADMIN", "SUPER_ADMIN"].includes(delivery.recipient.role) ||
           request?.status !== "PENDING"))
     ) {
-      await this.records.skip(delivery.id);
+      await this.records.skip(delivery.id, generation);
       return;
     }
     const path = reviewer
@@ -52,11 +56,12 @@ export class RoleNotificationProcessor extends WorkerHost {
         ...message,
       });
       if (!result.success) throw new Error("Provider did not accept email.");
-      await this.records.sent(delivery.id, result.messageId);
+      await this.records.sent(delivery.id, result.messageId, generation);
     } catch {
       await this.records.failed(
         delivery.id,
         job.attemptsMade + 1 >= (job.opts.attempts ?? 5),
+        generation,
       );
       throw new Error("ROLE_EMAIL_PROVIDER_FAILURE");
     }

@@ -4,6 +4,7 @@ import { handleDirectoryFixture, checkAdminDirectory } from "./admin-directory-b
 import { handleBillingFixture, checkAdminBilling } from "./admin-billing-browser-cases.mjs";
 import { handleConsultationsFixture, checkAdminConsultations } from "./admin-consultations-browser-cases.mjs";
 import { handleFinanceFixture, checkAdminFinance } from "./admin-finance-browser-cases.mjs";
+import { handleCommunicationsFixture, checkAdminCommunications } from "./admin-communications-browser-cases.mjs";
 import {handleCourseFixture,checkLearnerCourses} from "./course-browser-cases.mjs";
 import { handleCatalogFixture, handleCatalogObject, checkAdminCatalog, checkAdminCourses } from "./admin-catalog-browser-cases.mjs";
 import assert from "node:assert/strict";
@@ -122,6 +123,7 @@ const upstream = http.createServer(async (req, res) => {
     res.end(JSON.stringify({ success: status < 400, data }));
   };
   if (offline) return send(503, null);
+  if (handleCommunicationsFixture(req,res,data,route,role)) return;
   if (handleFinanceFixture(req,res,data,route,role)) return;
   if (handleConsultationsFixture(req,res,data,route,role)) return;
   if (handleBillingFixture(req,res,data,route,role)) return;
@@ -474,7 +476,10 @@ try {
     await cookie("vetralink_refresh", "r-" + role);
     await cookie("vetralink-locale", locale);
   }
-  if (process.env.WORKSPACE_BROWSER_FOCUS === "finance") {
+  if (process.env.WORKSPACE_BROWSER_FOCUS === "communications") {
+    checks += await checkAdminCommunications({seed,go,call,evaluate,until,temp,requests});
+    assert.deepEqual(exceptions, []);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "finance") {
     checks += await checkAdminFinance({seed,go,call,evaluate,until,temp,requests});
     assert.deepEqual(exceptions, []);
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "consultations") {

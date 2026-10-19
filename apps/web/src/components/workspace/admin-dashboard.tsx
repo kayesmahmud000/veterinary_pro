@@ -10,6 +10,7 @@ import { getAdminMessages } from "@/lib/i18n/admin";
 import { getAdminCourseMessages } from "@/lib/i18n/admin-courses";
 import { getConsultationMessages } from "@/lib/i18n/admin-consultations";
 import { getFinanceMessages } from "@/lib/i18n/admin-finance";
+import { communicationsMessages } from "@/lib/i18n/admin-communications";
 import { getBillingMessages } from "@/lib/i18n/admin-billing";
 import {
   adminOverviewSchema,
@@ -63,6 +64,9 @@ function Overview() {
       className="space-y-8"
     >
       <p className="mt-0 text-muted">{t.intro}</p>
+      <section data-admin-communications-shortcut className={`${styles.card} flex flex-wrap gap-4`}>
+        {(["content", "notifications", "support"] as const).map((kind) => <Link key={kind} className={styles.secondary} href={`/admin/${kind}`}>{communicationsMessages(auth.locale)[kind]}</Link>)}
+      </section>
       <Card
         data-admin-course-shortcut
         className="flex flex-wrap items-center justify-between gap-5 p-5"
