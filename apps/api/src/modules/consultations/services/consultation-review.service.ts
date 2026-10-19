@@ -1,5 +1,8 @@
 import { Prisma } from "@prisma/client";
-import {TRANSACTION_MANAGER, ITransactionManager} from "../../prisma/interfaces/transaction.interface";
+import {
+  TRANSACTION_MANAGER,
+  ITransactionManager,
+} from "../../prisma/interfaces/transaction.interface";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import {
   ConsultationReviewDto,
@@ -51,8 +54,31 @@ export class ConsultationReviewService implements IConsultationReviewService {
     private readonly vetProfileRepo: IVetProfileRepository,
     @Inject(AUDIT_LOG_REPOSITORY)
     private readonly auditLogRepo: IAuditLogRepository,
-    @Inject(TRANSACTION_MANAGER) private readonly transactions: ITransactionManager,
+    @Inject(TRANSACTION_MANAGER)
+    private readonly transactions: ITransactionManager,
   ) {}
+
+  private async runReviewTransaction<T>(
+    operation: (tx: Prisma.TransactionClient) => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await this.transactions.run(operation, {
+        isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+      });
+    } catch (error) {
+      const conflict = error as { code?: string; meta?: { code?: string } };
+      if (
+        conflict?.code === "P2034" ||
+        ["40001", "40P01"].includes(conflict?.meta?.code ?? "")
+      ) {
+        throw new WorkflowException(
+          "REVIEW_VERSION_CONFLICT",
+          "Review changed. Reload and review.",
+        );
+      }
+      throw error;
+    }
+  }
 
   public async submitReview(
     consultationId: string,
@@ -88,20 +114,61 @@ export class ConsultationReviewService implements IConsultationReviewService {
       );
     }
 
-    return this.transactions.run(async tx => {
-      await this.vetProfileRepo.lockReviewFence(consultation.vetId!,tx);
-      const locked = await this.reviewRepo.lockConsultation(consultationId,tx);
-      if (!locked) throw new EntityNotFoundException("Consultation",consultationId);
-      if (locked.farmerId!==author.sub) throw new ForbiddenOperationException();
-      if (locked.status!==ConsultationStatus.COMPLETED || locked.vetId!==consultation.vetId)
-        throw new EntityConflictException("Consultation changed. Reload and review.");
-      const existing=await this.reviewRepo.findByConsultationId(consultationId,tx);
-      if(existing) throw new EntityConflictException("A review has already been submitted for this consultation.");
-      const saved=await this.reviewRepo.create(ConsultationReviewEntity.create({consultationId,farmerId:author.sub,vetId:locked.vetId!,rating:dto.rating,feedback:dto.feedback,tags:dto.tags,isPublic:dto.isPublic??true}),tx);
-      await this.vetProfileRepo.recomputeRatingAggregates(saved.vetId,tx);
-      await this.auditLogRepo.record({userId:author.sub,action:"CONSULTATION_REVIEW_SUBMITTED",entityType:"ConsultationReview",entityId:saved.id,newValues:{consultationId:saved.consultationId,vetId:saved.vetId,rating:saved.rating,tags:saved.tags,isPublic:saved.isPublic,moderationStatus:saved.moderationStatus},traceId:activeTraceId},tx);
+    return this.runReviewTransaction(async (tx) => {
+      await this.vetProfileRepo.lockReviewFence(consultation.vetId!, tx);
+      const locked = await this.reviewRepo.lockConsultation(consultationId, tx);
+      if (!locked)
+        throw new EntityNotFoundException("Consultation", consultationId);
+      if (locked.farmerId !== author.sub)
+        throw new ForbiddenOperationException();
+      if (
+        locked.status !== ConsultationStatus.COMPLETED ||
+        locked.vetId !== consultation.vetId
+      )
+        throw new EntityConflictException(
+          "Consultation changed. Reload and review.",
+        );
+      const existing = await this.reviewRepo.findByConsultationId(
+        consultationId,
+        tx,
+      );
+      if (existing)
+        throw new EntityConflictException(
+          "A review has already been submitted for this consultation.",
+        );
+      const saved = await this.reviewRepo.create(
+        ConsultationReviewEntity.create({
+          consultationId,
+          farmerId: author.sub,
+          vetId: locked.vetId!,
+          rating: dto.rating,
+          feedback: dto.feedback,
+          tags: dto.tags,
+          isPublic: dto.isPublic ?? true,
+        }),
+        tx,
+      );
+      await this.vetProfileRepo.recomputeRatingAggregates(saved.vetId, tx);
+      await this.auditLogRepo.record(
+        {
+          userId: author.sub,
+          action: "CONSULTATION_REVIEW_SUBMITTED",
+          entityType: "ConsultationReview",
+          entityId: saved.id,
+          newValues: {
+            consultationId: saved.consultationId,
+            vetId: saved.vetId,
+            rating: saved.rating,
+            tags: saved.tags,
+            isPublic: saved.isPublic,
+            moderationStatus: saved.moderationStatus,
+          },
+          traceId: activeTraceId,
+        },
+        tx,
+      );
       return saved.toDto();
-    },{isolationLevel:Prisma.TransactionIsolationLevel.ReadCommitted});
+    });
   }
 
   public async getConsultationReview(
@@ -119,7 +186,8 @@ export class ConsultationReviewService implements IConsultationReviewService {
 
     // If review is rejected, only admins or the author farmer can view it
     if (
-      (!review.isPublic || review.moderationStatus !== ReviewModerationStatus.APPROVED) &&
+      (!review.isPublic ||
+        review.moderationStatus !== ReviewModerationStatus.APPROVED) &&
       !isSuperOrAdmin &&
       review.farmerId !== requestingUser.sub &&
       review.vetId !== requestingUser.sub
@@ -134,7 +202,7 @@ export class ConsultationReviewService implements IConsultationReviewService {
     vetId: string,
     query?: ReviewQueryDto,
   ): Promise<{ items: ConsultationReviewDto[]; total: number }> {
-    const effectiveQuery: ReviewQueryDto & {isPublic:true} = {
+    const effectiveQuery: ReviewQueryDto & { isPublic: true } = {
       ...query,
       vetId,
       moderationStatus: ReviewModerationStatus.APPROVED,
@@ -177,32 +245,67 @@ export class ConsultationReviewService implements IConsultationReviewService {
       `[${activeTraceId}] Moderating review '${reviewId}' to status '${dto.status}' by user '${actorUser.sub}'`,
     );
 
-    if (![UserRole.ADMIN,UserRole.SUPER_ADMIN].includes(actorUser.role)) throw new ForbiddenOperationException();
-    if (![ReviewModerationStatus.APPROVED,ReviewModerationStatus.FLAGGED,ReviewModerationStatus.REJECTED].includes(dto.status)) throw new ValidationDomainException("Invalid moderation status.");
-    const initial=await this.reviewRepo.findById(reviewId);
-    if(!initial) throw new EntityNotFoundException("ConsultationReview",reviewId);
-    return this.transactions.run(async tx => {
-      await this.vetProfileRepo.lockReviewFence(initial.vetId,tx);
-      await this.reviewRepo.lock(reviewId,tx);
-      const review=await this.reviewRepo.findById(reviewId,tx);
-      if(!review) throw new EntityNotFoundException("ConsultationReview",reviewId);
-      if(review.moderationStatus===dto.status) throw new WorkflowException("REVIEW_ACTION_UNAVAILABLE","Review status is already selected.");
-      switch(dto.status) {
-        case ReviewModerationStatus.APPROVED: review.approve(actorUser.sub,dto.reason);break;
-        case ReviewModerationStatus.FLAGGED: review.flag(actorUser.sub,dto.reason);break;
-        case ReviewModerationStatus.REJECTED: review.reject(actorUser.sub,dto.reason);break;
+    if (![UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(actorUser.role))
+      throw new ForbiddenOperationException();
+    if (
+      ![
+        ReviewModerationStatus.APPROVED,
+        ReviewModerationStatus.FLAGGED,
+        ReviewModerationStatus.REJECTED,
+      ].includes(dto.status)
+    )
+      throw new ValidationDomainException("Invalid moderation status.");
+    const initial = await this.reviewRepo.findById(reviewId);
+    if (!initial)
+      throw new EntityNotFoundException("ConsultationReview", reviewId);
+    return this.runReviewTransaction(async (tx) => {
+      await this.vetProfileRepo.lockReviewFence(initial.vetId, tx);
+      await this.reviewRepo.lock(reviewId, tx);
+      const review = await this.reviewRepo.findById(reviewId, tx);
+      if (!review)
+        throw new EntityNotFoundException("ConsultationReview", reviewId);
+      if (review.moderationStatus === dto.status)
+        throw new WorkflowException(
+          "REVIEW_ACTION_UNAVAILABLE",
+          "Review status is already selected.",
+        );
+      switch (dto.status) {
+        case ReviewModerationStatus.APPROVED:
+          review.approve(actorUser.sub, dto.reason);
+          break;
+        case ReviewModerationStatus.FLAGGED:
+          review.flag(actorUser.sub, dto.reason);
+          break;
+        case ReviewModerationStatus.REJECTED:
+          review.reject(actorUser.sub, dto.reason);
+          break;
       }
-      const saved=await this.reviewRepo.save(review,tx);
-      await this.vetProfileRepo.recomputeRatingAggregates(saved.vetId,tx);
-      await this.auditLogRepo.record({userId:actorUser.sub,action:"CONSULTATION_REVIEW_MODERATED",entityType:"ConsultationReview",entityId:saved.id,newValues:{moderationStatus:saved.moderationStatus,moderationReason:saved.moderationReason,moderatedById:saved.moderatedById,moderatedAt:saved.moderatedAt?.toISOString()},traceId:activeTraceId},tx);
+      const saved = await this.reviewRepo.save(review, tx);
+      await this.vetProfileRepo.recomputeRatingAggregates(saved.vetId, tx);
+      await this.auditLogRepo.record(
+        {
+          userId: actorUser.sub,
+          action: "CONSULTATION_REVIEW_MODERATED",
+          entityType: "ConsultationReview",
+          entityId: saved.id,
+          newValues: {
+            moderationStatus: saved.moderationStatus,
+            moderationReason: saved.moderationReason,
+            moderatedById: saved.moderatedById,
+            moderatedAt: saved.moderatedAt?.toISOString(),
+          },
+          traceId: activeTraceId,
+        },
+        tx,
+      );
       return saved.toDto();
-    },{isolationLevel:Prisma.TransactionIsolationLevel.ReadCommitted});
+    });
   }
 
   public async updateVetProfileAggregates(vetId: string): Promise<void> {
-    await this.transactions.run(async tx => {
-      await this.vetProfileRepo.lockReviewFence(vetId,tx);
-      await this.vetProfileRepo.recomputeRatingAggregates(vetId,tx);
-    },{isolationLevel:Prisma.TransactionIsolationLevel.ReadCommitted});
+    await this.runReviewTransaction(async (tx) => {
+      await this.vetProfileRepo.lockReviewFence(vetId, tx);
+      await this.vetProfileRepo.recomputeRatingAggregates(vetId, tx);
+    });
   }
 }

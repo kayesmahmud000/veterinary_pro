@@ -8,7 +8,9 @@ import {
 } from "@vetralink/shared-types";
 
 export interface IVetPayoutLedgerService {
-  getConsultationSettlement(consultationId: string): Promise<ConsultationPayoutLedgerDto>;
+  getConsultationSettlement(
+    consultationId: string,
+  ): Promise<ConsultationPayoutLedgerDto>;
 
   calculateSplit(
     totalFeeCents: number,

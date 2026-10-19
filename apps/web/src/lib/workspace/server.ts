@@ -2,11 +2,35 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchWithDiagnostics } from "../api-diagnostics";
 import { z } from "zod";
 import {
-  adminSettlementQuerySchema, adminSettlementSummaryQuerySchema, adminSettlementListSchema, adminSettlementSummarySchema, adminSettlementDetailSchema, adminSettlementPreviewSchema, adminSettlementReconcileSchema, adminSettlementBulkSchema, adminSettlementBulkResultSchema,
-  adminReviewQuerySchema, adminReviewListSchema, adminReviewDetailSchema, adminReviewModerateSchema,
-  adminConsultationQuerySchema, adminConsultationListSchema, adminConsultationDetailSchema, adminConsultationCandidatesSchema, adminConsultationActionSchema,
-  billingKinds, billingQueries, billingLists, billingDetails, billingSubscriptionActionSchema, billingPlanEditSchema,
-  courseLibrarySchema, courseLibraryQuerySchema, courseEnrollmentSchema, myCourseSchema, coursePlaybackSchema,
+  adminSettlementQuerySchema,
+  adminSettlementSummaryQuerySchema,
+  adminSettlementListSchema,
+  adminSettlementSummarySchema,
+  adminSettlementDetailSchema,
+  adminSettlementPreviewSchema,
+  adminSettlementReconcileSchema,
+  adminSettlementBulkSchema,
+  adminSettlementBulkResultSchema,
+  adminReviewQuerySchema,
+  adminReviewListSchema,
+  adminReviewDetailSchema,
+  adminReviewModerateSchema,
+  adminConsultationQuerySchema,
+  adminConsultationListSchema,
+  adminConsultationDetailSchema,
+  adminConsultationCandidatesSchema,
+  adminConsultationActionSchema,
+  billingKinds,
+  billingQueries,
+  billingLists,
+  billingDetails,
+  billingSubscriptionActionSchema,
+  billingPlanEditSchema,
+  courseLibrarySchema,
+  courseLibraryQuerySchema,
+  courseEnrollmentSchema,
+  myCourseSchema,
+  coursePlaybackSchema,
   addFarmMemberSchema,
   farmMemberSchema,
   farmOnboardingSchema,
@@ -15,13 +39,32 @@ import {
   roleRequestSchema,
   roleDecisionSchema,
   privilegedRoleSchema,
-  adminCurriculumSchema, adminCurriculumWriteSchema,
+  adminCurriculumSchema,
+  adminCurriculumWriteSchema,
   authUserSchema,
   ProfessionalRole,
   UserRole,
   UserStatus,
-  adminProductCreateSchema,adminProductEditSchema,adminProductActionSchema,adminProductSchema,adminProductListSchema,adminProductQuerySchema,adminAssetAttachSchema,adminUploadCreateSchema,adminUploadQuerySchema,adminUploadSchema,adminUploadListSchema,adminPartSchema,adminPartUrlSchema,adminCompleteSchema,
-  directoryKinds, directoryQueries, directoryLists, directoryDetails, accountActionSchema, accountActionResultSchema,
+  adminProductCreateSchema,
+  adminProductEditSchema,
+  adminProductActionSchema,
+  adminProductSchema,
+  adminProductListSchema,
+  adminProductQuerySchema,
+  adminAssetAttachSchema,
+  adminUploadCreateSchema,
+  adminUploadQuerySchema,
+  adminUploadSchema,
+  adminUploadListSchema,
+  adminPartSchema,
+  adminPartUrlSchema,
+  adminCompleteSchema,
+  directoryKinds,
+  directoryQueries,
+  directoryLists,
+  directoryDetails,
+  accountActionSchema,
+  accountActionResultSchema,
 } from "@vetralink/shared-types";
 import {
   adminTargetSchema,
@@ -74,63 +117,341 @@ export function resolveEndpoint(
 ): Endpoint | null {
   const key = path.join("/");
   if (path[0] === "admin" && path[1] === "settlements") {
-    if (path.length === 2 && method === "GET") return {method, upstream:key, response:adminSettlementListSchema, query:adminSettlementQuerySchema};
-    if (path.length === 3 && path[2] === "summary" && method === "GET") return {method, upstream:key, response:adminSettlementSummarySchema, query:adminSettlementSummaryQuerySchema};
-    if (path.length === 3 && path[2] === "bulk-reconcile" && method === "POST") return {method, upstream:key, response:adminSettlementBulkResultSchema, body:adminSettlementBulkSchema, bodyLimit:32768};
+    if (path.length === 2 && method === "GET")
+      return {
+        method,
+        upstream: key,
+        response: adminSettlementListSchema,
+        query: adminSettlementQuerySchema,
+      };
+    if (path.length === 3 && path[2] === "summary" && method === "GET")
+      return {
+        method,
+        upstream: key,
+        response: adminSettlementSummarySchema,
+        query: adminSettlementSummaryQuerySchema,
+      };
+    if (path.length === 3 && path[2] === "bulk-reconcile" && method === "POST")
+      return {
+        method,
+        upstream: key,
+        response: adminSettlementBulkResultSchema,
+        body: adminSettlementBulkSchema,
+        bodyLimit: 32768,
+      };
     if (uuid.safeParse(path[2]).success) {
-      if (path.length === 3 && method === "GET") return {method, upstream:key, entityId:path[2], response:adminSettlementDetailSchema};
-      if (path.length === 4 && path[3] === "preview" && method === "GET") return {method, upstream:key, entityId:path[2], response:adminSettlementPreviewSchema};
-      if (path.length === 4 && path[3] === "reconcile" && method === "POST") return {method, upstream:key, entityId:path[2], response:adminSettlementDetailSchema, body:adminSettlementReconcileSchema, bodyLimit:16384};
+      if (path.length === 3 && method === "GET")
+        return {
+          method,
+          upstream: key,
+          entityId: path[2],
+          response: adminSettlementDetailSchema,
+        };
+      if (path.length === 4 && path[3] === "preview" && method === "GET")
+        return {
+          method,
+          upstream: key,
+          entityId: path[2],
+          response: adminSettlementPreviewSchema,
+        };
+      if (path.length === 4 && path[3] === "reconcile" && method === "POST")
+        return {
+          method,
+          upstream: key,
+          entityId: path[2],
+          response: adminSettlementDetailSchema,
+          body: adminSettlementReconcileSchema,
+          bodyLimit: 16384,
+        };
     }
   }
   if (path[0] === "admin" && path[1] === "reviews") {
-    if (path.length === 2 && method === "GET") return {method, upstream:key, response:adminReviewListSchema, query:adminReviewQuerySchema};
+    if (path.length === 2 && method === "GET")
+      return {
+        method,
+        upstream: key,
+        response: adminReviewListSchema,
+        query: adminReviewQuerySchema,
+      };
     if (uuid.safeParse(path[2]).success) {
-      if (path.length === 3 && method === "GET") return {method, upstream:key, entityId:path[2], response:adminReviewDetailSchema};
-      if (path.length === 4 && path[3] === "moderate" && method === "POST") return {method, upstream:key, entityId:path[2], response:adminReviewDetailSchema, body:adminReviewModerateSchema, bodyLimit:16384};
+      if (path.length === 3 && method === "GET")
+        return {
+          method,
+          upstream: key,
+          entityId: path[2],
+          response: adminReviewDetailSchema,
+        };
+      if (path.length === 4 && path[3] === "moderate" && method === "POST")
+        return {
+          method,
+          upstream: key,
+          entityId: path[2],
+          response: adminReviewDetailSchema,
+          body: adminReviewModerateSchema,
+          bodyLimit: 16384,
+        };
     }
   }
   if (path[0] === "admin" && path[1] === "consultations") {
-    if (path.length === 2 && method === "GET") return {method, upstream:key, response:adminConsultationListSchema, query:adminConsultationQuerySchema};
+    if (path.length === 2 && method === "GET")
+      return {
+        method,
+        upstream: key,
+        response: adminConsultationListSchema,
+        query: adminConsultationQuerySchema,
+      };
     if (uuid.safeParse(path[2]).success) {
-      if (path.length === 3 && method === "GET") return {method, upstream:key, entityId:path[2], response:adminConsultationDetailSchema};
-      if (path.length === 4 && path[3] === "candidates" && method === "GET") return {method, upstream:key, consultationId:path[2], response:adminConsultationCandidatesSchema};
-      if (path.length === 4 && path[3] === "actions" && method === "POST") return {method, upstream:key, entityId:path[2], response:adminConsultationDetailSchema, body:adminConsultationActionSchema, bodyLimit:16384};
+      if (path.length === 3 && method === "GET")
+        return {
+          method,
+          upstream: key,
+          entityId: path[2],
+          response: adminConsultationDetailSchema,
+        };
+      if (path.length === 4 && path[3] === "candidates" && method === "GET")
+        return {
+          method,
+          upstream: key,
+          consultationId: path[2],
+          response: adminConsultationCandidatesSchema,
+        };
+      if (path.length === 4 && path[3] === "actions" && method === "POST")
+        return {
+          method,
+          upstream: key,
+          entityId: path[2],
+          response: adminConsultationDetailSchema,
+          body: adminConsultationActionSchema,
+          bodyLimit: 16384,
+        };
     }
   }
-  if(path[0]==="admin"&&path[1]==="billing"&&billingKinds.includes(path[2] as typeof billingKinds[number])){
-    const kind=path[2] as typeof billingKinds[number];
-    if(path.length===3&&method==="GET")return{method,upstream:key,response:billingLists[kind],query:billingQueries[kind]};
-    if(uuid.safeParse(path[3]).success){
-      if(path.length===4&&method==="GET")return{method,upstream:key,entityId:path[3],response:billingDetails[kind]};
-      if(path.length===4&&kind==="plans"&&method==="PATCH")return{method,upstream:key,entityId:path[3],response:billingDetails.plans,body:billingPlanEditSchema,bodyLimit:16384};
-      if(path.length===5&&kind==="subscriptions"&&path[4]==="actions"&&method==="POST")return{method,upstream:key,entityId:path[3],response:billingDetails.subscriptions,body:billingSubscriptionActionSchema,bodyLimit:16384};
+  if (
+    path[0] === "admin" &&
+    path[1] === "billing" &&
+    billingKinds.includes(path[2] as (typeof billingKinds)[number])
+  ) {
+    const kind = path[2] as (typeof billingKinds)[number];
+    if (path.length === 3 && method === "GET")
+      return {
+        method,
+        upstream: key,
+        response: billingLists[kind],
+        query: billingQueries[kind],
+      };
+    if (uuid.safeParse(path[3]).success) {
+      if (path.length === 4 && method === "GET")
+        return {
+          method,
+          upstream: key,
+          entityId: path[3],
+          response: billingDetails[kind],
+        };
+      if (path.length === 4 && kind === "plans" && method === "PATCH")
+        return {
+          method,
+          upstream: key,
+          entityId: path[3],
+          response: billingDetails.plans,
+          body: billingPlanEditSchema,
+          bodyLimit: 16384,
+        };
+      if (
+        path.length === 5 &&
+        kind === "subscriptions" &&
+        path[4] === "actions" &&
+        method === "POST"
+      )
+        return {
+          method,
+          upstream: key,
+          entityId: path[3],
+          response: billingDetails.subscriptions,
+          body: billingSubscriptionActionSchema,
+          bodyLimit: 16384,
+        };
     }
   }
-  if(key==="me/courses" && method==="GET")return{method,upstream:key,response:courseLibrarySchema,query:courseLibraryQuerySchema};
-  if(path[0]==="me"&&path[1]==="courses"&&uuid.safeParse(path[2]).success){
-    if(path.length===3&&method==="GET")return{method,upstream:key,response:myCourseSchema,entityId:path[2]};
-    if(path.length===4&&path[3]==="enrollment"&&method==="POST")return{method,upstream:key,response:courseEnrollmentSchema,body:emptyQuerySchema,productId:path[2]};
-    if(path.length===6&&path[3]==="lessons"&&uuid.safeParse(path[4]).success&&path[5]==="playback"&&method==="GET")return{method,upstream:key,response:coursePlaybackSchema,productId:path[2],lessonId:path[4]};
+  if (key === "me/courses" && method === "GET")
+    return {
+      method,
+      upstream: key,
+      response: courseLibrarySchema,
+      query: courseLibraryQuerySchema,
+    };
+  if (
+    path[0] === "me" &&
+    path[1] === "courses" &&
+    uuid.safeParse(path[2]).success
+  ) {
+    if (path.length === 3 && method === "GET")
+      return {
+        method,
+        upstream: key,
+        response: myCourseSchema,
+        entityId: path[2],
+      };
+    if (path.length === 4 && path[3] === "enrollment" && method === "POST")
+      return {
+        method,
+        upstream: key,
+        response: courseEnrollmentSchema,
+        body: emptyQuerySchema,
+        productId: path[2],
+      };
+    if (
+      path.length === 6 &&
+      path[3] === "lessons" &&
+      uuid.safeParse(path[4]).success &&
+      path[5] === "playback" &&
+      method === "GET"
+    )
+      return {
+        method,
+        upstream: key,
+        response: coursePlaybackSchema,
+        productId: path[2],
+        lessonId: path[4],
+      };
   }
 
-  if (key === "admin/products" && ["GET","POST"].includes(method)) return {method,upstream:key,response:method==="GET"?adminProductListSchema:adminProductSchema,...(method==="GET"?{query:adminProductQuerySchema}:{body:adminProductCreateSchema})};
-  if (path[0]==="admin" && path[1]==="products" && uuid.safeParse(path[2]).success) {
-    if(path.length===3 && ["GET","PATCH"].includes(method)) return {method,upstream:key,entityId:path[2],response:adminProductSchema,...(method==="PATCH"?{body:adminProductEditSchema}:{})};
-    if(path.length===4 && path[3]==="curriculum" && ["GET","PUT"].includes(method)) return {method,upstream:key,productId:path[2],response:adminCurriculumSchema,...(method==="PUT"?{body:adminCurriculumWriteSchema,bodyLimit:524288}:{})};
-    if(path.length===4 && method==="POST" && ["actions","asset"].includes(path[3])) return {method,upstream:key,entityId:path[2],response:adminProductSchema,body:path[3]==="actions"?adminProductActionSchema:adminAssetAttachSchema};
+  if (key === "admin/products" && ["GET", "POST"].includes(method))
+    return {
+      method,
+      upstream: key,
+      response: method === "GET" ? adminProductListSchema : adminProductSchema,
+      ...(method === "GET"
+        ? { query: adminProductQuerySchema }
+        : { body: adminProductCreateSchema }),
+    };
+  if (
+    path[0] === "admin" &&
+    path[1] === "products" &&
+    uuid.safeParse(path[2]).success
+  ) {
+    if (path.length === 3 && ["GET", "PATCH"].includes(method))
+      return {
+        method,
+        upstream: key,
+        entityId: path[2],
+        response: adminProductSchema,
+        ...(method === "PATCH" ? { body: adminProductEditSchema } : {}),
+      };
+    if (
+      path.length === 4 &&
+      path[3] === "curriculum" &&
+      ["GET", "PUT"].includes(method)
+    )
+      return {
+        method,
+        upstream: key,
+        productId: path[2],
+        response: adminCurriculumSchema,
+        ...(method === "PUT"
+          ? { body: adminCurriculumWriteSchema, bodyLimit: 524288 }
+          : {}),
+      };
+    if (
+      path.length === 4 &&
+      method === "POST" &&
+      ["actions", "asset"].includes(path[3])
+    )
+      return {
+        method,
+        upstream: key,
+        entityId: path[2],
+        response: adminProductSchema,
+        body:
+          path[3] === "actions"
+            ? adminProductActionSchema
+            : adminAssetAttachSchema,
+      };
   }
-  if(key==="admin/media" && method==="GET") return {method,upstream:key,response:adminUploadListSchema,query:adminUploadQuerySchema};
-  if(key==="admin/media/uploads" && method==="POST") return {method,upstream:key,response:adminUploadSchema,body:adminUploadCreateSchema};
-  if(path[0]==="admin" && path[1]==="media" && path[2]==="uploads" && uuid.safeParse(path[3]).success) {
-    if(path.length===4 && method==="GET") return {method,upstream:key,entityId:path[3],response:adminUploadSchema};
-    if(path.length===5 && method==="POST" && ["part-url","complete","abort","process"].includes(path[4])) return {method,upstream:key,...(path[4]!=="part-url"?{entityId:path[3]}:{}),response:path[4]==="part-url"?adminPartUrlSchema:adminUploadSchema,body:path[4]==="part-url"?adminPartSchema:path[4]==="complete"?adminCompleteSchema:emptyQuerySchema,...(path[4]==="complete"?{bodyLimit:524288}:{})};
+  if (key === "admin/media" && method === "GET")
+    return {
+      method,
+      upstream: key,
+      response: adminUploadListSchema,
+      query: adminUploadQuerySchema,
+    };
+  if (key === "admin/media/uploads" && method === "POST")
+    return {
+      method,
+      upstream: key,
+      response: adminUploadSchema,
+      body: adminUploadCreateSchema,
+    };
+  if (
+    path[0] === "admin" &&
+    path[1] === "media" &&
+    path[2] === "uploads" &&
+    uuid.safeParse(path[3]).success
+  ) {
+    if (path.length === 4 && method === "GET")
+      return {
+        method,
+        upstream: key,
+        entityId: path[3],
+        response: adminUploadSchema,
+      };
+    if (
+      path.length === 5 &&
+      method === "POST" &&
+      ["part-url", "complete", "abort", "process"].includes(path[4])
+    )
+      return {
+        method,
+        upstream: key,
+        ...(path[4] !== "part-url" ? { entityId: path[3] } : {}),
+        response:
+          path[4] === "part-url" ? adminPartUrlSchema : adminUploadSchema,
+        body:
+          path[4] === "part-url"
+            ? adminPartSchema
+            : path[4] === "complete"
+              ? adminCompleteSchema
+              : emptyQuerySchema,
+        ...(path[4] === "complete" ? { bodyLimit: 524288 } : {}),
+      };
   }
-  if (path[0] === "admin" && path[1] === "directory" && directoryKinds.includes(path[2] as typeof directoryKinds[number])) {
-    const kind = path[2] as typeof directoryKinds[number];
-    if (path.length === 3 && method === "GET") return { method, upstream: key, response: directoryLists[kind], query: directoryQueries[kind] };
-    if (path.length === 4 && uuid.safeParse(path[3]).success && method === "GET") return { method, upstream: key, entityId: path[3], response: directoryDetails[kind] };
-    if (kind === "users" && path.length === 5 && uuid.safeParse(path[3]).success && path[4] === "actions" && method === "POST") return { method, upstream: key, entityId: path[3], response: accountActionResultSchema, body: accountActionSchema };
+  if (
+    path[0] === "admin" &&
+    path[1] === "directory" &&
+    directoryKinds.includes(path[2] as (typeof directoryKinds)[number])
+  ) {
+    const kind = path[2] as (typeof directoryKinds)[number];
+    if (path.length === 3 && method === "GET")
+      return {
+        method,
+        upstream: key,
+        response: directoryLists[kind],
+        query: directoryQueries[kind],
+      };
+    if (
+      path.length === 4 &&
+      uuid.safeParse(path[3]).success &&
+      method === "GET"
+    )
+      return {
+        method,
+        upstream: key,
+        entityId: path[3],
+        response: directoryDetails[kind],
+      };
+    if (
+      kind === "users" &&
+      path.length === 5 &&
+      uuid.safeParse(path[3]).success &&
+      path[4] === "actions" &&
+      method === "POST"
+    )
+      return {
+        method,
+        upstream: key,
+        entityId: path[3],
+        response: accountActionResultSchema,
+        body: accountActionSchema,
+      };
   }
   if (key === "admin/overview" && method === "GET")
     return {
@@ -343,15 +664,30 @@ export function resolveEndpoint(
   return null;
 }
 const errorCodes = new Set([
-  "SETTLEMENT_VERSION_CONFLICT", "SETTLEMENT_ACTION_UNAVAILABLE", "REVIEW_VERSION_CONFLICT", "REVIEW_ACTION_UNAVAILABLE",
-  "CONSULTATION_VERSION_CONFLICT", "CONSULTATION_ACTION_UNAVAILABLE",
-  "BILLING_VERSION_CONFLICT", "BILLING_ACTION_UNAVAILABLE",
-  "CONTENT_PROVIDER_MISMATCH", "COURSE_MUST_BE_UNPUBLISHED", "INVALID_CURRICULUM", "INVALID_YOUTUBE_PRICING",
+  "SETTLEMENT_VERSION_CONFLICT",
+  "SETTLEMENT_ACTION_UNAVAILABLE",
+  "REVIEW_VERSION_CONFLICT",
+  "REVIEW_ACTION_UNAVAILABLE",
+  "CONSULTATION_VERSION_CONFLICT",
+  "CONSULTATION_ACTION_UNAVAILABLE",
+  "BILLING_VERSION_CONFLICT",
+  "BILLING_ACTION_UNAVAILABLE",
+  "CONTENT_PROVIDER_MISMATCH",
+  "COURSE_MUST_BE_UNPUBLISHED",
+  "INVALID_CURRICULUM",
+  "INVALID_YOUTUBE_PRICING",
   "COURSE_ENROLLMENT_REQUIRED",
   "ACCOUNT_VERSION_CONFLICT",
   "INVALID_ACCOUNT_TRANSITION",
   "ACCOUNT_ACTION_FORBIDDEN",
-  "PRODUCT_VERSION_CONFLICT","ASSET_NOT_READY","UPLOAD_STATE_CONFLICT","UPLOAD_BUSY","UPLOAD_REQUEST_CONFLICT","UPLOAD_VERIFICATION_FAILED","INVALID_UPLOAD","MEDIA_UNAVAILABLE",
+  "PRODUCT_VERSION_CONFLICT",
+  "ASSET_NOT_READY",
+  "UPLOAD_STATE_CONFLICT",
+  "UPLOAD_BUSY",
+  "UPLOAD_REQUEST_CONFLICT",
+  "UPLOAD_VERIFICATION_FAILED",
+  "INVALID_UPLOAD",
+  "MEDIA_UNAVAILABLE",
   "ROLE_REQUEST_PENDING",
   "SUBMISSION_KEY_CONFLICT",
   "ROLE_REQUEST_ALREADY_DECIDED",
@@ -380,6 +716,12 @@ export async function handleWorkspace(
   request: NextRequest,
   path: string[],
 ): Promise<NextResponse> {
+  const financeRoute =
+    path[0] === "admin" && ["settlements", "reviews"].includes(path[1]);
+  if (financeRoute)
+    path = path.map((value) =>
+      uuid.safeParse(value).success ? value.toLowerCase() : value,
+    );
   const endpoint = resolveEndpoint(path, request.method);
   if (!endpoint) return reply({ code: "NOT_FOUND" }, 404);
   if (
@@ -400,9 +742,18 @@ export async function handleWorkspace(
     Object.fromEntries(request.nextUrl.searchParams),
   );
   if (!query.success) return reply({ code: "VALIDATION_FAILED" }, 422);
+  if (financeRoute) {
+    const values = query.data as Record<string, unknown>;
+    for (const key of ["vetId", "cursor"])
+      if (typeof values[key] === "string")
+        values[key] = (values[key] as string).toLowerCase();
+  }
   let body: unknown;
   if (endpoint.body) {
-    if (Number(request.headers.get("content-length")) > (endpoint.bodyLimit ?? 32768))
+    if (
+      Number(request.headers.get("content-length")) >
+      (endpoint.bodyLimit ?? 32768)
+    )
       return reply({ code: "VALIDATION_FAILED" }, 413);
     const raw = await request.text();
     if (new TextEncoder().encode(raw).length > (endpoint.bodyLimit ?? 32768))
@@ -423,6 +774,19 @@ export async function handleWorkspace(
         422,
       );
     body = result.data;
+    if (financeRoute) {
+      const values = body as { vetId?: string; items?: Array<{ id: string }> };
+      if (values.vetId) values.vetId = values.vetId.toLowerCase();
+      values.items?.forEach((item) => {
+        item.id = item.id.toLowerCase();
+      });
+      if (
+        values.items &&
+        new Set(values.items.map((item) => item.id)).size !==
+          values.items.length
+      )
+        return reply({ code: "VALIDATION_FAILED" }, 422);
+    }
   }
   const controller = new AbortController(),
     timer = setTimeout(() => controller.abort(), 12000);
@@ -473,10 +837,19 @@ export async function handleWorkspace(
         envelope?.success === true ? envelope.data : undefined,
       );
       if (!identity.success) return reply({ code: "INVALID_RESPONSE" }, 502);
-      const roles = path[0] === "me" ? Object.values(UserRole) :
-        path[1] === "users"
-          ? [UserRole.SUPER_ADMIN]
-          : [UserRole.ADMIN, UserRole.SUPER_ADMIN];
+      const expectedActor = request.headers.get("X-Workspace-Actor");
+      if (
+        expectedActor !== null &&
+        expectedActor !==
+          `${identity.data.id}:${identity.data.role}:${identity.data.roleVersion ?? 0}`
+      )
+        return reply({ code: "AUTHORIZATION_CHANGED" }, 403);
+      const roles =
+        path[0] === "me"
+          ? Object.values(UserRole)
+          : path[1] === "users"
+            ? [UserRole.SUPER_ADMIN]
+            : [UserRole.ADMIN, UserRole.SUPER_ADMIN];
       if (
         identity.data.status !== UserStatus.ACTIVE ||
         !roles.includes(identity.data.role)
@@ -601,20 +974,88 @@ export async function handleWorkspace(
       record?.success === true ? record.data : undefined,
     );
     if (!parsed.success) return reply({ code: "INVALID_RESPONSE" }, 502);
-    if (endpoint.consultationId && parsed.data.consultationId !== endpoint.consultationId) return reply({code:"INVALID_RESPONSE"},502);
-    if (endpoint.lessonId && parsed.data.lessonId !== endpoint.lessonId) return reply({code:"INVALID_RESPONSE"},502);
-    if (endpoint.productId && parsed.data.productId !== endpoint.productId) return reply({code:"INVALID_RESPONSE"},502);
+    if (
+      endpoint.consultationId &&
+      parsed.data.consultationId !== endpoint.consultationId
+    )
+      return reply({ code: "INVALID_RESPONSE" }, 502);
+    if (endpoint.lessonId && parsed.data.lessonId !== endpoint.lessonId)
+      return reply({ code: "INVALID_RESPONSE" }, 502);
+    if (endpoint.productId && parsed.data.productId !== endpoint.productId)
+      return reply({ code: "INVALID_RESPONSE" }, 502);
     if (endpoint.entityId && parsed.data.id !== endpoint.entityId)
       return reply({ code: "INVALID_RESPONSE" }, 502);
     if (path[0] === "admin" && ["settlements", "reviews"].includes(path[1])) {
-      const data = parsed.data as { items?: Array<Record<string, any>> };
+      const data = parsed.data as Record<string, any>;
       const filters = query.data as Record<string, unknown>;
-      const items = data.items ?? [];
-      if (items.some(item => (filters.vetId && path[2] !== "summary" && item.vet?.id !== filters.vetId) || (filters.currency && item.currency !== filters.currency) || (filters.status && path[2] !== "summary" && (item.status ?? item.moderationStatus) !== filters.status) || (filters.rating && item.rating !== filters.rating))) return reply({code:"INVALID_RESPONSE"},502);
-      if (path[2] === "bulk-reconcile") {
-        const input = body as {items:Array<{id:string}>;vetId:string;currency:string};
-        if (items.length !== input.items.length || new Set(items.map(item=>item.id)).size !== items.length || items.some(item => !input.items.some(expected=>expected.id===item.id) || item.vet?.id!==input.vetId || item.currency!==input.currency)) return reply({code:"INVALID_RESPONSE"},502);
+      const items = (data.items ?? []) as Array<Record<string, any>>;
+      const isSettlement = path[1] === "settlements";
+      const isSummary = path[2] === "summary";
+      const details = data.items ?? [data];
+      // Detail context belongs to this ledger/review, even when both IDs are valid.
+      if (
+        details.some(
+          (item: Record<string, any>) =>
+            item.consultation && item.consultation.id !== item.consultationId,
+        )
+      )
+        return reply({ code: "INVALID_RESPONSE" }, 502);
+      if (
+        items.some(
+          (item) =>
+            (filters.vetId &&
+              !isSummary &&
+              item.vet !== null &&
+              item.vet.id !== filters.vetId) ||
+            (filters.currency && item.currency !== filters.currency) ||
+            (filters.status &&
+              !isSummary &&
+              (item.status ?? item.moderationStatus) !== filters.status) ||
+            (filters.rating && item.rating !== filters.rating),
+        )
+      )
+        return reply({ code: "INVALID_RESPONSE" }, 502);
+      if (isSettlement && request.method === "POST") {
+        const input = body as {
+          items?: Array<{ id: string }>;
+          vetId?: string;
+          currency?: string;
+          payoutReference: string;
+          payoutBatchId?: string;
+        };
+        const reconciled = path[2] === "bulk-reconcile" ? items : [data];
+        if (
+          reconciled.some(
+            (item) =>
+              item.status !== "PAID" ||
+              item.canReconcile ||
+              !item.processedAt ||
+              item.payoutReference !== input.payoutReference ||
+              (input.payoutBatchId !== undefined &&
+                item.payoutBatchId !== input.payoutBatchId),
+          )
+        )
+          return reply({ code: "INVALID_RESPONSE" }, 502);
+        if (
+          input.items &&
+          (items.length !== input.items.length ||
+            new Set(items.map((item) => item.id)).size !== items.length ||
+            items.some(
+              (item) =>
+                !input.items!.some((expected) => expected.id === item.id) ||
+                item.vet?.id !== input.vetId ||
+                item.currency !== input.currency,
+            ))
+        )
+          return reply({ code: "INVALID_RESPONSE" }, 502);
       }
+      if (
+        !isSettlement &&
+        request.method === "POST" &&
+        (data.moderationStatus !== (body as { status: string }).status ||
+          !data.moderatedAt)
+      )
+        return reply({ code: "INVALID_RESPONSE" }, 502);
     }
     if (endpoint.farmId) {
       const data = parsed.data as Record<string, unknown>;

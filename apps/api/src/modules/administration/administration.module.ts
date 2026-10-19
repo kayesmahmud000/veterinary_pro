@@ -5,6 +5,13 @@ import { UsersModule } from "../users/users.module";
 import { AuditModule } from "../audit/audit.module";
 import { RoleRequestsModule } from "../role-requests/role-requests.module";
 import { RoleEventsModule } from "../role-notifications/role-events.module";
+import { ConsultationsModule } from "../consultations/consultations.module";
+import { AdminSettlementsRepository } from "./settlements.repository";
+import { AdminSettlementsService } from "./settlements.service";
+import { AdminSettlementsController } from "./settlements.controller";
+import { AdminReviewsRepository } from "./reviews.repository";
+import { AdminReviewsService } from "./reviews.service";
+import { AdminReviewsController } from "./reviews.controller";
 import { PrivilegedRoleService } from "./privileged-role.service";
 import { PrivilegedRolesController } from "./privileged-roles.controller";
 import { DirectoryRepository } from "./directory.repository";
@@ -24,8 +31,28 @@ import { AdminConsultationsController } from "./consultations.controller";
     RoleRequestsModule,
     RoleEventsModule,
     WorkflowRateLimitModule,
+    ConsultationsModule,
   ],
-  providers: [PrivilegedRoleService, DirectoryRepository, DirectoryService, BillingRepository, BillingService, AdminConsultationsRepository, AdminConsultationsService],
-  controllers: [PrivilegedRolesController, DirectoryController, BillingController, AdminConsultationsController],
+  providers: [
+    PrivilegedRoleService,
+    DirectoryRepository,
+    DirectoryService,
+    BillingRepository,
+    BillingService,
+    AdminConsultationsRepository,
+    AdminConsultationsService,
+    AdminSettlementsRepository,
+    AdminSettlementsService,
+    AdminReviewsRepository,
+    AdminReviewsService,
+  ],
+  controllers: [
+    PrivilegedRolesController,
+    DirectoryController,
+    BillingController,
+    AdminConsultationsController,
+    AdminSettlementsController,
+    AdminReviewsController,
+  ],
 })
 export class AdministrationModule {}

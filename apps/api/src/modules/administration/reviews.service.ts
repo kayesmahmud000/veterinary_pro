@@ -1,4 +1,7 @@
-import {VET_PROFILE_REPOSITORY, IVetProfileRepository} from "../consultations/repositories/vet-profile.repository.interface";
+import {
+  VET_PROFILE_REPOSITORY,
+  IVetProfileRepository,
+} from "../consultations/repositories/vet-profile.repository.interface";
 import { Inject, Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { randomUUID } from "crypto";
@@ -47,7 +50,8 @@ export class AdminReviewsService {
     private readonly transactions: ITransactionManager,
     @Inject(AUDIT_LOG_REPOSITORY) private readonly audit: IAuditLogRepository,
     private readonly limiter: WorkflowRateLimiter,
-    @Inject(VET_PROFILE_REPOSITORY) private readonly profiles: IVetProfileRepository,
+    @Inject(VET_PROFILE_REPOSITORY)
+    private readonly profiles: IVetProfileRepository,
   ) {}
   private assert(
     user: UserEntity | null,
@@ -74,6 +78,7 @@ export class AdminReviewsService {
     return this.repo.list(validateWorkflow(adminReviewQuerySchema, raw));
   }
   async detail(claims: JwtPayload, id: string) {
+    id = id.toLowerCase();
     await this.authorize(claims);
     return this.transactions.run(
       async (tx) => {
@@ -97,6 +102,7 @@ export class AdminReviewsService {
     );
   }
   async moderate(claims: JwtPayload, id: string, raw: AdminReviewModerate) {
+    id = id.toLowerCase();
     const input = validateWorkflow(adminReviewModerateSchema, raw),
       actor = await this.authorize(claims);
     await this.limiter.hit("admin-reviews", actor.id, 10, 900);
@@ -127,10 +133,31 @@ export class AdminReviewsService {
           const current = await this.repo.detail(id, tx);
           if (!current) throw new EntityNotFoundException("ConsultationReview");
           if (current.revision !== input.expectedRevision) this.conflict();
-          if (!current.allowedStatuses.includes(input.status)) this.unavailable();
-          await this.repo.moderate(id, input.status, claims.sub, input.reason, tx);
+          if (!current.allowedStatuses.includes(input.status))
+            this.unavailable();
+          await this.repo.moderate(
+            id,
+            input.status,
+            claims.sub,
+            input.reason,
+            tx,
+          );
           await this.profiles.recomputeRatingAggregates(vetId, tx);
-          await this.audit.record({userId:claims.sub,entityType:"ConsultationReview",entityId:id,action:"ADMIN_REVIEW_MODERATED",traceId:randomUUID(),oldValues:{moderationStatus:current.moderationStatus},newValues:{moderationStatus:input.status,reason:input.reason}},tx);
+          await this.audit.record(
+            {
+              userId: claims.sub,
+              entityType: "ConsultationReview",
+              entityId: id,
+              action: "ADMIN_REVIEW_MODERATED",
+              traceId: randomUUID(),
+              oldValues: { moderationStatus: current.moderationStatus },
+              newValues: {
+                moderationStatus: input.status,
+                reason: input.reason,
+              },
+            },
+            tx,
+          );
           return (await this.repo.detail(id, tx))!;
         },
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },

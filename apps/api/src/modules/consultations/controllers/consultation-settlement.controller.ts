@@ -4,11 +4,12 @@ import {
   Get,
   Inject,
   Param,
-  ParseUUIDPipe,
   Post,
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { z } from "zod";
+import { SchemaValidationPipe } from "../../../common/pipes/schema-validation.pipe";
 import {
   ApiBearerAuth,
   ApiForbiddenResponse,
@@ -34,7 +35,11 @@ import {
   ResponseMessage,
   Roles,
 } from "../../../common/decorators";
-import { EntityNotFoundException, ValidationDomainException, ForbiddenOperationException } from "../../../common/exceptions/domain.exception";
+import {
+  EntityNotFoundException,
+  ValidationDomainException,
+  ForbiddenOperationException,
+} from "../../../common/exceptions/domain.exception";
 import { JwtAuthGuard, RolesGuard } from "../../../common/guards";
 import {
   IVetPayoutLedgerService,
@@ -44,6 +49,22 @@ import {
   IConsultationRepository,
   CONSULTATION_REPOSITORY,
 } from "../repositories/consultation.repository.interface";
+
+const processSchema = z
+  .object({
+    payoutReference: z.string().trim().min(3).max(255),
+    payoutBatchId: z.string().trim().min(1).max(100).optional(),
+  })
+  .strict();
+const bulkSchema = processSchema
+  .extend({
+    vetId: z.string().uuid().toLowerCase(),
+    payoutIds: z.array(z.string().uuid().toLowerCase()).min(1).max(20),
+  })
+  .refine((value) => new Set(value.payoutIds).size === value.payoutIds.length, {
+    message: "Duplicate payout IDs",
+    path: ["payoutIds"],
+  });
 
 @ApiTags("Tele-Veterinary - Fee Split & Payout Settlements")
 @ApiBearerAuth()
@@ -111,7 +132,8 @@ export class ConsultationSettlementController {
   @ApiForbiddenResponse({ description: "Cannot access another vet's earnings" })
   @ResponseMessage("Vet earnings summary retrieved successfully")
   public async getVetEarnings(
-    @Param("vetId", ParseUUIDPipe) vetId: string,
+    @Param("vetId", new SchemaValidationPipe(z.string().uuid().toLowerCase()))
+    vetId: string,
     @CurrentUser() user: JwtPayload,
     @Query() query: PayoutLedgerQueryDto,
   ): Promise<{
@@ -144,7 +166,8 @@ export class ConsultationSettlementController {
   @ApiNotFoundResponse({ description: "Consultation or settlement not found" })
   @ResponseMessage("Consultation settlement retrieved successfully")
   public async getConsultationSettlement(
-    @Param("id", ParseUUIDPipe) id: string,
+    @Param("id", new SchemaValidationPipe(z.string().uuid().toLowerCase()))
+    id: string,
     @CurrentUser() user: JwtPayload,
   ): Promise<ConsultationPayoutLedgerDto> {
     const consultation = await this.consultationRepo.findById(id);
@@ -174,16 +197,31 @@ export class ConsultationSettlementController {
   @ApiOkResponse({ description: "Calculated fee split preview" })
   @ResponseMessage("Fee split calculated successfully")
   public async previewFeeSplit(
-    @Param("id", ParseUUIDPipe) id: string,
+    @Param("id", new SchemaValidationPipe(z.string().uuid().toLowerCase()))
+    id: string,
     @Query("platformRate") platformRate: string | undefined,
     @CurrentUser() user: JwtPayload,
   ): Promise<FeeSplitCalculationDto> {
     const consultation = await this.consultationRepo.findById(id);
     if (!consultation) throw new EntityNotFoundException("Consultation", id);
-    if (![UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(user.role) && consultation.vetId !== user.sub && consultation.farmerId !== user.sub) throw new ForbiddenOperationException();
+    if (
+      ![UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(user.role) &&
+      consultation.vetId !== user.sub &&
+      consultation.farmerId !== user.sub
+    )
+      throw new ForbiddenOperationException();
     const rate = platformRate === undefined ? undefined : Number(platformRate);
-    if (platformRate !== undefined && (!platformRate.trim() || !Number.isFinite(rate))) throw new ValidationDomainException("Invalid platform fee rate.");
-    return {...this.payoutService.calculateSplit(consultation.feeCents, rate), currency: consultation.currency};
+    if (
+      platformRate !== undefined &&
+      (typeof platformRate !== "string" ||
+        !platformRate.trim() ||
+        !Number.isFinite(rate))
+    )
+      throw new ValidationDomainException("Invalid platform fee rate.");
+    return {
+      ...this.payoutService.calculateSplit(consultation.feeCents, rate),
+      currency: consultation.currency,
+    };
   }
 
   @Post("settlements/:id/process")
@@ -198,9 +236,10 @@ export class ConsultationSettlementController {
   @ApiForbiddenResponse({ description: "Admin access required" })
   @ResponseMessage("Payout processed successfully")
   public async processPayout(
-    @Param("id", ParseUUIDPipe) id: string,
+    @Param("id", new SchemaValidationPipe(z.string().uuid().toLowerCase()))
+    id: string,
     @CurrentUser() user: JwtPayload,
-    @Body() dto: ProcessPayoutDto,
+    @Body(new SchemaValidationPipe(processSchema, 16384)) dto: ProcessPayoutDto,
   ): Promise<ConsultationPayoutLedgerDto> {
     return this.payoutService.processPayout(id, dto, user.sub);
   }
@@ -218,7 +257,8 @@ export class ConsultationSettlementController {
   @ResponseMessage("Bulk payouts processed successfully")
   public async bulkProcessPayouts(
     @CurrentUser() user: JwtPayload,
-    @Body() dto: BulkProcessPayoutDto,
+    @Body(new SchemaValidationPipe(bulkSchema, 32768))
+    dto: BulkProcessPayoutDto,
   ): Promise<{ processedCount: number; totalPaidCents: number }> {
     return this.payoutService.bulkProcessPayouts(
       dto.vetId,

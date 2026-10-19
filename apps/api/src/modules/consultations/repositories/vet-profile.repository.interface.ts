@@ -17,7 +17,10 @@ export interface VetWithProfileRecord {
 
 export interface IVetProfileRepository {
   lockReviewFence(userId: string, tx: Prisma.TransactionClient): Promise<void>;
-  recomputeRatingAggregates(userId: string, tx: Prisma.TransactionClient): Promise<void>;
+  recomputeRatingAggregates(
+    userId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<void>;
   findByUserId(userId: string): Promise<VetProfileEntity | null>;
   save(entity: VetProfileEntity): Promise<VetProfileEntity>;
   findAllActiveVetsWithProfiles(): Promise<VetWithProfileRecord[]>;

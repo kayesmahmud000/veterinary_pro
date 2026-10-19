@@ -1,21 +1,148 @@
-import { z } from 'zod';
-const uuid = z.string().uuid(), money = z.number().int().nonnegative().safe(), currency = z.string().regex(/^[A-Z]{3}$/), revision = z.string().regex(/^[a-f0-9]{64}$/), date = z.string().datetime(), person = z.object({id:uuid,name:z.string()}).strict().nullable();
-const status = z.enum(['PENDING','PROCESSING','PAID','HELD','REVERSED']);
-const filters = {search:z.string().trim().min(1).max(100).optional(),status:status.optional(),vetId:uuid.optional(),currency:currency.optional()};
-export const adminSettlementQuerySchema = z.object({...filters,limit:z.coerce.number().int().min(1).max(100).default(20),cursor:uuid.optional()}).strict();
+import { z } from "zod";
+const uuid = z.string().uuid().toLowerCase(),
+  money = z.number().int().nonnegative().safe(),
+  currency = z.string().regex(/^[A-Z]{3}$/),
+  revision = z.string().regex(/^[a-f0-9]{64}$/),
+  date = z.string().datetime(),
+  person = z.object({ id: uuid, name: z.string() }).strict().nullable();
+const status = z.enum(["PENDING", "PROCESSING", "PAID", "HELD", "REVERSED"]);
+const filters = {
+  search: z.string().trim().min(1).max(100).optional(),
+  status: status.optional(),
+  vetId: uuid.optional(),
+  currency: currency.optional(),
+};
+export const adminSettlementQuerySchema = z
+  .object({
+    ...filters,
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    cursor: uuid.optional(),
+  })
+  .strict();
 export const adminSettlementSummaryQuerySchema = z.object(filters).strict();
-export const adminSettlementRowSchema = z.object({id:uuid,consultationId:uuid,vet:person,status,totalFeeCents:money,platformFeeRate:z.number().finite().min(0).max(1),platformFeeCents:money,vetPayoutCents:money,currency,processedAt:date.nullable(),createdAt:date,updatedAt:date,revision,canReconcile:z.boolean()}).strict();
-export const adminSettlementListSchema = z.object({items:z.array(adminSettlementRowSchema).max(100),nextCursor:uuid.nullable()}).strict();
-export const adminSettlementSummarySchema = z.object({items:z.array(z.object({currency,count:money,totalGrossCents:money,platformFeeCents:money,vetEarningsCents:money,pendingPayoutCents:money,paidPayoutCents:money,heldPayoutCents:money,reversedPayoutCents:money}).strict())}).strict();
-export const adminSettlementDetailSchema = adminSettlementRowSchema.extend({payoutReference:z.string().nullable(),payoutBatchId:z.string().nullable(),unavailableReason:z.enum(['STATUS','CONSULTATION_STATE','SNAPSHOT_MISMATCH']).nullable(),consultation:z.object({id:uuid,status:z.string(),paymentStatus:z.string(),type:z.string(),farmer:person,farm:person,feeCents:money,currency}).strict(),history:z.array(z.object({id:uuid,action:z.string(),actor:person,reason:z.string().nullable(),createdAt:date}).strict()).max(50),historyTruncated:z.boolean()}).strict();
-export const adminSettlementPreviewSchema = z.object({id:uuid,totalFeeCents:money,platformFeeRate:z.number().finite().min(0).max(1),platformFeeCents:money,vetPayoutCents:money,currency,matchesStoredSplit:z.boolean()}).strict();
-const confirmation = {reason:z.string().trim().min(5).max(1000),actorPassword:z.string().min(1).max(128),payoutReference:z.string().trim().min(3).max(255),payoutBatchId:z.string().trim().min(1).max(100).optional()};
-export const adminSettlementReconcileSchema = z.object({...confirmation,expectedRevision:revision}).strict();
-export const adminSettlementBulkSchema = z.object({...confirmation,items:z.array(z.object({id:uuid,expectedRevision:revision}).strict()).min(1).max(20),vetId:uuid,currency}).strict().refine(v => new Set(v.items.map(i=>i.id)).size===v.items.length,{message:'Duplicate settlement IDs',path:['items']});
-export const adminSettlementBulkResultSchema = z.object({items:z.array(adminSettlementDetailSchema).max(20)}).strict();
+export const adminSettlementRowSchema = z
+  .object({
+    id: uuid,
+    consultationId: uuid,
+    vet: person,
+    status,
+    totalFeeCents: money,
+    platformFeeRate: z.number().finite().min(0).max(1),
+    platformFeeCents: money,
+    vetPayoutCents: money,
+    currency,
+    processedAt: date.nullable(),
+    createdAt: date,
+    updatedAt: date,
+    revision,
+    canReconcile: z.boolean(),
+  })
+  .strict();
+export const adminSettlementListSchema = z
+  .object({
+    items: z.array(adminSettlementRowSchema).max(100),
+    nextCursor: uuid.nullable(),
+  })
+  .strict();
+export const adminSettlementSummarySchema = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          currency,
+          count: money,
+          totalGrossCents: money,
+          platformFeeCents: money,
+          vetEarningsCents: money,
+          pendingPayoutCents: money,
+          paidPayoutCents: money,
+          heldPayoutCents: money,
+          reversedPayoutCents: money,
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+export const adminSettlementDetailSchema = adminSettlementRowSchema
+  .extend({
+    payoutReference: z.string().nullable(),
+    payoutBatchId: z.string().nullable(),
+    unavailableReason: z
+      .enum(["STATUS", "CONSULTATION_STATE", "SNAPSHOT_MISMATCH"])
+      .nullable(),
+    consultation: z
+      .object({
+        id: uuid,
+        status: z.string(),
+        paymentStatus: z.string(),
+        type: z.string(),
+        farmer: person,
+        farm: person,
+        feeCents: money,
+        currency,
+      })
+      .strict(),
+    history: z
+      .array(
+        z
+          .object({
+            id: uuid,
+            action: z.string(),
+            actor: person,
+            reason: z.string().nullable(),
+            createdAt: date,
+          })
+          .strict(),
+      )
+      .max(50),
+    historyTruncated: z.boolean(),
+  })
+  .strict();
+export const adminSettlementPreviewSchema = z
+  .object({
+    id: uuid,
+    totalFeeCents: money,
+    platformFeeRate: z.number().finite().min(0).max(1),
+    platformFeeCents: money,
+    vetPayoutCents: money,
+    currency,
+    matchesStoredSplit: z.boolean(),
+  })
+  .strict();
+const confirmation = {
+  reason: z.string().trim().min(5).max(1000),
+  actorPassword: z.string().min(1).max(128),
+  payoutReference: z.string().trim().min(3).max(255),
+  payoutBatchId: z.string().trim().min(1).max(100).optional(),
+};
+export const adminSettlementReconcileSchema = z
+  .object({ ...confirmation, expectedRevision: revision })
+  .strict();
+export const adminSettlementBulkSchema = z
+  .object({
+    ...confirmation,
+    items: z
+      .array(z.object({ id: uuid, expectedRevision: revision }).strict())
+      .min(1)
+      .max(20),
+    vetId: uuid,
+    currency,
+  })
+  .strict()
+  .refine((v) => new Set(v.items.map((i) => i.id)).size === v.items.length, {
+    message: "Duplicate settlement IDs",
+    path: ["items"],
+  });
+export const adminSettlementBulkResultSchema = z
+  .object({ items: z.array(adminSettlementDetailSchema).max(20) })
+  .strict();
 export type AdminSettlementQuery = z.infer<typeof adminSettlementQuerySchema>;
 export type AdminSettlementRow = z.infer<typeof adminSettlementRowSchema>;
 export type AdminSettlementDetail = z.infer<typeof adminSettlementDetailSchema>;
-export type AdminSettlementSummary = z.infer<typeof adminSettlementSummarySchema>;
-export type AdminSettlementReconcile = z.infer<typeof adminSettlementReconcileSchema>;
+export type AdminSettlementSummary = z.infer<
+  typeof adminSettlementSummarySchema
+>;
+export type AdminSettlementReconcile = z.infer<
+  typeof adminSettlementReconcileSchema
+>;
 export type AdminSettlementBulk = z.infer<typeof adminSettlementBulkSchema>;

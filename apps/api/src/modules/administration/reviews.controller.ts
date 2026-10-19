@@ -41,24 +41,24 @@ export class AdminReviewsController {
   }
   @Get(":id")
   @ApiOperation({
-    summary:
-      "Read a repeatable review snapshot without clinical/provider data",
+    summary: "Read a repeatable review snapshot without clinical/provider data",
   })
   detail(
     @CurrentUser() user: JwtPayload,
-    @Param("id", new SchemaValidationPipe(z.string().uuid())) id: string,
+    @Param("id", new SchemaValidationPipe(z.string().uuid().toLowerCase()))
+    id: string,
     @Query(new SchemaValidationPipe(z.object({}).strict())) _query: unknown,
   ) {
     return this.consultations.detail(user, id);
   }
   @Post(":id/moderate")
   @ApiOperation({
-    summary:
-      "Password-confirm a revision-checked review moderation",
+    summary: "Password-confirm a revision-checked review moderation",
   })
   moderate(
     @CurrentUser() user: JwtPayload,
-    @Param("id", new SchemaValidationPipe(z.string().uuid())) id: string,
+    @Param("id", new SchemaValidationPipe(z.string().uuid().toLowerCase()))
+    id: string,
     @Body(new SchemaValidationPipe(adminReviewModerateSchema, 16384))
     input: AdminReviewModerate,
   ) {

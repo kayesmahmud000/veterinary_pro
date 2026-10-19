@@ -69,7 +69,10 @@ describe("ConsultationSettlementController", () => {
         vetPayoutCents: 4000,
         currency: "USD",
       }),
-      getConsultationSettlement: jest.fn().mockResolvedValue({id:"ledger-1"} as any),
+      getConsultationSettlement: jest.fn().mockResolvedValue({
+        id: "ledger-1",
+        consultationId: "consult-1",
+      } as any),
       recordConsultationSettlement: jest.fn().mockResolvedValue({
         id: "ledger-1",
         consultationId: "consult-1",
@@ -140,7 +143,9 @@ describe("ConsultationSettlementController", () => {
     it("should return summary and ledger for current vet", async () => {
       const result = await controller.getMyEarnings(mockVetUser, { page: 1 });
       expect(result.summary.vetId).toBe("vet-1");
-      expect(mockPayoutService.getVetEarningsSummary).toHaveBeenCalledWith("vet-1");
+      expect(mockPayoutService.getVetEarningsSummary).toHaveBeenCalledWith(
+        "vet-1",
+      );
       expect(mockPayoutService.getVetPayoutLedger).toHaveBeenCalledWith(
         "vet-1",
         { page: 1 },
@@ -150,9 +155,15 @@ describe("ConsultationSettlementController", () => {
 
   describe("getVetEarnings", () => {
     it("should allow admin to view another vet's earnings", async () => {
-      const result = await controller.getVetEarnings("vet-1", mockAdminUser, {});
+      const result = await controller.getVetEarnings(
+        "vet-1",
+        mockAdminUser,
+        {},
+      );
       expect(result.summary).toBeDefined();
-      expect(mockPayoutService.getVetEarningsSummary).toHaveBeenCalledWith("vet-1");
+      expect(mockPayoutService.getVetEarningsSummary).toHaveBeenCalledWith(
+        "vet-1",
+      );
     });
 
     it("should allow a vet to view their own earnings", async () => {
@@ -196,7 +207,11 @@ describe("ConsultationSettlementController", () => {
 
   describe("previewFeeSplit", () => {
     it("should calculate and preview fee split", async () => {
-      const result = await controller.previewFeeSplit("consult-1", "0.25", mockVetUser);
+      const result = await controller.previewFeeSplit(
+        "consult-1",
+        "0.25",
+        mockVetUser,
+      );
       expect(result).toBeDefined();
       expect(mockPayoutService.calculateSplit).toHaveBeenCalledWith(5000, 0.25);
     });
@@ -204,11 +219,9 @@ describe("ConsultationSettlementController", () => {
 
   describe("processPayout", () => {
     it("should call service to process payout", async () => {
-      const result = await controller.processPayout(
-        "ledger-1",
-        mockAdminUser,
-        { payoutReference: "REF-001" },
-      );
+      const result = await controller.processPayout("ledger-1", mockAdminUser, {
+        payoutReference: "REF-001",
+      });
       expect(result.status).toBe("PAID");
       expect(mockPayoutService.processPayout).toHaveBeenCalledWith(
         "ledger-1",
@@ -236,19 +249,65 @@ describe("ConsultationSettlementController", () => {
   });
 });
 
-describe('Legacy settlement reads must remain read-only', () => {
-  const make = (consultation:any) => {
-    const service:any = {recordConsultationSettlement:jest.fn(async()=>({id:'created'})),getConsultationSettlement:jest.fn(async()=>({id:'existing'})),calculateSplit:jest.fn(()=>({currency:'USD'}))};
-    return {service,controller:new ConsultationSettlementController(service,{findById:async()=>consultation} as never)};
+describe("Legacy settlement reads must remain read-only", () => {
+  const make = (consultation: any) => {
+    const service: any = {
+      recordConsultationSettlement: jest.fn(async () => ({ id: "created" })),
+      getConsultationSettlement: jest.fn(async () => ({ id: "existing" })),
+      calculateSplit: jest.fn(() => ({ currency: "USD" })),
+    };
+    return {
+      service,
+      controller: new ConsultationSettlementController(service, {
+        findById: async () => consultation,
+      } as never),
+    };
   };
-  const user:any = {sub:'farmer',role:UserRole.FARMER};
-  it('never invokes capture-triggered creation on GET',async()=>{
-    const {controller,service}=make({farmerId:'farmer'});
-    expect(await controller.getConsultationSettlement('id',user)).toEqual({id:'existing'});
+  const user: any = { sub: "farmer", role: UserRole.FARMER };
+  it("never invokes capture-triggered creation on GET", async () => {
+    const { controller, service } = make({ farmerId: "farmer" });
+    expect(await controller.getConsultationSettlement("id", user)).toEqual({
+      id: "existing",
+    });
     expect(service.recordConsultationSettlement).not.toHaveBeenCalled();
   });
-  it('returns missing consultation before ledger lookup',async()=>{
-    const {controller}=make(null);
-    await expect(controller.getConsultationSettlement('missing',user)).rejects.toThrow();
+  it("returns missing consultation before ledger lookup", async () => {
+    const { controller } = make(null);
+    await expect(
+      controller.getConsultationSettlement("missing", user),
+    ).rejects.toThrow();
+  });
+});
+
+describe("Legacy preview rejects unsafe access and malformed rates", () => {
+  const user: any = { sub: "farmer", role: UserRole.FARMER };
+  const preview = () =>
+    new ConsultationSettlementController(
+      { calculateSplit: () => ({}) } as never,
+      {
+        findById: async () => ({
+          farmerId: "farmer",
+          feeCents: 2999,
+          currency: "BDT",
+        }),
+      } as never,
+    );
+  it.each(["NaN", "Infinity", "", []])(
+    "rejects malformed rate %s with validation errors",
+    async (rate) => {
+      await expect(
+        preview().previewFeeSplit("id", rate as any, user),
+      ).rejects.toMatchObject({ statusCode: 422 });
+    },
+  );
+  it("denies unrelated participants before calculation", async () => {
+    await expect(
+      preview().previewFeeSplit("id", "0.2", { ...user, sub: "stranger" }),
+    ).rejects.toMatchObject({ statusCode: 403 });
+  });
+  it("uses the consultation currency for integer-cent previews", async () => {
+    expect(await preview().previewFeeSplit("id", "0.2", user)).toMatchObject({
+      currency: "BDT",
+    });
   });
 });

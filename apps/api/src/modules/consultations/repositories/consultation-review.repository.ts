@@ -25,9 +25,7 @@ const REVIEW_INCLUDE = {
 } as const;
 
 @Injectable()
-export class ConsultationReviewRepository
-  implements IConsultationReviewRepository
-{
+export class ConsultationReviewRepository implements IConsultationReviewRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   public async create(
@@ -78,7 +76,10 @@ export class ConsultationReviewRepository
     return this.toEntity(record);
   }
 
-  public async findById(id: string, tx?: Prisma.TransactionClient): Promise<ConsultationReviewEntity | null> {
+  public async findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ConsultationReviewEntity | null> {
     const record = await (tx ?? this.prisma).consultationReview.findUnique({
       where: { id },
       include: REVIEW_INCLUDE,
@@ -108,10 +109,10 @@ export class ConsultationReviewRepository
   }
 
   public async findMany(
-    query: ReviewQueryDto & {isPublic?:boolean},
+    query: ReviewQueryDto & { isPublic?: boolean },
   ): Promise<{ items: ConsultationReviewEntity[]; total: number }> {
     const where: Prisma.ConsultationReviewWhereInput = {};
-    if(query.isPublic !== undefined) where.isPublic=query.isPublic;
+    if (query.isPublic !== undefined) where.isPublic = query.isPublic;
 
     if (query.vetId) {
       where.vetId = query.vetId;
@@ -153,7 +154,9 @@ export class ConsultationReviewRepository
     };
   }
 
-  public async findVetRatingSummary(vetId: string): Promise<VetRatingSummaryDto> {
+  public async findVetRatingSummary(
+    vetId: string,
+  ): Promise<VetRatingSummaryDto> {
     const records = await this.prisma.consultationReview.findMany({
       where: {
         vetId,
@@ -180,9 +183,7 @@ export class ConsultationReviewRepository
     }
 
     const averageRating =
-      totalReviews > 0
-        ? Math.round((ratingSum / totalReviews) * 100) / 100
-        : 0;
+      totalReviews > 0 ? Math.round((ratingSum / totalReviews) * 100) / 100 : 0;
 
     const topTags = Array.from(tagCountMap.entries())
       .map(([tag, count]) => ({ tag, count }))
@@ -197,12 +198,13 @@ export class ConsultationReviewRepository
     };
   }
 
-
-  public async lock(id:string,tx:Prisma.TransactionClient):Promise<void> {
+  public async lock(id: string, tx: Prisma.TransactionClient): Promise<void> {
     await tx.$queryRaw`SELECT id FROM consultation_reviews WHERE id=${id}::uuid FOR UPDATE`;
   }
-  public async lockConsultation(id:string,tx:Prisma.TransactionClient) {
-    const rows=await tx.$queryRaw<Array<{farmerId:string;vetId:string|null;status:string}>>`SELECT farmer_id AS "farmerId",vet_id AS "vetId",status::text FROM consultations WHERE id=${id}::uuid FOR UPDATE`;
+  public async lockConsultation(id: string, tx: Prisma.TransactionClient) {
+    const rows = await tx.$queryRaw<
+      Array<{ farmerId: string; vetId: string | null; status: string }>
+    >`SELECT farmer_id AS "farmerId",vet_id AS "vetId",status::text FROM consultations WHERE id=${id}::uuid FOR UPDATE`;
     return rows[0] ?? null;
   }
   private toEntity(record: any): ConsultationReviewEntity {
