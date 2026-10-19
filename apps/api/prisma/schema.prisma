@@ -323,6 +323,7 @@ enum ImportJobStatus {
 // ==========================================
 
 model User {
+  platformDiagnosticRuns PlatformDiagnosticRun[]
   id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email           String     @unique @db.VarChar(255)
   phone           String?    @db.Text // Encrypted ciphertext (AES-256-GCM + IV + AuthTag)
@@ -387,6 +388,26 @@ model User {
   @@index([phoneHash])
   @@index([role, status])
   @@map("users")
+}
+
+model PlatformSettings {
+  id String @id @db.Uuid
+  organizationBn String @map("organization_bn") @db.VarChar(100)
+  organizationEn String @map("organization_en") @db.VarChar(100)
+  supportEmail String @map("support_email") @db.VarChar(254)
+  reportTimezone String @map("report_timezone") @db.VarChar(30)
+  version Int @default(1)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  @@map("platform_settings")
+}
+
+model PlatformDiagnosticRun {
+  id String @id @db.Uuid
+  actorId String @map("actor_id") @db.Uuid
+  result Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  @@map("platform_diagnostic_runs")
 }
 
 model RefreshToken {

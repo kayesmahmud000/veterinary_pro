@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchWithDiagnostics } from "../api-diagnostics";
 import { z } from "zod";
 import {
+  platformSettingsSchema, platformSettingsSaveSchema, platformIntegrationsSchema, platformSystemSchema,
+  platformDiagnosticSchema, platformDiagnosticResultSchema, platformReportQuerySchema, platformReportSchema,
+  platformReportExportSchema, platformReportExportResultSchema, platformAuditExportSchema, platformAuditExportResultSchema,
   editorialQuerySchema, editorialListSchema, editorialCreateSchema, editorialDetailSchema, editorialSaveSchema, editorialActionSchema,
   notificationQuerySchema, notificationListSchema, notificationRetrySchema, notificationRowSchema,
   supportQuerySchema, supportListSchema, supportDetailSchema, supportCreateSchema, supportReplySchema, supportActionSchema,
@@ -121,6 +124,19 @@ export function resolveEndpoint(
   method: string,
 ): Endpoint | null {
   const key = path.join("/");
+  if (path[0] === "admin" && path[1] === "platform") {
+    if (path.length === 3 && method === "GET") {
+      const response = path[2] === "settings" ? platformSettingsSchema : path[2] === "integrations" ? platformIntegrationsSchema : path[2] === "system" ? platformSystemSchema : path[2] === "reports" ? platformReportSchema : undefined;
+      if (response) return { method, upstream: key, response, ...(path[2] === "reports" ? { query: platformReportQuerySchema } : {}) };
+    }
+    if (method === "POST") {
+      if (path.length === 3 && path[2] === "settings") return { method, upstream: key, body: platformSettingsSaveSchema, response: platformSettingsSchema, bodyLimit: 16384 };
+      if (path.length === 3 && path[2] === "diagnostics") return { method, upstream: key, body: platformDiagnosticSchema, response: platformDiagnosticResultSchema, bodyLimit: 16384 };
+      if (path.length === 3 && path[2] === "audit-export") return { method, upstream: key, body: platformAuditExportSchema, response: platformAuditExportResultSchema, bodyLimit: 16384 };
+      if (path.length === 4 && path[2] === "reports" && path[3] === "export") return { method, upstream: key, body: platformReportExportSchema, response: platformReportExportResultSchema, bodyLimit: 16384 };
+    }
+    return null;
+  }
   if (path[0] === "admin" && path[1] === "content") {
     if (path.length === 2 && method === "GET") return { method, upstream: key, query: editorialQuerySchema, response: editorialListSchema };
     if (path.length === 2 && method === "POST") return { method, upstream: key, body: editorialCreateSchema, response: editorialDetailSchema, bodyLimit: 262144 };
@@ -690,6 +706,7 @@ export function resolveEndpoint(
   return null;
 }
 const errorCodes = new Set([
+  "SETTINGS_CONFLICT",
   "SETTLEMENT_VERSION_CONFLICT",
   "SETTLEMENT_ACTION_UNAVAILABLE",
   "REVIEW_VERSION_CONFLICT",
@@ -743,6 +760,7 @@ export async function handleWorkspace(
   request: NextRequest,
   path: string[],
 ): Promise<NextResponse> {
+  const platformRoute = path[0] === "admin" && path[1] === "platform";
   const communicationsRoute = (path[0] === "admin" && ["content", "notifications", "support"].includes(path[1])) || (path[0] === "support" && path[1] === "tickets");
   const financeRoute =
     path[0] === "admin" && ["settlements", "reviews"].includes(path[1]);
@@ -867,7 +885,7 @@ export async function handleWorkspace(
       );
       if (!identity.success) return reply({ code: "INVALID_RESPONSE" }, 502);
       const expectedActor = request.headers.get("X-Workspace-Actor");
-      if (communicationsRoute && request.method !== "GET" && expectedActor === null) return reply({ code: "AUTHORIZATION_CHANGED" }, 403);
+      if ((communicationsRoute || platformRoute) && request.method !== "GET" && expectedActor === null) return reply({ code: "AUTHORIZATION_CHANGED" }, 403);
       currentUserId = identity.data.id;
       if (
         expectedActor !== null &&
@@ -878,7 +896,7 @@ export async function handleWorkspace(
       const roles =
         path[0] === "me" || path[0] === "support"
           ? Object.values(UserRole)
-          : path[1] === "users"
+          : path[1] === "users" || (platformRoute && !["reports", "audit-export"].includes(path[2]))
             ? [UserRole.SUPER_ADMIN]
             : [UserRole.ADMIN, UserRole.SUPER_ADMIN];
       if (
@@ -1005,6 +1023,24 @@ export async function handleWorkspace(
       record?.success === true ? record.data : undefined,
     );
     if (!parsed.success) return reply({ code: "INVALID_RESPONSE" }, 502);
+    if (platformRoute) {
+      const data = parsed.data;
+      const input = body as Record<string, any> | undefined;
+      if (path[2] === "settings" && input && (data.version !== input.expectedVersion + 1 || ["organizationBn", "organizationEn", "supportEmail", "reportTimezone"].some(k => data[k] !== input[k]))) return reply({ code: "INVALID_RESPONSE" }, 502);
+      if (path[2] === "diagnostics" && data.requestId !== input?.requestId) return reply({ code: "INVALID_RESPONSE" }, 502);
+      if (path[2] === "reports") {
+        const expected = input?.query ?? query.data;
+        const range = (input ? data.report : data).range;
+        const offset = expected.timezone === "Asia/Dhaka" ? "+06:00" : "Z";
+        if (["from", "to", "timezone"].some(k => range[k] !== expected[k]) || Date.parse(range.startInstant) !== Date.parse(expected.from + "T00:00:00" + offset) || Date.parse(range.endInstant) !== Date.parse(expected.to + "T00:00:00" + offset)) return reply({ code: "INVALID_RESPONSE" }, 502);
+      }
+      if (path[2] === "audit-export") {
+        const expected = input!.query;
+        if (Object.keys(expected).some(k => data.query[k] !== expected[k]) || new Set(data.items.map((r: { id: string }) => r.id)).size !== data.items.length || data.items.some((r: Record<string, string>) => (expected.cursor && r.id <= expected.cursor) || (expected.actorId && r.actorId !== expected.actorId) || (expected.action && r.action !== expected.action) || (expected.entityId && r.entityId !== expected.entityId) || (expected.entityType && r.entityType !== expected.entityType))) return reply({ code: "INVALID_RESPONSE" }, 502);
+        const offset = expected.timezone === "Asia/Dhaka" ? "+06:00" : "Z";
+        if (data.items.some((r: { createdAt: string }) => Date.parse(r.createdAt) < Date.parse(expected.from + "T00:00:00" + offset) || Date.parse(r.createdAt) >= Date.parse(expected.to + "T00:00:00" + offset))) return reply({ code: "INVALID_RESPONSE" }, 502);
+      }
+    }
     if (communicationsRoute) {
       const data = parsed.data as Record<string, any>;
       const input = body as Record<string, any> | undefined;

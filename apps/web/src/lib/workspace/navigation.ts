@@ -20,7 +20,7 @@ export function isAdministrativeRole(role: UserRole): boolean {
 }
 export function canAccessAdminPath(role: UserRole, pathname: string): boolean {
   if (!/^\/admin(?:\/|$)/.test(pathname)) return true;
-  if (/^\/admin\/administrative-access(?:\/|$)/.test(pathname))
+  if (/^\/admin\/(?:administrative-access|settings|system)(?:\/|$)/.test(pathname))
     return role === UserRole.SUPER_ADMIN;
   return isAdministrativeRole(role);
 }
@@ -46,7 +46,7 @@ export function readProtectedReturnTo(
 }
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const released = new RegExp(
-  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:support(?:/${uuid})?|courses(?:/${uuid}/lessons/${uuid})?|profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin(?:/(?:notifications|(?:content|support)(?:/${uuid})?|dashboard|administrative-access|settlements(?:/vets/${uuid}|/${uuid})?|reviews(?:/${uuid})?|courses(?:/${uuid})?|(?:triage|consultations)(?:/${uuid})?|(?:orders|subscriptions|plans|dunning)(?:/${uuid})?|products(?:/new|/${uuid}(?:/edit|/curriculum)?)?|media(?:/uploads/${uuid})?|(?:users|veterinarians|farms|audit)(?:/${uuid})?|role-requests(?:/${uuid})?))?)$`,
+  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:support(?:/${uuid})?|courses(?:/${uuid}/lessons/${uuid})?|profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin(?:/(?:settings(?:/integrations)?|system|metrics|reports|notifications|(?:content|support)(?:/${uuid})?|dashboard|administrative-access|settlements(?:/vets/${uuid}|/${uuid})?|reviews(?:/${uuid})?|courses(?:/${uuid})?|(?:triage|consultations)(?:/${uuid})?|(?:orders|subscriptions|plans|dunning)(?:/${uuid})?|products(?:/new|/${uuid}(?:/edit|/curriculum)?)?|media(?:/uploads/${uuid})?|(?:users|veterinarians|farms|audit)(?:/${uuid})?|role-requests(?:/${uuid})?))?)$`,
   "i",
 );
 export function validateWorkspaceReturnTo(
@@ -196,6 +196,8 @@ export function getWorkspaceNav(
         section: t.adminPlatform,
       })),
       ...(["content", "notifications", "support"] as const).map((kind) => ({ label: t[kind], href: `/admin/${kind}`, section: t.adminPlatform })),
+      ...(["metrics", "reports"] as const).map(kind => ({ label: t[kind], href: `/admin/${kind}`, section: t.adminPlatform })),
+      ...(identity.role === UserRole.SUPER_ADMIN ? (["settings", "system"] as const).map(kind => ({ label: t[kind], href: `/admin/${kind}`, section: t.adminPlatform })) : []),
       {
         label: t.triage,
         href: "/admin/triage",

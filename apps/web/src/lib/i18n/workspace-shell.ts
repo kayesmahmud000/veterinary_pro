@@ -1,6 +1,7 @@
 import type { Locale } from "./locale";
 
 export const workspaceShellEn = {
+  settings: "Report settings", system: "System status", metrics: "Platform metrics", reports: "Reports and exports",
   content: "Public content", notifications: "Notification history", support: "Support",
   settlements: "Settlements",
   moderation: "Review moderation",
@@ -58,6 +59,7 @@ export const workspaceShellEn = {
 };
 export type WorkspaceShellMessages = typeof workspaceShellEn;
 export const workspaceShellBn: WorkspaceShellMessages = {
+  settings: "প্রতিবেদনের সেটিংস", system: "সিস্টেমের অবস্থা", metrics: "প্ল্যাটফর্মের পরিসংখ্যান", reports: "প্রতিবেদন ও এক্সপোর্ট",
   content: "প্রকাশ্য কনটেন্ট", notifications: "নোটিফিকেশনের ইতিহাস", support: "সহায়তা",
   settlements: "নিষ্পত্তি খতিয়ান",
   moderation: "রিভিউ পর্যালোচনা",

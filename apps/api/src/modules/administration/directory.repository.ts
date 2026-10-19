@@ -27,7 +27,7 @@ const farmSelect = {
   owner: { select: { id: true, name: true, deletedAt: true } },
   createdAt: true,
 } as const;
-const auditSelect = {
+export const auditMetadataSelect = {
   id: true,
   userId: true,
   action: true,
@@ -43,7 +43,8 @@ const reasonBearingActions = [
   "SUBSCRIPTION_CANCELLATION_SCHEDULED", "SUBSCRIPTION_CANCELLATION_REVOKED", "SUBSCRIPTION_PLAN_UPDATED",
   "CONSULTATION_ADMIN_ASSIGNED", "CONSULTATION_ADMIN_AUTO_ASSIGNED", "CONSULTATION_ADMIN_CANCELLED",
 ];
-const operationalActions = [
+export const operationalAuditActions = [
+  "ADMIN_REPORT_EXPORTED", "ADMIN_AUDIT_EXPORTED",
   "CONTENT_DRAFT_CREATED", "CONTENT_DRAFT_SAVED", "CONTENT_PUBLISHED", "CONTENT_UNPUBLISHED",
   "ROLE_EMAIL_RETRY_REQUESTED", "SUPPORT_TICKET_CREATED", "SUPPORT_MESSAGE_ADDED", "SUPPORT_ADMIN_UPDATED",
   "ADMIN_SETTLEMENT_RECONCILED", "ADMIN_SETTLEMENT_BULK_RECONCILED", "ADMIN_REVIEW_MODERATED",
@@ -61,6 +62,8 @@ const operationalActions = [
   "PRODUCT_CREATED", "PRODUCT_UPDATED", "PRODUCT_PUBLISHED", "PRODUCT_UNPUBLISHED", "PRODUCT_DELETED", "PRODUCT_ASSET_ATTACHED", "PRODUCT_MANAGEMENT_STARTED",
   "MEDIA_UPLOAD_RESERVED", "MEDIA_UPLOAD_STARTED", "MEDIA_UPLOAD_FAILED", "MEDIA_UPLOAD_COMPLETED", "MEDIA_UPLOAD_ABORTED", "MEDIA_PROCESSING_REQUESTED",
 ];
+const auditSelect = auditMetadataSelect;
+const operationalActions = operationalAuditActions;
 function projectFarm<
   T extends { owner: { id: string; name: string; deletedAt: Date | null } },
 >(row: T) {

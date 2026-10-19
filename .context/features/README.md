@@ -21,6 +21,8 @@ Paths below are relative to `apps/api/src/modules/` unless stated. “Present”
 
 ## Domain invariants to preserve
 
+Added 2026-10-19: [ADM-8 settings, diagnostics and reports](../../docs/features/admin-settings-reports/plan.md) add Super-only report branding/default-timezone configuration and bounded read-only dependency observations with confirmed durable snapshots. Both administrative roles get current aggregate reports, explicit USD current-plan estimates, exact per-currency order creation cohorts and confirmed bounded JSON exports. Audit exports reuse ADM-2's role allowlist and omit snapshots, contact details and private payloads. These operations grant no provider dispatch, arbitrary queue replay, infrastructure or clinical/financial mutation authority.
+
 Added 2026-10-19: [ADM-7 contracts and local evidence](../../docs/features/admin-communications/plan.md) cover content publication, verified public veterinarian biographies, safe domain notification history/retry generations and own/admin support. Draft/public snapshots and internal/requester-visible messages are distinct. These scoped support/publication contracts grant no clinical, membership, financial or external-dispatch rights.
 
 Updated 2026-10-16: `administration/billing.*` and web `/admin/orders`, `/admin/subscriptions`, `/admin/plans`, `/admin/dunning` provide guarded global financial support reads and confirmed/audited local-plan/eligible period-end changes. [Contracts, tests and actual API/web releases](../../docs/features/admin-billing/plan.md) record redaction/concurrency/provider boundaries and live learner/course acceptance. Page loads do not dispatch reminders, seed plans or invoke downloads.

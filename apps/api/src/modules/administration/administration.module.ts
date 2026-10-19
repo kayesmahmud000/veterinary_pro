@@ -1,4 +1,8 @@
 import { Module } from "@nestjs/common";
+import { PlatformRepository } from "./platform.repository";
+import { PlatformService } from "./platform.service";
+import { PlatformProbe } from "./platform-probe.service";
+import { PlatformController } from "./platform.controller";
 import { CommunicationsRepository } from "./communications.repository";
 import { CommunicationsService } from "./communications.service";
 import { CommunicationsController, OwnSupportController, PublicContentController } from "./communications.controller";
@@ -37,6 +41,7 @@ import { AdminConsultationsController } from "./consultations.controller";
     ConsultationsModule,
   ],
   providers: [
+    PlatformRepository, PlatformService, PlatformProbe,
     CommunicationsRepository, CommunicationsService,
     PrivilegedRoleService,
     DirectoryRepository,
@@ -51,6 +56,7 @@ import { AdminConsultationsController } from "./consultations.controller";
     AdminReviewsService,
   ],
   controllers: [
+    PlatformController,
     CommunicationsController, OwnSupportController, PublicContentController,
     PrivilegedRolesController,
     DirectoryController,
