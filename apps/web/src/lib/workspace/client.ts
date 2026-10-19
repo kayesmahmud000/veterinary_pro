@@ -6,6 +6,7 @@ export async function workspaceRequest<T>(
   schema: z.ZodType<T, any, any>,
   method = "GET",
   payload?: unknown,
+  expectedActor?: string,
 ): Promise<WorkspaceResult<T>> {
   const attempt = async (): Promise<WorkspaceResult<T>> => {
     const controller = new AbortController(),
@@ -19,7 +20,12 @@ export async function workspaceRequest<T>(
         ...(method === "GET"
           ? {}
           : {
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                ...(expectedActor
+                  ? { "X-Workspace-Actor": expectedActor }
+                  : {}),
+              },
               body: JSON.stringify(payload),
             }),
       });

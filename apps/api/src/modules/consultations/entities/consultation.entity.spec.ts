@@ -304,3 +304,16 @@ describe("ConsultationEntity", () => {
     });
   });
 });
+
+describe("Consultation persistence intent", () => {
+  it("tracks only changed payment fields and retains its original domain baseline", () => {
+    const entity = ConsultationEntity.create({farmerId:"farmer",farmId:"farm",chiefComplaint:"Synthetic complaint",feeCents:1234});
+    expect(entity.persistenceChanges()).toEqual({});
+    entity.placePaymentHold("provider-hold");
+    expect(entity.persistenceChanges()).toEqual(expect.objectContaining({paymentStatus:"AUTHORIZED",paymentIntentId:"provider-hold",paymentHeldAt:expect.any(Date)}));
+    expect(entity.persistenceChanges()).not.toHaveProperty("status");
+    expect(entity.persistenceChanges()).not.toHaveProperty("vetId");
+    expect(entity.persistedState.status).toBe("SUBMITTED");
+    expect(entity.persistedState.paymentStatus).toBe("UNPAID");
+  });
+});

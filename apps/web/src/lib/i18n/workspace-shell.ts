@@ -1,7 +1,16 @@
 import type { Locale } from "./locale";
 
 export const workspaceShellEn = {
-  billing: "Orders and billing", orders: "Orders", subscriptions: "Subscriptions", plans: "Plans", dunning: "Payment reminders",
+  settlements: "Settlements",
+  moderation: "Review moderation",
+  consultationOperations: "Consultation operations",
+  triage: "Triage queue",
+  consultations: "Consultation history",
+  billing: "Orders and billing",
+  orders: "Orders",
+  subscriptions: "Subscriptions",
+  plans: "Plans",
+  dunning: "Payment reminders",
   adminCourses: "Courses",
   courses: "My courses",
   dashboard: "Dashboard",
@@ -39,12 +48,25 @@ export const workspaceShellEn = {
   adminOverview: "Overview",
   adminPeople: "People",
   adminPlatform: "Platform",
-  products: "Products", media: "Media uploads",
-  users: "Users", veterinarians: "Veterinarians", farms: "Farms", audit: "Audit trail",
+  products: "Products",
+  media: "Media uploads",
+  users: "Users",
+  veterinarians: "Veterinarians",
+  farms: "Farms",
+  audit: "Audit trail",
 };
 export type WorkspaceShellMessages = typeof workspaceShellEn;
 export const workspaceShellBn: WorkspaceShellMessages = {
-  billing: "অর্ডার ও বিলিং", orders: "অর্ডারসমূহ", subscriptions: "সাবস্ক্রিপশন", plans: "প্ল্যানসমূহ", dunning: "পেমেন্টের রিমাইন্ডার",
+  settlements: "নিষ্পত্তি খতিয়ান",
+  moderation: "রিভিউ পর্যালোচনা",
+  consultationOperations: "পরামর্শ ব্যবস্থাপনা",
+  triage: "প্রাথমিক বাছাই",
+  consultations: "পরামর্শের ইতিহাস",
+  billing: "অর্ডার ও বিলিং",
+  orders: "অর্ডারসমূহ",
+  subscriptions: "সাবস্ক্রিপশন",
+  plans: "প্ল্যানসমূহ",
+  dunning: "পেমেন্টের রিমাইন্ডার",
   adminCourses: "কোর্সসমূহ",
   courses: "আমার কোর্স",
   dashboard: "ড্যাশবোর্ড",
@@ -82,8 +104,12 @@ export const workspaceShellBn: WorkspaceShellMessages = {
   adminOverview: "সারসংক্ষেপ",
   adminPeople: "ব্যবহারকারী",
   adminPlatform: "প্ল্যাটফর্ম",
-  products: "পণ্য", media: "মিডিয়া আপলোড",
-  users: "ব্যবহারকারী", veterinarians: "পশুচিকিৎসক", farms: "খামার", audit: "অডিট ইতিহাস",
+  products: "পণ্য",
+  media: "মিডিয়া আপলোড",
+  users: "ব্যবহারকারী",
+  veterinarians: "পশুচিকিৎসক",
+  farms: "খামার",
+  audit: "অডিট ইতিহাস",
 };
 export function getWorkspaceShellMessages(locale: Locale) {
   return locale === "bn" ? workspaceShellBn : workspaceShellEn;

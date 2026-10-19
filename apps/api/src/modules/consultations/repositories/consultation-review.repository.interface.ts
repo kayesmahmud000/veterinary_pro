@@ -1,18 +1,31 @@
-import {
-  ReviewQueryDto,
-  VetRatingSummaryDto,
-} from "@vetralink/shared-types";
+import { Prisma } from "@prisma/client";
+import { ReviewQueryDto, VetRatingSummaryDto } from "@vetralink/shared-types";
 import { ConsultationReviewEntity } from "../entities/consultation-review.entity";
 
 export interface IConsultationReviewRepository {
-  create(entity: ConsultationReviewEntity): Promise<ConsultationReviewEntity>;
-  save(entity: ConsultationReviewEntity): Promise<ConsultationReviewEntity>;
-  findById(id: string): Promise<ConsultationReviewEntity | null>;
+  lock(id: string, tx: Prisma.TransactionClient): Promise<void>;
+  lockConsultation(
+    id: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<{ farmerId: string; vetId: string | null; status: string } | null>;
+  create(
+    entity: ConsultationReviewEntity,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ConsultationReviewEntity>;
+  save(
+    entity: ConsultationReviewEntity,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ConsultationReviewEntity>;
+  findById(
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ConsultationReviewEntity | null>;
   findByConsultationId(
     consultationId: string,
+    tx?: Prisma.TransactionClient,
   ): Promise<ConsultationReviewEntity | null>;
   findMany(
-    query: ReviewQueryDto,
+    query: ReviewQueryDto & { isPublic?: boolean },
   ): Promise<{ items: ConsultationReviewEntity[]; total: number }>;
   findVetRatingSummary(vetId: string): Promise<VetRatingSummaryDto>;
 }

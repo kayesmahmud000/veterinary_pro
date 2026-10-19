@@ -8,6 +8,10 @@ import {
 } from "@vetralink/shared-types";
 
 export interface IVetPayoutLedgerService {
+  getConsultationSettlement(
+    consultationId: string,
+  ): Promise<ConsultationPayoutLedgerDto>;
+
   calculateSplit(
     totalFeeCents: number,
     platformRate?: number,

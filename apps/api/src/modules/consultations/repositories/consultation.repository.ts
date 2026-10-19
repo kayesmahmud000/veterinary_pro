@@ -11,6 +11,8 @@ import {
 } from "@vetralink/shared-types";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ConsultationEntity } from "../entities/consultation.entity";
+import { WorkflowException } from "../../../common/exceptions/domain.exception";
+import { isWithinVetWorkingHours } from "../entities/vet-profile.entity";
 import { IConsultationRepository } from "./consultation.repository.interface";
 
 const CONSULTATION_INCLUDE = {
@@ -91,32 +93,118 @@ export class ConsultationRepository implements IConsultationRepository {
     entity: ConsultationEntity,
     tx?: Prisma.TransactionClient,
   ): Promise<ConsultationEntity> {
-    const client = tx ?? this.prisma;
-    const record = await client.consultation.update({
-      where: { id: entity.id },
-      data: {
-        vetId: entity.vetId,
-        animalId: entity.animalId,
-        chiefComplaint: entity.chiefComplaint,
-        mediaUrls: entity.mediaUrls,
-        type: entity.type,
-        status: entity.status,
-        roomSessionId: entity.roomSessionId,
-        feeCents: entity.feeCents,
-        scheduledAt: entity.scheduledAt,
-        assignedAt: entity.assignedAt,
-        paymentStatus: entity.paymentStatus,
-        paymentIntentId: entity.paymentIntentId,
-        paymentHeldAt: entity.paymentHeldAt,
-        paymentCapturedAt: entity.paymentCapturedAt,
-        paymentReleasedAt: entity.paymentReleasedAt,
-        currency: entity.currency,
-        updatedAt: entity.updatedAt,
-      },
-      include: CONSULTATION_INCLUDE,
-    });
-
-    return ConsultationEntity.fromPersistence(record);
+    const changes = entity.persistenceChanges();
+    const original = entity.persistedState;
+    const domainChange = [
+      "status",
+      "vetId",
+      "scheduledAt",
+      "assignedAt",
+      "roomSessionId",
+    ].some((key) => key in changes);
+    const assignment =
+      changes.assignedAt !== undefined ||
+      changes.vetId !== undefined ||
+      changes.scheduledAt !== undefined;
+    const persist = async (client: Prisma.TransactionClient) => {
+      if (domainChange) {
+        await client.$queryRaw`SELECT id FROM consultations WHERE id=${entity.id}::uuid FOR UPDATE`;
+        const current = await client.consultation.findUnique({
+          where: { id: entity.id },
+        });
+        // Domain intents need their original clinical/assignment/payment state. Payment-only
+        // writes follow actual provider outcomes and must not erase newer domain state.
+        const expected = [
+          "status",
+          "vetId",
+          "scheduledAt",
+          "assignedAt",
+          "roomSessionId",
+          "paymentStatus",
+          "paymentIntentId",
+        ] as const;
+        if (
+          !current ||
+          expected.some(
+            (key) =>
+              JSON.stringify(current[key]) !== JSON.stringify(original[key]),
+          )
+        ) {
+          throw new WorkflowException(
+            "CONSULTATION_VERSION_CONFLICT",
+            "Consultation changed. Reload and review.",
+          );
+        }
+        if (assignment && entity.vetId) {
+          // Shared real-write fence makes Serializable admin transactions see legacy races.
+          await client.$executeRaw`UPDATE users SET updated_at=updated_at WHERE id=${entity.vetId}::uuid`;
+          await client.$queryRaw`SELECT id FROM vet_profiles WHERE user_id=${entity.vetId}::uuid FOR UPDATE`;
+          const vet = await client.user.findUnique({
+            where: { id: entity.vetId },
+            include: { vetProfile: true },
+          });
+          const profile = vet?.vetProfile;
+          const active = await client.consultation.count({
+            where: {
+              vetId: entity.vetId,
+              id: { not: entity.id },
+              status: { in: ["ASSIGNED", "IN_PROGRESS"] },
+            },
+          });
+          const at =
+            entity.type === ConsultationType.LIVE_VIDEO
+              ? entity.scheduledAt
+              : null;
+          const conflict = at
+            ? await client.consultation.count({
+                where: {
+                  vetId: entity.vetId,
+                  id: { not: entity.id },
+                  type: "LIVE_VIDEO",
+                  status: { in: ["ASSIGNED", "IN_PROGRESS"] },
+                  scheduledAt: {
+                    gte: new Date(at.getTime() - 45 * 60000),
+                    lte: new Date(at.getTime() + 45 * 60000),
+                  },
+                },
+              })
+            : 0;
+          if (
+            !vet ||
+            vet.role !== "VET" ||
+            vet.status !== "ACTIVE" ||
+            vet.deletedAt ||
+            !profile?.isAvailable ||
+            active >= profile.maxActiveCases ||
+            (at &&
+              (!isWithinVetWorkingHours(
+                profile.workingHours,
+                profile.timezone,
+                at,
+              ) ||
+                conflict))
+          ) {
+            throw new WorkflowException(
+              "CONSULTATION_ACTION_UNAVAILABLE",
+              "Veterinarian is unavailable for assignment.",
+            );
+          }
+        }
+      }
+      const record = await client.consultation.update({
+        where: { id: entity.id },
+        data: { ...changes, updatedAt: new Date() },
+        include: CONSULTATION_INCLUDE,
+      });
+      return ConsultationEntity.fromPersistence(record);
+    };
+    // Do not hold a transaction across remote provider calls: payment-only persistence is
+    // a partial update, preserving successful provider evidence even after cancellation.
+    return tx
+      ? persist(tx)
+      : domainChange
+        ? this.prisma.$transaction(persist)
+        : persist(this.prisma);
   }
 
   public async findByFarm(

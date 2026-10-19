@@ -179,23 +179,7 @@ export class VetProfileEntity {
       return true;
     }
 
-    // Check day of week: 1 (Monday) to 7 (Sunday)
-    const dayOfWeek = scheduledAt.getUTCDay() === 0 ? 7 : scheduledAt.getUTCDay();
-    const hours = String(scheduledAt.getUTCHours()).padStart(2, "0");
-    const minutes = String(scheduledAt.getUTCMinutes()).padStart(2, "0");
-    const timeStr = `${hours}:${minutes}`;
-
-    const matchingDaySlots = this._workingHours.filter(
-      (slot) => slot.dayOfWeek === dayOfWeek,
-    );
-
-    if (matchingDaySlots.length === 0) {
-      return false;
-    }
-
-    return matchingDaySlots.some(
-      (slot) => timeStr >= slot.startTime && timeStr <= slot.endTime,
-    );
+    return isWithinVetWorkingHours(this._workingHours, this._timezone, scheduledAt);
   }
 
   public canAcceptMoreCases(currentActiveCases: number): boolean {
@@ -265,5 +249,49 @@ export class VetProfileEntity {
       updatedAt: this._updatedAt.toISOString(),
       user: this._user,
     };
+  }
+}
+
+/** Evaluate persisted slots in the profile timezone, failing closed on invalid data. */
+export function isWithinVetWorkingHours(
+  workingHours: unknown,
+  timezone: string,
+  scheduledAt: Date,
+): boolean {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: timezone,
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(scheduledAt);
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+      parts.find((p) => p.type === type)?.value;
+    const day =
+      ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(
+        part("weekday")!,
+      ) + 1;
+    const time = `${part("hour")}:${part("minute")}`;
+    if (!Array.isArray(workingHours)) return false;
+    // An explicit profile with no slots follows the existing unrestricted-hours convention.
+    if (workingHours.length === 0) return true;
+    return workingHours.some((slot) => {
+      if (!slot || typeof slot !== "object" || Array.isArray(slot))
+        return false;
+      const { dayOfWeek, startTime, endTime } = slot;
+      const clock = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+      return (
+        dayOfWeek === day &&
+        typeof startTime === "string" &&
+        typeof endTime === "string" &&
+        clock.test(startTime) &&
+        clock.test(endTime) &&
+        startTime <= time &&
+        time <= endTime
+      );
+    });
+  } catch {
+    return false;
   }
 }

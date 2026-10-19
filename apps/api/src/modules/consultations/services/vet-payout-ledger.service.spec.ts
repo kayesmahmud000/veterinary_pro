@@ -40,6 +40,12 @@ describe("VetPayoutLedgerService", () => {
 
   beforeEach(() => {
     mockPayoutLedgerRepo = {
+      lockForProcessing: jest.fn(),
+      lockConsultations: jest.fn(),
+      lockProcessingActor: jest.fn().mockResolvedValue(true),
+      findConsultationForSettlement: jest
+        .fn()
+        .mockResolvedValue(mockConsultation),
       create: jest.fn().mockImplementation(async (e) => e),
       save: jest.fn().mockImplementation(async (e) => e),
       findById: jest.fn(),
@@ -71,6 +77,7 @@ describe("VetPayoutLedgerService", () => {
       mockPayoutLedgerRepo,
       mockConsultationRepo,
       mockAuditLogRepo,
+      { run: async (fn: any) => fn({}) },
     );
   });
 
@@ -122,6 +129,23 @@ describe("VetPayoutLedgerService", () => {
   });
 
   describe("recordConsultationSettlement", () => {
+    it("shares capture-triggered creation and audit under the consultation lock", async () => {
+      mockConsultationRepo.findById.mockResolvedValue(mockConsultation);
+      mockPayoutLedgerRepo.findByConsultationId.mockResolvedValue(null);
+      await service.recordConsultationSettlement("consult-101");
+      expect(mockPayoutLedgerRepo.lockConsultations).toHaveBeenCalledWith(
+        ["consult-101"],
+        expect.anything(),
+      );
+      expect(mockPayoutLedgerRepo.create).toHaveBeenCalledWith(
+        expect.any(PayoutLedgerEntity),
+        expect.anything(),
+      );
+      expect(mockAuditLogRepo.record).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "VET_CONSULTATION_SETTLED" }),
+        expect.anything(),
+      );
+    });
     it("should throw EntityNotFoundException if consultation does not exist", async () => {
       mockConsultationRepo.findById.mockResolvedValue(null);
 
@@ -179,6 +203,7 @@ describe("VetPayoutLedgerService", () => {
           userId: "vet-1",
           traceId: "trace-settle-1",
         }),
+        expect.anything(),
       );
     });
   });
@@ -199,7 +224,9 @@ describe("VetPayoutLedgerService", () => {
 
       const result = await service.getVetEarningsSummary("vet-1");
       expect(result).toEqual(summary);
-      expect(mockPayoutLedgerRepo.findEarningsSummary).toHaveBeenCalledWith("vet-1");
+      expect(mockPayoutLedgerRepo.findEarningsSummary).toHaveBeenCalledWith(
+        "vet-1",
+      );
     });
   });
 
@@ -213,11 +240,15 @@ describe("VetPayoutLedgerService", () => {
         totalSettledConsultations: 20,
         currency: "USD",
       };
-      mockPayoutLedgerRepo.findPlatformRevenueSummary.mockResolvedValue(summary);
+      mockPayoutLedgerRepo.findPlatformRevenueSummary.mockResolvedValue(
+        summary,
+      );
 
       const result = await service.getPlatformRevenueSummary();
       expect(result).toEqual(summary);
-      expect(mockPayoutLedgerRepo.findPlatformRevenueSummary).toHaveBeenCalled();
+      expect(
+        mockPayoutLedgerRepo.findPlatformRevenueSummary,
+      ).toHaveBeenCalled();
     });
   });
 
@@ -226,7 +257,11 @@ describe("VetPayoutLedgerService", () => {
       mockPayoutLedgerRepo.findById.mockResolvedValue(null);
 
       await expect(
-        service.processPayout("non-existent", {}, "admin-1"),
+        service.processPayout(
+          "non-existent",
+          { payoutReference: "EXT-123" },
+          "admin-1",
+        ),
       ).rejects.toThrow(EntityNotFoundException);
     });
 
@@ -258,6 +293,7 @@ describe("VetPayoutLedgerService", () => {
           userId: "admin-1",
           traceId: "trace-pay-1",
         }),
+        expect.anything(),
       );
     });
   });
@@ -277,6 +313,17 @@ describe("VetPayoutLedgerService", () => {
         totalFeeCents: 3000, // 2400 vet payout
       });
 
+      mockPayoutLedgerRepo.findConsultationForSettlement.mockImplementation(
+        async (id) =>
+          ({
+            id,
+            vetId: "vet-1",
+            status: "COMPLETED",
+            paymentStatus: "CAPTURED",
+            currency: "USD",
+            feeCents: id === "consult-2" ? 3000 : 5000,
+          }) as any,
+      );
       mockPayoutLedgerRepo.findById
         .mockResolvedValueOnce(ledger1)
         .mockResolvedValueOnce(ledger2);
@@ -284,7 +331,7 @@ describe("VetPayoutLedgerService", () => {
       const result = await service.bulkProcessPayouts(
         "vet-1",
         ["ledger-1", "ledger-2"],
-        { payoutBatchId: "BATCH-BULK-01" },
+        { payoutBatchId: "BATCH-BULK-01", payoutReference: "EXT-123" },
         "admin-1",
       );
 
@@ -297,6 +344,7 @@ describe("VetPayoutLedgerService", () => {
           action: "VET_PAYOUT_BULK_PROCESSED",
           userId: "admin-1",
         }),
+        expect.anything(),
       );
     });
   });

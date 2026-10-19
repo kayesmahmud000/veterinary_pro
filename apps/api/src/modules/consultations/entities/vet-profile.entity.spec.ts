@@ -63,6 +63,13 @@ describe("VetProfileEntity", () => {
   });
 
   describe("isAvailableAt()", () => {
+    it("uses local profile hours and fails closed on invalid timezones", () => {
+      const local = VetProfileEntity.create({...mockProps, timezone:"Asia/Dhaka"});
+      expect(local.isAvailableAt(new Date("2026-09-21T04:00:00Z"))).toBe(true);
+      expect(local.isAvailableAt(new Date("2026-09-21T14:00:00Z"))).toBe(false);
+      const invalid = VetProfileEntity.create({...mockProps, timezone:"Invalid/Zone"});
+      expect(invalid.isAvailableAt(new Date("2026-09-21T04:00:00Z"))).toBe(false);
+    });
     it("should return false if isAvailable is false", () => {
       const entity = VetProfileEntity.create({
         ...mockProps,

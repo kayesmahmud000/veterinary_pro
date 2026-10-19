@@ -106,14 +106,18 @@ export class PayoutLedgerEntity {
         "Veterinarian ID is required to create a payout ledger record.",
       );
     }
-    if (props.totalFeeCents < 0) {
+    if (!Number.isSafeInteger(props.totalFeeCents) || props.totalFeeCents < 0) {
       throw new ValidationDomainException(
         "Total fee cents cannot be negative.",
       );
     }
 
     const platformFeeRate = props.platformFeeRate ?? 0.2;
-    if (platformFeeRate < 0 || platformFeeRate > 1) {
+    if (
+      !Number.isFinite(platformFeeRate) ||
+      platformFeeRate < 0 ||
+      platformFeeRate > 1
+    ) {
       throw new ValidationDomainException(
         "Platform fee rate must be between 0 and 1 (inclusive).",
       );
@@ -206,18 +210,22 @@ export class PayoutLedgerEntity {
     return this._updatedAt;
   }
 
-  public get vet(): { id: string; name: string; email: string } | null | undefined {
+  public get vet():
+    { id: string; name: string; email: string } | null | undefined {
     return this._vet;
   }
 
-  public get consultation(): {
-    id: string;
-    chiefComplaint: string;
-    type: string;
-    feeCents: number;
-    farmId: string;
-    farmerId: string;
-  } | null | undefined {
+  public get consultation():
+    | {
+        id: string;
+        chiefComplaint: string;
+        type: string;
+        feeCents: number;
+        farmId: string;
+        farmerId: string;
+      }
+    | null
+    | undefined {
     return this._consultation;
   }
 
@@ -228,9 +236,7 @@ export class PayoutLedgerEntity {
       );
     }
     if (this._status === PayoutStatus.REVERSED) {
-      throw new ValidationDomainException(
-        "Cannot process a REVERSED payout.",
-      );
+      throw new ValidationDomainException("Cannot process a REVERSED payout.");
     }
     this._status = PayoutStatus.PROCESSING;
     if (batchId) {
@@ -300,4 +306,44 @@ export class PayoutLedgerEntity {
       consultation: this._consultation,
     };
   }
+}
+
+/** Shared by administrative and legacy reconciliation under the same row locks. */
+export function settlementUnavailableReason(row: {
+  status: string;
+  vetId: string;
+  currency: string;
+  totalFeeCents: number;
+  platformFeeRate: number;
+  platformFeeCents: number;
+  vetPayoutCents: number;
+  consultation: {
+    status: string;
+    paymentStatus: string;
+    vetId: string | null;
+    currency: string;
+    feeCents: number;
+  } | null;
+}): "STATUS" | "CONSULTATION_STATE" | "SNAPSHOT_MISMATCH" | null {
+  if (!["PENDING", "PROCESSING"].includes(row.status)) return "STATUS";
+  const c = row.consultation;
+  if (!c || c.status !== "COMPLETED" || c.paymentStatus !== "CAPTURED")
+    return "CONSULTATION_STATE";
+  if (
+    c.vetId !== row.vetId ||
+    c.currency !== row.currency ||
+    c.feeCents !== row.totalFeeCents ||
+    ![row.totalFeeCents, row.platformFeeCents, row.vetPayoutCents].every(
+      (v) => Number.isSafeInteger(v) && v >= 0,
+    ) ||
+    !Number.isFinite(row.platformFeeRate) ||
+    row.platformFeeRate < 0 ||
+    row.platformFeeRate > 1 ||
+    row.platformFeeCents + row.vetPayoutCents !== row.totalFeeCents ||
+    Math.round(row.totalFeeCents * row.platformFeeRate) !==
+      row.platformFeeCents ||
+    !/^[A-Z]{3}$/.test(row.currency)
+  )
+    return "SNAPSHOT_MISMATCH";
+  return null;
 }

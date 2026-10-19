@@ -99,6 +99,8 @@ describe("VetAssignmentService", () => {
     };
 
     mockVetProfileRepo = {
+      lockReviewFence: jest.fn(),
+      recomputeRatingAggregates: jest.fn(),
       findByUserId: jest.fn(),
       save: jest.fn(),
       findAllActiveVetsWithProfiles: jest.fn(),

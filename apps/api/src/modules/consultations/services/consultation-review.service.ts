@@ -1,3 +1,8 @@
+import { Prisma } from "@prisma/client";
+import {
+  TRANSACTION_MANAGER,
+  ITransactionManager,
+} from "../../prisma/interfaces/transaction.interface";
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import {
   ConsultationReviewDto,
@@ -15,6 +20,7 @@ import {
   EntityNotFoundException,
   ForbiddenOperationException,
   ValidationDomainException,
+  WorkflowException,
 } from "../../../common/exceptions/domain.exception";
 import {
   AUDIT_LOG_REPOSITORY,
@@ -48,7 +54,31 @@ export class ConsultationReviewService implements IConsultationReviewService {
     private readonly vetProfileRepo: IVetProfileRepository,
     @Inject(AUDIT_LOG_REPOSITORY)
     private readonly auditLogRepo: IAuditLogRepository,
+    @Inject(TRANSACTION_MANAGER)
+    private readonly transactions: ITransactionManager,
   ) {}
+
+  private async runReviewTransaction<T>(
+    operation: (tx: Prisma.TransactionClient) => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await this.transactions.run(operation, {
+        isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+      });
+    } catch (error) {
+      const conflict = error as { code?: string; meta?: { code?: string } };
+      if (
+        conflict?.code === "P2034" ||
+        ["40001", "40P01"].includes(conflict?.meta?.code ?? "")
+      ) {
+        throw new WorkflowException(
+          "REVIEW_VERSION_CONFLICT",
+          "Review changed. Reload and review.",
+        );
+      }
+      throw error;
+    }
+  }
 
   public async submitReview(
     consultationId: string,
@@ -84,50 +114,61 @@ export class ConsultationReviewService implements IConsultationReviewService {
       );
     }
 
-    const existing = await this.reviewRepo.findByConsultationId(consultationId);
-    if (existing) {
-      throw new EntityConflictException(
-        "A review has already been submitted for this consultation.",
+    return this.runReviewTransaction(async (tx) => {
+      await this.vetProfileRepo.lockReviewFence(consultation.vetId!, tx);
+      const locked = await this.reviewRepo.lockConsultation(consultationId, tx);
+      if (!locked)
+        throw new EntityNotFoundException("Consultation", consultationId);
+      if (locked.farmerId !== author.sub)
+        throw new ForbiddenOperationException();
+      if (
+        locked.status !== ConsultationStatus.COMPLETED ||
+        locked.vetId !== consultation.vetId
+      )
+        throw new EntityConflictException(
+          "Consultation changed. Reload and review.",
+        );
+      const existing = await this.reviewRepo.findByConsultationId(
+        consultationId,
+        tx,
       );
-    }
-
-    const entity = ConsultationReviewEntity.create({
-      consultationId,
-      farmerId: author.sub,
-      vetId: consultation.vetId,
-      rating: dto.rating,
-      feedback: dto.feedback,
-      tags: dto.tags,
-      isPublic: dto.isPublic ?? true,
+      if (existing)
+        throw new EntityConflictException(
+          "A review has already been submitted for this consultation.",
+        );
+      const saved = await this.reviewRepo.create(
+        ConsultationReviewEntity.create({
+          consultationId,
+          farmerId: author.sub,
+          vetId: locked.vetId!,
+          rating: dto.rating,
+          feedback: dto.feedback,
+          tags: dto.tags,
+          isPublic: dto.isPublic ?? true,
+        }),
+        tx,
+      );
+      await this.vetProfileRepo.recomputeRatingAggregates(saved.vetId, tx);
+      await this.auditLogRepo.record(
+        {
+          userId: author.sub,
+          action: "CONSULTATION_REVIEW_SUBMITTED",
+          entityType: "ConsultationReview",
+          entityId: saved.id,
+          newValues: {
+            consultationId: saved.consultationId,
+            vetId: saved.vetId,
+            rating: saved.rating,
+            tags: saved.tags,
+            isPublic: saved.isPublic,
+            moderationStatus: saved.moderationStatus,
+          },
+          traceId: activeTraceId,
+        },
+        tx,
+      );
+      return saved.toDto();
     });
-
-    const saved = await this.reviewRepo.create(entity);
-
-    // Update aggregate rating on vet profile
-    await this.updateVetProfileAggregates(consultation.vetId);
-
-    // Audit log
-    await this.auditLogRepo.record({
-      userId: author.sub,
-      action: "CONSULTATION_REVIEW_SUBMITTED",
-      entityType: "ConsultationReview",
-      entityId: saved.id,
-      newValues: {
-        consultationId: saved.consultationId,
-        vetId: saved.vetId,
-        rating: saved.rating,
-        tags: saved.tags,
-        isPublic: saved.isPublic,
-        moderationStatus: saved.moderationStatus,
-      },
-      traceId: activeTraceId,
-    });
-
-    this.logger.log(
-      `Review '${saved.id}' submitted for consultation '${consultationId}' with rating ${saved.rating}/5`,
-    );
-
-    return saved.toDto();
   }
 
   public async getConsultationReview(
@@ -145,9 +186,11 @@ export class ConsultationReviewService implements IConsultationReviewService {
 
     // If review is rejected, only admins or the author farmer can view it
     if (
-      review.moderationStatus === ReviewModerationStatus.REJECTED &&
+      (!review.isPublic ||
+        review.moderationStatus !== ReviewModerationStatus.APPROVED) &&
       !isSuperOrAdmin &&
-      review.farmerId !== requestingUser.sub
+      review.farmerId !== requestingUser.sub &&
+      review.vetId !== requestingUser.sub
     ) {
       return null;
     }
@@ -159,11 +202,11 @@ export class ConsultationReviewService implements IConsultationReviewService {
     vetId: string,
     query?: ReviewQueryDto,
   ): Promise<{ items: ConsultationReviewDto[]; total: number }> {
-    const effectiveQuery: ReviewQueryDto = {
+    const effectiveQuery: ReviewQueryDto & { isPublic: true } = {
       ...query,
       vetId,
-      moderationStatus:
-        query?.moderationStatus ?? ReviewModerationStatus.APPROVED,
+      moderationStatus: ReviewModerationStatus.APPROVED,
+      isPublic: true,
     };
 
     const result = await this.reviewRepo.findMany(effectiveQuery);
@@ -202,68 +245,67 @@ export class ConsultationReviewService implements IConsultationReviewService {
       `[${activeTraceId}] Moderating review '${reviewId}' to status '${dto.status}' by user '${actorUser.sub}'`,
     );
 
-    const review = await this.reviewRepo.findById(reviewId);
-    if (!review) {
+    if (![UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(actorUser.role))
+      throw new ForbiddenOperationException();
+    if (
+      ![
+        ReviewModerationStatus.APPROVED,
+        ReviewModerationStatus.FLAGGED,
+        ReviewModerationStatus.REJECTED,
+      ].includes(dto.status)
+    )
+      throw new ValidationDomainException("Invalid moderation status.");
+    const initial = await this.reviewRepo.findById(reviewId);
+    if (!initial)
       throw new EntityNotFoundException("ConsultationReview", reviewId);
-    }
-
-    switch (dto.status) {
-      case ReviewModerationStatus.APPROVED:
-        review.approve(actorUser.sub, dto.reason);
-        break;
-      case ReviewModerationStatus.FLAGGED:
-        review.flag(actorUser.sub, dto.reason);
-        break;
-      case ReviewModerationStatus.REJECTED:
-        review.reject(actorUser.sub, dto.reason);
-        break;
-      default:
-        break;
-    }
-
-    const saved = await this.reviewRepo.save(review);
-
-    // Recalculate aggregates on the vet's profile
-    await this.updateVetProfileAggregates(saved.vetId);
-
-    // Audit log
-    await this.auditLogRepo.record({
-      userId: actorUser.sub,
-      action: "CONSULTATION_REVIEW_MODERATED",
-      entityType: "ConsultationReview",
-      entityId: saved.id,
-      newValues: {
-        moderationStatus: saved.moderationStatus,
-        moderationReason: saved.moderationReason,
-        moderatedById: saved.moderatedById,
-        moderatedAt: saved.moderatedAt?.toISOString(),
-      },
-      traceId: activeTraceId,
+    return this.runReviewTransaction(async (tx) => {
+      await this.vetProfileRepo.lockReviewFence(initial.vetId, tx);
+      await this.reviewRepo.lock(reviewId, tx);
+      const review = await this.reviewRepo.findById(reviewId, tx);
+      if (!review)
+        throw new EntityNotFoundException("ConsultationReview", reviewId);
+      if (review.moderationStatus === dto.status)
+        throw new WorkflowException(
+          "REVIEW_ACTION_UNAVAILABLE",
+          "Review status is already selected.",
+        );
+      switch (dto.status) {
+        case ReviewModerationStatus.APPROVED:
+          review.approve(actorUser.sub, dto.reason);
+          break;
+        case ReviewModerationStatus.FLAGGED:
+          review.flag(actorUser.sub, dto.reason);
+          break;
+        case ReviewModerationStatus.REJECTED:
+          review.reject(actorUser.sub, dto.reason);
+          break;
+      }
+      const saved = await this.reviewRepo.save(review, tx);
+      await this.vetProfileRepo.recomputeRatingAggregates(saved.vetId, tx);
+      await this.auditLogRepo.record(
+        {
+          userId: actorUser.sub,
+          action: "CONSULTATION_REVIEW_MODERATED",
+          entityType: "ConsultationReview",
+          entityId: saved.id,
+          newValues: {
+            moderationStatus: saved.moderationStatus,
+            moderationReason: saved.moderationReason,
+            moderatedById: saved.moderatedById,
+            moderatedAt: saved.moderatedAt?.toISOString(),
+          },
+          traceId: activeTraceId,
+        },
+        tx,
+      );
+      return saved.toDto();
     });
-
-    this.logger.log(
-      `Review '${saved.id}' moderated to status '${saved.moderationStatus}'`,
-    );
-
-    return saved.toDto();
   }
 
   public async updateVetProfileAggregates(vetId: string): Promise<void> {
-    try {
-      const summary = await this.reviewRepo.findVetRatingSummary(vetId);
-      await this.vetProfileRepo.updateRatingAggregates(
-        vetId,
-        summary.averageRating,
-        summary.totalReviews,
-      );
-      this.logger.log(
-        `Updated vet profile aggregates for vet '${vetId}': avg=${summary.averageRating}, total=${summary.totalReviews}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Failed to update aggregates for vet '${vetId}': ${(error as Error).message}`,
-        (error as Error).stack,
-      );
-    }
+    await this.runReviewTransaction(async (tx) => {
+      await this.vetProfileRepo.lockReviewFence(vetId, tx);
+      await this.vetProfileRepo.recomputeRatingAggregates(vetId, tx);
+    });
   }
 }

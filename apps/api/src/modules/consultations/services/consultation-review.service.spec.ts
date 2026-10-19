@@ -25,6 +25,7 @@ describe("ConsultationReviewService", () => {
   let mockConsultationRepo: jest.Mocked<IConsultationRepository>;
   let mockVetProfileRepo: jest.Mocked<IVetProfileRepository>;
   let mockAuditLogRepo: jest.Mocked<IAuditLogRepository>;
+  let transactions: { run: jest.Mock };
 
   const farmerUser: JwtPayload = {
     sub: "farmer-1",
@@ -71,6 +72,8 @@ describe("ConsultationReviewService", () => {
 
   beforeEach(() => {
     mockReviewRepo = {
+      lock: jest.fn(),
+      lockConsultation: jest.fn().mockResolvedValue(mockConsultation),
       create: jest.fn().mockImplementation(async (e) => e),
       save: jest.fn().mockImplementation(async (e) => e),
       findById: jest.fn(),
@@ -99,6 +102,8 @@ describe("ConsultationReviewService", () => {
     };
 
     mockVetProfileRepo = {
+      lockReviewFence: jest.fn(),
+      recomputeRatingAggregates: jest.fn(),
       findByUserId: jest.fn(),
       save: jest.fn(),
       findAllActiveVetsWithProfiles: jest.fn(),
@@ -109,11 +114,13 @@ describe("ConsultationReviewService", () => {
       record: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<IAuditLogRepository>;
 
+    transactions = { run: jest.fn(async (fn: any) => fn({ marker: "tx" })) };
     service = new ConsultationReviewService(
       mockReviewRepo,
       mockConsultationRepo,
       mockVetProfileRepo,
       mockAuditLogRepo,
+      transactions,
     );
   });
 
@@ -140,10 +147,9 @@ describe("ConsultationReviewService", () => {
       expect(result.farmerId).toBe("farmer-1");
       expect(result.vetId).toBe("vet-1");
       expect(mockReviewRepo.create).toHaveBeenCalled();
-      expect(mockVetProfileRepo.updateRatingAggregates).toHaveBeenCalledWith(
+      expect(mockVetProfileRepo.recomputeRatingAggregates).toHaveBeenCalledWith(
         "vet-1",
-        4.8,
-        12,
+        expect.objectContaining({ marker: "tx" }),
       );
       expect(mockAuditLogRepo.record).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -151,6 +157,7 @@ describe("ConsultationReviewService", () => {
           userId: "farmer-1",
           traceId: "trace-rev-1",
         }),
+        expect.objectContaining({ marker: "tx" }),
       );
     });
 
@@ -338,10 +345,9 @@ describe("ConsultationReviewService", () => {
 
       expect(result.moderationStatus).toBe(ReviewModerationStatus.REJECTED);
       expect(mockReviewRepo.save).toHaveBeenCalled();
-      expect(mockVetProfileRepo.updateRatingAggregates).toHaveBeenCalledWith(
+      expect(mockVetProfileRepo.recomputeRatingAggregates).toHaveBeenCalledWith(
         "vet-1",
-        4.8,
-        12,
+        expect.objectContaining({ marker: "tx" }),
       );
       expect(mockAuditLogRepo.record).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -349,7 +355,86 @@ describe("ConsultationReviewService", () => {
           userId: "admin-1",
           traceId: "trace-mod-1",
         }),
+        expect.objectContaining({ marker: "tx" }),
       );
+    });
+  });
+  it("forces approved public discovery even with caller status override", async () => {
+    await service.getVetReviews("vet-1", {
+      moderationStatus: ReviewModerationStatus.REJECTED,
+    });
+    expect(mockReviewRepo.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        moderationStatus: ReviewModerationStatus.APPROVED,
+        isPublic: true,
+      }),
+    );
+  });
+  it("hides private approved and public pending reviews from unrelated users", async () => {
+    for (const isPublic of [false, true]) {
+      const review = ConsultationReviewEntity.create({
+        consultationId: "consult-101",
+        farmerId: "farmer-1",
+        vetId: "vet-1",
+        rating: 4,
+        isPublic,
+      });
+      const persisted = ConsultationReviewEntity.fromPersistence({
+        ...review,
+        id: review.id,
+        consultationId: review.consultationId,
+        farmerId: review.farmerId,
+        vetId: review.vetId,
+        rating: review.rating,
+        isPublic,
+        moderationStatus: isPublic
+          ? ReviewModerationStatus.PENDING
+          : ReviewModerationStatus.APPROVED,
+        createdAt: review.createdAt,
+        updatedAt: review.updatedAt,
+      });
+      mockReviewRepo.findByConsultationId.mockResolvedValue(persisted);
+      expect(
+        await service.getConsultationReview("consult-101", otherUser),
+      ).toBeNull();
+    }
+  });
+
+  it.each([{ code: "P2034" }, { code: "P2010", meta: { code: "40P01" } }])(
+    "translates legacy moderation transaction conflicts to reloadable 409",
+    async (error) => {
+      mockReviewRepo.findById.mockResolvedValue(
+        ConsultationReviewEntity.create({
+          consultationId: "consult-101",
+          farmerId: "farmer-1",
+          vetId: "vet-1",
+          rating: 5,
+        }),
+      );
+      transactions.run.mockRejectedValue(error);
+      await expect(
+        service.moderateReview(
+          "review-1",
+          { status: ReviewModerationStatus.REJECTED },
+          adminUser,
+        ),
+      ).rejects.toMatchObject({
+        errorCode: "REVIEW_VERSION_CONFLICT",
+        statusCode: 409,
+      });
+    },
+  );
+  it("translates legacy submission transaction conflicts to reloadable 409", async () => {
+    mockConsultationRepo.findById.mockResolvedValue(mockConsultation);
+    transactions.run.mockRejectedValue({
+      code: "P2010",
+      meta: { code: "40001" },
+    });
+    await expect(
+      service.submitReview("consult-101", farmerUser, { rating: 5 }),
+    ).rejects.toMatchObject({
+      errorCode: "REVIEW_VERSION_CONFLICT",
+      statusCode: 409,
     });
   });
 });

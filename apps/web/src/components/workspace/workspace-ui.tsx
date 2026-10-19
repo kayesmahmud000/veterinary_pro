@@ -301,6 +301,7 @@ export function Answers({
 export function Confirmation({
   title,
   children,
+  confirmAttributes,
   confirm,
   cancel,
   pending,
@@ -308,6 +309,7 @@ export function Confirmation({
 }: {
   title: string;
   children: ReactNode;
+  confirmAttributes?: Record<`data-${string}`, string | boolean>;
   confirm: () => void;
   cancel: () => void;
   pending: boolean;
@@ -341,6 +343,7 @@ export function Confirmation({
           type="button"
           disabled={pending}
           onClick={confirm}
+          {...confirmAttributes}
         >
           {pending ? t.saving : t.confirm}
         </button>
