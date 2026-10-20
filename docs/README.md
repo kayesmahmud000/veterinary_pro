@@ -1,5 +1,7 @@
 # Documentation and planning guide
 
+**Current selected delivery, 2026-10-20 — ADM-9:** [Integrated administration acceptance](features/admin-release-acceptance/spec.md) / [execution evidence](features/admin-release-acceptance/plan.md) consolidate ADM-1–8 against real isolated web/BFF/API/PostgreSQL/Redis, with [release findings](features/admin-release-acceptance/findings.md) and a [migration/worker/recovery runbook](features/admin-release-acceptance/runbook.md). Production/provider/security gates remain explicit; administration is not certified complete by local tests. Farmer milk and actual training content stay deferred.
+
 **Latest selected delivery, 2026-10-19 — ADM-8:** [Settings, diagnostics and reports](features/admin-settings-reports/spec.md) / [verification and recovery](features/admin-settings-reports/plan.md) add Super-only versioned report configuration and redacted operational observations, plus both-role aggregate reports and bounded confirmed JSON report/audit exports. Current state, USD plan estimates and per-currency order creation cohorts have distinct meanings. Local acceptance leaves production migration, real Redis/workers/providers and integrated ADM-9 release acceptance separate.
 
 ## Ownership and hierarchy

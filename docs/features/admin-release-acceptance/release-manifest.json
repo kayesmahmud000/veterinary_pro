@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "recordedDate": "2026-10-21",
+  "timezone": "Asia/Dhaka",
+  "baseRevision": "a07d77f",
+  "sourceState": "Uncommitted ADM-9 candidate; Git remains human-managed",
+  "sourceSha256": {
+    "apps/api/src/modules/subscriptions/subscriptions.module.ts": "eae665134ff6aad264f49361a01099ec20a07d2f99187121905dee267ef6d9b4",
+    "apps/web/src/components/workspace/workspace-gate.tsx": "af6c1db400496b7a78ba82e26f529699f7f32123a3b4feb243d5ea2758d034ee",
+    "apps/api/scripts/check-admin-release-migrations.mjs": "efd9afa7fff4dbcc687fe291ef1b7d60ae03099dbc850a2b82c26518e130c364",
+    "apps/web/scripts/check-admin-release.mjs": "2e86a1511aec3b46d36444ed07a60457a31acf4d0bbfa56f53d6aecd18be9a10",
+    "apps/web/scripts/check-dashboard-browser.mjs": "a7ac9a608906726c92fae22be175959dfedac9537b758791bb83188ff43bd086",
+    "pnpm-lock.yaml": "50ddc761d29e3dd23b725d5884c41c2599a05c153257914e70c4fe1421f467a7",
+    "apps/api/prisma/schema.prisma": "657ada1853d4248d7a9ea625fb3d0298f132cad0a16ec093f19cb919781e041c"
+  },
+  "build": {
+    "webBuildId": "3x7aTCHG3PtK91CsKuWMT",
+    "apiEntrySha256": "11896301af4f009fe75f035e177bc2bc1bc0b6a124bdb68c2df558eaba55409e",
+    "apiSubscriptionModuleSha256": "76e8ae8c33f415aa3d5388ba7cdcbbf330d2756432d1dae17a1094c2aaf33ebb",
+    "webGateSourceMatchesBuild": true
+  },
+  "migrations": [
+    {
+      "name": "0_init",
+      "sha256": "aa9e1460075fc3cce9d0654912bf48da90a42c09564c03ee904d5c7c69759c89"
+    },
+    {
+      "name": "20260905180000_product_fts_gin_index",
+      "sha256": "60fd211e71f8715d2cb832c95d6c9e4300d593114ccf69e35cb0badf85a4cf18"
+    },
+    {
+      "name": "20260913000000_add_animal_rfid_uniqueness",
+      "sha256": "3f2620ff4f3d14386079e83a0923d1e81b3a06c6e2cc07cfdf88653bbb80bb08"
+    },
+    {
+      "name": "20260913010000_add_animal_pedigree_indexes",
+      "sha256": "52738e180e8370cdd590d0aac82b89e20b9bacf5b9e719920d10285d420b712d"
+    },
+    {
+      "name": "20260913020000_add_animal_weight_logs",
+      "sha256": "b959f11f949f7c57c633146daea17fd5401560463b3c4252aede88028f867bd4"
+    },
+    {
+      "name": "20260913030000_add_animal_import_jobs",
+      "sha256": "8e922d3d85ee6780c1219e74d3ed91a4f3cf2731cab152a8aade2b3f2b68a08e"
+    },
+    {
+      "name": "20260913040000_add_bulk_milk_log_uniqueness",
+      "sha256": "aa32fe2e5842ddabe2db8eb693e1c4dccd08e70f2511dd6feb074529be78a81f"
+    },
+    {
+      "name": "20260913060000_add_milk_yield_anomalies",
+      "sha256": "e2ace4ef42c22a3504cad0ea22457fca1d585146ff22f666ac62449df0f506eb"
+    },
+    {
+      "name": "20260913070000_add_health_records_composite_indexes",
+      "sha256": "cfab3d46e241b53368ef176f570c6c30b8f0855d52f308960206622afcd9d22a"
+    },
+    {
+      "name": "20260913080000_enhance_vaccine_records",
+      "sha256": "abbdd699fbfa1b31a92af7da2e5327c8ad5c5274b8f5c4e525edd7fe936f83db"
+    },
+    {
+      "name": "20260913090000_add_vaccine_reminder_logs",
+      "sha256": "258fa52d26bf57b1ec6f5148dad48b31bd53cc06fdf5381a5d0419fecc65c505"
+    },
+    {
+      "name": "20260913100000_add_health_incident_escalations",
+      "sha256": "a71cf7b0f95989eaae1a58b8deba69ee6925dd251c44850b63ec4863f473179e"
+    },
+    {
+      "name": "20260913110000_add_health_record_attachments",
+      "sha256": "7edb50e16f8983c3fff351d631f6ed54ea6a72250c7dbf944da6175b0a9c8894"
+    },
+    {
+      "name": "20260913120000_add_farm_transactions_expense_categorizer",
+      "sha256": "1285cd13ad155b986302e6e28399760d6a6ef1b214bca7a50fb1da80360eceb6"
+    },
+    {
+      "name": "20260913130000_add_revenue_categories",
+      "sha256": "8fc68dd9c6f3503a9cc00952256d1a491a7c691bfb3097877b64b501ef4f570a"
+    },
+    {
+      "name": "20260920170000_add_subscription_dunning_logs",
+      "sha256": "b792d646b83a5c6ba1c648ecf9a4b2e73a4533a6afdf8533450f9a121f0a21eb"
+    },
+    {
+      "name": "20260920210000_add_consultation_messages",
+      "sha256": "e7079caada89a8c0a6f01e26d14ef5e0636c69be15893c371768459fa852c794"
+    },
+    {
+      "name": "20260920220000_add_consultation_clinical_notes",
+      "sha256": "1fef9c6c48a5568015844000bccc8b15f51dcc238ca9dc7a9aea801fd6a1b0f1"
+    },
+    {
+      "name": "20260920230000_enhance_prescriptions",
+      "sha256": "cb1fdb3fd07fc854779da62da089312b8fdaa20d6cbdd76d417fe5599ef768a9"
+    },
+    {
+      "name": "20260920240000_add_vet_license_number",
+      "sha256": "6fd1816da7eafec1c7bece425fa8e0a5800610546096ca80976e5208d6675a4d"
+    },
+    {
+      "name": "20261007090000_add_learner_role",
+      "sha256": "839bd25f0ce7bcc285d075e9a23b372179ec2bcd39f9d32dda5a6a615d35e5e3"
+    },
+    {
+      "name": "20261007090100_role_workflows_and_farm_onboarding",
+      "sha256": "5ec2f3b8a1f117644e0a2bd2ab33109e2aee7e0edd93e04599e577284b5995f8"
+    },
+    {
+      "name": "20261007090200_strengthen_role_request_constraints",
+      "sha256": "a8570aaa5880242a5ff4b340e1256dc8e19aab9395d8c959cee83cae2404fb63"
+    },
+    {
+      "name": "20261008090000_restore_consultation_schema",
+      "sha256": "5d235329dc296ea71e545a29bd0ea4ed1acb1fc7f3989bea4838033ed55a0a04"
+    },
+    {
+      "name": "20261015090000_admin_product_media",
+      "sha256": "7e3414b27928c4092abfe5c391b43da8ae3f8244b12322a57c007cd948bbb987"
+    },
+    {
+      "name": "20261015120000_youtube_course_curriculum",
+      "sha256": "d259907a7829d9e5c6671c7d9d3202f1a13a2d3861ea55cc3a4434101cacf16b"
+    },
+    {
+      "name": "20261015150000_course_enrollment",
+      "sha256": "7c5a5ec94a390bc650278d3073710ebfe91c020d06b571dc2619a5bf9f597288"
+    },
+    {
+      "name": "20261019100000_admin_communications",
+      "sha256": "c54da1d5b226e21c0c8d02e9587790f26426bf4886d33da0e8c44519d149adb5"
+    },
+    {
+      "name": "20261019160000_admin_platform",
+      "sha256": "5aea8a3c7fcb5d7760ba49c24508d611192d844d93c965155cda34ae6ae89c7e"
+    }
+  ],
+  "verification": {
+    "api": {
+      "suites": 242,
+      "tests": 2261,
+      "skipped": 0,
+      "result": "PASS"
+    },
+    "webBoundaries": {
+      "tests": 198,
+      "result": "PASS"
+    },
+    "gateRegressions": {
+      "tests": 51,
+      "result": "PASS"
+    },
+    "integrated": {
+      "groups": 21,
+      "adminRouteVisits": 192,
+      "result": "PASS",
+      "mail": "Real Redis/BullMQ with missing-key failure and mock acceptance; no external delivery"
+    },
+    "controlledBrowser": {
+      "observedChecks": 1477,
+      "result": "PASS",
+      "note": "Includes a redundant 165-check course pass removed from the final aggregator; catalog retains those cases"
+    },
+    "authBrowser": {
+      "result": "PASS",
+      "localizedGets": 80,
+      "languageSubmissions": 60
+    },
+    "populatedMigrationRestore": {
+      "result": "PASS",
+      "from": 27,
+      "to": 29,
+      "schemaDiffs": "empty"
+    },
+    "dependencyAudit": {
+      "result": "OPEN",
+      "critical": 3,
+      "high": 23,
+      "moderate": 24,
+      "low": 4,
+      "observedDate": "2026-10-20"
+    }
+  },
+  "evidenceSha256": {
+    "adm9-api-final.log": "45bcabca44b22e8d4311fe4e2b2a4ee37674002ef2832da8f0c5bdda62b029b7",
+    "adm9-web-regression.log": "d8c311c8f75469206970e9697dee738aad0c4a2bf61cb651aee7984b0b92ce71",
+    "adm9-gate-regression.log": "07abc91a69bfe16dbf8e228b8e8cece6d0fc9c714ad66ab917fc0edafb726168",
+    "adm9-controlled-browser.log": "39e47095518668240cb5dea4da2668ba8e8b34430fa11ef2778b41fc4f4f894b",
+    "adm9-integrated.log": "3ab44b2c48c7f20416ea03a532f6c6e4290d5942363cbda35643b4172bf9ef0d",
+    "adm9-auth-browser.log": "3f19579107f0f4180609f32281370096c5e9dd9f78aaadb9cec896b9df03771e",
+    "adm9-migrations-final.log": "997eda9b3414e13f7d65f85cd71580feab6730cb11764f9400f50e3d454cf7a8",
+    "adm9-audit.json": "38abc5da2e5ddd354d9aad766676995669280ed28fbd2a14f1fb1eaaa24d4f97",
+    "adm9-live-readonly.json": "aac3ffa0a2a8faeed79609577cbec447a5ab2c281f5835a2528c922ad922449e",
+    "adm9-configured-schema.json": "a8736c7aa06129143250360049245cdde842a6586d5780ee60b5fc501ce4bd13"
+  },
+  "releaseDecision": "NO_GO",
+  "openGates": [
+    "Verified production binding and target backup/restore plus communications/platform migrations",
+    "Target-specific dependency advisory remediation/disposition",
+    "Durable hosted workers and enabled storage/media/provider acceptance/inbox delivery",
+    "Actual HTTPS ADMIN/SUPER_ADMIN journeys and declared load/alert/alternate-browser acceptance"
+  ],
+  "productionMutations": false
+}

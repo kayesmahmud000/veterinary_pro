@@ -6,6 +6,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { getWorkspaceShellMessages } from "@/lib/i18n/workspace-shell";
+import { protectedEntryUrl } from "@/lib/workspace/navigation";
 export function WorkspaceGate({
   allowedRoles,
   requireFarmerSetupComplete = false,
@@ -46,19 +47,16 @@ export function WorkspaceGate({
     const destination = query ? `${pathname}?${query}` : pathname;
     if (promptedRoute.current === destination) return;
     promptedRoute.current = destination;
-    auth.open(
-      auth.modal === "register" ? "register" : "login",
-      destination,
-      true,
-    );
+    // Back navigation may restore a cached workspace without running middleware.
+    // Use the same public handoff as a signed-out server request.
+    router.replace(protectedEntryUrl(destination));
   }, [
     auth.user,
     auth.checking,
     auth.error,
-    auth.modal,
-    auth.open,
     pathname,
     query,
+    router,
   ]);
   useEffect(() => {
     if (!auth.checking && !auth.error && setup)

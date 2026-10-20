@@ -493,6 +493,33 @@
         "Stage A — common dashboard/profile",
         "live isolated API/database acceptance remains pending"
       ]
+    },
+    {
+      "path": "apps/api/scripts/check-admin-release-migrations.mjs",
+      "anchors": [
+        "ADM9_POSTGRES_CONTAINER",
+        "pre-adm7.sql"
+      ]
+    },
+    {
+      "path": "apps/web/scripts/check-admin-release.mjs",
+      "anchors": [
+        "ADM9_TEST_DATABASE_URL",
+        "checkColdBootstrap",
+        "retryGeneration"
+      ]
+    },
+    {
+      "path": "apps/web/src/components/workspace/workspace-gate.tsx",
+      "anchors": [
+        "router.replace(protectedEntryUrl(destination))"
+      ]
+    },
+    {
+      "path": "apps/api/src/modules/subscriptions/subscriptions.module.ts",
+      "anchors": [
+        "useExisting: SubscriptionPlanService"
+      ]
     }
   ]
 }

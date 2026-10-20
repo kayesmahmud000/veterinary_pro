@@ -478,7 +478,26 @@ try {
     await cookie("vetralink_refresh", "r-" + role);
     await cookie("vetralink-locale", locale);
   }
-  if (process.env.WORKSPACE_BROWSER_FOCUS === "platform") {
+  if (process.env.WORKSPACE_BROWSER_FOCUS === "admin-release") {
+    const context = { seed, go, call, evaluate, until, temp, requests, origin, users };
+    for (const [name, check] of [
+      ["overview", checkAdminDashboard],
+      ["directory", checkAdminDirectory],
+      ["catalog", checkAdminCatalog],
+      ["billing", checkAdminBilling],
+      ["consultations", checkAdminConsultations],
+      ["finance", checkAdminFinance],
+      ["communications", checkAdminCommunications],
+      ["platform", checkAdminPlatform],
+    ]) {
+      console.log(`Checking controlled ${name} browser journeys.`);
+      const count = await check(context);
+      checks += count;
+      console.log(`Passed ${count} controlled ${name} browser checks.`);
+    }
+    assert.deepEqual(exceptions, []);
+    console.log(`Passed ${checks} controlled administration browser checks. Screenshots: ${temp}`);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "platform") {
     checks += await checkAdminPlatform({seed,go,call,evaluate,until,temp,requests});
     assert.deepEqual(exceptions, []);
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "communications") {

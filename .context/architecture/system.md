@@ -21,6 +21,8 @@ flowchart LR
 
 ## Layer and dependency conventions
 
+Updated 2026-10-20 ADM-9: the subscription plan service token uses `useExisting` for its concrete provider so Nest invokes its bootstrap seeding lifecycle once. The prior duplicate `useClass` instance raced on cold-tier inserts. [Real bootstrap/restart evidence](../../docs/features/admin-release-acceptance/plan.md) verifies single initialization and retention of edited plans.
+
 - Controllers handle transport, DTOs, decorators and delegation. Some are at module root; larger modules use `controllers/`. Match the target module rather than moving files for uniformity.
 - Services implement use cases with injected interface tokens; entities capture domain state and behavior. Interfaces and tokens commonly share `*.interface.ts` files.
 - Repositories own Prisma queries, tenant filters, ORM/domain mapping and persistence error translation. Avoid leaking ORM objects as public contracts.

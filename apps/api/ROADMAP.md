@@ -10,6 +10,8 @@ Original review: **2026-10-05 / d5d311b**. Admin-dashboard dependency planning u
 
 ## API dependency register
 
+Updated 2026-10-20: [ADM-9 integrated acceptance](../../docs/features/admin-release-acceptance/plan.md) records real isolated API/PostgreSQL/Redis and browser evidence, cold-bootstrap binding repair, migration/recovery and current advisory findings. The configured database is missing the communications/platform migrations; no production schema rollout is established. [Release gates](../../docs/features/admin-release-acceptance/runbook.md) remain separate from implemented contracts and historical sprint completion. The web tracker owns ADM-9 progress.
+
 Updated 2026-10-09: safe HTTP completion diagnostics cover main/serverless Nest entry points, including validation/guard errors. Development defaults on; production requires `API_DEBUG=1`. Focused logger/filter/envelope/auth checks and API build evidence are in the [diagnostics plan](../../docs/tasks/api-request-diagnostics/plan.md). This code has not been deployed by this task.
 
 Updated 2026-10-08: explicit offline first-super-admin bootstrap also supports new
