@@ -13,9 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const p = findDoctor(doctorProfiles, params.id);
-  const { locale, messages } = getLocalization();
+  const { locale, messages } = (await getLocalization());
   if (!p) {
     const managed = await publishedEntry("VET", params.id);
     if (managed.data) return { title: managed.data.content[locale].title, description: managed.data.content[locale].summary };
@@ -31,10 +32,11 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
     ...(p.isDemo ? { robots: { index: false, follow: true } } : {}),
   };
 }
-export default function DoctorPage({ params }: { params: { id: string } }) {
+export default async function DoctorPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const p = findDoctor(doctorProfiles, params.id);
   if (!p) return <PublishedDetail kind="VET" slug={params.id} />;
-  const { locale, messages } = getLocalization();
+  const { locale, messages } = (await getLocalization());
   const t = messages.publicPages;
   const others = doctorProfiles.filter(
     (other) => other.published && other.id !== p.id,

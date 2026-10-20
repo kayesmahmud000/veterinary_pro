@@ -54,7 +54,9 @@ $env:API_BASE_URL = 'http://127.0.0.1:35411/api/v1'
 pnpm --filter @vetralink/shared-types build
 pnpm --filter @vetralink/api build
 pnpm --filter @vetralink/web check:styles
-pnpm --filter @vetralink/web exec next build $adm9Web
+$adm9Next = (Resolve-Path apps/web/node_modules/next/dist/bin/next).Path
+Push-Location -LiteralPath $adm9Web
+try { node $adm9Next build } finally { Pop-Location }
 $env:WEB_TEST_BUILD_DIR = $adm9Web
 $env:ADM9_TEST_DATABASE_URL = 'postgresql://postgres:adm9_only@127.0.0.1:55449/adm9_test'
 $env:ADM9_REDIS_CONTAINER = "$adm9Name-redis"
@@ -64,6 +66,8 @@ node apps/web/scripts/check-admin-release.mjs
 $env:WORKSPACE_BROWSER_FOCUS = 'admin-release'
 node apps/web/scripts/check-dashboard-browser.mjs
 ```
+
+Build and start Next from inside the isolated application directory. Next 15 resolves runtime manifests relative to the process working directory; cross-directory launches on Windows were observed to construct invalid manifest paths. Browser harnesses now start Next with that directory as cwd and `start .`. API/worker children still use an empty temporary cwd and synthetic environment. The [dependency remediation evidence](../../tasks/admin-release-dependencies/plan.md) supersedes the historical Next 14 candidate without rewriting its manifest.
 
 The real harness verifies both roles/locales at 320/1440px, loaded modules, persisted BFF actions, denial/privacy, current sessions, local queue processing and worker failure/restart/generation retry. Its cold-bootstrap database proves default tiers seed once and a later restart retains edited pricing. The controlled browser suite covers detailed form failures, uncertain/stale recovery, keyboard/drawer behavior and deterministic financial/clinical states. Neither establishes external delivery or alternate-engine/device acceptance.
 

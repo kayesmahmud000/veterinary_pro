@@ -8,16 +8,18 @@ function kind(value: string): BillingKind {
   if (!billingKinds.includes(value as BillingKind)) notFound();
   return value as BillingKind;
 }
-export function generateMetadata({ params }: { params: { kind: string } }) {
+export async function generateMetadata(props: { params: Promise<{ kind: string }> }) {
+  const params = await props.params;
   return {
-    title: getBillingMessages(getLocalization().locale)[kind(params.kind)],
+    title: getBillingMessages((await getLocalization()).locale)[kind(params.kind)],
   };
 }
-export default function Page({
-  params,
-}: {
-  params: { kind: string; id: string };
-}) {
+export default async function Page(
+  props: {
+    params: Promise<{ kind: string; id: string }>;
+  }
+) {
+  const params = await props.params;
   if (!z.string().uuid().safeParse(params.id).success) notFound();
   return <AdminBilling kind={kind(params.kind)} id={params.id} />;
 }

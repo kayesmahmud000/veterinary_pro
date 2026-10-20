@@ -6,8 +6,8 @@ import { SiteBrand } from "@/components/brand/site-brand";
 import { getPublicNavItems } from "@/lib/public-navigation";
 import { getLocalization } from "@/lib/i18n/server";
 import { formatNumber } from "@/lib/i18n/locale";
-export function SiteFooter() {
-  const { locale, messages } = getLocalization();
+export async function SiteFooter() {
+  const { locale, messages } = (await getLocalization());
   const items = getPublicNavItems(messages);
   const year = new Date().toLocaleString("en-US", {
     timeZone: "Asia/Dhaka",

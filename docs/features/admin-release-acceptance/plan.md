@@ -78,3 +78,16 @@ All three task-owned Docker containers were identified by exact UUID name/ID and
 Final structural checks: **48 context documents / 358 links / 99 source entries**, **13 changed/new Markdown documents / 393 local links/anchors**; manifest source and all **29 migration hashes** match the final files. `git diff --check` and all three changed/new browser/migration JavaScript syntax checks pass.
 
 Suggested human-managed commit: `test(admin): add integrated release acceptance and recovery checks`.
+
+
+## 2026-10-21 security follow-up
+
+The [separate remediation scope and evidence](../../tasks/admin-release-dependencies/plan.md)
+replace the local dependency candidate with Next 15.5.28 / React 19.3.1 and patched
+spreadsheet/transport dependencies, plus a reproduced veterinarian SSE role/owner
+repair. Production audit: zero critical/high and three documented moderate matches.
+The new build passes 21 real integrated groups / 192 route visits, 1,312 controlled
+admin browser checks and auth/localization regression. Its candidate/evidence
+manifest is separate; the original manifest and earlier raw results remain historical.
+The configured-target migrations, hosted workers/providers and deployed acceptance
+are still open. This follow-up does not complete full ADM-9 or authorize rollout.

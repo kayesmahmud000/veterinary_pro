@@ -4,11 +4,12 @@ import { AdminCourseCurriculum } from "@/components/workspace/admin-course-curri
 import { getAdminCourseMessages } from "@/lib/i18n/admin-courses";
 import { getLocalization } from "@/lib/i18n/server";
 
-export function generateMetadata() {
-  return { title: getAdminCourseMessages(getLocalization().locale).heading };
+export async function generateMetadata() {
+  return { title: getAdminCourseMessages((await getLocalization()).locale).heading };
 }
 
-export default function Page({ params }: { params: { id: string } }) {
+export default async function Page(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!z.string().uuid().safeParse(params.id).success) notFound();
   return <AdminCourseCurriculum id={params.id} courseWorkspace />;
 }

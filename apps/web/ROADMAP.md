@@ -1,6 +1,8 @@
 # VETRALINK PRO — Web Roadmap
 
-Planning updated **2026-10-21**, inspected baseline **a07d77f plus ADM-9 changes**. Current selected delivery: **integrated administration release acceptance**, following locally implemented ADM-1–8. [Project coordination](../../ROADMAP.md) · [Documentation authority](../../docs/README.md) · [Backend roadmap and API readiness](../api/ROADMAP.md#api-dependency-register).
+**ADM-9 security follow-up locally verified, 2026-10-21:** [Scope and evidence](../../docs/tasks/admin-release-dependencies/plan.md) cover Next 15.5 / React 19 compatibility, patched spreadsheet/transport dependencies and veterinarian SSE ownership repair. The local production audit has zero critical/high matches and three documented moderate matches; 21 real integrated groups / 192 route visits pass on the new build. The full 1,312-check controlled admin run and auth/public localization browser regression also pass. Actual release-target migrations, durable hosted workers/providers and deployed acceptance remain open.
+
+Planning updated **2026-10-21**, inspected baseline **7c92823 plus local security follow-up**. Current selected delivery: **integrated administration release acceptance**, following locally implemented ADM-1–8. [Project coordination](../../ROADMAP.md) · [Documentation authority](../../docs/README.md) · [Backend roadmap and API readiness](../api/ROADMAP.md#api-dependency-register).
 
 ## Current priority — administration first
 

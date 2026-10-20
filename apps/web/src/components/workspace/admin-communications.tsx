@@ -486,7 +486,7 @@ function ContentList() {
     [code, setCode] = useState(""),
     [pending, setPending] = useState(false),
     busy = useRef(false),
-    createId = useRef<string>();
+    createId = useRef<string | undefined>(undefined);
   const remote = useData(
     `admin/content?${query}${cursor ? `&cursor=${cursor}` : ""}`,
     editorialListSchema,
@@ -927,8 +927,8 @@ function TicketList({ own }: { own: boolean }) {
     [pending, setPending] = useState(false),
     [uncertain, setUncertain] = useState(false),
     busy = useRef(false),
-    createId = useRef<string>(),
-    messageId = useRef<string>();
+    createId = useRef<string | undefined>(undefined),
+    messageId = useRef<string | undefined>(undefined);
   const api = own ? "support/tickets" : "admin/support",
     base = own ? "/account/support" : "/admin/support",
     remote = useData(

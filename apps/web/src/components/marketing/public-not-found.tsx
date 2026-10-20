@@ -7,8 +7,8 @@ import { cn } from "@/lib/ui/cn";
 import { buttonVariants } from "@/components/ui/button";
 
 // Nested routes already receive the marketing header/footer from their layout.
-export function PublicNotFound() {
-  const { locale, messages } = getLocalization();
+export async function PublicNotFound() {
+  const { locale, messages } = (await getLocalization());
   return (
     <main
       id="main-content"

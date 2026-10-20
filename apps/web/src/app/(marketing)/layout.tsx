@@ -3,12 +3,12 @@ import siteStyles from "@/lib/ui/site.styles";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { getLocalization } from "@/lib/i18n/server";
-export default function MarketingLayout({
+export default async function MarketingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { messages } = getLocalization();
+  const { messages } = (await getLocalization());
   return (
     <>
       <a className={cn(siteStyles["skip-link"])} href="#main-content">

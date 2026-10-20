@@ -18,8 +18,8 @@ const bases: Record<string, string> = {
   GUIDE: "/guides",
   VET: "/doctors",
 };
-export function PublishedArticle({ entry }: { entry: PublicEditorial }) {
-  const { locale } = getLocalization(),
+export async function PublishedArticle({ entry }: { entry: PublicEditorial }) {
+  const { locale } = (await getLocalization()),
     t = communicationsMessages(locale);
   return (
     <PublicPage
@@ -46,7 +46,7 @@ export async function PublishedDetail({
 }) {
   const r = await publishedEntry(kind, slug),
     parsed = publicEditorialSchema.safeParse(r.data),
-    { locale } = getLocalization(),
+    { locale } = (await getLocalization()),
     t = communicationsMessages(locale);
   if (parsed.success) return <PublishedArticle entry={parsed.data} />;
   return r.status === 404 ? (
@@ -78,7 +78,7 @@ export async function PublishedCatalog({
     },
     result = await publishedEntries(kind, values),
     parsed = publicEditorialListSchema.safeParse(result.data),
-    { locale } = getLocalization(),
+    { locale } = (await getLocalization()),
     t = communicationsMessages(locale);
   if (
     embedded &&

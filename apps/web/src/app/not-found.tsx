@@ -6,8 +6,8 @@ import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { getLocalization } from "@/lib/i18n/server";
 import { formatNumber } from "@/lib/i18n/locale";
-export default function NotFound() {
-  const { locale, messages } = getLocalization();
+export default async function NotFound() {
+  const { locale, messages } = (await getLocalization());
   return (
     <>
       <a className={cn(siteStyles["skip-link"])} href="#main-content">

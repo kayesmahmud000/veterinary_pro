@@ -19,19 +19,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 
-export function generateMetadata() {
-  const { messages } = getLocalization();
+export async function generateMetadata() {
+  const { messages } = (await getLocalization());
   return {
     title: messages.navigation.blog,
     description: messages.publicPages.blog.description,
   };
 }
-export default function BlogPage({
-  searchParams,
-}: {
-  searchParams: { q?: string | string[]; topic?: string | string[]; cursor?: string };
-}) {
-  const { messages, locale } = getLocalization();
+export default async function BlogPage(
+  props: {
+    searchParams: Promise<{ q?: string | string[]; topic?: string | string[]; cursor?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const { messages, locale } = (await getLocalization());
   const t = messages.publicPages;
   const posts = filterBlogPosts({ ...searchParams, locale });
   const topics = Object.keys(t.topics) as BlogTopic[];

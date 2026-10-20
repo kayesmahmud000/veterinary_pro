@@ -3,18 +3,19 @@ import { LandingSections } from "@/components/marketing/landing-sections";
 import { getLocalization } from "@/lib/i18n/server";
 import { ProtectedEntry } from "@/components/auth/protected-entry";
 import { readProtectedReturnTo } from "@/lib/workspace/navigation";
-export function generateMetadata(): Metadata {
-  const { messages } = getLocalization();
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = (await getLocalization());
   return {
     title: { absolute: messages.metadata.homeTitle },
     description: messages.metadata.homeDescription,
   };
 }
-export default function HomePage({
-  searchParams,
-}: {
-  searchParams: Record<string, string | string[] | undefined>;
-}) {
+export default async function HomePage(
+  props: {
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const returnTo = readProtectedReturnTo(
     searchParams.auth,
     searchParams.returnTo,

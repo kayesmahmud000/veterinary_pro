@@ -10,19 +10,20 @@ import { PublicFilters } from "@/components/marketing/public-filters";
 import { DoctorCard } from "@/components/marketing/doctor-card";
 import { buttonVariants } from "@/components/ui/button";
 
-export function generateMetadata() {
-  const { messages } = getLocalization();
+export async function generateMetadata() {
+  const { messages } = (await getLocalization());
   return {
     title: messages.navigation.doctors,
     description: messages.publicPages.doctors.description,
   };
 }
-export default function DoctorsPage({
-  searchParams,
-}: {
-  searchParams: { q?: string | string[]; specialty?: string | string[]; cursor?: string };
-}) {
-  const { locale, messages } = getLocalization();
+export default async function DoctorsPage(
+  props: {
+    searchParams: Promise<{ q?: string | string[]; specialty?: string | string[]; cursor?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const { locale, messages } = (await getLocalization());
   const t = messages.publicPages;
   const profiles = listDoctors(doctorProfiles, { ...searchParams, locale });
   const total = doctorProfiles.filter((p) => p.published).length;

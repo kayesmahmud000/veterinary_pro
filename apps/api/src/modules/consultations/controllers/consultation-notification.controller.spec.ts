@@ -4,6 +4,7 @@ import {
   ConsultationStatus,
   ConsultationType,
   UserRole,
+  UserStatus,
 } from "@vetralink/shared-types";
 import { firstValueFrom, of } from "rxjs";
 import {
@@ -52,6 +53,7 @@ describe("ConsultationNotificationController", () => {
     sub: "vet-1",
     email: "sarah@vet.com",
     role: UserRole.VET,
+    status: UserStatus.ACTIVE,
   };
 
   const mockOtherVetUser = {
@@ -130,11 +132,7 @@ describe("ConsultationNotificationController", () => {
       mockConsultationRepo.findById.mockResolvedValue(null);
 
       await expect(
-        controller.notifyAssignedVet(
-          "invalid-id",
-          {},
-          mockAdminUser as any,
-        ),
+        controller.notifyAssignedVet("invalid-id", {}, mockAdminUser as any),
       ).rejects.toThrow(EntityNotFoundException);
     });
 
@@ -147,11 +145,7 @@ describe("ConsultationNotificationController", () => {
       );
 
       await expect(
-        controller.notifyAssignedVet(
-          "consult-123",
-          {},
-          mockAdminUser as any,
-        ),
+        controller.notifyAssignedVet("consult-123", {}, mockAdminUser as any),
       ).rejects.toThrow(ValidationDomainException);
     });
   });
@@ -205,11 +199,7 @@ describe("ConsultationNotificationController", () => {
 
     it("should throw ForbiddenOperationException if a vet tries to view another vet's notifications", async () => {
       await expect(
-        controller.getVetNotifications(
-          "vet-1",
-          {},
-          mockOtherVetUser as any,
-        ),
+        controller.getVetNotifications("vet-1", {}, mockOtherVetUser as any),
       ).rejects.toThrow(ForbiddenOperationException);
     });
   });
@@ -244,11 +234,7 @@ describe("ConsultationNotificationController", () => {
 
     it("should throw ForbiddenOperationException if unauthorized user tries to mark read", async () => {
       await expect(
-        controller.markAsRead(
-          "vet-1",
-          "notif-1",
-          mockOtherVetUser as any,
-        ),
+        controller.markAsRead("vet-1", "notif-1", mockOtherVetUser as any),
       ).rejects.toThrow(ForbiddenOperationException);
     });
   });
@@ -270,9 +256,11 @@ describe("ConsultationNotificationController", () => {
         id: "notif-1",
       };
 
-      mockNotificationService.getNotificationStream.mockReturnValue(of(sseEvent));
+      mockNotificationService.getNotificationStream.mockReturnValue(
+        of(sseEvent),
+      );
 
-      const stream$ = controller.streamVetNotifications("vet-1");
+      const stream$ = controller.streamVetNotifications("vet-1", mockVetUser);
       const event = await firstValueFrom(stream$);
 
       expect(event).toBeDefined();

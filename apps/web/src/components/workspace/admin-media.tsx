@@ -29,7 +29,7 @@ function useTransfer() {
     [progress, setProgress] = useState(0),
     [code, setCode] = useState(""),
     running = useRef(false),
-    controller = useRef<AbortController>();
+    controller = useRef<AbortController | undefined>(undefined);
   useEffect(() => () => controller.current?.abort(), []);
   useEffect(() => {
     if (!busy) return;

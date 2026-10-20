@@ -1,0 +1,812 @@
+{
+  "task": "ADM-9 local dependency and notification-stream security follow-up",
+  "date": "2026-10-21",
+  "baselineRevision": "7c928231078eada4010aeab50308a142d4a46ed6",
+  "candidateState": "UNCOMMITTED_LOCAL_CHANGES",
+  "releaseDecision": "NO_GO_PENDING_TARGET_MIGRATIONS_HOSTED_WORKERS_PROVIDERS_AND_DEPLOYED_ACCEPTANCE",
+  "environment": {
+    "os": "Windows",
+    "node": "24.9.0",
+    "pnpm": "10.18.3",
+    "chrome": "156.0.8078.35",
+    "postgres": "16.14",
+    "redis": "7.4.11",
+    "serviceBindings": "Disposable task-owned loopback resources retained from ADM9"
+  },
+  "versions": {
+    "next": "15.5.28",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "nestjs-core": "10.4.22",
+    "xlsx": "0.20.3 (official CDN tarball with explicit SHA-512 integrity)",
+    "multer": "2.4.0",
+    "express": "4.22.3",
+    "proxy-addr": "2.0.8",
+    "file-type": "20.4.1"
+  },
+  "audit": {
+    "command": "pnpm audit --prod --json",
+    "before": {
+      "info": 0,
+      "low": 4,
+      "moderate": 24,
+      "high": 23,
+      "critical": 3
+    },
+    "after": {
+      "info": 0,
+      "low": 0,
+      "moderate": 3,
+      "high": 0,
+      "critical": 0
+    },
+    "finalExitCode": 1,
+    "residualAdvisories": [
+      {
+        "package": "file-type",
+        "severity": "moderate",
+        "title": "file-type affected by infinite loop in ASF parser on malformed input with zero-size sub-header",
+        "url": "https://github.com/advisories/GHSA-5v7r-6r5c-r473",
+        "versions": [
+          "20.4.1"
+        ]
+      },
+      {
+        "package": "file-type",
+        "severity": "moderate",
+        "title": "file-type: ZIP Decompression Bomb DoS via [Content_Types].xml entry",
+        "url": "https://github.com/advisories/GHSA-j47w-4g3g-c36v",
+        "versions": [
+          "20.4.1"
+        ]
+      },
+      {
+        "package": "@nestjs/core",
+        "severity": "moderate",
+        "title": "@nestjs/core Improperly Neutralizes Special Elements in Output Used by a Downstream Component ('Injection')",
+        "url": "https://github.com/advisories/GHSA-36xv-jgw5-4q75",
+        "versions": [
+          "10.4.22"
+        ]
+      }
+    ],
+    "dispositions": "plan.md: current file-type detector is unused; SSE producer maps literal type/generated UUID. No ignore list or blanket certification."
+  },
+  "verification": {
+    "frozenInstall": "PASS after integrity pin",
+    "sharedBuild": "PASS CJS/ESM/declarations",
+    "apiBuild": "PASS after SSE repair",
+    "apiDependencyRegression": {
+      "suites": 242,
+      "tests": 2261,
+      "skipped": 0,
+      "seconds": 245.408
+    },
+    "finalNotificationRegression": {
+      "suites": 3,
+      "tests": 28,
+      "newTransportTests": 8,
+      "preRepairDenialFailures": 4
+    },
+    "serverlessWrapperTests": 5,
+    "webBoundaryStyleTests": 198,
+    "webTypeCheck": "PASS",
+    "webProductionBuildId": "7mLxnRvdshUX2CUpXmgdI",
+    "copiedWebSourceFilesVerified": 224,
+    "integrated": {
+      "groups": 21,
+      "routeVisits": 192,
+      "roles": [
+        "ADMIN",
+        "SUPER_ADMIN"
+      ],
+      "locales": [
+        "bn",
+        "en"
+      ],
+      "widths": [
+        320,
+        1440
+      ],
+      "browserExceptions": [],
+      "nextAsyncWarnings": []
+    },
+    "controlledAdministration": {
+      "checks": 1312,
+      "batches": 8,
+      "browserExceptions": []
+    },
+    "authAndLocalization": "PASS responsive modal/session/cross-tab/expiry/retry plus 80 GETs/60 native locale submissions/5 unsafe return URLs/12 filters/4 CSVs/2 missing templates",
+    "contextAndDocs": "See final plan; structure/links/anchors and diff checks pass"
+  },
+  "sourceFiles": [
+    {
+      "path": "apps/api/package.json",
+      "sha256": "ce79690a73569a483120c597561d76a50cb33691e77d657852cbbafb27f2a5d8",
+      "bytes": 3063
+    },
+    {
+      "path": "apps/api/src/modules/consultations/controllers/consultation-notification-access.spec.ts",
+      "sha256": "c8b7f03ba00ff11e54d4e89c2cbed33d15f9aa0a1dfd7fb9ee856b16f69ab123",
+      "bytes": 3709
+    },
+    {
+      "path": "apps/api/src/modules/consultations/controllers/consultation-notification.controller.spec.ts",
+      "sha256": "fd1f06a8655ad6ec7351d0e86c9bd20528ceab6255f5d3d80b86fa8be92c2849",
+      "bytes": 8272
+    },
+    {
+      "path": "apps/api/src/modules/consultations/controllers/consultation-notification.controller.ts",
+      "sha256": "e1ee64e0d07455824b1112c3360e2ba22f3f481ef362c40f05b89b43057306a6",
+      "bytes": 6679
+    },
+    {
+      "path": "apps/web/package.json",
+      "sha256": "224ef5cc47b213a66cfaac5d38f724ebc3630235d84b5a39e6739f29d45cd191",
+      "bytes": 2340
+    },
+    {
+      "path": "apps/web/scripts/admin-finance-browser-cases.mjs",
+      "sha256": "8e20575fb5cfff5e21be4cbb9c7a17e3028669c78ab9b43e77aecbe5845487ff",
+      "bytes": 26528
+    },
+    {
+      "path": "apps/web/scripts/check-admin-release.mjs",
+      "sha256": "173ca1d17d49882ce0581730a4f3c38908b0eaf3f0516812b3ca40415618d598",
+      "bytes": 34347
+    },
+    {
+      "path": "apps/web/scripts/check-auth-browser.mjs",
+      "sha256": "01f877d73f6094422ac3258452b1d3845517724eecaef6c31531db42cdd6aaa4",
+      "bytes": 34144
+    },
+    {
+      "path": "apps/web/scripts/check-dashboard-browser.mjs",
+      "sha256": "19c3ecc71dee8c6c7afa28a41f69cc65184b8be0fe250a63f7a3546fbd2c7e2f",
+      "bytes": 65990
+    },
+    {
+      "path": "apps/web/scripts/check-workspace-browser.mjs",
+      "sha256": "8d2df5f8b7d8004b7dd9b2f6f9494f1901466327dd6a05e2a0fb5f85ce56b880",
+      "bytes": 25832
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/about/page.tsx",
+      "sha256": "702d246394349935948b424d899d2a896f779f8a28584b2a95000e109a781b68",
+      "bytes": 2866
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/blog/[slug]/page.tsx",
+      "sha256": "0e2226150411290e29d713be83d34621cf8f8ebb1fe39dd6d2fb16ea161693ed",
+      "bytes": 3715
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/blog/page.tsx",
+      "sha256": "9b4d4e565f29403ddd586d4ae35b11183ef6cdeab0d39b491e217d5e630ce25a",
+      "bytes": 4151
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/courses/[slug]/page.tsx",
+      "sha256": "4204f442a8404508faac1dadfbece69c567f6665235c2d8fe4af343e6d93a4e7",
+      "bytes": 635
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/courses/page.tsx",
+      "sha256": "40e726c033e8594d90c522301afd546b8e9020a12bf8e8423b03798fe70b5d17",
+      "bytes": 421
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/doctors/[id]/page.tsx",
+      "sha256": "916f535bfd4961e4328f345ef3df9528b4c8e751b80bd526df38ad6223c829be",
+      "bytes": 4927
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/doctors/page.tsx",
+      "sha256": "982a827fac9f7c2e7335794bdc165d1f6d9db4a44cc3b326965dc4b6a4f6d0e1",
+      "bytes": 3390
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/faq/[slug]/page.tsx",
+      "sha256": "d04fceb2603d7cce4124c03208c069067ea3b385af717751adee0d0dbb780a16",
+      "bytes": 263
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/farm-management/page.tsx",
+      "sha256": "3a827b54d42a6ced9e0b2838207d30464f2716bd8c59e151e97dd43b14ebf337",
+      "bytes": 590
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/guides/[slug]/page.tsx",
+      "sha256": "397932f4640696a953541c52a7b3be21bb9bbdc7570af8a15084a51238cfbf5b",
+      "bytes": 265
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/guides/page.tsx",
+      "sha256": "44d5d37359b7b354c4028629418754f3b3f1d3fb4436d70a2984583e82467734",
+      "bytes": 815
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/help/page.tsx",
+      "sha256": "b255bb88d91f9db4a45f01efb7774ee0754f7fcfffd67c473950aefa0f9f6a96",
+      "bytes": 3770
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/layout.tsx",
+      "sha256": "072443209f49356abb7d91e56c21d675fa8793cb4cf4e14e03a3c7a3e02d8be1",
+      "bytes": 644
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/learning/[slug]/template/route.ts",
+      "sha256": "a27abbcdd541c5bf8bc5e530b2db54f12e82d941ae8da335dc8cbd047bf271cf",
+      "bytes": 1111
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/learning/page.tsx",
+      "sha256": "415a2007c7e3677ae88ae2d01081fdae2316a032f0932fc73dc89f7982f7d54e",
+      "bytes": 1310
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/page.tsx",
+      "sha256": "fe8c159858c673168bea00a229a03a08587aac764668f2c7c2bfa17afaa6eb2c",
+      "bytes": 1005
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/pages/[slug]/page.tsx",
+      "sha256": "d459b8d16192ae013eca080974c9a013e5910f57ff571e3022835a4a351055be",
+      "bytes": 264
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/pages/page.tsx",
+      "sha256": "5e545213c6d2d73975a425493858752210a8b79383f56d680f74b11dd571315c",
+      "bytes": 814
+    },
+    {
+      "path": "apps/web/src/app/(marketing)/veterinary-care/page.tsx",
+      "sha256": "cbc6cb4f8055228dfcf69457efbf0d9d4a42fb50db48c583f9d9f88a1e13a296",
+      "bytes": 614
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/account/courses/[id]/lessons/[lessonId]/page.tsx",
+      "sha256": "826c9349ad241aeb85c4d2c2f73bad870861b2c5b371694cbdd29d3ec7e84230",
+      "bytes": 680
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/account/courses/page.tsx",
+      "sha256": "f7c01a64e45fbc8327e6131bb8b86eb9964b4a914627dbc26e47ce1ed275d9a2",
+      "bytes": 421
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/account/farm-onboarding/page.tsx",
+      "sha256": "f1a798f2b4f10aaddf0e01f0e598036a9f348623bb85bcd64cca7c037fe5958d",
+      "bytes": 509
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/account/profile/page.tsx",
+      "sha256": "8606a4b2b742536eb07e9fc66bc4725ebcddb75a0d855cabcb09c529955d77a9",
+      "bytes": 405
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/account/role-requests/[id]/page.tsx",
+      "sha256": "29a3db7e5a43f188aa4e1101f7f2c05d3823d28fec9d2b638c3c47a624216e66",
+      "bytes": 617
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/account/role-requests/new/page.tsx",
+      "sha256": "59443ef244cfcd31fe2ed3865f4065ca9622202ea94d8a45488172b39b7167be",
+      "bytes": 525
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/account/role-requests/page.tsx",
+      "sha256": "d65e6834933b6de6f2a3c8444a9dda357374908d9ac5c85b0ce9c51953cc4539",
+      "bytes": 522
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/account/support/[id]/page.tsx",
+      "sha256": "4c56b4ceb8cd9458977ec8b8eecf8f72fe62c012c7f78b3f9680b67a8ed7ecea",
+      "bytes": 255
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/(billing)/[kind]/[id]/page.tsx",
+      "sha256": "3ea468e9aa724d9d0a57ab3c912eb0669057ae9ee11eaa1494059781dc41140f",
+      "bytes": 999
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/(billing)/[kind]/page.tsx",
+      "sha256": "1a935aa4d1e5897bae93909087aabbaede73dc030ece64cdfed3adb730877453",
+      "bytes": 863
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/administrative-access/page.tsx",
+      "sha256": "ef5af0168511a327dc4036a807ffe246b27bd12ae76a07a04acb9358cbc84b49",
+      "bytes": 506
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/audit/[id]/page.tsx",
+      "sha256": "34ab934a192d960f702ce0a83d799e0e6cfc1ff9da5c2cac8ab8eca7146c87ce",
+      "bytes": 632
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/audit/page.tsx",
+      "sha256": "47a31e1a78072dc73b157329306769713e755e6bfa3fcac8f43b0578d19109f0",
+      "bytes": 398
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/consultations/[id]/page.tsx",
+      "sha256": "e97272878ca96976724c2136052f8199ada6ca58385145abd6f83979bcbebdc6",
+      "bytes": 696
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/consultations/page.tsx",
+      "sha256": "056587662b7de0989f88bda34d467f9c295c516a97a4756ca1d4444186d1d069",
+      "bytes": 456
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/content/[id]/page.tsx",
+      "sha256": "63123a03e8a87ef3564feeeec8746f60aa52e14ae5dc8b664a787a39d749807a",
+      "bytes": 243
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/courses/[id]/page.tsx",
+      "sha256": "ad9e9f13fac918eb132751d269f0d0b1d5b3c770e22e13c5cb62f6316d6868df",
+      "bytes": 679
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/courses/page.tsx",
+      "sha256": "c47cae4daa7e0bad490e48336201a74bf7ee3ce84a76261b063dd81b196754ab",
+      "bytes": 385
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/dashboard/page.tsx",
+      "sha256": "659cd7587642a25795f36354d33d3ca73ff8d874812d45ff72e1f3a38a0a9883",
+      "bytes": 377
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/farms/[id]/page.tsx",
+      "sha256": "d7d5dd668ccf944983ab4e81d98493253132578289fd2286450bd1d9b72b49cf",
+      "bytes": 632
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/farms/page.tsx",
+      "sha256": "3a300e6fd9b75f150f778e13be518a47686e0ad06ccbcc15a1bfe0a0d3b5b7f6",
+      "bytes": 398
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/media/page.tsx",
+      "sha256": "c9d91f210c192f7da27fbbda80b5f1c044fa667c69a749f04cd1fdeb7fc0a60a",
+      "bytes": 375
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/media/uploads/[id]/page.tsx",
+      "sha256": "35f3979492239730f4d566f2e9f2ed214a29c38b703056f48397043b2b1f3db8",
+      "bytes": 619
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/products/[id]/curriculum/page.tsx",
+      "sha256": "354f01d267c7487058b07d94939823dd35d66a6db7fc55e09c2b3af0a0985aa2",
+      "bytes": 659
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/products/[id]/edit/page.tsx",
+      "sha256": "75cdefd430211edfadb1a2d457cb0514f8701bce9f2caf922563710085b8bf80",
+      "bytes": 635
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/products/[id]/page.tsx",
+      "sha256": "c932a16b52bcdf52c0cba519c7de2723b5c1d19b5c44ed5e78059bd0ca6928eb",
+      "bytes": 641
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/products/new/page.tsx",
+      "sha256": "c8915fd658e0257978d27c8de2f88b9736c669ceb53081fbbe243908661b35b3",
+      "bytes": 400
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/products/page.tsx",
+      "sha256": "21c503e8f34b2f523940403a4c7f546c9cbf50416b16dad40acf21cc5f21ef87",
+      "bytes": 387
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/reviews/[id]/page.tsx",
+      "sha256": "8cafcb20579b66c150b5fd490f56fe454d893a39f87117893e4589b9b501a3f0",
+      "bytes": 623
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/reviews/page.tsx",
+      "sha256": "0a616178561dc6b8c6d72eaa0193c083ab6efddd27fffdaa5b65e7670311f268",
+      "bytes": 383
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/role-requests/[id]/page.tsx",
+      "sha256": "f37f58e35077db5b1fe5e9bb51c29e2732f53504ca1127e22ce4a40aadeefeca",
+      "bytes": 601
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/role-requests/page.tsx",
+      "sha256": "de85a46bb15202582a4ab255d2ea6a663498ee31d314e56fa9350237ed21ccfd",
+      "bytes": 504
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/settlements/[id]/page.tsx",
+      "sha256": "04497d73749e4bec80a8325944b254d615c7f0bd5c8c62deed4d57c6e12b43aa",
+      "bytes": 639
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/settlements/page.tsx",
+      "sha256": "ea8e8c44d5812fd4ee0d1b7ebb515f6298a52b90182eb319094dd3979c493b0a",
+      "bytes": 399
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/settlements/vets/[vetId]/page.tsx",
+      "sha256": "68f9a31798d59fd6f09b786232547f56441d424e0a552440025787a1c318314e",
+      "bytes": 651
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/support/[id]/page.tsx",
+      "sha256": "19ce6248f5e24193da14b37f27c758151bf7e0fe6cafa9404ffd3cea5b21ffdb",
+      "bytes": 251
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/triage/[id]/page.tsx",
+      "sha256": "0f4f26cf44d122b0bd30bce143034677ae6345709abb43e1b69e12993f262ff5",
+      "bytes": 673
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/triage/page.tsx",
+      "sha256": "53b48d574a5e9de8c29c5db597a8bd26ab5d21526704ae980df26b189999c371",
+      "bytes": 433
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/users/[id]/page.tsx",
+      "sha256": "2bf94a26a4c4b764f10fad9e3a5ef6f476f58d9faea3b80341b1694f95cc2126",
+      "bytes": 632
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/users/page.tsx",
+      "sha256": "a92d1c8aec9093cb02c162237d6ca7766472b462b56757cf07d4652d66ceb3c2",
+      "bytes": 398
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/veterinarians/[id]/page.tsx",
+      "sha256": "16ff12dbe98ebeefedcf6a88775d93a65e7542e7a6b597c8a5eeda8e87c93b53",
+      "bytes": 648
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/admin/veterinarians/page.tsx",
+      "sha256": "7fcdbb68eac02f8064f9889f1468b325e50e750d007aca411f88945d09287cca",
+      "bytes": 414
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/app/farms/[farmId]/animals/[animalId]/page.tsx",
+      "sha256": "aec7db1373317a6850999acd35df53cfdd5a6a48701b5743413dfa85d8cc57ac",
+      "bytes": 487
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/app/farms/[farmId]/animals/new/page.tsx",
+      "sha256": "7087a6d3a738f782733342828fecbe560f5585c02c4f27ab3b2baa46bed11e45",
+      "bytes": 368
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/app/farms/[farmId]/animals/page.tsx",
+      "sha256": "0531fd96fb5e654becf0f3de91250cea15278a75a07dcd468b312876e3406e59",
+      "bytes": 402
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/app/farms/[farmId]/members/page.tsx",
+      "sha256": "77ca110025417151ed3ecde11697216e43e3443559376cb77456c451ef8573e1",
+      "bytes": 402
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/app/farms/[farmId]/page.tsx",
+      "sha256": "daefd58c8b4b86e1c6e4b253df32d288acf47c01b102f5ca3f90bed623413793",
+      "bytes": 413
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/dashboard/page.tsx",
+      "sha256": "9c8228fc93b8844d9b5938d1f7bf0497558612845690d772424c73d983496f5f",
+      "bytes": 413
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/farm/page.tsx",
+      "sha256": "5c962989fbbbcc2d98241df8836f83d1190b6250ac70a9dff2ed8d8fd6e0e4b3",
+      "bytes": 502
+    },
+    {
+      "path": "apps/web/src/app/(workspace)/layout.tsx",
+      "sha256": "8eafade56bca133511053e147a4a8d9e04d7f740482e73b9d5ca6df17bcb2d99",
+      "bytes": 755
+    },
+    {
+      "path": "apps/web/src/app/api/auth/[action]/route.ts",
+      "sha256": "dc62dd19548d83aa0e75cba4b526703e945418b2a6ddf5996f170b2e5df04d17",
+      "bytes": 713
+    },
+    {
+      "path": "apps/web/src/app/api/courses/[[...path]]/route.ts",
+      "sha256": "5e627c9df7fe7b140f59f4b917d04fb6eb77fed8ce2b25c5a7fac38a35dd1140",
+      "bytes": 492
+    },
+    {
+      "path": "apps/web/src/app/api/workspace/[...path]/route.ts",
+      "sha256": "d7d4025e1b87071ca60f54b6b4c744d363a779779f0056ab562554846fc01b7f",
+      "bytes": 553
+    },
+    {
+      "path": "apps/web/src/app/layout.tsx",
+      "sha256": "cecc0093baff808eeceb651ade426dbacefe029907279d46884838be48dbfc88",
+      "bytes": 1203
+    },
+    {
+      "path": "apps/web/src/app/not-found.tsx",
+      "sha256": "9edd1d48864dd3c8a767fe4f4d6fb7795f18a5cb4aca16fee1bf548fd923980e",
+      "bytes": 1193
+    },
+    {
+      "path": "apps/web/src/components/marketing/guide-article.tsx",
+      "sha256": "3e1cc664358dee855ab6767e1ba7cdef2f9d1cd05834591d166a451244c0d4d8",
+      "bytes": 2961
+    },
+    {
+      "path": "apps/web/src/components/marketing/landing-sections.tsx",
+      "sha256": "329cbf32df4aaaf7bd1f651dae8afdaf1a843f9a16976e68fdea649ad785595c",
+      "bytes": 5423
+    },
+    {
+      "path": "apps/web/src/components/marketing/product-overview.tsx",
+      "sha256": "ffa2d6b42f3caad95b0d9712231736b62d477d4349cea82a75ede93bbb571b93",
+      "bytes": 2149
+    },
+    {
+      "path": "apps/web/src/components/marketing/public-filters.tsx",
+      "sha256": "a7d1ff1be34ef985fc103f0849a760c05e9582c39c6c06ee2554dd562d70b254",
+      "bytes": 2377
+    },
+    {
+      "path": "apps/web/src/components/marketing/public-not-found.tsx",
+      "sha256": "6feee7c77655c553994475358b4f54b230dc7ddc297cee3c53379a781965f43c",
+      "bytes": 1010
+    },
+    {
+      "path": "apps/web/src/components/marketing/public-page.tsx",
+      "sha256": "286057fd3251734201326562ef13fefad165b977226bcb1386694e0529625aca",
+      "bytes": 1868
+    },
+    {
+      "path": "apps/web/src/components/marketing/published-content.tsx",
+      "sha256": "15812ea54b171adbc1ec9950401cbd347cc48ecc0547a7082d94cbedc4d1b326",
+      "bytes": 4104
+    },
+    {
+      "path": "apps/web/src/components/marketing/site-footer.tsx",
+      "sha256": "a102d2623f73b7ee8a6a14cbcb0cd942673000ad54e3bd13d0d26c833dcc4447",
+      "bytes": 1767
+    },
+    {
+      "path": "apps/web/src/components/marketing/site-header.tsx",
+      "sha256": "68ea0d1f20962cf8367a9cf6e466e9b9062b44cf48a78e9a799ce404849c9ef5",
+      "bytes": 1972
+    },
+    {
+      "path": "apps/web/src/components/workspace/admin-communications.tsx",
+      "sha256": "c0119a5f59876a0700af5420f4fde735bcec5e045c0dfbcd1391cac53f55fc85",
+      "bytes": 41120
+    },
+    {
+      "path": "apps/web/src/components/workspace/admin-media.tsx",
+      "sha256": "973109910ff7b76a54209a905f2d1428adaeac2298829b5acb9258d7f606864f",
+      "bytes": 17803
+    },
+    {
+      "path": "apps/web/src/components/workspace/admin-platform.tsx",
+      "sha256": "d7de371c18a98f52a179874bb0f07270f578ed4b157692e4bb4952d3d74cb70d",
+      "bytes": 26725
+    },
+    {
+      "path": "apps/web/src/components/workspace/navigation-guard.tsx",
+      "sha256": "f48883119ca9453c88080f7c7fc64698d3e20d4712331631420af6bb989e12f5",
+      "bytes": 1340
+    },
+    {
+      "path": "apps/web/src/components/workspace/workspace-gate.tsx",
+      "sha256": "b403f4dc65f9913297a34bc05072d90eea4583d9c19780b2a9ac48ced3dc5dea",
+      "bytes": 4026
+    },
+    {
+      "path": "apps/web/src/lib/i18n/actions.ts",
+      "sha256": "dc831c9febd9fd238ba83da2020830bcd5f9c664ea981212b6fdcc38a8ca7f52",
+      "bytes": 1169
+    },
+    {
+      "path": "apps/web/src/lib/i18n/server.ts",
+      "sha256": "ede1836c01a55d62f10e6bd259e816dae29248d0f401aed0f3378d3a79105369",
+      "bytes": 383
+    },
+    {
+      "path": "package.json",
+      "sha256": "5936d3de717b05222aeada34d0e7f53e55377936e2b355eca004535724611383",
+      "bytes": 2258
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "sha256": "a2c4e50bb71a5ad75f876d9af907abf5a11cf1d862e9fa1d0ffe6ba8b8b1de3a",
+      "bytes": 300016
+    }
+  ],
+  "unchangedSchema": {
+    "file": {
+      "path": "apps/api/prisma/schema.prisma",
+      "sha256": "657ada1853d4248d7a9ea625fb3d0298f132cad0a16ec093f19cb919781e041c",
+      "bytes": 57780
+    },
+    "migrationFiles": 29,
+    "migrationSqlChanged": false
+  },
+  "localBuildFiles": [
+    {
+      "path": ".turbo/vet-adm9-dependencies-6d5c3df61f7244e29d344e426b3aa6bf/web/.next/BUILD_ID",
+      "sha256": "f2268d1307fcbb0c609d9c6d485829356ac946bb53352b27da6cc6a724c05a15",
+      "bytes": 21
+    },
+    {
+      "path": ".turbo/vet-adm9-dependencies-6d5c3df61f7244e29d344e426b3aa6bf/web/.next/required-server-files.json",
+      "sha256": "42dc7b794d1632e50abd34c58de77d84fb3d2bc1736776d707c572f9bc0a9e5b",
+      "bytes": 9192
+    },
+    {
+      "path": ".turbo/vet-adm9-dependencies-6d5c3df61f7244e29d344e426b3aa6bf/web/.next/server/app/(marketing)/page.js",
+      "sha256": "ffe47cf43eaf0a818c90be20fe69d8e1b335d27532f3b2be0885db26248f3a28",
+      "bytes": 47655
+    },
+    {
+      "path": "apps/api/dist/main.js",
+      "sha256": "11896301af4f009fe75f035e177bc2bc1bc0b6a124bdb68c2df558eaba55409e",
+      "bytes": 2654
+    },
+    {
+      "path": "apps/api/dist/modules/consultations/controllers/consultation-notification.controller.js",
+      "sha256": "02fa492a27dedecbe0c263b9b1c5889a9e6389514c9d2d488f2538c3945d2c96",
+      "bytes": 9700
+    },
+    {
+      "path": "apps/api/dist/modules/animals/processors/animal-import.processor.js",
+      "sha256": "570a679a1c7bb5d23a6c5b4e13190769b7a7321a9d13ae334804213c2e0d4a65",
+      "bytes": 20571
+    },
+    {
+      "path": "apps/api/dist/modules/milk-logs/services/milk-export.service.js",
+      "sha256": "7bcd28d3ffe9a0289b2a818a99afb9bf0c88e4b9f2694a6477758690906fd19b",
+      "bytes": 13447
+    }
+  ],
+  "rawEvidenceFiles": [
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-before.json",
+      "sha256": "00fb508498fb5b14249afecf2b463c0e8732a851a31a29447017df42f936e759",
+      "bytes": 173885
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-after.json",
+      "sha256": "db308e0d2f9c2c178a5449a18f341e0e0f1f5ff1bc15a65d30584ec9b76e8fd9",
+      "bytes": 11911
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-frozen.log",
+      "sha256": "77dca6349e798b27a02c611ceef8a9cacfde15cf5a3edbb2434c2ec12ed901c6",
+      "bytes": 1766
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-sheetjs-integrity.json",
+      "sha256": "b8e765f344f10a6fe751c4b26973ee00c30764f67fee704e878dbe9e7d655f1c",
+      "bytes": 249
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-api.log",
+      "sha256": "ce76e7148be9aeb8c1726ab31d8be93ea9d58a9a87b8b2bc121be4dd094fdc7e",
+      "bytes": 132122
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-sse-before.log",
+      "sha256": "4dcbadf0e336d3d921e32c01a1f64dd0a48ffe6300210c69ee89acb97ad08e36",
+      "bytes": 6994
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-sse-after.log",
+      "sha256": "b8bbe4db877bcade6a72420a817e10c70d592383e22f3183a4b97e75dc158cc3",
+      "bytes": 1360
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-sse-final.log",
+      "sha256": "d9db2a6b8f88000228d3841918c4e7abe0494daf8d567828dd3bd72fd2220100",
+      "bytes": 1873
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-api-build.log",
+      "sha256": "db5b368542d825cd549f8c62fc67ce3cfd9b5f780810a06319c247bd9ebdc5f8",
+      "bytes": 552
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-web.log",
+      "sha256": "0afbbafe7263d61b361d91f8b6eeb2643ac784212b37dd45f696feb69d6ae88a",
+      "bytes": 81699
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-types.log",
+      "sha256": "1cc1be07338fdb79f02c1630386bd7cca94a25eb0d510e3fd7436c65ce600586",
+      "bytes": 2468
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-build.log",
+      "sha256": "c666f91f7c494a09980fe5aadb9708982c5155d53000927d941f1fc9d2d465e3",
+      "bytes": 14538
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-integrated.log",
+      "sha256": "049cda0992229e02266513969d13585874918e9062338de6f6f08fa6c374eb7e",
+      "bytes": 1836
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-integrated-final.log",
+      "sha256": "3526f4cca29bb8ba8231ec1f84e3ea62243680c59955a59ae25406b662385923",
+      "bytes": 4236
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-controlled.log",
+      "sha256": "8b95d5c119fae57b209463a7aba12959f5bf8d040983c48d03960a86357f189a",
+      "bytes": 4112
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-controlled-final.log",
+      "sha256": "77f26019842517642ddff16ee0b329fdeb9f9065a0fccab5e6910081ae1155c0",
+      "bytes": 3302
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\adm9-dependencies-auth-browser.log",
+      "sha256": "4d0d3505b53790940fb6575b47bac6f1fdbbcf76c8a1ee1e12a7c59d087bc896",
+      "bytes": 2090
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\vet-adm9-acceptance-YWtzne\\results.json",
+      "sha256": "d45c33241c556a01bb7c01f96358a43bcc4de8915851952162828f24464f337b",
+      "bytes": 2269
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\vet-adm9-acceptance-YWtzne\\next.log",
+      "sha256": "306c24eb658a91d7f8e0e47ca738ff9fef38387cdd2741534af4f928f8588429",
+      "bytes": 145
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\vet-adm9-acceptance-YWtzne\\ADMIN-bn-320.png",
+      "sha256": "01f51b927e648ebaf95c34755720a65180105d21c9d245ccdb29ffcff9f40e48",
+      "bytes": 30411
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\vet-adm9-acceptance-YWtzne\\SUPER_ADMIN-en-1440.png",
+      "sha256": "1fa5bfc6c0d591b919d2ce9b543bde8d838c39e5834bc8907c86fac4ea26283d",
+      "bytes": 233843
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\vet-adm9-acceptance-YWtzne\\report-bn-320.png",
+      "sha256": "b5251f3ff8fef650872e624c5fa0db696cf630d884ec5ebebad259b0e0f333a6",
+      "bytes": 49317
+    },
+    {
+      "path": "C:\\Users\\asus\\AppData\\Local\\Temp\\vet-adm9-acceptance-YWtzne\\report-en-1440.png",
+      "sha256": "ff0f67b64b19b2db19ca497ea433d0bfbb9c5e8c084cc82c0facca0018833745",
+      "bytes": 95303
+    }
+  ],
+  "evidenceDirectories": {
+    "integrated": "C:\\Users\\asus\\AppData\\Local\\Temp\\vet-adm9-acceptance-YWtzne",
+    "controlled": "C:\\Users\\asus\\AppData\\Local\\Temp\\khamar-workspace-qa-KgEfJS",
+    "auth": "C:\\Users\\asus\\AppData\\Local\\Temp\\vetralink-auth-qa-zst9z9",
+    "isolatedWebBuild": "G:\\projucts\\veterinary\\.turbo\\vet-adm9-dependencies-6d5c3df61f7244e29d344e426b3aa6bf\\web"
+  },
+  "provenanceNote": "The full integrated raw results contain the old hardcoded revision label a07d77f plus ADM9 changes. Treat that label as historical harness metadata, not source provenance. Build ID and matching 224 current web source hashes identify the tested app. The harness metadata-only repair now records Git HEAD/dirty state; its read-only Git queries were verified separately. Earlier ADM9 release-manifest.json is unchanged.",
+  "limits": [
+    "Not deployed; no configured/production database writes or external provider sends/charges",
+    "Three moderate dependency matches remain with current entry-point assessments",
+    "Initial SSE entry guards do not certify revalidation of already-open streams",
+    "No new migration/restore or standalone workspace-browser/alternate-browser/device/load acceptance run",
+    "Real worker acceptance used missing-key failure and mock mail, not inbox delivery"
+  ],
+  "review": "Implementing-agent self-review and QA, not independent certification"
+}

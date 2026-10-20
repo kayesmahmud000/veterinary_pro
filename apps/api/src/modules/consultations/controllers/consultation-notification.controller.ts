@@ -29,17 +29,18 @@ import {
   UserRole,
 } from "@vetralink/shared-types";
 import { map, Observable } from "rxjs";
-import { CurrentUser, ResponseMessage, Roles } from "../../../common/decorators";
+import {
+  CurrentUser,
+  ResponseMessage,
+  Roles,
+} from "../../../common/decorators";
 import {
   EntityNotFoundException,
   ForbiddenOperationException,
   ValidationDomainException,
 } from "../../../common/exceptions/domain.exception";
 import { JwtAuthGuard, RolesGuard } from "../../../common/guards";
-import {
-  NotifyVetRequestDto,
-  QueryVetNotificationsRequestDto,
-} from "../dto";
+import { NotifyVetRequestDto, QueryVetNotificationsRequestDto } from "../dto";
 import {
   CONSULTATION_REPOSITORY,
   IConsultationRepository,
@@ -64,7 +65,8 @@ export class ConsultationNotificationController {
   @Post(":id/notify-vet")
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.VET)
   @ApiOperation({
-    summary: "Manually trigger or re-send notification dispatch to assigned veterinarian",
+    summary:
+      "Manually trigger or re-send notification dispatch to assigned veterinarian",
     description:
       "Dispatches real-time notification (SSE/In-App, Push, SMS, and/or Email) to the assigned veterinarian with optional custom note.",
   })
@@ -116,7 +118,8 @@ export class ConsultationNotificationController {
   })
   @ApiUnauthorizedResponse({ description: "JWT authentication required" })
   @ApiForbiddenResponse({
-    description: "Insufficient permissions to view this veterinarian's notifications",
+    description:
+      "Insufficient permissions to view this veterinarian's notifications",
   })
   @ResponseMessage("Veterinarian notifications retrieved successfully")
   public async getVetNotifications(
@@ -172,14 +175,27 @@ export class ConsultationNotificationController {
   }
 
   @Sse("vets/:vetId/notifications/stream")
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.VET)
   @ApiOperation({
-    summary: "Subscribe to real-time Server-Sent Events (SSE) notification stream",
+    summary:
+      "Subscribe to real-time Server-Sent Events (SSE) notification stream",
     description:
       "Establishes a continuous SSE stream delivering live consultation assignment alerts to the active veterinarian session.",
   })
   public streamVetNotifications(
     @Param("vetId", ParseUUIDPipe) vetId: string,
+    @CurrentUser() user: JwtPayload,
   ): Observable<MessageEvent> {
+    if (
+      user.role !== UserRole.ADMIN &&
+      user.role !== UserRole.SUPER_ADMIN &&
+      user.sub !== vetId
+    ) {
+      throw new ForbiddenOperationException(
+        "You do not have permission to view notifications for this veterinarian.",
+      );
+    }
+
     return this.notificationService.getNotificationStream(vetId).pipe(
       map((event) => ({
         data: event.data,

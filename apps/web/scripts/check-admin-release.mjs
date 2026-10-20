@@ -105,11 +105,11 @@ async function until(task, message, timeout = 25000) {
   }
   throw new Error(message);
 }
-function start(name, file, args = [], env = {}) {
+function start(name, file, args = [], env = {}, cwd = temp) {
   const log = createWriteStream(path.join(temp, name + ".log"));
   logs.push(log);
   const child = spawn(process.execPath, [file, ...args], {
-    cwd: temp,
+    cwd,
     env: { ...baseEnv, ...env },
     windowsHide: true,
     stdio: ["ignore", "pipe", "pipe"],
@@ -435,8 +435,9 @@ try {
   start(
     "next",
     require.resolve("next/dist/bin/next"),
-    ["start", buildDir, "-p", "35410", "-H", "127.0.0.1"],
+    ["start", ".", "-p", "35410", "-H", "127.0.0.1"],
     { NODE_ENV: "production" },
+    buildDir,
   );
   await until(
     async () => {
@@ -985,11 +986,22 @@ try {
     "Real logout/Back discards cached admin workspace and restores the public login handoff",
   );
   assert.deepEqual(exceptions, []);
+  const sourceRevision = spawnSync("git", ["rev-parse", "HEAD"], {
+    cwd: webDir,
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  const sourceStatus = spawnSync("git", ["status", "--porcelain"], {
+    cwd: webDir,
+    encoding: "utf8",
+    windowsHide: true,
+  });
   await writeFile(
     path.join(temp, "results.json"),
     JSON.stringify(
       {
-        revision: "a07d77f plus ADM9 changes",
+        revision: sourceRevision.status === 0 ? sourceRevision.stdout.trim() : null,
+        uncommittedChanges: sourceStatus.status === 0 ? Boolean(sourceStatus.stdout.trim()) : null,
         buildId: (
           await readFile(path.join(buildDir, ".next/BUILD_ID"), "utf8")
         ).trim(),

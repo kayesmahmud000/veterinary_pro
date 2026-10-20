@@ -9,9 +9,10 @@ import { PublicPage } from "@/components/marketing/public-page";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const post = findBlogPost(params.slug);
-  const { locale, messages } = getLocalization();
+  const { locale, messages } = (await getLocalization());
   if (!post) {
     const managed = await publishedEntry("BLOG", params.slug);
     if (managed.data) return { title: managed.data.content[locale].title, description: managed.data.content[locale].summary };
@@ -26,14 +27,15 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     description: post.content[locale].summary,
   };
 }
-export default function BlogArticlePage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default async function BlogArticlePage(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+) {
+  const params = await props.params;
   const post = findBlogPost(params.slug);
   if (!post) return <PublishedDetail kind="BLOG" slug={params.slug} />;
-  const { locale, messages } = getLocalization();
+  const { locale, messages } = (await getLocalization());
   const t = messages.publicPages;
   const article = post.content[locale];
   return (

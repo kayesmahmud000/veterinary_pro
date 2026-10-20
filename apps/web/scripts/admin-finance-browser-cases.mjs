@@ -386,11 +386,11 @@ export async function checkAdminFinance({
         await go("/admin/settlements");
         await visible("[data-settlement-row]");
         await visible("[data-settlement-summary]");
-        assert.equal(
-          await evaluate(
+        await until(
+          () => evaluate(
             `document.querySelector('[data-settlement-summary]').textContent.includes('USD')&&document.querySelector('[data-settlement-summary]').textContent.includes('EUR')`,
           ),
-          true,
+          `Settlement summary currencies ready for ${role}/${locale}/${width}`,
         );
         checks++;
         await noOverflow();

@@ -1,4 +1,5 @@
 import { PublishedDetail } from "@/components/marketing/published-content";
-export default function Page({ params }: { params: { slug: string } }) {
+export default async function Page(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   return <PublishedDetail kind="PAGE" slug={params.slug} />;
 }

@@ -1,17 +1,15 @@
 import { getLocalization } from "@/lib/i18n/server";
 import { findGuide } from "@/lib/learning-guides";
 
-export function GET(
-  _request: Request,
-  { params }: { params: { slug: string } },
-) {
+export async function GET(_request: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const guide = findGuide(params.slug);
   if (!guide)
     return new Response(null, {
       status: 404,
       headers: { "Cache-Control": "private, no-store" },
     });
-  const { messages } = getLocalization();
+  const { messages } = (await getLocalization());
   const headers = messages.resources.articles[guide.index].headers;
   if (!headers.length)
     return new Response(null, {

@@ -5,19 +5,15 @@ import { withResponseDiagnostics } from "@/lib/api-diagnostics";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export function GET(
-  request: NextRequest,
-  { params }: { params: { action: string } },
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ action: string }> }) {
+  const params = await props.params;
   return withResponseDiagnostics(request, () =>
     handleAuth(request, params.action),
   );
 }
 
-export function POST(
-  request: NextRequest,
-  { params }: { params: { action: string } },
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ action: string }> }) {
+  const params = await props.params;
   return withResponseDiagnostics(request, () =>
     handleAuth(request, params.action),
   );

@@ -36,7 +36,7 @@ export function WorkspaceGate({
   const visible = authorized && !auth.checking && !auth.error && !setup,
     previouslyAuthorized = useRef("");
   if (visible) previouslyAuthorized.current = key;
-  const promptedRoute = useRef<string>();
+  const promptedRoute = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (auth.user) {
       promptedRoute.current = undefined;

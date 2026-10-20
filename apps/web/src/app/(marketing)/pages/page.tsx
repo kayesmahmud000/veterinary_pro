@@ -2,12 +2,13 @@ import { PublishedCatalog } from "@/components/marketing/published-content";
 import { PublicPage } from "@/components/marketing/public-page";
 import { getLocalization } from "@/lib/i18n/server";
 import { communicationsMessages } from "@/lib/i18n/admin-communications";
-export default function Page({
-  searchParams,
-}: {
-  searchParams: { q?: string; cursor?: string };
-}) {
-  const { locale } = getLocalization();
+export default async function Page(
+  props: {
+    searchParams: Promise<{ q?: string; cursor?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const { locale } = (await getLocalization());
   const t = communicationsMessages(locale);
   return (
     <PublicPage

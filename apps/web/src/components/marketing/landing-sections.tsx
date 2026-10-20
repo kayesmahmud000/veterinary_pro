@@ -28,8 +28,8 @@ const pillarPresentation = [
   { icon: HeartPulse, href: "/veterinary-care", className: styles.vetCard },
 ];
 
-export function LandingSections() {
-  const { locale, messages } = getLocalization();
+export async function LandingSections() {
+  const { locale, messages } = (await getLocalization());
   const content = messages.landing;
   const number = (value: number) =>
     formatNumber(value, locale, { minimumIntegerDigits: 2 });

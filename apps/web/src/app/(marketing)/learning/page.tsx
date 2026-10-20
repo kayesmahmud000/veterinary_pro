@@ -5,20 +5,21 @@ import { ProductOverview } from "@/components/marketing/product-overview";
 import { getLocalization } from "@/lib/i18n/server";
 import { ResourceCatalog } from "@/components/marketing/resource-catalog";
 
-export function generateMetadata(): Metadata {
-  const { messages } = getLocalization();
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = (await getLocalization());
   return {
     title: messages.pages.learning.metadataTitle,
     description: messages.pages.learning.metadataDescription,
   };
 }
 
-export default function LearningPage({
-  searchParams,
-}: {
-  searchParams: { topic?: string | string[] };
-}) {
-  const { messages, locale } = getLocalization();
+export default async function LearningPage(
+  props: {
+    searchParams: Promise<{ topic?: string | string[] }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const { messages, locale } = (await getLocalization());
   const topic =
     typeof searchParams.topic === "string" ? searchParams.topic : undefined;
   return (

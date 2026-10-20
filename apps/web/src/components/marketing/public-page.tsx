@@ -5,7 +5,7 @@ import { getLocalization } from "@/lib/i18n/server";
 import { Badge } from "@/components/ui/badge";
 import type { ReactNode } from "react";
 
-export function PublicPage({
+export async function PublicPage({
   title,
   description,
   eyebrow,
@@ -16,7 +16,7 @@ export function PublicPage({
   eyebrow: string;
   children: ReactNode;
 }) {
-  const { messages } = getLocalization();
+  const { messages } = (await getLocalization());
   return (
     <main
       id="main-content"

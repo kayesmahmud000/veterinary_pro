@@ -10,15 +10,15 @@ import ui from "@/components/marketing/showcase.styles";
 
 type GuideIndex = 0 | 1 | 2;
 
-export function getGuideMetadata(index: GuideIndex): Metadata {
-  const { messages } = getLocalization();
+export async function getGuideMetadata(index: GuideIndex): Promise<Metadata> {
+  const { messages } = (await getLocalization());
   const article = messages.resources.articles[index];
   return { title: article.title, description: article.description };
 }
 
-export function GuideArticle({ index }: { index: GuideIndex }) {
+export async function GuideArticle({ index }: { index: GuideIndex }) {
   const guide = guideDefinitions[index];
-  const { messages, locale } = getLocalization();
+  const { messages, locale } = (await getLocalization());
   const copy = messages.resources;
   const article = copy.articles[index];
   return (

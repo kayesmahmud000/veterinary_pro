@@ -10,8 +10,8 @@ import { LanguageSwitcher } from "./language-switcher";
 import { HeaderSurface } from "./header-surface";
 import { DesktopNavigation } from "./desktop-navigation";
 
-export function SiteHeader() {
-  const { locale, messages } = getLocalization();
+export async function SiteHeader() {
+  const { locale, messages } = (await getLocalization());
   const items = getPublicNavGroups(messages);
   return (
     <HeaderSurface>

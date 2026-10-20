@@ -13,15 +13,16 @@ import {
 } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 
-export function generateMetadata() {
-  const { messages } = getLocalization();
+export async function generateMetadata() {
+  const { messages } = (await getLocalization());
   return {
     title: messages.navigation.help,
     description: messages.publicPages.help.description,
   };
 }
-export default function HelpPage({ searchParams }: { searchParams: { cursor?: string } }) {
-  const { messages, locale } = getLocalization();
+export default async function HelpPage(props: { searchParams: Promise<{ cursor?: string }> }) {
+  const searchParams = await props.searchParams;
+  const { messages, locale } = (await getLocalization());
   const t = messages.publicPages;
   const h = t.help;
   const destinations = ["/#farm-demo", "/learning#guides", "/"];

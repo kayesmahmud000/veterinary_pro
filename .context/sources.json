@@ -520,6 +520,14 @@
       "anchors": [
         "useExisting: SubscriptionPlanService"
       ]
+    },
+    {
+      "path": "apps/api/src/modules/consultations/controllers/consultation-notification.controller.ts",
+      "anchors": [
+        "@Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.VET)",
+        "user.sub !== vetId",
+        "streamVetNotifications"
+      ]
     }
   ]
 }

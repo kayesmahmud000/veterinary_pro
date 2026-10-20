@@ -7,7 +7,7 @@ import { getPublicNavItems } from "@/lib/public-navigation";
 import { getLocalization } from "@/lib/i18n/server";
 import { FeatureExplorer } from "./interactive-discovery";
 import styles from "./marketing.styles";
-export function ProductOverview({
+export async function ProductOverview({
   title,
   intro,
   sections,
@@ -20,7 +20,7 @@ export function ProductOverview({
   kind: "farm" | "learning" | "veterinary";
   children?: ReactNode;
 }) {
-  const { locale, messages } = getLocalization();
+  const { locale, messages } = (await getLocalization());
   const items = getPublicNavItems(messages);
   return (
     <main id="main-content" className={cn(siteStyles["container"])}>

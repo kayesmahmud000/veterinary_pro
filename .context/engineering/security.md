@@ -1,5 +1,7 @@
 # Security requirements and evidence
 
+Updated 2026-10-21: veterinarian notification SSE entry now uses the existing VET/ADMIN/SUPER_ADMIN allowlist and denies foreign VET subscriptions before allocating a stream, matching notification-history ownership. The [security follow-up](../../docs/tasks/admin-release-dependencies/plan.md) records real HTTP regression, dependency remediation and three residual moderate advisory assessments. Initial request checks do not certify authorization revalidation of already-open SSE streams.
+
 The [Senior Application Security Engineer](../roles/security.md) perspective is required for the sensitive boundaries described here. Pair with the owning implementer and [QA/Code Reviewer](../roles/quality.md), classify findings using [evidence labels](evidence.md), and verify mitigations through [self-review](../workflows/self-review.md).
 
 ## Existing mechanisms

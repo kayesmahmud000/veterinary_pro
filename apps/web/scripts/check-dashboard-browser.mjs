@@ -329,9 +329,9 @@ try {
   );
   next = spawn(
     process.execPath,
-    [require.resolve("next/dist/bin/next"), "start", buildDir, "-p", "3410"],
+    [require.resolve("next/dist/bin/next"), "start", ".", "-p", "3410"],
     {
-      cwd: webDir,
+      cwd: buildDir,
       stdio: "ignore",
       env: {
         ...process.env,

@@ -701,7 +701,7 @@ function Reports({ exports }: { exports: boolean }) {
     rows?: number;
     nextCursor?: string | null;
   }>();
-  const url = useRef<string>();
+  const url = useRef<string | undefined>(undefined);
   const queryString = new URLSearchParams(query).toString(),
     r = useRemote(
       `admin/platform/reports?${queryString}`,

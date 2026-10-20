@@ -4,7 +4,7 @@ import { Search } from "lucide-react";
 import { cn } from "@/lib/ui/cn";
 import { getLocalization } from "@/lib/i18n/server";
 
-export function PublicFilters({
+export async function PublicFilters({
   action,
   query,
   queryLabel,
@@ -25,7 +25,7 @@ export function PublicFilters({
   allLabel: string;
   options: readonly { value: string; label: string }[];
 }) {
-  const { messages } = getLocalization();
+  const { messages } = (await getLocalization());
   const t = messages.publicPages;
   return (
     <form

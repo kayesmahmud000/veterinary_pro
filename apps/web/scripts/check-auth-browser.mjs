@@ -293,14 +293,12 @@ try {
     [
       require.resolve("next/dist/bin/next"),
       "start",
-      ...(process.env.WEB_TEST_BUILD_DIR
-        ? [process.env.WEB_TEST_BUILD_DIR]
-        : []),
+      ".",
       "-p",
       "3210",
     ],
     {
-      cwd: webDir,
+      cwd: process.env.WEB_TEST_BUILD_DIR || webDir,
       windowsHide: true,
       stdio: "ignore",
       env: {

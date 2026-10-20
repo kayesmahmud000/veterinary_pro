@@ -4,8 +4,8 @@ import { AuthProvider } from "@/components/auth/auth-provider";
 import { NavigationGuardProvider } from "@/components/workspace/navigation-guard";
 import siteStyles from "@/lib/ui/site.styles";
 import "./globals.css";
-export function generateMetadata(): Metadata {
-  const { messages } = getLocalization();
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = (await getLocalization());
   return {
     title: {
       default: messages.metadata.siteTitle,
@@ -18,12 +18,12 @@ export function generateMetadata(): Metadata {
     },
   };
 }
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { locale, messages } = getLocalization();
+  const { locale, messages } = (await getLocalization());
   return (
     <html lang={locale} className={siteStyles.document}>
       <body className={siteStyles.body}>

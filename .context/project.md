@@ -1,5 +1,7 @@
 # Project overview
 
+Updated 2026-10-21: [ADM-9 security follow-up](../docs/tasks/admin-release-dependencies/plan.md) moves the web to Next 15.5 / React 19, pins the official SheetJS distribution and patched transport/transitive dependencies, and restricts veterinarian SSE subscriptions by role and owner. The plan owns current audit/runtime evidence and residual advisory assessments; this does not establish a deployment.
+
 Updated 2026-10-20 (ADM-9): integrated administration acceptance and the [release/recovery runbook](../docs/features/admin-release-acceptance/runbook.md) consolidate the delivered batches. Narrow fixes address duplicate plan-service initialization and signed-out cached-workspace handoff. [Evidence/findings](../docs/features/admin-release-acceptance/plan.md) retain the configured database's pending communications/platform migrations, dependency/security disposition and deployed/hosted-provider acceptance as separate gates. Farmer milk and actual training content remain deferred.
 
 Updated 2026-10-19 (ADM-7): `administration/communications.*` and shared strict contracts implement bilingual content drafts/revisions/publication, curated verified veterinarian biographies, safe domain notification history and durable role-email retries, plus own/admin support conversations. Web entry points are `/admin/content`, `/admin/notifications`, `/admin/support` and `/account/support`; published entries extend existing blog/doctor/help discovery and `/pages`/`guides`/`faq` routes. [Contracts and local evidence](../docs/features/admin-communications/plan.md) separate disposable populated PostgreSQL migration/restore, privacy/concurrency/rollback and controlled production-browser acceptance from deployment and provider acceptance. The new additive migration must precede code rollout; private drafts/notes and protected account data are never public projections.
@@ -15,7 +17,7 @@ Versions below are manifest major versions/ranges, not a claim about the newest 
 | Workspace | pnpm `10.18.3`, Turborepo 2, Node engine `>=20`; CI uses Node 20 |
 | API | NestJS 10 on Express 4, TypeScript 5, Prisma 5; class-validator DTOs and Zod environment parsing |
 | Database | PostgreSQL 16 in local Compose; Redis 7 for BullMQ and Redis-backed mechanisms |
-| Web | Next.js 14 App Router, React 18; configured Tailwind 3 utilities, Lucide, clsx, tailwind-merge |
+| Web | Next.js 15.5 App Router, React 19; configured Tailwind 3 utilities, Lucide, clsx, tailwind-merge |
 | Mobile | Flutter/Dart (`>=3.0.0 <4.0.0`), Dio, sqflite, uuid; flutter_bloc dependency |
 | Shared contracts | `@vetralink/shared-types`, tsup emits CJS, ESM and declarations |
 | Integrations | S3-compatible storage/MinIO, Stripe, regional MFS handler, CloudFront signing, Daily provider, mail providers |

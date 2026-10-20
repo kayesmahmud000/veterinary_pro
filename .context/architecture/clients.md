@@ -1,5 +1,7 @@
 # Web and mobile architecture
 
+Updated 2026-10-21: Next 15 request cookies/parameters and cached server localization are asynchronous; metadata and server components await them. Next-launching browser harnesses build/start inside the isolated app directory (`start .`) to resolve Windows runtime manifests. [Compatibility and security evidence](../../docs/tasks/admin-release-dependencies/plan.md) separates local acceptance from deployment.
+
 Updated 2026-10-20 ADM-9: after a confirmed signed-out identity on a restored cached workspace, `WorkspaceGate` follows the existing validated public `protectedEntryUrl` handoff. Unavailable-session recovery remains local and private subtrees still require a current identity. This closes the reproduced logout/Back shell regression; [integrated acceptance and limits](../../docs/features/admin-release-acceptance/plan.md) own verification.
 
 Added 2026-10-19 ADM-8: `/admin/settings`, `/admin/settings/integrations` and `/admin/system` are Super-only at page/middleware, BFF and API boundaries. `/admin/metrics` and `/admin/reports` allow both administrative roles, use bounded explicit date/timezone contracts and distinguish current snapshots/list-price estimates from creation cohorts. Confirmed exports return exact JSON artifacts only after audited acknowledgement; actor binding and session/input changes protect private artifacts. [Local evidence and release limits](../../docs/features/admin-settings-reports/plan.md).

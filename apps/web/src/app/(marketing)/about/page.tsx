@@ -5,15 +5,15 @@ import { PublicPage } from "@/components/marketing/public-page";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 
-export function generateMetadata() {
-  const { messages } = getLocalization();
+export async function generateMetadata() {
+  const { messages } = (await getLocalization());
   return {
     title: messages.navigation.about,
     description: messages.publicPages.about.description,
   };
 }
-export default function AboutPage() {
-  const { messages } = getLocalization();
+export default async function AboutPage() {
+  const { messages } = (await getLocalization());
   const t = messages.publicPages;
   const a = t.about;
   const icons = [Sprout, BookOpen, HeartPulse];

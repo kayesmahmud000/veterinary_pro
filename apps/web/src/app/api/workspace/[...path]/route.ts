@@ -3,9 +3,10 @@ import { handleWorkspace } from "@/lib/workspace/server";
 import { withResponseDiagnostics } from "@/lib/api-diagnostics";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-function handle(request: NextRequest, context: { params: { path: string[] } }) {
+async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+  const { path } = await context.params;
   return withResponseDiagnostics(request, () =>
-    handleWorkspace(request, context.params.path),
+    handleWorkspace(request, path),
   );
 }
 export { handle as GET, handle as POST, handle as PUT, handle as PATCH };

@@ -3,10 +3,11 @@ import { getConsultationMessages } from "@/lib/i18n/admin-consultations";
 import { getLocalization } from "@/lib/i18n/server";
 import { notFound } from "next/navigation";
 import { z } from "zod";
-export function generateMetadata() {
-  return { title: getConsultationMessages(getLocalization().locale).triage };
+export async function generateMetadata() {
+  return { title: getConsultationMessages((await getLocalization()).locale).triage };
 }
-export default function Page({ params }: { params: { id: string } }) {
+export default async function Page(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!z.string().uuid().safeParse(params.id).success) notFound();
   return <AdminConsultations section="triage" id={params.id} />;
 }

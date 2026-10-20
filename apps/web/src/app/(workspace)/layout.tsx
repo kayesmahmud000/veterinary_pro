@@ -5,12 +5,12 @@ import { WorkspaceShell } from "@/components/workspace/workspace-shell";
 import { getLocalization } from "@/lib/i18n/server";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
-export default function WorkspaceLayout({
+export default async function WorkspaceLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { messages } = getLocalization();
+  const { messages } = (await getLocalization());
   return (
     <>
       <a className={cn(siteStyles["skip-link"])} href="#main-content">

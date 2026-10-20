@@ -15,7 +15,7 @@ const NavigationGuardContext = createContext<
 >(null);
 
 export function NavigationGuardProvider({ children }: { children: ReactNode }) {
-  const current = useRef<PopGuard>();
+  const current = useRef<PopGuard | undefined>(undefined);
   const register = useCallback((guard: PopGuard) => {
     current.current = guard;
     return () => {
