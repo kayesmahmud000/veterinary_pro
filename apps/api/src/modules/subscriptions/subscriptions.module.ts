@@ -72,7 +72,7 @@ import { SUBSCRIPTION_METRICS_SERVICE } from "./services/subscription-metrics.se
     SubscriptionPlanService,
     {
       provide: SUBSCRIPTION_PLAN_SERVICE,
-      useClass: SubscriptionPlanService,
+      useExisting: SubscriptionPlanService,
     },
     SubscriptionRepository,
     {

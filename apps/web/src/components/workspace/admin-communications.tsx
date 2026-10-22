@@ -43,6 +43,7 @@ import {
 import { workspaceBn, workspaceEn } from "@/lib/i18n/workspace";
 import { WorkspaceGate } from "./workspace-gate";
 import { Confirmation, Field } from "./workspace-ui";
+import { useUnsavedChanges } from "./use-unsaved-changes";
 import { EditorialText } from "../marketing/editorial-text";
 import styles from "./workspace.styles";
 const roles = [UserRole.ADMIN, UserRole.SUPER_ADMIN];
@@ -162,7 +163,7 @@ function ConfirmationForm<T>({
   responseSchema: z.ZodType<T, any, any>;
   input: Record<string, unknown>;
   onSaved: (v: T) => void;
-  onReload: () => void;
+  onReload: () => boolean | void;
   disabled?: boolean;
   title: string;
   children?: ReactNode;
@@ -301,11 +302,11 @@ function ConfirmationForm<T>({
         <button
           className={styles.secondary}
           onClick={() => {
+            if (onReload() === false) return;
             setPassword("");
             setConfirm(false);
             setBlocked(false);
             setCode("");
-            onReload();
           }}
         >
           {t.refresh}
@@ -677,6 +678,15 @@ function ContentEditor({
   }, [loading, row]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(row.draft),
     stale = draftVersion !== row.version;
+  const confirmDiscard = useUnsavedChanges(dirty,
+    (auth.locale === "bn" ? workspaceBn : workspaceEn).discardUnsaved,
+    () => setDraft(row.draft));
+  function reloadDraft() {
+    if (!confirmDiscard()) return false;
+    reloadPhase.current = 1;
+    reload();
+    return true;
+  }
   function saved(r: EditorialDetail) {
     onSaved(r);
     setDraft(r.draft);
@@ -748,10 +758,8 @@ function ContentEditor({
         {stale && <p role="alert">{t.stale}</p>}
         <button
           className={styles.secondary}
-          onClick={() => {
-            reloadPhase.current = 1;
-            reload();
-          }}
+          data-content-reload
+          onClick={reloadDraft}
         >
           {t.reloadDraft}
         </button>
@@ -801,7 +809,7 @@ function ContentEditor({
         }
         title={t.publish}
         onSaved={saved}
-        onReload={reload}
+        onReload={reloadDraft}
       />
       {row.published && (
         <ConfirmationForm
@@ -812,7 +820,7 @@ function ContentEditor({
           disabled={loading || dirty || stale}
           title={t.unpublish}
           onSaved={saved}
-          onReload={reload}
+          onReload={reloadDraft}
         />
       )}
       <section className={`${styles.card} space-y-4`}>

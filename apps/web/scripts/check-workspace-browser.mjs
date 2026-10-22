@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
+import { checkRealAdminRelease } from "./admin-release-live-browser-cases.mjs";
 const require = createRequire(import.meta.url),
   apiRequire = createRequire(
     new URL("../../api/package.json", import.meta.url),
@@ -299,6 +300,10 @@ try {
   client = await connect(
     targets.find((t) => t.type === "page" && t.url === "about:blank"),
   );
+  if (process.env.WORKSPACE_BROWSER_FOCUS === "admin-release") {
+    await checkRealAdminRelease({ client, db, fixtures, password, apiRequest, origin, shot });
+    console.log(`Screenshots: ${JSON.stringify(shots)}`);
+  } else {
   console.log("Stage: default Learner signup and application");
   await viewport(1440);
   await locale("en");
@@ -785,6 +790,7 @@ try {
   console.log(
     "Isolated PostgreSQL/Redis and mock mail only; no production service or real email provider was used.",
   );
+  }
 } catch (error) {
   if (client)
     console.error(

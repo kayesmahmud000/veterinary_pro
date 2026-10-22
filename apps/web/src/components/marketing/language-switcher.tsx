@@ -19,6 +19,12 @@ export function LanguageSwitcher({
   return (
     <form
       action={changeLocale}
+      data-locale-switcher
+      onSubmit={(event) => {
+        const button = (event.nativeEvent as SubmitEvent)
+          .submitter as HTMLButtonElement | null;
+        if (button?.value === locale) event.preventDefault();
+      }}
       className={cn(siteStyles["language-switcher"])}
       aria-label={label}
     >

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   adminCurriculumSchema,
@@ -13,7 +13,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { getAdminCourseMessages } from "@/lib/i18n/admin-courses";
 import { getCatalogMessages } from "@/lib/i18n/admin-catalog";
 import { workspaceRequest } from "@/lib/workspace/client";
-import { useNavigationGuard } from "./navigation-guard";
+import { useUnsavedChanges } from "./use-unsaved-changes";
 import { WorkspaceGate } from "./workspace-gate";
 import { Field, useRemote } from "./workspace-ui";
 import { CatalogError } from "./admin-products";
@@ -59,84 +59,12 @@ function Editor({
       null,
     );
   const disabled = busy || initial.isPublished;
-  const registerGuard = useNavigationGuard();
-  useEffect(() => {
-    if (!dirty) return;
-    const source = location.href,
-      sourceState = history.state;
-    const navigation = (
-      window as Window & { navigation?: { currentEntry?: { index: number } } }
-    ).navigation;
-    const sourceIndex = navigation?.currentEntry?.index;
-    let restoring = false;
-    const confirm = () => window.confirm(t.discard);
-    const click = (event: MouseEvent) => {
-      if (
-        event.defaultPrevented ||
-        event.button !== 0 ||
-        event.ctrlKey ||
-        event.metaKey ||
-        event.shiftKey ||
-        event.altKey
-      )
-        return;
-      const link = (event.target as Element).closest?.(
-        "a[href]",
-      ) as HTMLAnchorElement | null;
-      if (
-        !link ||
-        link.target === "_blank" ||
-        link.hasAttribute("download") ||
-        link.href === source
-      )
-        return;
-      const target = new URL(link.href);
-      if (
-        target.pathname === location.pathname &&
-        target.search === location.search
-      )
-        return;
-      if (confirm()) setDirty(false);
-      else {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    };
-    const pop = (event: PopStateEvent) => {
-      if (restoring) {
-        event.stopImmediatePropagation();
-        restoring = false;
-        return;
-      }
-      if (location.href === source) return;
-      if (confirm()) {
-        setDirty(false);
-        return;
-      }
-      event.stopImmediatePropagation();
-      const destinationIndex = navigation?.currentEntry?.index;
-      if (
-        sourceIndex !== undefined &&
-        destinationIndex !== undefined &&
-        sourceIndex !== destinationIndex
-      ) {
-        restoring = true;
-        history.go(sourceIndex - destinationIndex);
-      } else history.pushState(sourceState, "", source);
-    };
-    const before = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    document.addEventListener("click", click, true);
-    const unregister = registerGuard(pop);
-    window.addEventListener("beforeunload", before);
-    return () => {
-      document.removeEventListener("click", click, true);
-      unregister();
-      window.removeEventListener("beforeunload", before);
-    };
-  }, [dirty, t.discard, registerGuard]);
+  const [savedRows, setSavedRows] = useState(rows);
+  const confirmDiscard = useUnsavedChanges(dirty, t.discard, () => {
+    setRows(savedRows);
+    setDirty(false);
+    setPreview(null);
+  });
   function change(next: Row[]) {
     setRows(next);
     setDirty(true);
@@ -172,16 +100,16 @@ function Editor({
     setBusy(false);
     if (result.data) {
       setVersion(result.data.version);
-      setRows(
-        result.data.lessons.map((lesson) => ({
+      const nextRows = result.data.lessons.map((lesson) => ({
           id: lesson.id,
           title: lesson.title,
           summary: lesson.summary,
           access: lesson.access,
           key: lesson.id,
           videoUrl: `https://www.youtube.com/watch?v=${lesson.youtubeVideoId}`,
-        })),
-      );
+        }));
+      setRows(nextRows);
+      setSavedRows(nextRows);
       setDirty(false);
       setSaved(true);
     } else setCode(result.code ?? "DEFAULT");
@@ -371,7 +299,7 @@ function Editor({
             disabled={busy}
             className={styles.secondary}
             onClick={() => {
-              if (!dirty || window.confirm(t.discard)) reload();
+              if (!dirty || confirmDiscard()) reload();
             }}
           >
             {t.reload}

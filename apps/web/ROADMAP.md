@@ -1,8 +1,10 @@
 # VETRALINK PRO — Web Roadmap
 
-Planning updated **2026-10-19**, inspected baseline **b88b098 plus ADM-8 working changes**. Current selected delivery: **settings, diagnostics and reports**, following ADM-7. [Project coordination](../../ROADMAP.md) · [Documentation authority](../../docs/README.md) · [Backend roadmap and API readiness](../api/ROADMAP.md#api-dependency-register).
+Planning updated **2026-10-22**, inspected baseline **a07d77f plus existing local changes**. Current selected stage: **UXR-4 account-recovery contract preparation**, following ADM-9 local acceptance work. [Project coordination](../../ROADMAP.md) · [Documentation authority](../../docs/README.md) · [Backend roadmap and API readiness](../api/ROADMAP.md#api-dependency-register).
 
 ## Current priority — administration first
+
+**User-selected planning, 2026-10-22:** the [UI/UX remediation roadmap](#uiux-remediation-roadmap) turns all ten [audit findings](../../docs/reviews/2026-10-22-web-ui-ux-audit.md) into bounded delivery batches. Start with unsaved edits, currency readability and validation; begin account-recovery contract work early without blocking independent UI fixes. The original request created this roadmap; the subsequent “continue” selects UXR-1 implementation. UXR-1 is locally accepted under its [verification record](../../docs/features/admin-settings-reports/plan.md#uxr-1-verification-record); the subsequent “go next” selected UXR-2, now [locally accepted](../../docs/features/admin-settings-reports/plan.md#uxr-2-verification-record). The next continuation delivered [UXR-3 date feedback](../../docs/features/admin-settings-reports/plan.md#uxr-3-verification-record) locally. UXR-4 [shared contract and implementation planning](../../docs/features/account-recovery/plan.md) are now reviewed; recovery implementation and delivery remain pending. ADM-9 remains in progress under its [open release gates](../../docs/features/admin-release-acceptance/release-gates.md); the remediation program does not replace them. Farmer-domain work and actual training-course content remain deferred.
 
 **ADM-8 local implementation, 2026-10-19:** Super-only versioned report settings and redacted integration/dependency/queue observations, plus both-role current aggregate reports and confirmed bounded JSON report/audit exports, are implemented under the [shared contracts and evidence](../../docs/features/admin-settings-reports/plan.md). Current USD plan estimates and per-currency order creation cohorts have explicit semantics. Populated migration/restore, PostgreSQL races/rollback/privacy/precision, API/BFF and bilingual production-browser checks passed locally; production migration, real Redis/workers/providers and integrated release acceptance remain separate. ADM-9 is next proposed.
 
@@ -31,6 +33,133 @@ Planning updated **2026-10-19**, inspected baseline **b88b098 plus ADM-8 working
 - [x] **WEB-P2 — Product showcase and free learning:** original product preview/service illustrations, species discovery, three bilingual record guides, URL topic filters and two blank CSV templates. See [specification](../../docs/tasks/web-product-showcase/spec.md) / [verification](../../docs/tasks/web-product-showcase/plan.md). Free guides are available; paid catalog, accounts and operational services remain pending.
 - [x] **WEB-P3 — Public navigation and editorial discovery:** bilingual grouped header/mobile/footer links including a separate Courses link to the learning-plan section, blog list/articles, about/help, and a curated doctor directory/profile view with two expressly labeled fictional frontend demos. [Specification](../../docs/tasks/web-public-navigation/spec.md) / [verification](../../docs/tasks/web-public-navigation/plan.md). Manual content publication only; booking and backend directory synchronization remain pending.
 - WEB-1E modal authentication is implemented and locally verified under its [contract specification](../../docs/tasks/web-auth-modals/spec.md) and [ordered implementation/evidence plan](../../docs/tasks/web-auth-modals/plan.md). Real isolated backend/database browser acceptance passed; deployed/provider acceptance remains separate. The common dashboard and ADM-1 admin dashboard exist; browser offline implementation remains pending.
+
+## UI/UX remediation roadmap
+
+Created **2026-10-22** from the [web UI/UX audit](../../docs/reviews/2026-10-22-web-ui-ux-audit.md). This section is the single delivery-status owner for remediation; root/docs entries only route here. The audit remains the dated evidence record. Its Chrome/synthetic-data observations establish local UI behavior, not production or full accessibility acceptance.
+
+**Outcome:** users can edit without silent loss, interpret money correctly, recover access, find pending work quickly and complete ordinary tasks without developer knowledge. Preserve the existing brand and role/tenant boundaries.
+
+**Status:** UXR-1–3 are **complete locally**, with [exit-protection](../../docs/features/admin-settings-reports/plan.md#uxr-1-verification-record), [currency](../../docs/features/admin-settings-reports/plan.md#uxr-2-verification-record) and [date-feedback evidence](../../docs/features/admin-settings-reports/plan.md#uxr-3-verification-record); UXR-4 contract preparation is complete, while its implementation/delivery and UXR-5–11 remain open. No calendar dates are promised; ordering follows impact and actual dependencies. Suggested owners are responsibilities, not named assignments.
+
+### Delivery sequence and dependencies
+
+| Wave | Batches | Scope and sequencing |
+| --- | --- | --- |
+| 1 — Protect work and interpretation | UXR-1, UXR-2, UXR-3; contract stage of UXR-4 | Fix lost edits, exact readable money and date errors using existing contracts. Begin the P1 recovery contract/provider assessment immediately; recovery's missing API does not block these UI fixes. |
+| 2 — Make daily operations easier | UXR-5, UXR-6, UXR-7 | Improve dashboard hierarchy, navigation and reports. UXR-7 follows UXR-2/3 so report restructuring retains corrected amounts and errors. Review the shared shell before final dashboard/report browser acceptance. |
+| 3 — Finish clarity and interaction fixes | UXR-8, UXR-9, UXR-10 | Correct availability copy, search churn and control contrast. These are independent of account recovery and may move earlier when practical. |
+| 4 — Complete recovery and integrated acceptance | Remaining UXR-4; UXR-11 | Deliver recovery after its reviewed API/session/provider contract. UXR-11 closes all ten findings with fresh evidence. Individual safe UI batches may be accepted earlier; the whole program stays open until recovery is accepted too. |
+
+### Batch register
+
+| Batch | Audit finding / priority | Suggested owner | Dependency | Delivery status |
+| --- | --- | --- | --- | --- |
+| **UXR-1 — Unsaved edit protection** | UX-01 / P1 | Frontend + QA | Existing navigation guard; no new API contract expected | **Complete locally** — [verification](../../docs/features/admin-settings-reports/plan.md#uxr-1-verification-record) |
+| **UXR-2 — Readable exact currency** | UX-02 / P1 | Frontend + financial-domain reviewer | Existing report string minor-unit contract; no FX or API amount change | **Complete locally** — [verification](../../docs/features/admin-settings-reports/plan.md#uxr-2-verification-record) |
+| **UXR-3 — Specific validation feedback** | UX-05 / P2 | Frontend + accessibility reviewer | Existing date/query schema and field helpers | **Complete locally** — [verification](../../docs/features/admin-settings-reports/plan.md#uxr-3-verification-record) |
+| **UXR-4 — Account recovery** | UX-03 / P1 | API/auth + security + frontend + operations | [API-AUTH-R](../api/ROADMAP.md#api-dependency-register): reviewed [shared contract](../../docs/features/account-recovery/spec.md); API/persistence/worker and verified mail delivery remain missing | **Contract prepared; API and web implementation not started** |
+| **UXR-5 — Actionable dashboard** | UX-06 / P2 | Frontend + UX + QA | Existing authorized overview/application data | **Not started** |
+| **UXR-6 — Scannable reachable navigation** | UX-07 / P2 | Frontend + UX + accessibility reviewer | Shared workspace shell; recheck every role's existing menu | **Not started** |
+| **UXR-7 — Reporting structure** | UX-08 / P2 | Frontend + UX + financial-domain reviewer | UXR-2/3; existing API-ADMIN-M/A report/export contracts | **Not started** |
+| **UXR-8 — Accurate public availability** | UX-04 / P2 | Frontend + content/product review | Reconcile actual course/account availability with existing delivery evidence | **Not started** |
+| **UXR-9 — Efficient media search** | UX-09 / P2 | Frontend + QA | Existing product search; preserve unrelated `useRemote` callers | **Not started** |
+| **UXR-10 — Control contrast** | UX-10 / P2 | Frontend + accessibility reviewer | Existing Tailwind/auth/workspace compositions | **Not started** |
+| **UXR-11 — Integrated audit closure** | UX-01–10 / verification | QA + UI/code review; API/security for recovery | UXR-1–10 accepted in their documented environments | **Not started** |
+
+### UXR-1 — Protect unsaved settings and content
+
+**Touchpoints:** [content editor](src/components/workspace/admin-communications.tsx), [settings](src/components/workspace/admin-platform.tsx), [navigation guard](src/components/workspace/navigation-guard.tsx) and [curriculum guard reference](src/components/workspace/admin-course-curriculum.tsx). Extend the owning [communications](../../docs/features/admin-communications/spec.md) and [settings](../../docs/features/admin-settings-reports/spec.md) specs/plans before code.
+
+- [x] Define dirty-state lifecycle and reuse the existing guard for settings/content; handle sidebar/link, Back/Forward, locale and reload/close exits. Use native browser unload confirmation where required rather than promising custom unload text.
+- [x] Retain the current in-memory draft when navigation is cancelled or a save fails; offer explicit discard, clear dirty state only after a confirmed save, and preserve stale-version conflict handling. Persistent browser drafts are outside this batch unless separately specified; never persist passwords.
+- [x] **Acceptance:** in both locales, cancel each exit and retain exact edited fields; discard explicitly and leave; fail a save without losing input; save successfully and leave without a false warning. Confirm curriculum navigation still works. Reproduce both audited settings/content losses as regression scenarios.
+
+### UXR-2 — Show exact amounts in ordinary currency units
+
+**Touchpoints:** [report rendering](src/components/workspace/admin-platform.tsx), [platform messages](src/lib/i18n/admin-platform.ts) and [platform checks](scripts/check-admin-platform.mjs). Extend the [settings/report spec and plan](../../docs/features/admin-settings-reports/spec.md).
+
+- [x] Define one exact string-minor-unit display formatter for supported report currencies/locales, with an explicit minor-digit policy. Format primary amounts in major units without conversion through unsafe JavaScript numbers; retain currency codes.
+- [x] Keep raw strings in JSON exports and preserve per-currency grouping, estimate/cohort/current-state meanings and provider limitations. Do not change stored amounts, rounding rules, FX, settlement or revenue definitions.
+- [x] **Acceptance:** `1234567` USD minor units display as USD 12,345.67 in English and the corresponding localized Bangla amount; `1` displays as 0.01, zero as 0.00, and `9007199254740993` remains exactly 90,071,992,547,409.93. Check BDT/USD, large rendered values, no overflow and unchanged export strings.
+
+### UXR-3 — Explain the actual date error
+
+**Touchpoints:** [report form](src/components/workspace/admin-platform.tsx), [Field/validate](src/components/workspace/workspace-ui.tsx), [messages](src/lib/i18n/admin-platform.ts), [report browser cases](scripts/admin-platform-browser-cases.mjs). Update the existing settings/report plan.
+
+- [x] Map schema issues to date controls, with translated field errors, `aria-invalid`, linked error text and focus to the first invalid control or linked error summary. Date-only actions must not mention password/reason.
+- [x] Preserve the last applied report and visibly distinguish unapplied filter edits. Preserve the API's timezone-aware half-open range and maximum 366-day contract.
+- [x] **Acceptance:** reversed/equal ranges, missing values and over-limit ranges identify the actual issue; correction/resubmission clears stale errors and applies the right query. Test supported timezone boundaries, keyboard recovery, both locales and preservation of prior applied results after rejected input.
+
+### UXR-4 — Complete forgotten-password recovery
+
+**Touchpoints:** [auth controller/module](../api/src/modules/auth), [shared auth DTOs](../../packages/shared-types/src/dto/auth), [web auth boundary](src/lib/auth), [dialog](src/components/auth/auth-dialog.tsx), [auth messages](src/lib/i18n/auth.ts) and existing session/mail bindings. Backend readiness belongs to API-AUTH-R, not a rendered link.
+
+- [x] Prepare/review the [shared recovery specification](../../docs/features/account-recovery/spec.md) and [API-first implementation plan](../../docs/features/account-recovery/plan.md): exact endpoints/DTOs, eligibility, generic responses, abuse/backpressure, single-use credentials, trusted fragment links, encrypted durable delivery and atomic session revocation. Contract preparation is complete; runtime acceptance remains open.
+- [ ] Implement and verify the API/persistence/provider slice before wiring a usable request/reset UI. Use expiring single-use reset credentials with atomic consumption, safe logging and no token leakage to analytics. Prepare any required additive migration and recovery procedure in the shared plan.
+- [ ] Add bilingual request, generic acknowledgment, password reset, expired/used token, failure/retry and completed states. Do not enable an inert Forgot password link or present queued mail as delivered. A support fallback requires a verified operational route.
+- [ ] **Acceptance:** valid, unknown and ineligible accounts follow the reviewed disclosure policy; expiry/replay and concurrent token use are safe; replacement password works, old password fails, and existing sessions follow the agreed revocation policy. Test mail failures/retry, untrusted return URLs and both locales. Controlled-mail checks establish local behavior; configured-provider/target-origin delivery must be verified separately before integrated completion.
+
+### UXR-5 — Lead the dashboard with pending work
+
+**Touchpoints:** [admin dashboard](src/components/workspace/admin-dashboard.tsx), its translations and [dashboard specification/evidence](../../docs/tasks/web-admin-dashboard/spec.md).
+
+- [ ] Put compact authorized summary and pending applications before introductory shortcut panels. Keep a clear primary queue action; group secondary module links below the operational overview.
+- [ ] **Acceptance:** at 320×900 and 1440×900, a pending-work summary and queue action are reachable without scrolling; the detailed queue starts before the first module-introduction panel. Verify both admin roles/locales, long names, zero pending work, denied/failed/slow metrics and no invented counts or permissions.
+
+### UXR-6 — Keep navigation and the account footer usable
+
+**Touchpoints:** [shell](src/components/workspace/workspace-shell.tsx), [navigation](src/components/workspace/workspace-navigation.tsx), [account footer](src/components/workspace/workspace-account.tsx), [navigation checks](scripts/check-workspace-navigation.mjs), [workspace design](../../docs/tasks/web-workspace-design/spec.md) and its progress ledger.
+
+- [ ] Make only the menu region scroll within the desktop sidebar/mobile drawer and keep account/profile/logout in the requested bottom footer. Preserve header language controls and the mobile drawer trigger.
+- [ ] Refine domain groups, meaningful icons and current-page indication. Introduce collapsible groups only if their keyboard/expanded/current-route behavior is specified and tested; do not hide authorized active routes by default.
+- [ ] **Acceptance:** Super Admin's long menu and account footer work at 320×700 and 1440×900 without scrolling the whole drawer to reach logout. Test Tab order, visible/unobscured focus, Escape/close/return focus, long Bangla labels, other-role menus, logout/Back and existing role denial. Preserve skip links and a single main landmark.
+
+### UXR-7 — Separate report results and advanced exports
+
+**Touchpoints:** [platform report UI](src/components/workspace/admin-platform.tsx), [translations](src/lib/i18n/admin-platform.ts), platform fixtures/browser cases and [settings/report contracts](../../docs/features/admin-settings-reports/spec.md).
+
+- [ ] Following UXR-2/3, put compact filters/results first. Separate ordinary results, report export and audit export into labelled sections or accessible tabs; record the chosen interaction in the owning spec before code.
+- [ ] Add Today/Last 7 days/Last 30 days presets with tested timezone/end-boundary semantics. Keep short truthful methodology warnings visible, detailed definitions available on demand, and UUID/cursor inputs in an advanced section. Do not add unsupported name lookup or alter export permissions/limits.
+- [ ] **Acceptance:** current totals follow compact filters before lengthy metadata/export forms; users can enter each export area directly without scrolling through all result groups. Verify dates/DST where supported, exact amounts, applied-query clarity, keyboard navigation, empty/failed/long reports and both locales/roles. Preserve JSON export redaction, confirmation, caps and continuation behavior; CSV/Excel remains separate scope.
+
+### UXR-8 — Describe what is available now
+
+**Touchpoints:** [English](src/lib/i18n/en.ts), [Bangla](src/lib/i18n/bn.ts), learning-page CTA/metadata and [course delivery evidence](../../docs/features/youtube-courses/plan.md).
+
+- [ ] Reconcile public learning/account wording and metadata with shipped free-course discovery, enrollment and My Courses. Clearly retain paid marketplace/purchase/booking limitations; preserve My Courses access.
+- [ ] **Acceptance:** both locales explain the actual free learning journey and give a working course-discovery CTA. Signed-out course entry preserves the authorized return journey; signed-in users can reach their library. Do not describe sample/demo content as actual training content. Verify desktop/mobile rendered copy and links; implementation-mirroring copy tests are unnecessary.
+
+### UXR-9 — Search without per-keystroke request churn
+
+**Touchpoints:** [media search](src/components/workspace/admin-media.tsx), [remote hook](src/components/workspace/workspace-ui.tsx), [workspace transport](src/lib/workspace/client.ts) and product/media browser checks. Reuse the [product/media spec and plan](../../docs/features/admin-product-media/spec.md).
+
+- [ ] Set a 300ms input debounce with immediate clear/reset, and thread caller cancellation through the existing transport while retaining its timeout behavior. Keep cancellation opt-in for unrelated callers; preserve stale-response protection.
+- [ ] Retain prior useful results during updates when appropriate; show updating, empty and genuine failure/retry states separately. Aborted superseded searches must not appear as errors or cancel a write/upload.
+- [ ] **Acceptance:** the audited six inputs at 90ms intervals cause one final query after debounce; superseded in-flight reads are cancelled and cannot replace newer results. Test clear, unmount, slow/reordered responses, abort versus timeout, retry and existing non-search callers. Measure controlled request counts separately from real-network latency.
+
+### UXR-10 — Improve meaningful control boundaries
+
+**Touchpoints:** [workspace styles](src/components/workspace/workspace.styles.ts), [auth styles](src/components/auth/auth.styles.ts) and existing shared Tailwind compositions.
+
+- [ ] Adjust meaningful input/select/textarea boundaries to at least 3:1 contrast against adjacent backgrounds while keeping visible focus/error treatments and the green/cream palette. Do not darken every decorative border indiscriminately.
+- [ ] **Acceptance:** record actual computed colors/ratios for enabled auth/workspace controls; verify default/hover/focus/error/disabled appearance, both locales and narrow/wide screens. Check normal text remains readable; do not claim full WCAG conformance from border measurements alone. A style-only change needs rendered/contrast checks, not redundant behavioral unit tests.
+
+### UXR-11 — Close the audit with integrated evidence
+
+- [ ] Reproduce the original failure/interaction for each UX-01–10 finding; record the corrected result, environment, command, screenshots and limits in its owning plan. Keep the original audit historical; add a linked closure/evidence table rather than rewriting old observations.
+- [ ] Recheck Bangla-default/English, 320/375/1440px and 320×700 navigation, keyboard-only operation, native browser zoom/reflow, long/empty/loading/error states and representative slow/offline recovery. Complete targeted screen-reader and real-mobile/alternate-browser checks for changed forms/navigation; record unexecuted device checks as open, not passed.
+- [ ] Preserve admin/Super/ordinary-role boundaries, locale/auth return handling, exact exports and session/logout behavior. Recovery requires isolated real persistence/concurrency/session evidence plus configured-provider/target delivery evidence, beyond synthetic browser fixtures.
+- [ ] Run relevant checks per batch, then one integrated regression pass after final related changes. Existing commands: `pnpm --filter @vetralink/web check:styles`, `test:auth`, `test:workspace`, `test:workspace-navigation`, `test:protected-routes`, `test:admin-dashboard`, `test:admin-finance`; use `pnpm --filter @vetralink/web exec node --test scripts/check-admin-platform.mjs` for report boundaries. Build in an isolated source/output location before affected `test:dashboard:browser`, `test:auth:browser` or public-browser checks. Recovery also needs scoped API tests/builds under its new plan. Actual outcomes belong in evidence; these commands have not been run by this roadmap task.
+- [ ] Mark each batch complete only after acceptance/evidence is attached; mark the program complete only when all ten findings are closed. Keep unverified production/device/provider checks visible and ADM-9's independent security/hosting/operational gates open until separately satisfied.
+
+### Implementation and handoff rules
+
+Before code, update each batch's existing owning spec/plan; recovery uses its shared specification and API-first plan linked above. Break execution into small testable changes and review affected behavior. Use failing behavior tests for meaningful state/finance/auth/search fixes; use rendered checks for reversible visual/copy edits. Keep shared-hook changes scoped and test their callers.
+
+Preserve Bangla as default, full English coverage, Tailwind-only styling, role/tenant privacy, version/reason/password confirmations, redaction and financial semantics. No blanket component rewrite, paid commerce, CSV export, offline-sync feature, new Farmer module or provider control is implied. Git remains human-managed: no agent staging/commit/merge/push. Planning does not authorize production account/data changes or deployment.
+
+**Roadmap validation, 2026-10-22:** all ten audit IDs map exactly once to primary remediation batches; UXR-11 supplies integrated closure. Checked 35 newly referenced local paths/anchors, nine existing package test/check commands and added-line whitespace; the context validator passed 48 Markdown documents, 357 local links and 95 source entries. Source touchpoints and API-AUTH-R's missing-contract status were reviewed. This is documentation evidence only; no application checks were executed and no finding is claimed fixed. Suggested documentation commit: `docs: plan audit-based UI UX remediation`; no staging or commit was performed.
 
 ## Bangla-default bilingual delivery requirement
 
@@ -163,7 +292,7 @@ These are roadmap defaults for new contracts; current backend permissions remain
 | **ADM-6** | Settlements and moderation | API-ADMIN-V plus API-SETTLEMENT; read views, calculation/reconciliation and moderation with reasons | Opening a page causes no ledger mutation; processing is confirmed/audited/repeat-safe; PAID ledger state is not represented as an external transfer; moderation permissions pass | Implemented locally; [verification](../../docs/features/admin-settlements-moderation/plan.md); deployment/provider acceptance separate |
 | **ADM-7** | Public content, notifications and support | API-ADMIN-C/N; bilingual publication/revisions, verified veterinarian biographies, safe delivery history/retry requests and own/admin support | Draft/public separation, plain-text safety, qualification policy, privacy, versions/atomic audits and bounded recovery verified | **Implemented locally.** [Spec and verification](../../docs/features/admin-communications/plan.md) record disposable populated PostgreSQL migration/restore, real races/rollback, HTTP/BFF and bilingual production-browser checks. Additive migration, release and external provider acceptance remain separate. |
 | **ADM-8** | Super Admin settings, operations and complete reports | API-ADMIN-S/M/A; typed configuration, redacted system health, integration status and aggregate reports/exports | ADMIN denied on Super-only routes/actions; changes audited; no secrets exposed; exports authorized/bounded; unavailable providers represented accurately | **Implemented locally.** [Contracts and verification](../../docs/features/admin-settings-reports/plan.md) cover populated migration/restore, concurrent/audit/precision/privacy tests and bilingual production-browser journeys. Additive migration, live Redis/workers/providers and deployed acceptance remain separate. Historical revenue/churn are unavailable; reports explicitly identify current-plan estimates and creation cohorts |
-| **ADM-9** | Integrated admin release acceptance | All selected administration batches, their API prerequisites and WEB-L3/WEB-12 | End-to-end both-role/both-language journeys, permissions, responsive/accessibility, concurrency, failed providers, migrations and operational runbooks accepted | Not started; depends on delivered batches |
+| **ADM-9** | Integrated admin release acceptance | All selected administration batches, their API prerequisites and WEB-L3/WEB-12 | End-to-end both-role/both-language journeys, permissions, responsive/accessibility, concurrency, failed providers, migrations and operational runbooks accepted | **In progress; release gates remain open.** [Acceptance/evidence](../../docs/features/admin-release-acceptance/plan.md) and [release gates/runbook](../../docs/features/admin-release-acceptance/release-gates.md) distinguish integrated local checks from security/provider/hosting/deployed acceptance. Not production accepted |
 
 This is a dependency-based sequence, not a calendar estimate. A missing contract blocks its module rather than unrelated implemented capabilities. **ADM-1 is the first useful delivery, not completion of the full admin program.** Full administration completion requires the included ADM-2–8 workflows and ADM-9 evidence; any scope change must remain explicit in this roadmap.
 
@@ -190,7 +319,9 @@ Later shared API/web modules use their own `docs/features/<slug>/spec.md` and pa
 
 ## Selecting the next work
 
-**Current handoff (2026-10-19):** ADM-8 is locally implemented under its [verification/migration plan](../../docs/features/admin-settings-reports/plan.md), following ADM-7. Release/provider/runtime acceptance remains separate. This task stops after ADM-8; ADM-9 integrated admin release acceptance is the next proposed batch and needs selection. Earlier slices retain their individual release limits.
+**Current handoff (2026-10-22):** the user requested an [audit-based UI/UX remediation roadmap](#uiux-remediation-roadmap). The subsequent continuations completed UXR-1 exit protection, UXR-2 readable exact currency and UXR-3 date feedback locally, with linked evidence above. UXR-4 [contract preparation and design review](../../docs/features/account-recovery/plan.md) are now complete. The next proposed batch is Task 1 of that API-first plan: validated shared schemas and transport boundaries. This task stops at preparation; recovery implementation/delivery, other remediation and production release gates remain open.
+
+**Previous selected work (2026-10-22):** ADM-9 integrated administration acceptance. [Local evidence and scoped fixes](../../docs/features/admin-release-acceptance/plan.md) consolidate ADM-1–8 checks; [open release gates and rollout/recovery](../../docs/features/admin-release-acceptance/release-gates.md) retain security advisories, public serverless diagnostics, provider/hosting, accessibility/device, load/monitoring and deployed acceptance requirements. Close these gates before marking ADM-9 complete. Farmer-domain work remains deferred; earlier slices retain their individual release limits.
 
 **Priority override (2026-10-13):** start ADM-1 above. The older Farmer-domain handoffs and the milk proposal are deferred by the user's admin-first direction. The dated entries below preserve completed implementation history and do not override that priority.
 

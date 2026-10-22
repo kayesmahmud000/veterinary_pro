@@ -6,6 +6,7 @@ import { handleConsultationsFixture, checkAdminConsultations } from "./admin-con
 import { handleFinanceFixture, checkAdminFinance } from "./admin-finance-browser-cases.mjs";
 import { handleCommunicationsFixture, checkAdminCommunications } from "./admin-communications-browser-cases.mjs";
 import { handlePlatformFixture, checkAdminPlatform } from "./admin-platform-browser-cases.mjs";
+import { checkUnsavedEditors } from "./unsaved-editor-browser-cases.mjs";
 import {handleCourseFixture,checkLearnerCourses} from "./course-browser-cases.mjs";
 import { handleCatalogFixture, handleCatalogObject, checkAdminCatalog, checkAdminCourses } from "./admin-catalog-browser-cases.mjs";
 import assert from "node:assert/strict";
@@ -416,8 +417,10 @@ try {
   let seq = 0;
   const pending = new Map();
   const exceptions = [];
+  let dialogHandler;
   ws.onmessage = ({ data }) => {
     const r = JSON.parse(data);
+    if (r.method === "Page.javascriptDialogOpening") void dialogHandler?.(r.params);
     if (r.method === "Runtime.exceptionThrown") {
       exceptions.push(r.params.exceptionDetails.exception?.description);
       console.error(r.params.exceptionDetails.exception?.description);
@@ -478,7 +481,28 @@ try {
     await cookie("vetralink_refresh", "r-" + role);
     await cookie("vetralink-locale", locale);
   }
-  if (process.env.WORKSPACE_BROWSER_FOCUS === "platform") {
+  if (process.env.WORKSPACE_BROWSER_FOCUS === "admin-release") {
+    const context = { seed, go, call, evaluate, until, temp, requests, origin, users };
+    // Run every selected administration batch on the same production build.
+    // The default workspace run predates the later administrative batches.
+    for (const check of [
+      checkAdminDashboard,
+      checkAdminDirectory,
+      checkAdminCatalog,
+      checkAdminBilling,
+      checkAdminConsultations,
+      checkAdminFinance,
+      checkAdminCommunications,
+      checkAdminPlatform,
+    ]) {
+      checks += await check(context);
+      assert.deepEqual(exceptions, []);
+    }
+    console.log(`Passed ${checks} integrated admin release browser checks. Screenshots: ${temp}`);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "unsaved") {
+    checks += await checkUnsavedEditors({ seed, go, call, evaluate, until, temp, requests, setDialogHandler: (handler) => { dialogHandler = handler; } });
+    assert.deepEqual(exceptions, []);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "platform") {
     checks += await checkAdminPlatform({seed,go,call,evaluate,until,temp,requests});
     assert.deepEqual(exceptions, []);
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "communications") {

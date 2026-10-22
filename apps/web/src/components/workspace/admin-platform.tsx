@@ -18,7 +18,6 @@ import {
   platformDiagnosticSchema,
   platformDiagnosticResultSchema,
   platformReportSchema,
-  platformReportQuerySchema,
   platformReportExportSchema,
   platformReportExportResultSchema,
   platformAuditExportSchema,
@@ -36,8 +35,11 @@ import {
   platformError,
 } from "@/lib/i18n/admin-platform";
 import { workspaceBn, workspaceEn } from "@/lib/i18n/workspace";
+import { formatReportAmount } from "@/lib/i18n/report-amount";
+import { validateReportRange, type ReportRangeIssues } from "@/lib/workspace/report-range";
 import { WorkspaceGate } from "./workspace-gate";
 import { Confirmation, Field, useRemote } from "./workspace-ui";
+import { useUnsavedChanges } from "./use-unsaved-changes";
 import styles from "./workspace.styles";
 const roles = [UserRole.ADMIN, UserRole.SUPER_ADMIN];
 function useCopy() {
@@ -285,16 +287,26 @@ function SettingsForm({
   reload: () => void;
   saved: () => void;
 }) {
-  const { t } = useCopy();
+  const { auth, t } = useCopy();
   const [pending, setPending] = useState(false);
-  const [fields, setFields] = useState({
+  const initial = {
     organizationBn: record.organizationBn,
     organizationEn: record.organizationEn,
     supportEmail: record.supportEmail,
     reportTimezone: record.reportTimezone,
-  });
+  };
+  const [fields, setFields] = useState(initial);
+  const [baseline, setBaseline] = useState(initial);
+  const dirty = (Object.keys(fields) as (keyof typeof fields)[]).some((k) => fields[k] !== baseline[k]);
+  const confirmDiscard = useUnsavedChanges(dirty,
+    (auth.locale === "bn" ? workspaceBn : workspaceEn).discardUnsaved,
+    () => setFields(baseline));
+  const reloadSaved = () => { if (confirmDiscard()) reload(); };
   return (
     <>
+      <button className={styles.secondary} data-settings-reload disabled={pending} onClick={reloadSaved}>
+        {t.refresh}
+      </button>
       <p>
         {t.version}: {record.version}
       </p>
@@ -339,8 +351,8 @@ function SettingsForm({
         input={{ ...fields, expectedVersion: record.version }}
         schema={platformSettingsSaveSchema}
         response={platformSettingsSchema}
-        saved={saved}
-        reload={reload}
+        saved={() => { setBaseline(fields); saved(); }}
+        reload={reloadSaved}
         onPending={setPending}
       >
         <dl className={styles.details}>
@@ -367,9 +379,9 @@ function Settings() {
           {t.saved}
         </p>
       )}
-      <button className={styles.secondary} onClick={r.reload}>
+      {!r.data && <button className={styles.secondary} onClick={r.reload}>
         {t.refresh}
-      </button>
+      </button>}
       <Feedback code={r.code} />
       {r.loading ? (
         <p role="status">{t.loading}</p>
@@ -587,8 +599,8 @@ function ReportView({ report }: { report: PlatformReport }) {
               <span>
                 {t.count}: {number(r.count)}
               </span>
-              <span>
-                {t.amount}: {number(r.totalMinor)} {r.currency}
+              <span className="min-w-0 [overflow-wrap:anywhere]">
+                {t.amount}: {formatReportAmount(r.totalMinor, r.currency, auth.locale)}
               </span>
             </li>
           ))}
@@ -641,9 +653,8 @@ function ReportView({ report }: { report: PlatformReport }) {
       </div>
       <section className={styles.card}>
         <h2>{t.estimatedMrr}</h2>
-        <p className="text-2xl font-semibold">
-          {number(report.subscriptions.estimatedMrr.totalMinor)} USD ·{" "}
-          {t.amount}
+        <p className="text-2xl font-semibold [overflow-wrap:anywhere]">
+          {formatReportAmount(report.subscriptions.estimatedMrr.totalMinor, report.subscriptions.estimatedMrr.currency, auth.locale)}
         </p>
         <p>{t.mrrNote}</p>
       </section>
@@ -685,7 +696,7 @@ function Reports({ exports }: { exports: boolean }) {
   const { auth, t } = useCopy();
   const [draft, setDraft] = useState(() => initialRange("Asia/Dhaka")),
     [query, setQuery] = useState(draft),
-    [code, setCode] = useState(""),
+    [issues, setIssues] = useState<ReportRangeIssues>({}),
     [tick, setTick] = useState(0);
   const [audit, setAudit] = useState({
     actorId: "",
@@ -762,46 +773,67 @@ function Reports({ exports }: { exports: boolean }) {
     limit: Number(audit.limit),
   };
   const changed = JSON.stringify(draft) !== JSON.stringify(query);
+  const errorMessages = {
+    required: t.dateRequired, calendar: t.dateCalendar, order: t.dateOrder,
+    length: t.dateLength, future: t.dateFuture, timezone: t.dateTimezone,
+  };
+  const error = (key: keyof ReportRangeIssues) => issues[key] ? errorMessages[issues[key]!] : undefined;
+  function changeRange(next: typeof draft) {
+    touched.current = true;
+    setDraft(next);
+    if (Object.keys(issues).length) {
+      const result = validateReportRange(next);
+      setIssues(result.success ? {} : result.issues);
+    }
+  }
   return (
     <>
       <p>{t.reportNote}</p>
       <p>{t.rangeNote}</p>
       <form
         className={styles.card}
+        noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          const result = platformReportQuerySchema.safeParse(draft);
-          if (!result.success) setCode("VALIDATION_FAILED");
+          const result = validateReportRange(draft);
+          if (!result.success) {
+            setIssues(result.issues);
+            const first = (["from", "to", "timezone"] as const).find(k => result.issues[k]);
+            requestAnimationFrame(() => first && document.getElementById(first)?.focus());
+          }
           else {
             touched.current = true;
-            setCode("");
+            setIssues({});
             setQuery(result.data);
             reload();
           }
         }}
       >
+        {Object.keys(issues).length > 0 && <p role="alert" data-report-date-errors className={styles.error}>{t.dateValidation}</p>}
         <div className={styles.grid}>
           {(["from", "to"] as const).map((k) => (
-            <Field key={k} name={k} label={t[k]}>
+            <Field key={k} name={k} label={t[k]} error={error(k)}>
               <input
                 id={k}
                 required
                 type="date"
+                aria-invalid={!!issues[k]}
+                aria-describedby={issues[k] ? `${k}-error` : undefined}
                 value={draft[k]}
                 onChange={(e) => {
-                  touched.current = true;
-                  setDraft({ ...draft, [k]: e.target.value });
+                  changeRange({ ...draft, [k]: e.target.value });
                 }}
               />
             </Field>
           ))}
-          <Field name="timezone" label={t.timezone}>
+          <Field name="timezone" label={t.timezone} error={error("timezone")}>
             <select
               id="timezone"
+              aria-invalid={!!issues.timezone}
+              aria-describedby={issues.timezone ? "timezone-error" : undefined}
               value={draft.timezone}
               onChange={(e) => {
-                touched.current = true;
-                setDraft({
+                changeRange({
                   ...draft,
                   timezone: e.target.value as typeof draft.timezone,
                 });
@@ -817,7 +849,8 @@ function Reports({ exports }: { exports: boolean }) {
           {t.apply}
         </button>
       </form>
-      <Feedback code={code || r.code} />
+      {changed && <p role="status" data-report-unapplied className={styles.notice}>{t.unappliedDates}</p>}
+      {r.code === "VALIDATION_FAILED" ? <p role="alert" className={styles.error}>{t.dateRejected}</p> : <Feedback code={r.code} />}
       <button className={styles.secondary} onClick={reload}>
         {t.refresh}
       </button>
