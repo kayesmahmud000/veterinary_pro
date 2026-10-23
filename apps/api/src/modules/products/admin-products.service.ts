@@ -14,6 +14,7 @@ import {
   adminProductQuerySchema,
   JwtPayload,
   UserRole,
+  readCourseThumbnail,
 } from "@vetralink/shared-types";
 import {
   USER_REPOSITORY,
@@ -34,8 +35,25 @@ import {
   WorkflowException,
 } from "../../common/exceptions/domain.exception";
 import { AdminProductsRepository } from "./admin-products.repository";
-export const projectAdminProduct = (row: Product) =>
-  adminProductSchema.parse(JSON.parse(JSON.stringify(row)));
+export const projectAdminProduct = (
+  row: Product & {
+    _count?: { courseLessons: number; courseEnrollments: number };
+    courseLessons?: Array<{ youtubeVideoId: string }>;
+  },
+) =>
+  adminProductSchema.parse(
+    JSON.parse(
+      JSON.stringify({
+        ...row,
+        thumbnailUrl: readCourseThumbnail(row.metadata),
+        previewImageUrl: row.courseLessons?.[0]
+          ? `https://i.ytimg.com/vi/${row.courseLessons[0].youtubeVideoId}/hqdefault.jpg`
+          : null,
+        lessonCount: row._count?.courseLessons,
+        enrollmentCount: row._count?.courseEnrollments,
+      }),
+    ),
+  );
 @Injectable()
 export class AdminProductsService {
   constructor(
@@ -115,14 +133,23 @@ export class AdminProductsService {
     });
   }
   async edit(claims: JwtPayload, id: string, raw: AdminProductEdit) {
-    const { expectedVersion, ...input } = validateWorkflow(
+    const { expectedVersion, thumbnailUrl, ...input } = validateWorkflow(
       adminProductEditSchema,
       raw,
     );
     return this.transactions.run(async (tx) => {
       await this.authorize(claims, tx);
       const current = await this.locked(id, expectedVersion, tx);
-      if (current.contentProvider === "YOUTUBE" && (input.priceCents !== 0 || input.discountPriceCents !== null)) throw new WorkflowException("INVALID_YOUTUBE_PRICING", "YouTube courses require free enrollment.",400);
+      if (
+        current.isPublished &&
+        current.contentProvider === "YOUTUBE" &&
+        (input.priceCents !== 0 || input.discountPriceCents !== null)
+      )
+        throw new WorkflowException(
+          "INVALID_YOUTUBE_PRICING",
+          "YouTube courses require free enrollment.",
+          400,
+        );
       const meta =
         current?.metadata &&
         typeof current.metadata === "object" &&
@@ -131,7 +158,16 @@ export class AdminProductsService {
           : {};
       const row = await this.repo.save(
         id,
-        { ...input, metadata: { ...meta, adminManaged: true } },
+        {
+          ...input,
+          metadata: {
+            ...meta,
+            adminManaged: true,
+            ...(thumbnailUrl !== undefined
+              ? { courseThumbnailUrl: thumbnailUrl }
+              : {}),
+          },
+        },
         tx,
       );
       return this.record(claims, row, "PRODUCT_UPDATED", tx);
@@ -143,9 +179,28 @@ export class AdminProductsService {
       await this.authorize(claims, tx);
       const current = await this.locked(id, input.expectedVersion, tx);
       if (input.action === "PUBLISH") {
-        const lessons = current.contentProvider === "YOUTUBE" ? await this.repo.lessons(id,tx) : [];
-        if (!isProductAssetReady(current, lessons.filter(lesson=>lesson.access === "ENROLLED").length))
-          throw new WorkflowException("ASSET_NOT_READY", "Save a ready asset or a free course curriculum with an enrolled lesson before publication.");
+        if (
+          current.contentProvider === "YOUTUBE" &&
+          (current.priceCents !== 0 || current.discountPriceCents !== null)
+        )
+          throw new WorkflowException(
+            "PAID_COURSE_NOT_ENABLED",
+            "Paid courses can be prepared as drafts. Publication and enrollment are not enabled.",
+          );
+        const lessons =
+          current.contentProvider === "YOUTUBE"
+            ? await this.repo.lessons(id, tx)
+            : [];
+        if (
+          !isProductAssetReady(
+            current,
+            lessons.filter((lesson) => lesson.access === "ENROLLED").length,
+          )
+        )
+          throw new WorkflowException(
+            "ASSET_NOT_READY",
+            "Save a ready asset or a free course curriculum with an enrolled lesson before publication.",
+          );
       }
       const data =
         input.action === "DELETE"

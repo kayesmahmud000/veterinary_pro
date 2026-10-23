@@ -89,6 +89,7 @@ if (database && !new URL(database).pathname.endsWith("/adm3_test"))
     afterAll(async () => {
       if (!prisma) return;
       await prisma.auditLog.deleteMany({ where: { userId: actor.sub } });
+      await prisma.courseEnrollment.deleteMany({where:{productId:{in:ids}}});
       await prisma.courseLesson.deleteMany({
         where: { productId: { in: ids } },
       });
@@ -102,6 +103,35 @@ if (database && !new URL(database).pathname.endsWith("/adm3_test"))
       });
       expect(original?.contentProvider).toBe("INTERNAL");
       expect(original?.contentS3Key).toBe("legacy/guide.pdf");
+    });
+    it("projects actual lesson/enrollment counts and preserves related rows after soft deletion", async () => {
+      await service.replace(actor,productId,{expectedVersion:0,lessons:[lesson("Main"),lesson("Public demo","PUBLIC_DEMO")]});
+      await prisma.courseEnrollment.create({data:{productId,userId:actor.sub}});
+      await prisma.product.update({where:{id:productId},data:{metadata:{adminManaged:true,privateNote:"SYNTHETIC_PRIVATE_NOTE"}}});
+      const existing = await repo.detail(productId);
+      const lookup = await repo.list({limit:1,slug:existing!.slug});
+      expect(lookup.items.map((item)=>item.id)).toEqual([productId]);
+      expect((await repo.list({limit:1,slug:`${existing!.slug}-absent`})).items).toEqual([]);
+      const current=await catalog.detail(actor,productId);
+      expect(current.lessonCount).toBe(2);expect(current.enrollmentCount).toBe(1);
+      expect(current.previewImageUrl).toBe("https://i.ytimg.com/vi/M7lc1UVf-VE/hqdefault.jpg");
+      const updated=await catalog.edit(actor,productId,{expectedVersion:current.version,title:current.title,slug:current.slug,description:current.description,priceCents:0,discountPriceCents:null,currency:current.currency,minSubscriptionTier:current.minSubscriptionTier,thumbnailUrl:"https://images.example.test/course.jpg"});
+      expect(updated.thumbnailUrl).toBe("https://images.example.test/course.jpg");
+      expect(JSON.stringify(updated)).not.toContain("SYNTHETIC_PRIVATE_NOTE");
+      expect((await prisma.product.findUniqueOrThrow({where:{id:productId}})).metadata).toMatchObject({privateNote:"SYNTHETIC_PRIVATE_NOTE"});
+      await catalog.action(actor,productId,{action:"DELETE",expectedVersion:updated.version,reason:"Remove synthetic course from discovery"});
+      expect((await prisma.product.findUniqueOrThrow({where:{id:productId}})).deletedAt).not.toBeNull();
+      expect(await prisma.courseEnrollment.count({where:{productId}})).toBe(1);
+      expect(await prisma.courseLesson.count({where:{productId}})).toBe(2);
+      await expect(catalog.detail(actor,productId)).rejects.toThrow();
+    });
+    it("stores future paid pricing only as a draft and refuses publication", async () => {
+      const current=await catalog.detail(actor,productId);
+      const paid=await catalog.edit(actor,productId,{expectedVersion:current.version,title:current.title,slug:current.slug,description:current.description,priceCents:250000,discountPriceCents:null,currency:"BDT",minSubscriptionTier:current.minSubscriptionTier});
+      expect(paid.priceCents).toBe(250000);expect(paid.isPublished).toBe(false);
+      await expect(catalog.action(actor,productId,{action:"PUBLISH",expectedVersion:paid.version,reason:"Attempt future paid publication"})).rejects.toThrow("Paid courses");
+      expect((await prisma.product.findUniqueOrThrow({where:{id:productId}})).isPublished).toBe(false);
+      await expect(prisma.product.update({where:{id:productId},data:{isPublished:true}})).rejects.toThrow();
     });
     it("keeps lesson identities and unique order, publishes, and rehydrates an empty-key course", async () => {
       const first = await service.replace(actor, productId, {

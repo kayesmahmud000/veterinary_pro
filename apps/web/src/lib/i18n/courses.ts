@@ -1,5 +1,11 @@
 import type { Locale } from "./locale";
 const copy = {
+  manageCourses: ["Manage courses", "কোর্স পরিচালনা করুন"],
+  manageCourse: ["Manage this course", "এই কোর্স পরিচালনা করুন"],
+  administrator: [
+    "You are viewing this course as an administrator. Manage its details and lessons without enrolling.",
+    "আপনি প্রশাসক হিসেবে কোর্সটি দেখছেন। এনরোল না করেই এর তথ্য ও লেসন পরিচালনা করুন।",
+  ],
   discover: ["Learn something you can put into practice", "শিখুন, কাজে লাগান"],
   videoCourse: ["Video course", "ভিডিও কোর্স"],
   searchHint: [

@@ -8,10 +8,12 @@ export function CourseArtwork({
   src,
   title,
   priority = false,
+  compact = false,
 }: {
   src?: string | null;
   title: string;
   priority?: boolean;
+  compact?: boolean;
 }) {
   const t = getCourseMessages(useAuth().locale);
   const [image, setImage] = useState({ src, status: "loading" });
@@ -24,23 +26,31 @@ export function CourseArtwork({
     >
       <div
         data-course-artwork-fallback
-        className="absolute inset-0 flex flex-col justify-between p-6 text-white [&[hidden]]:hidden"
+        className={`absolute inset-0 flex flex-col text-white [&[hidden]]:hidden ${compact ? "items-center justify-center p-2" : "justify-between p-6"}`}
         hidden={visible && status === "ready"}
       >
-        <BookOpen size={32} aria-hidden="true" className="text-amber" />
-        <div className="min-w-0">
-          <span className="block text-xs font-semibold uppercase tracking-widest text-amber">
-            {t.videoCourse}
-          </span>
-          <span className="mt-2 block truncate text-lg font-semibold">
-            {title}
-          </span>
-        </div>
-        <Play
-          size={70}
+        <BookOpen
+          size={compact ? 20 : 32}
           aria-hidden="true"
-          className="absolute -right-2 top-6 text-white/10"
+          className="text-amber"
         />
+        {!compact && (
+          <div className="min-w-0">
+            <span className="block text-xs font-semibold uppercase tracking-widest text-amber">
+              {t.videoCourse}
+            </span>
+            <span className="mt-2 block truncate text-lg font-semibold">
+              {title}
+            </span>
+          </div>
+        )}
+        {!compact && (
+          <Play
+            size={70}
+            aria-hidden="true"
+            className="absolute -right-2 top-6 text-white/10"
+          />
+        )}
       </div>
       {visible && (
         <img

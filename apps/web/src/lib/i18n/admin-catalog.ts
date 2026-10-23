@@ -1,5 +1,9 @@
 import type { Locale } from "./locale";
 const copy = {
+  PAID_COURSE_NOT_ENABLED: [
+    "Paid courses can be saved as drafts. Only free courses can be published for now.",
+    "পেইড কোর্স খসড়ায় রাখা যায়। আপাতত শুধু ফ্রি কোর্স প্রকাশ করা যাবে।",
+  ],
   viewCourses: ["View course catalog", "কোর্সের তালিকা দেখুন"],
   products: ["Products", "পণ্য"],
   media: ["Media uploads", "মিডিয়া আপলোড"],
@@ -159,9 +163,18 @@ const copy = {
     "The product changed. Reload and review before saving again.",
     "পণ্যের তথ্য বদলেছে। আবার সংরক্ষণের আগে তথ্য লোড করে পর্যালোচনা করুন।",
   ],
-  CONTENT_PROVIDER_MISMATCH: ["This product uses a different content source.","এই পণ্যের ভিডিওর উৎস আলাদা।"],
-  COURSE_MUST_BE_UNPUBLISHED: ["Unpublish this course before changing lessons.","লেসন বদলানোর আগে কোর্স অপ্রকাশিত করুন।"],
-  INVALID_YOUTUBE_PRICING: ["YouTube courses require free enrollment.","YouTube কোর্সে ফ্রি এনরোলমেন্ট প্রয়োজন।"],
+  CONTENT_PROVIDER_MISMATCH: [
+    "This product uses a different content source.",
+    "এই পণ্যের ভিডিওর উৎস আলাদা।",
+  ],
+  COURSE_MUST_BE_UNPUBLISHED: [
+    "Unpublish this course before changing lessons.",
+    "লেসন বদলানোর আগে কোর্স অপ্রকাশিত করুন।",
+  ],
+  INVALID_YOUTUBE_PRICING: [
+    "YouTube courses require free enrollment.",
+    "YouTube কোর্সে ফ্রি এনরোলমেন্ট প্রয়োজন।",
+  ],
   ASSET_NOT_READY: [
     "Save at least one enrolled lesson for a YouTube course, or attach a completed asset for an uploaded product before publishing.",
     "YouTube কোর্সে অন্তত একটি এনরোলড লেসন সংরক্ষণ করুন। আপলোড করা পণ্যের ক্ষেত্রে প্রকাশের আগে সম্পন্ন ফাইল সংযুক্ত করুন।",

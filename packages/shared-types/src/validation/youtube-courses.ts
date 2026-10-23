@@ -1,4 +1,25 @@
 import { z } from "zod";
+export const courseThumbnailUrlSchema = z
+  .string()
+  .trim()
+  .max(2048)
+  .url()
+  .refine((value) => {
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && !url.username && !url.password;
+    } catch {
+      return false;
+    }
+  });
+export function readCourseThumbnail(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata))
+    return null;
+  const result = courseThumbnailUrlSchema.safeParse(
+    (metadata as Record<string, unknown>).courseThumbnailUrl,
+  );
+  return result.success ? result.data : null;
+}
 export enum ProductContentProvider {
   INTERNAL = "INTERNAL",
   YOUTUBE = "YOUTUBE",
@@ -134,12 +155,8 @@ export const courseCardSchema = z.object({
   lessonCount: z.number().int().min(0).max(100),
   demoCount: z.number().int().min(0).max(100),
   firstLessonId: courseId.nullable(),
-  // Only artwork from an explicitly public demo; older API responses omit it.
-  thumbnailUrl: z
-    .string()
-    .regex(/^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/hqdefault\.jpg$/)
-    .nullable()
-    .optional(),
+  // Explicit public artwork or public-demo fallback; older API responses omit it.
+  thumbnailUrl: courseThumbnailUrlSchema.nullable().optional(),
 });
 export const courseSchema = courseCardSchema.extend({
   lessons: z

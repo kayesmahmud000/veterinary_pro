@@ -137,7 +137,7 @@ export class ProductEntity {
       }
     }
 
-    if (this._contentProvider === ProductContentProvider.YOUTUBE && (this._type !== ProductType.VIDEO_COURSE || this._priceCents !== 0 || this._discountPriceCents !== null || this._contentS3Key !== "")) throw new ValidationDomainException("YouTube courses require free video content without a storage key.");
+    if (this._contentProvider === ProductContentProvider.YOUTUBE && (this._type !== ProductType.VIDEO_COURSE || (this._isPublished && (this._priceCents !== 0 || this._discountPriceCents !== null)) || this._contentS3Key !== "")) throw new ValidationDomainException("YouTube courses require free video content without a storage key.");
 
     if (this._contentProvider !== ProductContentProvider.YOUTUBE && this._isPublished && (!this._contentS3Key || this._contentS3Key.trim().length === 0)) {
       throw new ValidationDomainException(

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { isAdministrativeRole } from "@/lib/workspace/navigation";
 import { useState } from "react";
 import { Search, ArrowRight } from "lucide-react";
 import { courseListSchema } from "@vetralink/shared-types";
@@ -14,7 +15,8 @@ import { cn } from "@/lib/ui/cn";
 import styles from "./course.styles";
 
 export function CourseCatalog() {
-  const { locale } = useAuth(),
+  const auth = useAuth(),
+    { locale } = auth,
     t = getCourseMessages(locale),
     [search, setSearch] = useState(""),
     [query, setQuery] = useState(""),
@@ -23,6 +25,11 @@ export function CourseCatalog() {
     `?limit=20&search=${encodeURIComponent(query)}${cursors.at(-1) ? `&cursor=${cursors.at(-1)}` : ""}`,
     courseListSchema,
   );
+  const administrative =
+    !auth.checking &&
+    !auth.error &&
+    auth.user &&
+    isAdministrativeRole(auth.user.role);
   const clear = () => {
     setSearch("");
     setQuery("");
@@ -40,8 +47,11 @@ export function CourseCatalog() {
           <h1 className={`${styles.heading} mt-5`}>{t.discover}</h1>
           <p className="mb-0">{t.intro}</p>
         </div>
-        <Link href="/account/courses" className={styles.link}>
-          {t.library}
+        <Link
+          href={administrative ? "/admin/courses" : "/account/courses"}
+          className={styles.link}
+        >
+          {administrative ? t.manageCourses : t.library}
           <ArrowRight size={18} aria-hidden="true" />
         </Link>
       </header>
@@ -148,8 +158,12 @@ export function CourseCatalog() {
               <CourseCard
                 key={course.id}
                 course={course}
-                href={`/courses/${course.slug}`}
-                action={t.details}
+                href={
+                  administrative
+                    ? `/admin/courses/${course.id}`
+                    : `/courses/${course.slug}`
+                }
+                action={administrative ? t.manageCourse : t.details}
                 priority={index === 0}
               />
             ))}

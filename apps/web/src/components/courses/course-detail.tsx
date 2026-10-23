@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { isAdministrativeRole } from "@/lib/workspace/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, BookOpen, LockKeyhole, Play, Check } from "lucide-react";
 import {
@@ -44,8 +45,13 @@ function CourseOverview({ course }: { course: Course }) {
     [selected, setSelected] = useState<string | null>(null);
   const enrollmentPanel = useRef<HTMLElement>(null),
     demoPanel = useRef<HTMLElement>(null);
+  const administrative =
+    !auth.checking &&
+    !auth.error &&
+    !!auth.user &&
+    isAdministrativeRole(auth.user.role);
   const membership = useRemote(
-    !auth.checking && !auth.error && auth.user
+    !auth.checking && !auth.error && auth.user && !administrative
       ? `me/courses/${course.id}`
       : null,
     myCourseSchema,
@@ -97,7 +103,11 @@ function CourseOverview({ course }: { course: Course }) {
           className={`${styles.panel} space-y-5 lg:sticky lg:top-28`}
         >
           <h2 id="enrollment-heading" className="mb-0 text-2xl font-semibold">
-            {enrolled ? t.available : t.enrollmentHeading}
+            {administrative
+              ? t.manageCourse
+              : enrolled
+                ? t.available
+                : t.enrollmentHeading}
           </h2>
           {lesson && (
             <div role="status" className="rounded-xl bg-[#eff4ec] p-4">
@@ -108,7 +118,19 @@ function CourseOverview({ course }: { course: Course }) {
               <p className="mb-0 mt-2">{t.locked}</p>
             </div>
           )}
-          {auth.checking || (auth.user && !auth.error && membership.loading) ? (
+          {administrative ? (
+            <div className="space-y-4">
+              <p>{t.administrator}</p>
+              <Link
+                data-course-management
+                href={`/admin/courses/${course.id}`}
+                className={buttonVariants()}
+              >
+                {t.manageCourse}
+              </Link>
+            </div>
+          ) : auth.checking ||
+            (auth.user && !auth.error && membership.loading) ? (
             <CourseLoading />
           ) : membership.code ? (
             <CourseError code={membership.code} retry={membership.reload} />
@@ -149,18 +171,20 @@ function CourseOverview({ course }: { course: Course }) {
                   {item.title}
                 </h3>
                 <span className="inline-flex items-center gap-2 text-sm text-muted">
-                  {enrolled ? (
+                  {administrative || enrolled ? (
                     <Check size={16} aria-hidden="true" />
                   ) : item.access === "PUBLIC_DEMO" ? (
                     <Play size={16} aria-hidden="true" />
                   ) : (
                     <LockKeyhole size={16} aria-hidden="true" />
                   )}
-                  {enrolled
-                    ? t.available
-                    : item.access === "PUBLIC_DEMO"
-                      ? t.demo
-                      : t.enrolled}
+                  {administrative
+                    ? t.manageCourse
+                    : enrolled
+                      ? t.available
+                      : item.access === "PUBLIC_DEMO"
+                        ? t.demo
+                        : t.enrolled}
                 </span>
                 {item.summary && (
                   <p className="mb-0 mt-2 break-words text-sm">
@@ -168,7 +192,14 @@ function CourseOverview({ course }: { course: Course }) {
                   </p>
                 )}
               </div>
-              {enrolled ? (
+              {administrative && item.access !== "PUBLIC_DEMO" ? (
+                <Link
+                  className={buttonVariants({ variant: "outline" })}
+                  href={`/admin/courses/${course.id}`}
+                >
+                  {t.manageCourse}
+                </Link>
+              ) : enrolled ? (
                 <Link
                   className={buttonVariants({ variant: "outline" })}
                   href={`/account/courses/${course.id}/lessons/${item.id}`}

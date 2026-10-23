@@ -1,4 +1,4 @@
-import { AdminCourses } from "@/components/workspace/admin-products";
+import { AdminCourses } from "@/components/workspace/admin-courses";
 import { getAdminCourseMessages } from "@/lib/i18n/admin-courses";
 import { getLocalization } from "@/lib/i18n/server";
 

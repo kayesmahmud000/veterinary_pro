@@ -1,4 +1,4 @@
-import { AdminProductsService } from "./admin-products.service";
+import { AdminProductsService, projectAdminProduct } from "./admin-products.service";
 import { UserEntity } from "../users/entities/user.entity";
 import { UserRole, UserStatus, JwtPayload } from "@vetralink/shared-types";
 const actorId = "550e8400-e29b-41d4-a716-446655440001",
@@ -35,6 +35,16 @@ const row = {
   deletedAt: null,
 };
 describe("Admin product policy", () => {
+  it("projects actual course counts and only the explicitly public thumbnail", () => {
+    const result = projectAdminProduct({ ...row, metadata: {courseThumbnailUrl:"https://images.example.test/course.jpg",privateNote:"DO-NOT-EXPOSE"}, _count:{courseLessons:4,courseEnrollments:8} } as any);
+    expect(result).toHaveProperty("lessonCount",4);
+    expect(result).toHaveProperty("enrollmentCount",8);
+    expect(result).toHaveProperty("thumbnailUrl","https://images.example.test/course.jpg");
+    expect(JSON.stringify(result)).not.toContain("DO-NOT-EXPOSE");
+  });
+  it("does not project malformed legacy thumbnail metadata", () => {
+    expect(projectAdminProduct({...row,metadata:{courseThumbnailUrl:"javascript:alert(1)"}} as any)).toHaveProperty("thumbnailUrl",null);
+  });
   let service: AdminProductsService, repo: any, users: any, audit: any;
   const tx = { marker: "tx" };
   beforeEach(() => {
@@ -65,6 +75,10 @@ describe("Admin product policy", () => {
       }),
     ).rejects.toThrow();
     expect(repo.save).not.toHaveBeenCalled();
+  });
+  it("allows pricing preparation on an unpublished YouTube draft", async () => {
+    repo.lock.mockResolvedValue({...row,type:"VIDEO_COURSE",contentProvider:"YOUTUBE",priceCents:0});
+    await expect(service.edit(claims,id,{expectedVersion:2,title:row.title,slug:row.slug,description:row.description,priceCents:1000,discountPriceCents:null,currency:"BDT",minSubscriptionTier:"STARTER" as any})).resolves.toBeDefined();
   });
   it("rejects stale versions before product persistence", async () => {
     await expect(

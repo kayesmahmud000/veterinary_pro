@@ -160,7 +160,8 @@ describe("YouTube product publication", () => {
     ).rejects.toThrow();
     expect(repo.save).not.toHaveBeenCalled();
   });
-  it("rejects charging for a YouTube course during editing", async () => {
+  it("rejects charging for a published YouTube course during editing", async () => {
+    repo.lock.mockResolvedValue({...product(),isPublished:true});
     await expect(
       service.edit(claims, id, {
         title: "Course title",

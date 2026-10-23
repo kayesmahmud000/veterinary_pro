@@ -199,10 +199,10 @@ test("administrators manage courses separately from their personal library", () 
       const items = nav.getWorkspaceNav(user(role), locale);
       const management = items.find(item => item.href === "/admin/courses");
       const library = items.find(item => item.href === "/account/courses");
-      assert.ok(management && library);
-      assert.notEqual(management.label, library.label);
+      assert.ok(management);
+      assert.equal(library, undefined);
     }
-    for (const path of ["/admin/courses", `/admin/courses/${id}`]) {
+    for (const path of ["/admin/courses", "/admin/courses/new", `/admin/courses/${id}`]) {
       assert.equal(nav.validateWorkspaceReturnTo(path), path);
       assert.equal(nav.getPostLoginDestination(user(role), path), path);
     }
@@ -212,6 +212,6 @@ test("administrators manage courses separately from their personal library", () 
     assert.equal(nav.getWorkspaceNav(user(role), "en").some(item => item.href === "/admin/courses"), false);
     assert.notEqual(nav.getPostLoginDestination(user(role), `/admin/courses/${id}`), `/admin/courses/${id}`);
   }
-  for (const path of ["/admin/courses/not-an-id", "/admin/courses/new", `/admin/courses/${id}/unknown`, "/admin/courses?userId=another-user"])
+  for (const path of ["/admin/courses/not-an-id", `/admin/courses/${id}/unknown`, "/admin/courses?userId=another-user"])
     assert.equal(nav.validateWorkspaceReturnTo(path), null);
 });

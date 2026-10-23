@@ -15,6 +15,7 @@ const outline = {
   slug: true,
   title: true,
   description: true,
+  metadata: true,
   courseLessons: {
     where: { deletedAt: null },
     orderBy: { position: "asc" },

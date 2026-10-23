@@ -1,5 +1,5 @@
 import { checkAdminYouTube } from "./admin-youtube-browser-cases.mjs";
-import { checkAdminCourseWorkspace } from "./admin-course-workspace-browser-cases.mjs";
+import { checkAdminCourseManagement } from "./admin-course-management-browser-cases.mjs";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
@@ -88,44 +88,46 @@ export function handleCatalogFixture(
     send(403, null);
     return true;
   }
+  const viewProduct = row => ({...row,lessonCount:(curricula.get(row.id)??[]).length,enrollmentCount:row.enrollmentCount??0,thumbnailUrl:row.thumbnailUrl??null,previewImageUrl:(curricula.get(row.id)??[]).find(l=>l.access==='PUBLIC_DEMO')?`https://i.ytimg.com/vi/${curricula.get(row.id).find(l=>l.access==='PUBLIC_DEMO').youtubeVideoId}/hqdefault.jpg`:null});
   const p = route.split("/");
   if (route === "admin/products") {
     if (method === "GET") {
       const rows = [...products.values()].filter(
         (v) =>
-          (!query.get("search") ||
+          !v.deletedAt && (!query.get("slug") || v.slug === query.get("slug")) && (!query.get("search") ||
             [v.title, v.slug].some(value => value.toLowerCase().includes(query.get("search").toLowerCase()))) &&
           (!query.get("publication") ||
             (query.get("publication") === "PUBLISHED") === v.isPublished) &&
           (!query.get("type") || query.get("type") === v.type) &&
           (!query.get("contentProvider") || query.get("contentProvider") === v.contentProvider),
       );
-      send(200, { items: rows, nextCursor: null });
+      send(200, { items: rows.map(viewProduct), nextCursor: null });
     } else {
       if (state.createFailure) { send(503, null); return true; }
+      if([...products.values()].some(p=>p.slug===body.slug)){conflict(res,'CONFLICT');return true;}
       const row = { ...base(), ...body, id: randomUUID() };
       products.set(row.id, row);
-      send(201, { ...row, metadata: { secret: "MUST_NOT_RENDER" } });
+      if(state.createLostAck){state.createLostAck=false;send(503,null);}else send(201, { ...viewProduct(row), metadata: { secret: "MUST_NOT_RENDER" } });
     }
     return true;
   }
   if (p[1] === "products") {
     const row = products.get(p[2]);
-    if (!row) {
+    if (!row || row.deletedAt) {
       send(404, null);
       return true;
     }
     if (p[3] === "curriculum") {
       const view = () => ({productId:row.id,version:row.version,isPublished:row.isPublished,lessons:curricula.get(row.id)??[]});
       if(row.contentProvider!=="YOUTUBE"){send(404,null);return true;}
-      if(method==="GET"){send(200,view());return true;}
+      if(method==="GET"){if(state.courseReadDelay)setTimeout(()=>send(200,view()),state.courseReadDelay);else send(200,view());return true;}
       if(body.expectedVersion!==row.version||state.conflict){conflict(res,"PRODUCT_VERSION_CONFLICT");return true;}
       if(row.isPublished){conflict(res,"COURSE_MUST_BE_UNPUBLISHED");return true;}
       curricula.set(row.id,body.lessons.map((lesson,index)=>({id:lesson.id??randomUUID(),title:lesson.title,summary:lesson.summary,access:lesson.access,position:index+1,youtubeVideoId:new URL(lesson.videoUrl).searchParams.get("v")??new URL(lesson.videoUrl).pathname.split("/").pop()})));
       row.version++;send(200,view());return true;
     }
     if (method === "GET") {
-      send(200, { ...row, metadata: { secret: "MUST_NOT_RENDER" } });
+      send(200, { ...viewProduct(row), metadata: { secret: "MUST_NOT_RENDER" } });
       return true;
     }
     if (body.expectedVersion !== row.version || state.conflict) {
@@ -133,13 +135,15 @@ export function handleCatalogFixture(
       return true;
     }
     if (p[3] === "actions") {
+      if(body.action==='PUBLISH'&&row.contentProvider==='YOUTUBE'&&row.priceCents>0){conflict(res,'PAID_COURSE_NOT_ENABLED');return true;}
       if (body.action === "PUBLISH" && (row.contentProvider==="YOUTUBE" ? !(curricula.get(row.id)??[]).some(lesson=>lesson.access==="ENROLLED") : !row.contentS3Key)) {
         conflict(res, "ASSET_NOT_READY");
         return true;
       }
       if (body.action === "DELETE") {
-        products.delete(row.id);
-        send(200, { ...row, isPublished: false });
+        row.isPublished=false;row.version++;
+        if(row.contentProvider==='YOUTUBE')row.deletedAt=new Date().toISOString();else products.delete(row.id);
+        send(200, viewProduct(row));
         return true;
       }
       row.isPublished = body.action === "PUBLISH";
@@ -150,7 +154,7 @@ export function handleCatalogFixture(
           : `admin-assets/${row.id}/${body.uploadId}.pdf`;
     } else Object.assign(row, body);
     row.version++;
-    send(200, row);
+    send(200, viewProduct(row));
     return true;
   }
   if (route === "admin/media") {
@@ -586,5 +590,5 @@ export async function checkAdminCatalog({
 }
 
 export function checkAdminCourses(context) {
-  return checkAdminCourseWorkspace({ ...context, products, curricula, state });
+  return checkAdminCourseManagement({ ...context, products, curricula, state });
 }

@@ -29,14 +29,21 @@ test('playback mapping binds both product and lesson IDs and forbids caller user
  assert.equal(resolveEndpoint(['me','courses',id,'enrollment'],'POST').body.safeParse({userId:id}).success,false);
 });
 const {youtubeEmbedUrl}=compile('../src/lib/courses/youtube-player.ts');
-test('course artwork allows only fixed public preview images and remains backwards compatible',()=>{
+test('course artwork allows validated public HTTPS images and remains backwards compatible',()=>{
  const {courseSchema}=require('@vetralink/shared-types');
  assert.equal(courseSchema.safeParse(course).success,true);
- for(const thumbnailUrl of [null,'https://i.ytimg.com/vi/M7lc1UVf-VE/hqdefault.jpg'])assert.equal(courseSchema.safeParse({...course,thumbnailUrl}).success,true);
- for(const thumbnailUrl of ['https://evil.test/image.jpg','javascript:alert(1)','https://i.ytimg.com/vi/invalid/hqdefault.jpg','https://i.ytimg.com/vi/M7lc1UVf-VE/hqdefault.jpg?token=x'])assert.equal(courseSchema.safeParse({...course,thumbnailUrl}).success,false);
+ for(const thumbnailUrl of [null,'https://i.ytimg.com/vi/M7lc1UVf-VE/hqdefault.jpg','https://images.example.test/course.jpg'])assert.equal(courseSchema.safeParse({...course,thumbnailUrl}).success,true);
+ for(const thumbnailUrl of ['http://images.example.test/course.jpg','javascript:alert(1)','https://user:secret@images.example.test/image.jpg','not a URL'])assert.equal(courseSchema.safeParse({...course,thumbnailUrl}).success,false);
 });
 test('player constructs only official privacy-enhanced iframe URLs with origin and no autoplay',()=>{
  const url=new URL(youtubeEmbedUrl('M7lc1UVf-VE','https://school.example.test','bn'));
  assert.equal(url.origin,'https://www.youtube-nocookie.com');assert.equal(url.pathname,'/embed/M7lc1UVf-VE');assert.equal(url.searchParams.get('origin'),'https://school.example.test');assert.equal(url.searchParams.get('autoplay'),'0');assert.equal(url.searchParams.get('enablejsapi'),'1');
  assert.throws(()=>youtubeEmbedUrl('bad/video','https://school.example.test','en'));assert.throws(()=>youtubeEmbedUrl('M7lc1UVf-VE','javascript:alert(1)','en'));
+});
+
+test('admin course recovery accepts exact slugs up to the product limit without substring search',()=>{
+ const endpoint=resolveEndpoint(['admin','products'],'GET');
+ const slug='a'.repeat(200);
+ assert.equal(endpoint.query.safeParse({slug,limit:'1'}).data.slug,slug);
+ assert.equal(endpoint.query.safeParse({slug:'a'.repeat(201)}).success,false);
 });

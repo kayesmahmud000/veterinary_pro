@@ -46,7 +46,7 @@ export function readProtectedReturnTo(
 }
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const released = new RegExp(
-  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:support(?:/${uuid})?|courses(?:/${uuid}/lessons/${uuid})?|profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin(?:/(?:settings(?:/integrations)?|system|metrics|reports|notifications|(?:content|support)(?:/${uuid})?|dashboard|administrative-access|settlements(?:/vets/${uuid}|/${uuid})?|reviews(?:/${uuid})?|courses(?:/${uuid})?|(?:triage|consultations)(?:/${uuid})?|(?:orders|subscriptions|plans|dunning)(?:/${uuid})?|products(?:/new|/${uuid}(?:/edit|/curriculum)?)?|media(?:/uploads/${uuid})?|(?:users|veterinarians|farms|audit)(?:/${uuid})?|role-requests(?:/${uuid})?))?)$`,
+  `^/(?:dashboard|farm|app/farms/${uuid}(?:/members|/animals(?:/new|/${uuid})?)?|account/(?:support(?:/${uuid})?|courses(?:/${uuid}/lessons/${uuid})?|profile|farm-onboarding|role-requests(?:/new|/${uuid})?)|admin(?:/(?:settings(?:/integrations)?|system|metrics|reports|notifications|(?:content|support)(?:/${uuid})?|dashboard|administrative-access|settlements(?:/vets/${uuid}|/${uuid})?|reviews(?:/${uuid})?|courses(?:/new|/${uuid})?|(?:triage|consultations)(?:/${uuid})?|(?:orders|subscriptions|plans|dunning)(?:/${uuid})?|products(?:/new|/${uuid}(?:/edit|/curriculum)?)?|media(?:/uploads/${uuid})?|(?:users|veterinarians|farms|audit)(?:/${uuid})?|role-requests(?:/${uuid})?))?)$`,
   "i",
 );
 export function validateWorkspaceReturnTo(
@@ -221,7 +221,6 @@ export function getWorkspaceNav(
         href: "/admin/reviews",
         section: t.consultationOperations,
       },
-      { label: t.courses, href: "/account/courses", section: t.account },
       ...(identity.role === UserRole.SUPER_ADMIN
         ? [
             {

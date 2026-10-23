@@ -12,6 +12,7 @@ import {
   myCourseSchema,
   courseLibrarySchema,
   coursePlaybackSchema,
+  readCourseThumbnail,
 } from "@vetralink/shared-types";
 import { CoursesRepository } from "./courses.repository";
 import {
@@ -63,9 +64,9 @@ export class CoursesService {
       ...row,
       provider: "YOUTUBE",
       access: "FREE_ENROLLMENT",
-      thumbnailUrl: demo
+      thumbnailUrl: readCourseThumbnail(row.metadata) ?? (demo
         ? `https://i.ytimg.com/vi/${demo.youtubeVideoId}/hqdefault.jpg`
-        : null,
+        : null),
       lessonCount: row.courseLessons.length,
       demoCount: row.courseLessons.filter((l) => l.access === "PUBLIC_DEMO")
         .length,

@@ -51,7 +51,7 @@ describe("YouTube course contracts", () => {
       }).success,
     ).toBe(false);
   });
-  it("requires free video-only YouTube product creation", () => {
+  it("accepts video-only YouTube drafts including future paid pricing", () => {
     const input = {
       title: "Course title",
       slug: "course-title",
@@ -70,6 +70,6 @@ describe("YouTube course contracts", () => {
     ).toBe(false);
     expect(
       adminProductCreateSchema.safeParse({ ...input, priceCents: 100 }).success,
-    ).toBe(false);
+    ).toBe(true);
   });
 });
