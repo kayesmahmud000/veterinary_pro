@@ -1,13 +1,47 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { type Course, courseEnrollmentSchema } from "@vetralink/shared-types";
 import { useAuth } from "@/components/auth/auth-provider";
 import { workspaceRequest } from "@/lib/workspace/client";
 import { getCourseMessages } from "@/lib/i18n/courses";
-import { Button } from "@/components/ui/button";
-import styles from "@/components/workspace/workspace.styles";
+import { Button, buttonVariants } from "@/components/ui/button";
+import styles from "./course.styles";
+
+export function CourseLoading({ cards = false }: { cards?: boolean }) {
+  const t = getCourseMessages(useAuth().locale);
+  return (
+    <div role="status" className="space-y-5">
+      <span className="inline-flex items-center gap-2 text-muted">
+        <Loader2
+          size={18}
+          className="motion-safe:animate-spin"
+          aria-hidden="true"
+        />
+        {t.loading}
+      </span>
+      {cards && (
+        <div aria-hidden="true" className={styles.grid}>
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="overflow-hidden rounded-2xl border border-solid border-line"
+            >
+              <div className="aspect-video bg-[#eff4ec] motion-safe:animate-pulse" />
+              <div className="space-y-4 p-6">
+                <div className="h-5 w-2/3 rounded bg-line" />
+                <div className="h-4 rounded bg-line" />
+                <div className="h-4 w-4/5 rounded bg-line" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 export function CourseError({
   code,
   retry,
@@ -17,8 +51,14 @@ export function CourseError({
 }) {
   const t = getCourseMessages(useAuth().locale);
   return (
-    <div className={styles.error}>
-      <p role="alert">{code === "NOT_FOUND" ? t.missing : t.error}</p>
+    <div className={`${styles.panel} space-y-3`}>
+      <p role="alert">
+        {code === "NOT_FOUND"
+          ? t.missing
+          : code === "COURSE_ENROLLMENT_REQUIRED"
+            ? t.locked
+            : t.error}
+      </p>
       {retry && (
         <Button variant="outline" onClick={retry}>
           {t.retry}
@@ -30,26 +70,41 @@ export function CourseError({
 export function EnrollmentButton({
   course,
   enrolled,
+  lessonId,
   afterEnroll,
 }: {
   course: Course;
   enrolled: boolean;
+  lessonId?: string;
   afterEnroll?: () => void;
 }) {
   const auth = useAuth(),
     t = getCourseMessages(auth.locale),
-    router = useRouter(),
-    [busy, setBusy] = useState(false),
-    [code, setCode] = useState("");
-  const destination = course.firstLessonId
-    ? `/account/courses/${course.id}/lessons/${course.firstLessonId}`
+    router = useRouter();
+  const [busy, setBusy] = useState(false),
+    [code, setCode] = useState(""),
+    [saved, setSaved] = useState(false);
+  const submitting = useRef(false),
+    active = useRef(true);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  const target =
+    course.lessons.find((lesson) => lesson.id === lessonId)?.id ??
+    course.firstLessonId;
+  const destination = target
+    ? `/account/courses/${course.id}/lessons/${target}`
     : "/account/courses";
   async function enroll() {
-    if (busy) return;
+    if (submitting.current || auth.checking || auth.error) return;
     if (!auth.user) {
       auth.open("login", destination);
       return;
     }
+    submitting.current = true;
     setBusy(true);
     setCode("");
     const result = await workspaceRequest(
@@ -57,17 +112,39 @@ export function EnrollmentButton({
       courseEnrollmentSchema,
       "POST",
       {},
+      `${auth.user.id}:${auth.user.role}:${auth.user.roleVersion ?? 0}`,
     );
+    if (!active.current) return;
+    submitting.current = false;
     setBusy(false);
     if (result.data) {
+      setSaved(true);
       if (afterEnroll) afterEnroll();
       else router.push(destination);
     } else setCode(result.code ?? "UNAVAILABLE");
   }
   return (
-    <div className="space-y-3">
-      {enrolled ? (
-        <Link className={styles.primary} href={destination}>
+    <div className="space-y-4" data-course-enrollment>
+      {!(enrolled || saved) && (
+        <>
+          {auth.user ? (
+            <div className="rounded-xl bg-paper p-4">
+              <p className="mb-2 text-sm font-semibold">
+                {t.enrollmentAccount}
+              </p>
+              <strong className="block break-words">{auth.user.name}</strong>
+              <span className="block break-all text-sm text-muted">
+                {auth.user.email}
+              </span>
+              <p className="mb-0 mt-2 text-sm">{t.enrollmentInfo}</p>
+            </div>
+          ) : (
+            <p>{t.enrollmentSignIn}</p>
+          )}
+        </>
+      )}
+      {enrolled || saved ? (
+        <Link className={buttonVariants()} href={destination}>
           {t.continue}
         </Link>
       ) : (
@@ -76,11 +153,27 @@ export function EnrollmentButton({
           disabled={auth.checking || !!auth.error || busy}
           onClick={() => void enroll()}
         >
+          {busy && (
+            <Loader2
+              size={18}
+              className="motion-safe:animate-spin"
+              aria-hidden="true"
+            />
+          )}
           {busy ? t.enrolling : t.enroll}
         </Button>
       )}
-      {code && <CourseError code={code} />}
-      <p className="text-sm text-muted">{t.noPayment}</p>
+      {saved && <p role="status">{t.saved}</p>}
+      {code && <p role="alert">{t.enrollmentError}</p>}
+      {auth.error && (
+        <div>
+          <p role="alert">{t.membershipError}</p>
+          <Button variant="outline" onClick={() => void auth.restore()}>
+            {t.retry}
+          </Button>
+        </div>
+      )}
+      <p className="mb-0 text-sm text-muted">{t.noPayment}</p>
     </div>
   );
 }

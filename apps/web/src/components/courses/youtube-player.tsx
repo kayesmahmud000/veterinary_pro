@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { Loader2, VideoOff } from "lucide-react";
 import { loadYouTube, youtubeEmbedUrl } from "@/lib/courses/youtube-player";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -13,22 +14,36 @@ export function YouTubePlayer({
 }) {
   const { locale } = useAuth(),
     t = getCourseMessages(locale),
-    host = useRef<HTMLDivElement>(null),
-    [status, setStatus] = useState("loading"),
+    host = useRef<HTMLDivElement>(null);
+  const details = useRef({ title, locale });
+  details.current = { title, locale };
+  const [status, setStatus] = useState("loading"),
     [revision, setRevision] = useState(0);
   useEffect(() => {
     const container = host.current;
     if (!container) return;
     let active = true,
+      failed = false,
       player: { destroy: () => void } | undefined;
     setStatus("loading");
-    const readyTimer = setTimeout(() => {
-      if (active) setStatus("error-network");
-    }, 15000);
+    function fail(code: string) {
+      if (!active || failed) return;
+      failed = true;
+      clearTimeout(readyTimer);
+      player?.destroy();
+      player = undefined;
+      container?.replaceChildren();
+      setStatus(`error-${code}`);
+    }
+    const readyTimer = setTimeout(() => fail("network"), 15000);
     const frame = document.createElement("iframe");
-    frame.src = youtubeEmbedUrl(videoId, window.location.origin, locale);
-    frame.title = title;
-    frame.className = "aspect-video min-h-[200px] w-full rounded-xl border-0";
+    frame.src = youtubeEmbedUrl(
+      videoId,
+      window.location.origin,
+      details.current.locale,
+    );
+    frame.title = details.current.title;
+    frame.className = "absolute inset-0 h-full min-h-[200px] w-full border-0";
     frame.referrerPolicy = "strict-origin-when-cross-origin";
     frame.allow = "encrypted-media; picture-in-picture; fullscreen";
     frame.allowFullscreen = true;
@@ -36,46 +51,75 @@ export function YouTubePlayer({
     container.replaceChildren(frame);
     void loadYouTube()
       .then((api) => {
-        if (active)
+        if (active && !failed)
           player = new api.Player(frame, {
             events: {
               onReady: () => {
-                clearTimeout(readyTimer);
-                if (active) setStatus("ready");
+                if (active && !failed) {
+                  clearTimeout(readyTimer);
+                  setStatus("ready");
+                }
               },
-              onError: (event) => {
-                clearTimeout(readyTimer);
-                if (active) setStatus(`error-${event.data}`);
-              },
+              onError: (event) => fail(String(event.data)),
             },
           });
       })
-      .catch(() => {
-        if (active) setStatus("error-network");
-      });
+      .catch(() => fail("network"));
     return () => {
       active = false;
       clearTimeout(readyTimer);
       player?.destroy();
       container.replaceChildren();
     };
-  }, [videoId, title, locale, revision]);
+  }, [videoId, revision]);
+  useEffect(() => {
+    const frame = host.current?.querySelector("iframe");
+    if (frame) frame.title = title;
+  }, [title]);
   return (
     <section className="space-y-3" aria-label={title} data-course-player>
-      <div ref={host} />
-      {status === "loading" && <p role="status">{t.playerLoading}</p>}
-      {status.startsWith("error") && (
-        <div
-          role="alert"
-          className="rounded-xl border border-solid border-line p-4"
-        >
-          <p>{status === "error-153" ? t.referrerError : t.playerError}</p>
-          <Button variant="outline" onClick={() => setRevision((v) => v + 1)}>
-            {t.retry}
-          </Button>
-        </div>
-      )}
-      <p className="text-sm text-muted">{t.playerPrivacy}</p>
+      <div
+        className="relative aspect-video min-h-[200px] w-full overflow-hidden rounded-2xl bg-[#101b16] text-white"
+        aria-busy={status === "loading"}
+      >
+        <div ref={host} />
+        {status === "loading" && (
+          <div
+            className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#101b16] p-5 text-center"
+            role="status"
+          >
+            <Loader2
+              size={32}
+              className="motion-safe:animate-spin"
+              aria-hidden="true"
+            />
+            <span>{t.playerLoading}</span>
+          </div>
+        )}
+        {status.startsWith("error") && (
+          <div
+            role="alert"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-y-auto p-4 text-center sm:p-6"
+          >
+            <VideoOff
+              size={28}
+              aria-hidden="true"
+              className="shrink-0 text-amber"
+            />
+            <p className="m-0 max-w-xl text-sm text-white sm:text-base">
+              {status === "error-153" ? t.referrerError : t.playerError}
+            </p>
+            <Button
+              variant="outline"
+              className="shrink-0"
+              onClick={() => setRevision((v) => v + 1)}
+            >
+              {t.retry}
+            </Button>
+          </div>
+        )}
+      </div>
+      <p className="mb-0 text-xs text-muted">{t.playerPrivacy}</p>
     </section>
   );
 }

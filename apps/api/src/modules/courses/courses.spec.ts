@@ -70,6 +70,36 @@ describe("YouTube learner access", () => {
   it("denies an enrolled lesson at the public demo endpoint", async () => {
     await expect(service.demoPlayback(id, lessonId)).rejects.toThrow();
   });
+  it("provides no artwork for restricted-only courses", async () => {
+    expect(await service.bySlug("course-title")).toHaveProperty(
+      "thumbnailUrl",
+      null,
+    );
+  });
+  it("derives artwork only from a public demo without leaking restricted sources", async () => {
+    repo.published.mockResolvedValue({
+      ...row(),
+      courseLessons: [
+        ...row().courseLessons,
+        {
+          ...row().courseLessons[0],
+          id: "550e8400-e29b-41d4-a716-446655440003",
+          access: "PUBLIC_DEMO",
+          youtubeVideoId: "M7lc1UVf-VE",
+          position: 2,
+        },
+      ],
+    });
+    const detail = await service.bySlug("course-title");
+    expect(detail).toHaveProperty(
+      "thumbnailUrl",
+      "https://i.ytimg.com/vi/M7lc1UVf-VE/hqdefault.jpg",
+    );
+    expect(JSON.stringify(detail)).not.toContain("PRIVATE_ID1");
+    expect(
+      detail.lessons.every((lesson) => !("youtubeVideoId" in lesson)),
+    ).toBe(true);
+  });
   it("serves only an explicitly public demo", async () => {
     repo.lesson.mockResolvedValue({
       ...row().courseLessons[0],

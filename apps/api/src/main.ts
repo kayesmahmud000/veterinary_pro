@@ -7,6 +7,7 @@ import { AppModule } from "./app.module";
 import { ResponseInterceptor } from "./common/interceptors/response.interceptor";
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
 import { apiResponseLogger } from "./common/middleware/api-response-logger";
+import { configureAccountRecoveryTransport } from "./modules/auth/recovery/account-recovery.transport";
 
 async function bootstrap() {
   const logger = new Logger("Bootstrap");
@@ -15,6 +16,7 @@ async function bootstrap() {
     rawBody: true,
   });
 
+  configureAccountRecoveryTransport(app);
   app.useBodyParser("json", { limit: "512kb" });
 
   // Enable graceful shutdown hooks for Prisma and async teardown

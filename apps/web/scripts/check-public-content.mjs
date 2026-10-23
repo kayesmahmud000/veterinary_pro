@@ -171,18 +171,18 @@ test("public navigation exposes real grouped routes and all direct footer destin
   );
   const groups = navigation.getPublicNavGroups({ navigation: names });
   assert.equal(groups.length, 7);
-  assert.equal(groups[0].children[1].href, "/#farm-demo");
-  assert.equal(groups[1].children[1].href, "/learning#guides");
-  assert.equal(groups[2].href, "/courses");
+  assert.equal(groups[0].href, "/courses");
+  assert.equal(groups[1].children[1].href, "/#farm-demo");
+  assert.equal(groups[2].children[1].href, "/learning#guides");
   assert.equal(groups[3].children[1].href, "/doctors");
   const links = navigation.getPublicNavItems({ navigation: names });
   const hrefs = Array.from(links, (item) => item.href);
   assert.deepEqual(hrefs, [
+    "/courses",
     "/farm-management",
     "/#farm-demo",
     "/learning",
     "/learning#guides",
-    "/courses",
     "/veterinary-care",
     "/doctors",
     "/blog",

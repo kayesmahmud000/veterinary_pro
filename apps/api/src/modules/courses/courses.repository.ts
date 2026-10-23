@@ -25,6 +25,7 @@ const outline = {
       summary: true,
       position: true,
       access: true,
+      youtubeVideoId: true,
     },
   },
 } satisfies Prisma.ProductSelect;

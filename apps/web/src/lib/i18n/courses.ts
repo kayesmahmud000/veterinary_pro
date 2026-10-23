@@ -1,5 +1,68 @@
 import type { Locale } from "./locale";
 const copy = {
+  discover: ["Learn something you can put into practice", "শিখুন, কাজে লাগান"],
+  videoCourse: ["Video course", "ভিডিও কোর্স"],
+  searchHint: [
+    "Find practical lessons for your next step.",
+    "আপনার প্রয়োজনের ব্যবহারিক লেসন খুঁজে নিন।",
+  ],
+  searchLabel: ["Course name or topic", "কোর্সের নাম বা বিষয়"],
+  searchPlaceholder: ["What would you like to learn?", "আপনি কী শিখতে চান?"],
+  clear: ["Clear search", "খোঁজা মুছুন"],
+  allCourses: ["Explore our courses", "আমাদের কোর্সগুলো দেখুন"],
+  searchResults: ["Search results", "খোঁজার ফলাফল"],
+  coursesOnPage: ["courses on this page", "টি কোর্স এই পাতায়"],
+  noResults: ["No matching courses", "মিল আছে এমন কোর্স পাওয়া যায়নি"],
+  noResultsHint: [
+    "Try another word or browse all courses.",
+    "অন্য শব্দ দিয়ে খুঁজুন বা সব কোর্স দেখুন।",
+  ],
+  checkBack: [
+    "New lessons will appear here when they are available.",
+    "নতুন লেসন পাওয়া গেলে এখানে দেখা যাবে।",
+  ],
+  pagination: ["Course pages", "কোর্সের পাতা"],
+  overview: ["About this course", "এই কোর্স সম্পর্কে"],
+  curriculum: ["Your learning path", "আপনার শেখার ধাপ"],
+  learnAtPace: ["Learn at your own pace", "নিজের সুবিধামতো শিখুন"],
+  publicPreview: [
+    "Preview a lesson before you enroll.",
+    "এনরোল করার আগে একটি ডেমো লেসন দেখুন।",
+  ],
+  openLesson: ["Open lesson", "লেসন খুলুন"],
+  unlockLesson: ["Unlock lesson", "লেসন চালু করুন"],
+  selectedLesson: ["Selected lesson", "নির্বাচিত লেসন"],
+  enrollmentHeading: ["Start learning for free", "বিনামূল্যে শেখা শুরু করুন"],
+  enrollmentAccount: [
+    "Enroll using your signed-in account",
+    "আপনার লগইন করা অ্যাকাউন্ট দিয়ে এনরোল করুন",
+  ],
+  enrollmentInfo: [
+    "Your account is all you need. No extra personal details are required.",
+    "আপনার অ্যাকাউন্টই যথেষ্ট। বাড়তি ব্যক্তিগত তথ্যের প্রয়োজন নেই।",
+  ],
+  enrollmentSignIn: [
+    "Sign in or create an account, then confirm your free enrollment.",
+    "লগইন করুন বা অ্যাকাউন্ট তৈরি করুন, তারপর ফ্রি এনরোলমেন্ট নিশ্চিত করুন।",
+  ],
+  enrollmentError: [
+    "Enrollment could not be confirmed. Try again; an existing enrollment will be reused.",
+    "এনরোলমেন্ট নিশ্চিত করা যায়নি। আবার চেষ্টা করুন; আগের এনরোলমেন্ট থাকলে সেটিই ব্যবহার হবে।",
+  ],
+  membershipError: [
+    "We could not check your enrollment. Try again to continue.",
+    "আপনার এনরোলমেন্ট যাচাই করা যায়নি। চালিয়ে যেতে আবার চেষ্টা করুন।",
+  ],
+  currentLesson: ["Now learning", "এখন শিখছেন"],
+  available: ["Ready to watch", "দেখার জন্য প্রস্তুত"],
+  libraryIntro: [
+    "Your courses, ready whenever you are. Choose a course to start learning.",
+    "আপনার সুবিধামতো সময়ে শিখুন। শুরু করতে একটি কোর্স বেছে নিন।",
+  ],
+  lessonNavigation: ["Lesson navigation", "লেসন পরিবর্তন"],
+  backLibrary: ["Back to my courses", "আমার কোর্সে ফিরুন"],
+  previewHeading: ["Course preview", "কোর্সের ডেমো"],
+
   courses: ["Courses", "কোর্স"],
   intro: [
     "Practical video lessons. Watch a free demo, then enroll free to learn at your own pace.",

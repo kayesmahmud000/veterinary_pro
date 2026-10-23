@@ -27,9 +27,9 @@ export class TransactionManager implements ITransactionManager {
         return await fn(tx);
       }, opts);
     } catch (error) {
-      const errMessage =
-        error instanceof Error ? error.message : String(error);
-      this.logger.warn(`Transaction rollback occurred: ${errMessage}`);
+      // Prisma errors can include supplied password hashes and encrypted payloads.
+      // Callers still receive the original exception; operational logs stay safe.
+      this.logger.warn("Transaction rollback occurred.");
       throw error;
     }
   }

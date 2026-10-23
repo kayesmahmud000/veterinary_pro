@@ -9,6 +9,8 @@ import { AppModule } from "./app.module";
 import { ResponseInterceptor } from "./common/interceptors/response.interceptor";
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
 import { apiResponseLogger } from "./common/middleware/api-response-logger";
+import { configureAccountRecoveryTransport, isAccountRecoveryRequest } from "./modules/auth/recovery/account-recovery.transport";
+import { AccountRecoveryException, sendRecoveryError } from "./modules/auth/recovery/account-recovery.errors";
 
 let cachedServer: Express;
 
@@ -32,6 +34,7 @@ async function bootstrapServer(): Promise<Express> {
       }
     );
 
+    configureAccountRecoveryTransport(app);
     app.useBodyParser("json", { limit: "512kb" });
 
     // Serverless mode: do not enable shutdown hooks as Lambda manages lifecycle
@@ -109,8 +112,14 @@ async function bootstrapServer(): Promise<Express> {
 }
 
 export default async function handler(req: Request, res: Response) {
+  const recovery = isAccountRecoveryRequest(req);
+  const matchedPath = req.headers["x-matched-path"];
+  if (recovery && (req.url.includes("?") ||
+    (typeof matchedPath === "string" && matchedPath.includes("?")))) {
+    sendRecoveryError(res, new AccountRecoveryException("VALIDATION_FAILED"));
+    return;
+  }
   try {
-    const matchedPath = req.headers["x-matched-path"];
     if (matchedPath && typeof matchedPath === "string") {
       req.url = matchedPath;
     }
@@ -118,6 +127,10 @@ export default async function handler(req: Request, res: Response) {
     const server = await bootstrapServer();
     return server(req, res);
   } catch (err: unknown) {
+    if (recovery) {
+      if (!res.headersSent) sendRecoveryError(res, new AccountRecoveryException("RECOVERY_UNAVAILABLE"));
+      return;
+    }
     const error = err as Error;
     console.error("❌ Vercel Serverless Function Crash:", error);
     if (!res.headersSent) {

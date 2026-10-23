@@ -3,6 +3,9 @@ import { ConfigService } from "@nestjs/config";
 import { EnvConfig } from "./env.schema";
 
 export interface IEnvService {
+  readonly accountRecoveryEnabled: boolean;
+  readonly accountRecoveryTestTransport: boolean;
+  readonly recoveryTrustedProxyCidrs: string[];
   readonly nodeEnv: string;
   readonly port: number;
   readonly isProduction: boolean;
@@ -41,6 +44,15 @@ export interface IEnvService {
 
 @Injectable()
 export class EnvService implements IEnvService {
+  get accountRecoveryEnabled(): boolean {
+    return this.configService.get("ACCOUNT_RECOVERY_ENABLED", { infer: true });
+  }
+  get accountRecoveryTestTransport(): boolean {
+    return this.configService.get("ACCOUNT_RECOVERY_TEST_TRANSPORT", { infer: true });
+  }
+  get recoveryTrustedProxyCidrs(): string[] {
+    return this.configService.get("RECOVERY_TRUSTED_PROXY_CIDRS", { infer: true });
+  }
   get authLegacyClaimsUntil(): number {
     const value = this.configService.get("AUTH_LEGACY_CLAIMS_UNTIL", {
       infer: true,

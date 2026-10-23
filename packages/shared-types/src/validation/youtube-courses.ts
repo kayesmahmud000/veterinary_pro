@@ -134,6 +134,12 @@ export const courseCardSchema = z.object({
   lessonCount: z.number().int().min(0).max(100),
   demoCount: z.number().int().min(0).max(100),
   firstLessonId: courseId.nullable(),
+  // Only artwork from an explicitly public demo; older API responses omit it.
+  thumbnailUrl: z
+    .string()
+    .regex(/^https:\/\/i\.ytimg\.com\/vi\/[A-Za-z0-9_-]{11}\/hqdefault\.jpg$/)
+    .nullable()
+    .optional(),
 });
 export const courseSchema = courseCardSchema.extend({
   lessons: z

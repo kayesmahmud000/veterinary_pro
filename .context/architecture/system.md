@@ -35,7 +35,7 @@ Concrete reference: `modules/animals/animals.controller.ts` → `services/animal
 
 `ResponseInterceptor` and `GlobalExceptionFilter` implement normal HTTP envelopes. `JwtAuthGuard`, `RolesGuard`, `TenantGuard` enforce access only where wired. Subscription guards add feature/quota/access checks. WebSocket chat in `modules/consultations/gateways/consultation-chat.gateway.ts` has a separate handshake/message boundary; HTTP guard behavior is not automatically inherited.
 
-`PrismaService` connects with bounded retry, logs slow queries and disconnects on module destruction. A configured `DATABASE_REPLICA_URL` is not evidence that read routing exists. Logging currently uses Nest `Logger`, not the Pino integration described in older rules.
+`PrismaService` connects with bounded retry, logs slow SQL without bound parameter values and disconnects on module destruction. As of 2026-10-23, driver error events and transaction rollback logs use constant safe messages; original exceptions still propagate to callers. A configured `DATABASE_REPLICA_URL` is not evidence that read routing exists. Logging currently uses Nest `Logger`, not the Pino integration described in older rules.
 
 For bootstrap differences, worker/runtime constraints and external provider behavior, see [operations](../operations/runtime.md). For decisions and their trade-offs, see [decision records](../decisions/README.md).
 

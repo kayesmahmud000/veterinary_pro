@@ -3,6 +3,8 @@
 Status: **Admin and learner slices implemented locally; live schema and real-database local-web course demonstration verified; team-owned YouTube release acceptance pending.**
 Date: 2026-10-15. Original planning inspected 82d857a plus ADM-3; admin execution baseline is ab18a9f. [Execution plan](plan.md).
 
+**Learner refinement, 2026-10-23:** the user prioritizes the complete learner experience and pauses other remediation/ROADMAP work. The [learner specification](../../tasks/learner-course-experience/spec.md) and [plan/evidence](../../tasks/learner-course-experience/plan.md) supersede the workspace-sidebar/text-only learner presentation below: every course screen uses centered `w-11/12`, protected learning has its own header/layout, locked selections lead to explicit enrollment, and only public-demo artwork is added to the existing API. Administrative requirements remain outside this refinement.
+
 ## Admin-first delivery history
 
 The user subsequently requested the admin dashboard first. The current slice implements Product.contentProvider, CourseLesson persistence, admin curriculum GET/PUT, YouTube create/edit/publication rules and the bilingual editor/preview. Existing internal upload/transcode/DRM/checkout paths reject YouTube course assets. Curriculum read DTO also includes `isPublished` for read-only UI behavior. The versioned editor guards unsaved internal/history/document exits.

@@ -56,10 +56,16 @@ export class CoursesService {
       );
   }
   private card(row: Outline) {
+    const demo = row.courseLessons.find(
+      (lesson) => lesson.access === "PUBLIC_DEMO",
+    );
     return courseCardSchema.parse({
       ...row,
       provider: "YOUTUBE",
       access: "FREE_ENROLLMENT",
+      thumbnailUrl: demo
+        ? `https://i.ytimg.com/vi/${demo.youtubeVideoId}/hqdefault.jpg`
+        : null,
       lessonCount: row.courseLessons.length,
       demoCount: row.courseLessons.filter((l) => l.access === "PUBLIC_DEMO")
         .length,

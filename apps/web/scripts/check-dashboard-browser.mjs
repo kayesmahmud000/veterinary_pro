@@ -7,7 +7,7 @@ import { handleFinanceFixture, checkAdminFinance } from "./admin-finance-browser
 import { handleCommunicationsFixture, checkAdminCommunications } from "./admin-communications-browser-cases.mjs";
 import { handlePlatformFixture, checkAdminPlatform } from "./admin-platform-browser-cases.mjs";
 import { checkUnsavedEditors } from "./unsaved-editor-browser-cases.mjs";
-import {handleCourseFixture,checkLearnerCourses} from "./course-browser-cases.mjs";
+import {handleCourseFixture,checkLearnerCourses,checkRealCourseProvider} from "./course-browser-cases.mjs";
 import { handleCatalogFixture, handleCatalogObject, checkAdminCatalog, checkAdminCourses } from "./admin-catalog-browser-cases.mjs";
 import assert from "node:assert/strict";
 import { handleAdminFixture, checkAdminDashboard } from "./admin-dashboard-browser-cases.mjs";
@@ -297,7 +297,7 @@ const upstream = http.createServer(async (req, res) => {
   }
   if (route === "users/me/role-requests")
     return send(200, { requests: [], nextCursor: null });
-  if(handleCourseFixture(route,role,send,query,req.method,data,res))return;
+  if(handleCourseFixture(route,role,send,query,req.method,data,res,users.get(role)?.id))return;
   if (handleCatalogFixture(route, role, send, query, req.method, data, res)) return;
   if (handleDirectoryFixture(route, role, send, query, req.method, data, res)) return;
   if (handleAdminFixture(route, role, send)) return;
@@ -418,8 +418,14 @@ try {
   const pending = new Map();
   const exceptions = [];
   let dialogHandler;
+  const eventListeners = new Map();
+  const subscribe = (method, handler) => {
+    eventListeners.set(method, handler);
+    return () => eventListeners.delete(method);
+  };
   ws.onmessage = ({ data }) => {
     const r = JSON.parse(data);
+    if (r.method) eventListeners.get(r.method)?.(r.params);
     if (r.method === "Page.javascriptDialogOpening") void dialogHandler?.(r.params);
     if (r.method === "Runtime.exceptionThrown") {
       exceptions.push(r.params.exceptionDetails.exception?.description);
@@ -521,7 +527,10 @@ try {
     checks += await checkAdminCourses({seed,go,call,evaluate,until,temp,requests});
     assert.deepEqual(exceptions, []);
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "courses") {
-    checks += await checkLearnerCourses({seed,go,call,evaluate,until,temp,requests,origin});
+    checks += await checkLearnerCourses({seed,go,call,evaluate,until,temp,requests,origin,subscribe,replaceLearner:patch=>{const previous=users.get('LEARNER');users.set('LEARNER',{...previous,...patch});return previous;}});
+    assert.deepEqual(exceptions, []);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "courses-provider") {
+    checks += await checkRealCourseProvider({seed,go,call,evaluate,until,temp,origin});
     assert.deepEqual(exceptions, []);
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "catalog") {
     checks += await checkAdminCatalog({seed,go,call,evaluate,until,temp,requests});

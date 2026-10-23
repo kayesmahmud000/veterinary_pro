@@ -1,6 +1,6 @@
 # UXR-4 account recovery specification
 
-Status: **Contract preparation complete; implementation not started.** This defines required behavior, not available endpoints or provider acceptance.
+Status: **Tasks 1–2 transport and internal persistence implemented locally; public recovery unavailable.** The registered request/complete service fails closed with 503, even if enabled, until abuse controls and delivery are integrated. See the [Task 1 evidence](plan.md#task-1-local-verification-2026-10-23) and [Task 2 persistence evidence](plan.md#task-2-execution-2026-10-23).
 Date / inspected revision: **2026-10-22 / `a07d77f` plus existing local changes**.
 Owners: [UXR-4](../../../apps/web/ROADMAP.md#uxr-4--complete-forgotten-password-recovery), [API-AUTH-R](../../../apps/api/ROADMAP.md#api-dependency-register). Execution/evidence: [plan](plan.md).
 
@@ -10,13 +10,13 @@ A person who forgot their password can request instructions through the existing
 
 This refines the broad authentication intent in the [blueprint, section 4](../../../vetralink_pro_blueprint.md) and dormant contracts from [Task 2.2](../../tasks/task-2.2-auth-dtos/spec.md). It extends the [auth-modal spec](../../tasks/web-auth-modals/spec.md), whose prohibition on dead recovery controls remains applicable until the implementation is accepted. SMS/OTP/passwordless login, authenticated change-password, email changes, MFA, lost-mailbox/manual recovery, impersonation and production rollout are outside this feature. Do not invent an unauthenticated support route; current own-support requires a session.
 
-Primary perspectives: Backend/API and Application Security; Database/Tech Lead for transactions/workers; Frontend/UI/UX and QA for public forms; Release for migration, transport and hosting gates. The preparation stage writes these documents only.
+Primary perspectives: Backend/API and Application Security; Database/Tech Lead for transactions/workers; Frontend/UI/UX and QA for public forms; Release for migration, transport and hosting gates. The 2026-10-22 preparation stage wrote these documents only; the subsequent 2026-10-23 continuations select Task 1 transport, then Task 2 internal persistence.
 
 ## Confirmed implementation and gaps
 
 | Evidence from code | Consequence for this design |
 | --- | --- |
-| [Auth controller](../../../apps/api/src/modules/auth/auth.controller.ts) exposes register/login/refresh/logout/logout-all/me; [shared reset DTOs](../../../packages/shared-types/src/dto/auth/password-reset.dto.ts) are interfaces without routes/runtime validation. | Add explicit routes/schemas. Preserve the old DTO exports; their presence does not make recovery available. |
+| [Auth controller](../../../apps/api/src/modules/auth/auth.controller.ts) exposes register/login/refresh/logout/logout-all/me; [shared reset DTOs](../../../packages/shared-types/src/dto/auth/password-reset.dto.ts) are interfaces without routes/runtime validation. | Task 1 adds separate [recovery routes](../../../apps/api/src/modules/auth/recovery/account-recovery.controller.ts) and strict shared schemas, preserving old DTO exports. The bound service remains unavailable; transport alone does not enable recovery. |
 | [Auth service](../../../apps/api/src/modules/auth/services/auth.service.ts) serializes login/refresh through the user lock; [current identity](../../../apps/api/src/modules/auth/services/current-identity.service.ts) compares `authorizationVersion`. | Reset must use the same user lock and invalidate sessions atomically. Legacy access claims are rejected after the version becomes nonzero. |
 | [User summary](../../../apps/api/src/modules/users/auth-user-summary.ts) returns `roleVersion`, not `authorizationVersion`; [user repository](../../../apps/api/src/modules/users/repositories/user.repository.ts) increments the latter in `invalidateSessions`. | Do not change role/version fields or confuse the two versions. Browser session revalidation, not a new exposed version, reflects reset revocation. |
 | [Shared signup validation](../../../packages/shared-types/src/validation/index.ts) permits 8–128 string code units; [hasher](../../../apps/api/src/modules/auth/services/bcrypt-password-hasher.service.ts) uses bcrypt cost 12. Installed bcryptjs documents truncation beyond 72 UTF-8 bytes. | New reset passwords also reject encoded length above 72 bytes; do not silently truncate, trim or normalize passwords. Existing login remains compatible. Signup's separate byte-limit gap is recorded, not silently repaired by this feature. |
@@ -36,7 +36,7 @@ These are source observations, not deployed tests. **Unknown:** target mail conf
 - Use a dedicated SQL-polling worker, reusing established outbox/lease patterns without a second Redis business queue. Redis is used for abuse budgets only. This costs a durable worker deployment and two additive tables; it avoids recoverable secrets in queue payloads and retained failed-job collisions.
 - Use the existing email/provider configuration but a recovery-specific Resend adapter with fixed error codes and a real/test result distinction. This keeps sensitive-send requirements out of unrelated order/role mail behavior. Test transport is allowed only through explicit nonproduction wiring.
 
-## Public contracts — required, not implemented
+## Public contracts — required lifecycle, locally implemented transport
 
 API paths include the existing `/api/v1` prefix. Neither route takes a bearer session, role, farm, user ID, caller-provided reset URL or callback URL. Strict Zod plus Nest DTO validation; reject unknown keys, arrays and query parameters; JSON bodies at most **8 KiB by UTF-8 bytes**, including streamed/chunked requests.
 
@@ -77,7 +77,7 @@ The reset client reads the fragment into tab memory, immediately replaces histor
 
 ## Persistence and worker contract
 
-Two additive API-schema models; names below are planned. No root Prisma tree edits, old-row rewrite or applied-migration changes.
+Two additive API-schema models implemented in Task 2, with the new migration’s hash, lifetime, terminal-erasure, lease and context checks. Provider rendering/polling/cleanup remain Task 4. No root Prisma tree edits, old-row rewrite or applied-migration changes.
 
 - **PasswordResetCredential:** UUID PK, user FK, unique 64-character token hash, 64-character email HMAC, authorization-version snapshot, created/expiry/consumed/invalidated timestamps. Index `(userId, expiresAt)`; lifetime/terminal-state/check constraints. No recoverable token here; do not impose one-outstanding-token uniqueness.
 - **AccountRecoveryJob:** UUID PK, kind RESET_REQUEST or PASSWORD_CHANGED, nullable user/credential FKs (credential link unique), locale, email HMAC, nullable AES-GCM payload, immutable template/origin version and purpose-keyed HMAC of the exact provider payload, created/deadline/available/lease timestamps, random lease-fence UUID, attempts, terminal status and bounded failure code. Pending request payload is encrypted normalized email; issuance replaces it atomically with an encrypted envelope binding job ID, credential ID, email HMAC, origin/template version and token. Password-changed payload has no token. Index due unfinished jobs and user/credential references; require terminal jobs to have null payload. Unknown/ineligible jobs never acquire a credential/user link and erase their payload when skipped.

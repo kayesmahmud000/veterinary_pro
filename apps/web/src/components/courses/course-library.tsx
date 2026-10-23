@@ -1,53 +1,57 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { BookOpen, ArrowRight } from "lucide-react";
 import { courseLibrarySchema } from "@vetralink/shared-types";
 import { useAuth } from "@/components/auth/auth-provider";
 import { getCourseMessages } from "@/lib/i18n/courses";
 import { WorkspaceGate } from "@/components/workspace/workspace-gate";
 import { useRemote } from "@/components/workspace/workspace-ui";
-import { Button } from "@/components/ui/button";
-import { CourseError } from "./course-ui";
-import styles from "@/components/workspace/workspace.styles";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { CourseError, CourseLoading } from "./course-ui";
+import { CourseCard } from "./course-card";
+import styles from "./course.styles";
 function Library() {
-  const auth = useAuth(),
-    t = getCourseMessages(auth.locale),
+  const t = getCourseMessages(useAuth().locale),
     [cursors, setCursors] = useState([""]),
-    cursor = cursors.at(-1),
-    data = useRemote(
-      `me/courses?limit=20${cursor ? `&cursor=${cursor}` : ""}`,
-      courseLibrarySchema,
-    );
+    cursor = cursors.at(-1);
+  const data = useRemote(
+    `me/courses?limit=20${cursor ? `&cursor=${cursor}` : ""}`,
+    courseLibrarySchema,
+  );
   return (
-    <div data-course-library className="space-y-5">
-      <Link href="/courses" className={styles.secondary}>
-        {t.browse}
-      </Link>
+    <div data-course-library className="space-y-6">
       {data.loading ? (
-        <p role="status">{t.loading}</p>
+        <CourseLoading cards />
       ) : data.code ? (
         <CourseError code={data.code} retry={data.reload} />
       ) : !data.data?.items.length ? (
-        <p>{t.libraryEmpty}</p>
+        <section className={`${styles.panel} space-y-4 text-center`}>
+          <BookOpen size={40} aria-hidden="true" className="text-green" />
+          <h2 className="text-2xl">{t.libraryEmpty}</h2>
+          <p>{t.intro}</p>
+          <Link href="/courses" className={buttonVariants()}>
+            {t.browse}
+          </Link>
+        </section>
       ) : (
-        data.data.items.map((course) => (
-          <article key={course.id} className={`${styles.card} space-y-4`}>
-            <h2>{course.title}</h2>
-            <p>
-              {course.lessonCount} {t.outOf}
-            </p>
-            {course.firstLessonId && (
-              <Link
-                href={`/account/courses/${course.id}/lessons/${course.firstLessonId}`}
-                className={styles.primary}
-              >
-                {t.continue}
-              </Link>
-            )}
-          </article>
-        ))
+        <div className={styles.grid}>
+          {data.data.items.map((course, index) => (
+            <CourseCard
+              key={course.id}
+              course={course}
+              href={
+                course.firstLessonId
+                  ? `/account/courses/${course.id}/lessons/${course.firstLessonId}`
+                  : `/courses/${course.slug}`
+              }
+              action={t.continue}
+              priority={index === 0}
+            />
+          ))}
+        </div>
       )}
-      <div className={styles.actions}>
+      <nav aria-label={t.pagination} className="flex flex-wrap gap-3">
         {cursors.length > 1 && (
           <Button
             variant="outline"
@@ -57,16 +61,15 @@ function Library() {
             {t.previous}
           </Button>
         )}
-        {data.data?.nextCursor && (
+        {!data.loading && data.data?.nextCursor && (
           <Button
             variant="outline"
-            disabled={data.loading}
             onClick={() => setCursors((v) => [...v, data.data!.nextCursor!])}
           >
             {t.next}
           </Button>
         )}
-      </div>
+      </nav>
     </div>
   );
 }
@@ -74,7 +77,16 @@ export function CourseLibrary() {
   const t = getCourseMessages(useAuth().locale);
   return (
     <main id="main-content" className={styles.shell}>
-      <h1 className={styles.heading}>{t.library}</h1>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className={styles.heading}>{t.library}</h1>
+          <p className="mb-0 max-w-2xl">{t.libraryIntro}</p>
+        </div>
+        <Link href="/courses" className={styles.link}>
+          {t.browse}
+          <ArrowRight size={18} aria-hidden="true" />
+        </Link>
+      </header>
       <WorkspaceGate>
         <Library />
       </WorkspaceGate>

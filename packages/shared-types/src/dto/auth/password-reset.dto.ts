@@ -3,6 +3,7 @@
  */
 export interface ForgotPasswordRequestDto {
   readonly email: string;
+  readonly locale?: "bn" | "en";
 }
 
 /**
