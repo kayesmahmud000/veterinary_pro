@@ -70,7 +70,6 @@ export const publicPagesEn = {
       "Khamar School is built around the people who care for animals: farm owners and staff, veterinarians and people learning about livestock farming. Our aim is to make everyday information easier to record, understand and share.",
     services: {
       title: "What is Khamar School?",
-      brand: "Khamar School",
       description:
         "From treatment and breeding to feed, dairy farming and everyday planning, Khamar School brings the key areas of animal care and farm management together with practical learning and connected records.",
       items: {
@@ -227,7 +226,6 @@ export const publicPagesBn: typeof publicPagesEn = {
       "খামার স্কুল প্রাণীর যত্ন নেওয়া মানুষদের কথা ভেবে তৈরি—খামারের মালিক ও কর্মী, পশুচিকিৎসক এবং প্রাণিসম্পদ পালন শিখতে আগ্রহী মানুষ। প্রতিদিনের তথ্য সহজে লেখা, বোঝা ও ভাগ করে নেওয়ার ব্যবস্থা গড়াই আমাদের লক্ষ্য।",
     services: {
       title: "খামার স্কুল কী?",
-      brand: "খামার স্কুল",
       description:
         "চিকিৎসা ও প্রজনন থেকে শুরু করে রসদ, দুগ্ধ খামার ও দৈনন্দিন পরিকল্পনা—প্রাণীর যত্ন এবং খামার ব্যবস্থাপনার প্রয়োজনীয় বিষয়গুলোকে ব্যবহারিক শিক্ষা ও গোছানো রেকর্ডের সঙ্গে যুক্ত করে খামার স্কুল।",
       items: {

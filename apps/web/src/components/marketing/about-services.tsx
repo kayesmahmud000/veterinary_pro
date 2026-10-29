@@ -1,5 +1,4 @@
 import {
-  BookOpen,
   ClipboardList,
   HeartPulse,
   Milk,
@@ -10,6 +9,7 @@ import {
   Tractor,
 } from "lucide-react";
 import type { publicPagesEn } from "@/lib/i18n/public-pages";
+import { BrandLogo } from "@/components/brand/site-brand";
 
 const services = [
   {
@@ -93,29 +93,9 @@ export function AboutServices({ copy }: { copy: AboutCopy }) {
             d="m 360 236 15 7 -11 12 M 563 360 l -7 15 -12 -11 M 440 564 l -15 -7 11 -12 M 237 440 l 7 -15 12 11"
             className="fill-[#8b9e88]"
           />
-          <BookOpen
-            x="349"
-            y="323"
-            width="102"
-            height="78"
-            strokeWidth="1.5"
-            className="text-green"
-          />
-          <Sprout
-            x="382"
-            y="303"
-            width="36"
-            height="36"
-            className="text-[#85b936]"
-          />
-          <text
-            x="400"
-            y="455"
-            textAnchor="middle"
-            className="fill-green text-[39px] font-bold"
-          >
-            {t.brand}
-          </text>
+          <foreignObject x="290" y="290" width="220" height="220">
+            <BrandLogo className="h-full w-full" sizes="220px" />
+          </foreignObject>
           {services.map(({ key, Icon, color, x, y }) => (
             <g key={key} className={color}>
               <circle
@@ -160,12 +140,8 @@ export function AboutServices({ copy }: { copy: AboutCopy }) {
             </g>
           ))}
         </svg>
-        <div
-          aria-hidden="true"
-          className="mb-6 flex flex-col items-center gap-3 text-green md:hidden"
-        >
-          <BookOpen size={48} strokeWidth={1.5} />
-          <span className="text-2xl font-bold">{t.brand}</span>
+        <div aria-hidden="true" className="mb-6 flex justify-center md:hidden">
+          <BrandLogo className="h-24 w-24" sizes="96px" />
         </div>
         <ul className="m-0 grid list-none grid-cols-2 gap-x-3 gap-y-6 p-0 md:sr-only">
           {services.map(({ key, Icon, color }) => (

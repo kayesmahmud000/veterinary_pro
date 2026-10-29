@@ -40,3 +40,24 @@ Independent read-only scoped review found no material issues; final author revie
 The initial wider-suite failures were traced to existing `src/lib/editorial.ts` / middleware behavior: unknown authored slugs consult the content API and propagate unavailability as HTTP 503. No source changes were made for that separate dependency. Fixture-backed passes validate deterministic public-page behavior, not the live editorial API. The requested About section is locally verified; no deployment or Git commit was performed.
 
 Suggested commit: `feat(web): add Khamar School services overview to about page`.
+
+## Follow-up: reuse the site logo (2026-10-29)
+
+- [x] Inspect header/footer `SiteBrand` and its shared `BrandLogo` implementation.
+- [x] Replace the decorative central book/sprout mark with `BrandLogo` inside SVG `foreignObject`; reuse it in the mobile layout. Add an optional `sizes` hint to `BrandLogo` without changing its default rendering.
+- [x] Run styling checks/tests and isolated production build; inspect both locales at mobile and desktop widths and verify the same image loads in the header, diagram and footer.
+- [x] Re-review the scoped diff and record verification evidence.
+
+**Observed behavior:** `check:styles` passed and `test:styles` passed 14/14. `pnpm --dir /tmp/web-about-logo-n8m2rxky build` passed production compilation, type checking and route generation. `node /tmp/check-veterinary-about-logo.mjs` passed all ten Bangla/English viewport cases (320, 375, 768, 1440, 1920px): the visible center image loaded, used the identical asset as header/footer, retained the shared circular crop and requested image-size hint, and preserved all eight services without overflow or clipped labels. Bangla default also passed. Inspected desktop/mobile screenshots at `/tmp/about-logo-browser-NRdXfL/`. Final scoped review and `git diff --check` found no material issues. Existing callers retain the `48px` default; no assets were edited or duplicated.
+
+Suggested follow-up commit: `fix(web): reuse site logo in about services overview`.
+
+## Follow-up: center the logo without duplicate text (2026-10-29)
+
+- [x] Inspect the existing center SVG and mobile brand presentation.
+- [x] Remove duplicate brand text in both layouts and unused translation keys, center/enlarge the shared logo, and preserve service labels and explanatory content.
+- [x] Run styling checks/tests, isolated production build and responsive browser checks; review the final diff.
+
+**Observed behavior:** styling guard passed, styling tests passed 14/14, and `pnpm --dir /tmp/web-about-logo-only-5lhv6vkf build` passed. `node /tmp/check-veterinary-about-logo-only.mjs` passed ten bilingual viewport checks at 320, 375, 768, 1440 and 1920px, verifying loaded site-logo artwork, desktop logo center (400, 400), absence of separate brand text in desktop/mobile branding, eight retained service labels and no clipping/overflow. Inspected the Bangla desktop screenshot in `/tmp/about-logo-only-browser-0CCt0N/`. Final source/diff review found no material issues.
+
+Suggested commit: `fix(web): center about logo and remove duplicate brand text`.

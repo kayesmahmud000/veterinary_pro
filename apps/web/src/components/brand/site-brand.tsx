@@ -3,7 +3,13 @@ import Link from "next/link";
 import logo from "../../../public/assets/brand/logo-green.jpeg";
 import { cn } from "@/lib/ui/cn";
 
-export function BrandLogo({ className }: { className?: string }) {
+export function BrandLogo({
+  className,
+  sizes = "48px",
+}: {
+  className?: string;
+  sizes?: string;
+}) {
   return (
     <span
       className={cn(
@@ -16,7 +22,7 @@ export function BrandLogo({ className }: { className?: string }) {
         alt=""
         width={64}
         height={64}
-        sizes="48px"
+        sizes={sizes}
         className="block h-full w-full scale-[1.37] object-cover"
       />
     </span>
