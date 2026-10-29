@@ -11,7 +11,7 @@ export default function LearnerLayout({
 }) {
   const { messages } = getLocalization();
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen bg-white">
       <a className={siteStyles["skip-link"]} href="#main-content">
         {messages.navigation.skip}
       </a>

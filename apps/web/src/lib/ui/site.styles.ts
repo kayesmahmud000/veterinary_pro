@@ -2,6 +2,7 @@
 // Prefer utilities in JSX for new one-off styles; extract shared combinations here.
 const styles = {
   document: [
+    "bg-white",
     "[--site-header-height:94px]",
     "[scroll-padding-top:calc(var(--site-header-height)_+_20px)]",
     "[:where(&)_main]:[scroll-margin-top:calc(var(--site-header-height)_+_20px)]",
@@ -73,7 +74,7 @@ const styles = {
     "motion-reduce:[:where(&)_*::after]:!transition-none",
     "motion-reduce:[:where(&)_*::after]:!animate-none",
   ].join(" "),
-  body: ["m-0", "bg-paper", "text-ink", "font-sans", "antialiased"].join(" "),
+  body: ["m-0", "bg-white", "text-ink", "font-sans", "antialiased"].join(" "),
   container: ["container", "w-11/12", "mx-auto"].join(" "),
   eyebrow: [
     "eyebrow",
