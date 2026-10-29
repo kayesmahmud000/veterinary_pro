@@ -4,6 +4,7 @@ import { getLocalization } from "@/lib/i18n/server";
 import { PublicPage } from "@/components/marketing/public-page";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
+import { AboutServices } from "@/components/marketing/about-services";
 
 export function generateMetadata() {
   const { messages } = getLocalization();
@@ -23,7 +24,7 @@ export default function AboutPage() {
       description={a.description}
       eyebrow={t.aboutEyebrow}
     >
-      <p className="mb-12 max-w-4xl text-lg leading-8">{a.intro}</p>
+      <AboutServices copy={a} />
       <section className="mb-12">
         <h2 className="!text-3xl">{a.missionTitle}</h2>
         <p className="max-w-4xl">{a.missionBody}</p>

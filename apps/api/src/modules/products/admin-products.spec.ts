@@ -90,6 +90,11 @@ describe("Admin product policy", () => {
     ).rejects.toThrow();
     expect(repo.save).not.toHaveBeenCalled();
   });
+  it.each(["https://res.cloudinary.com/test/image/upload/v1/course-thumbnails/test.webp", "https://images.example.test/legacy.jpg", null])("preserves unrelated metadata while saving or removing thumbnail %s", async thumbnailUrl=>{
+    repo.lock.mockResolvedValue({...row,metadata:{privateNote:"preserved",courseThumbnailUrl:"https://images.example.test/old.jpg"}});
+    await service.edit(claims,id,{expectedVersion:2,title:row.title,slug:row.slug,description:row.description,priceCents:row.priceCents,discountPriceCents:null,currency:row.currency,minSubscriptionTier:row.minSubscriptionTier as any,thumbnailUrl});
+    expect(repo.save).toHaveBeenCalledWith(id,expect.objectContaining({metadata:{privateNote:"preserved",adminManaged:true,courseThumbnailUrl:thumbnailUrl}}),tx);
+  });
   it("soft deletes and audits through one transaction", async () => {
     await service.action(claims, id, {
       action: "DELETE",

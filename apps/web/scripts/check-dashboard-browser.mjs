@@ -107,7 +107,7 @@ const upstream = http.createServer(async (req, res) => {
   if (await handleCatalogObject(req, res, requests)) return;
   let text = "";
   for await (const chunk of req) text += chunk;
-  const data = text ? JSON.parse(text) : {};
+  const data = req.headers["content-type"]?.startsWith("multipart/form-data") ? { multipartBytes: Buffer.byteLength(text) } : text ? JSON.parse(text) : {};
   const route = new URL(req.url, "http://local").pathname.replace(
     "/api/v1/",
     "",

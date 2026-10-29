@@ -3,6 +3,11 @@ import { ConfigService } from "@nestjs/config";
 import { EnvConfig } from "./env.schema";
 
 export interface IEnvService {
+  readonly cloudinaryThumbnailsEnabled: boolean;
+  readonly cloudinaryCloudName?: string;
+  readonly cloudinaryApiKey?: string;
+  readonly cloudinaryApiSecret?: string;
+  readonly cloudinaryThumbnailsFolder: string;
   readonly accountRecoveryEnabled: boolean;
   readonly accountRecoveryTestTransport: boolean;
   readonly recoveryTrustedProxyCidrs: string[];
@@ -44,14 +49,37 @@ export interface IEnvService {
 
 @Injectable()
 export class EnvService implements IEnvService {
+  get cloudinaryThumbnailsEnabled() {
+    return this.configService.get("CLOUDINARY_THUMBNAILS_ENABLED", {
+      infer: true,
+    });
+  }
+  get cloudinaryCloudName() {
+    return this.configService.get("CLOUDINARY_CLOUD_NAME", { infer: true });
+  }
+  get cloudinaryApiKey() {
+    return this.configService.get("CLOUDINARY_API_KEY", { infer: true });
+  }
+  get cloudinaryApiSecret() {
+    return this.configService.get("CLOUDINARY_API_SECRET", { infer: true });
+  }
+  get cloudinaryThumbnailsFolder() {
+    return this.configService.get("CLOUDINARY_THUMBNAILS_FOLDER", {
+      infer: true,
+    });
+  }
   get accountRecoveryEnabled(): boolean {
     return this.configService.get("ACCOUNT_RECOVERY_ENABLED", { infer: true });
   }
   get accountRecoveryTestTransport(): boolean {
-    return this.configService.get("ACCOUNT_RECOVERY_TEST_TRANSPORT", { infer: true });
+    return this.configService.get("ACCOUNT_RECOVERY_TEST_TRANSPORT", {
+      infer: true,
+    });
   }
   get recoveryTrustedProxyCidrs(): string[] {
-    return this.configService.get("RECOVERY_TRUSTED_PROXY_CIDRS", { infer: true });
+    return this.configService.get("RECOVERY_TRUSTED_PROXY_CIDRS", {
+      infer: true,
+    });
   }
   get authLegacyClaimsUntil(): number {
     const value = this.configService.get("AUTH_LEGACY_CLAIMS_UNTIL", {

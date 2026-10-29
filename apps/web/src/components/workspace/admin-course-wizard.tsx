@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { ImageUpload, type ImageUploadState } from "./image-upload";
+import { uploadCourseThumbnail } from "@/lib/workspace/thumbnail-upload";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
 import {
@@ -63,6 +65,12 @@ function Wizard({
     [issues, setIssues] = useState<Record<string, string>>({}),
     [notice, setNotice] = useState(""),
     [action, setAction] = useState<CourseAction | null>(null),
+    [thumbnailState, setThumbnailState] = useState<ImageUploadState>({
+      busy: false,
+      dirty: false,
+      blocked: false,
+    }),
+    thumbnailStateRef = useRef(thumbnailState),
     [lessonState, setLessonState] = useState({ dirty: false, busy: false }),
     [editorRevision, setEditorRevision] = useState(0),
     [submittedSlug, setSubmittedSlug] = useState<string | null>(null),
@@ -76,8 +84,15 @@ function Wizard({
       active.current = false;
     };
   }, []);
+  const thumbnailStateChanged = useCallback((state: ImageUploadState) => {
+    thumbnailStateRef.current = state;
+    setThumbnailState(state);
+  }, []);
+  const actor = auth.user
+    ? `${auth.user.id}:${auth.user.role}:${auth.user.roleVersion ?? 0}`
+    : "";
   const infoDirty = JSON.stringify(values) !== JSON.stringify(savedInfo),
-    dirty = infoDirty || lessonState.dirty;
+    dirty = infoDirty || lessonState.dirty || thumbnailState.dirty;
   const lessonStateChanged = useCallback(
     (value: { dirty: boolean; busy: boolean }) =>
       setLessonState((current) =>
@@ -103,6 +118,7 @@ function Wizard({
     if (
       running.current ||
       pendingCreateSlug ||
+      thumbnailStateRef.current.blocked ||
       auth.checking ||
       auth.error ||
       !auth.user
@@ -236,6 +252,7 @@ function Wizard({
       !product ||
       running.current ||
       lessonState.busy ||
+      thumbnailStateRef.current.busy ||
       auth.checking ||
       auth.error
     )
@@ -389,7 +406,7 @@ function Wizard({
         hidden={step !== 1}
         data-admin-course-form
         className={`${styles.card} space-y-5`}
-        aria-busy={busy}
+        aria-busy={busy || thumbnailState.busy}
         onSubmit={(event) => {
           event.preventDefault();
           void saveInfo();
@@ -440,20 +457,18 @@ function Wizard({
               onChange={(event) => change("description", event.target.value)}
             />
           </Field>
-          <Field
-            name="course-thumbnailUrl"
+          <ImageUpload
+            key={`thumbnail:${actor}:${editorRevision}`}
+            value={values.thumbnailUrl || null}
+            onChange={(url) => change("thumbnailUrl", url ?? "")}
+            upload={(file, options) =>
+              uploadCourseThumbnail(file, { ...options, expectedActor: actor })
+            }
+            onStateChange={thumbnailStateChanged}
+            locale={auth.locale}
             label={t.thumbnail}
-            hint={t.thumbnailHint}
-            error={issues.thumbnailUrl}
-          >
-            <input
-              id="course-thumbnailUrl"
-              type="url"
-              maxLength={2048}
-              value={values.thumbnailUrl}
-              onChange={(event) => change("thumbnailUrl", event.target.value)}
-            />
-          </Field>
+            disabled={busy || auth.checking || !!auth.error || !auth.user}
+          />
           <Field name="course-mode" label={t.pricing}>
             <select
               id="course-mode"
@@ -521,7 +536,10 @@ function Wizard({
           )}
           {product?.isPublished && <p role="status">{t.publishedEditing}</p>}
           {!product && submittedSlug && <p>{t.retryIdentity}</p>}
-          <Button data-course-next-info disabled={!!pendingCreateSlug}>
+          <Button
+            data-course-next-info
+            disabled={!!pendingCreateSlug || thumbnailState.blocked}
+          >
             {busy ? t.working : t.continue}
             <ArrowRight size={18} aria-hidden="true" />
           </Button>
@@ -638,7 +656,13 @@ function Wizard({
             </Button>
             <Button
               data-wizard-publish
-              disabled={busy || !ready || product.isPublished || dirty}
+              disabled={
+                busy ||
+                thumbnailState.blocked ||
+                !ready ||
+                product.isPublished ||
+                dirty
+              }
               onClick={() => setAction("PUBLISH")}
             >
               {t.publish}

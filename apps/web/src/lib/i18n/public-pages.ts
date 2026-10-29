@@ -68,6 +68,22 @@ export const publicPagesEn = {
       "Learn why Khamar School brings practical learning, farm records and veterinary care into one product vision.",
     intro:
       "Khamar School is built around the people who care for animals: farm owners and staff, veterinarians and people learning about livestock farming. Our aim is to make everyday information easier to record, understand and share.",
+    services: {
+      title: "What is Khamar School?",
+      brand: "Khamar School",
+      description:
+        "From treatment and breeding to feed, dairy farming and everyday planning, Khamar School brings the key areas of animal care and farm management together with practical learning and connected records.",
+      items: {
+        treatment: "Treatment management",
+        breeding: "Breeding management",
+        grass: "Grass cultivation",
+        vaccination: "Deworming & vaccination\nmanagement",
+        planning: "Farm planning",
+        farm: "Farm management",
+        supplies: "Supplies management",
+        dairy: "Dairy farm management",
+      },
+    },
     missionTitle: "A clearer picture of everyday work",
     missionBody:
       "An animal's identity, a milk log and a record of farm spending each tell part of the story. We want practical learning and connected records to help the people doing the work find the information they need.",
@@ -209,6 +225,22 @@ export const publicPagesBn: typeof publicPagesEn = {
       "খামার স্কুল কেন ব্যবহারিক শিক্ষা, খামারের রেকর্ড ও পশুচিকিৎসাকে একসঙ্গে যুক্ত করতে চায়, জানুন।",
     intro:
       "খামার স্কুল প্রাণীর যত্ন নেওয়া মানুষদের কথা ভেবে তৈরি—খামারের মালিক ও কর্মী, পশুচিকিৎসক এবং প্রাণিসম্পদ পালন শিখতে আগ্রহী মানুষ। প্রতিদিনের তথ্য সহজে লেখা, বোঝা ও ভাগ করে নেওয়ার ব্যবস্থা গড়াই আমাদের লক্ষ্য।",
+    services: {
+      title: "খামার স্কুল কী?",
+      brand: "খামার স্কুল",
+      description:
+        "চিকিৎসা ও প্রজনন থেকে শুরু করে রসদ, দুগ্ধ খামার ও দৈনন্দিন পরিকল্পনা—প্রাণীর যত্ন এবং খামার ব্যবস্থাপনার প্রয়োজনীয় বিষয়গুলোকে ব্যবহারিক শিক্ষা ও গোছানো রেকর্ডের সঙ্গে যুক্ত করে খামার স্কুল।",
+      items: {
+        treatment: "চিকিৎসা ব্যবস্থাপনা",
+        breeding: "প্রজনন ব্যবস্থাপনা",
+        grass: "ঘাসচাষ ব্যবস্থাপনা",
+        vaccination: "কৃমিনাশক ও টিকা\nব্যবস্থাপনা",
+        planning: "খামার পরিকল্পনা",
+        farm: "খামার ব্যবস্থাপনা",
+        supplies: "রসদ ব্যবস্থাপনা",
+        dairy: "দুগ্ধ খামার ব্যবস্থাপনা",
+      },
+    },
     missionTitle: "প্রতিদিনের কাজের আরও পূর্ণ চিত্র",
     missionBody:
       "প্রাণীর পরিচয়, দুধের লগ ও খামারের খরচের রেকর্ড—প্রতিটি তথ্য পুরো গল্পের একটি অংশ। ব্যবহারিক শিক্ষা ও গোছানো রেকর্ডের মাধ্যমে কাজে প্রয়োজনীয় তথ্য সহজে খুঁজে পেতে সাহায্য করতে চাই।",

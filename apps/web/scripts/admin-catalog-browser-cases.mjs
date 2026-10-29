@@ -82,6 +82,13 @@ export function handleCatalogFixture(
   body,
   res,
 ) {
+  if (route === "admin/courses/thumbnails" && method === "POST") {
+    if (!["ADMIN", "SUPER_ADMIN"].includes(role)) { send(403, null); return true; }
+    const failed=state.thumbnailFailure, delay=state.thumbnailDelay ?? 0;
+    const url=`https://res.cloudinary.com/test/image/upload/v1/course-thumbnails/synthetic-${state.thumbnailCount=(state.thumbnailCount??0)+1}.webp`;
+    setTimeout(()=>send(failed?503:201,failed?null:{url}),delay);
+    return true;
+  }
   if (!route.startsWith("admin/products") && !route.startsWith("admin/media"))
     return false;
   if (!["ADMIN", "SUPER_ADMIN"].includes(role)) {

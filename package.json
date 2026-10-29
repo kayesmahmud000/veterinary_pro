@@ -24,7 +24,7 @@
                         },
     "packageManager":  "pnpm@10.18.3",
     "engines":  {
-                    "node":  "\u003e=20.0.0",
+                    "node":  "\u003e=20.9.0",
                     "pnpm":  "\u003e=9.0.0"
                 },
     "pnpm":  {

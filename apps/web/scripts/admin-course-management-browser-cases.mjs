@@ -23,12 +23,14 @@ export async function checkAdminCourseManagement({
       "*youtube-nocookie.com/*",
       "*youtube.com/iframe_api*",
       "https://images.example.test/*",
+      "https://res.cloudinary.com/*",
     ],
   });
   const set = async (id, value) =>
     evaluate(
       `(()=>{const e=document.getElementById(${JSON.stringify(id)});Object.getOwnPropertyDescriptor(e instanceof HTMLTextAreaElement?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));return new Promise(resolve=>requestAnimationFrame(resolve));})()`,
     );
+  const chooseThumbnail = async (name="cover.png",type="image/png",drop=false) => evaluate(`(()=>{const canvas=document.createElement('canvas');canvas.width=40;canvas.height=24;const ctx=canvas.getContext('2d');ctx.fillStyle='#236d42';ctx.fillRect(0,0,40,24);const bytes=Uint8Array.from(atob(canvas.toDataURL('image/png').split(',')[1]),c=>c.charCodeAt(0));const file=new File([bytes],${JSON.stringify(name)},{type:${JSON.stringify(type)}}),transfer=new DataTransfer();transfer.items.add(file);if(${drop})document.querySelector('[data-image-upload] > div').dispatchEvent(new DragEvent('drop',{bubbles:true,dataTransfer:transfer}));else{const input=document.getElementById('course-thumbnailUrl');input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));}})()`);
   const select = async (id, value) =>
     evaluate(
       `(()=>{const e=document.getElementById(${JSON.stringify(id)});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('change',{bubbles:true}));})()`,
@@ -64,6 +66,44 @@ export async function checkAdminCourseManagement({
     await writeFile(path.join(temp, name), Buffer.from(s.data, "base64"));
   };
   try {
+    // Real browser file/drop/progress/cancel/retry behavior against a controlled upload provider.
+    await seed("ADMIN", "en");
+    await go("/admin/courses/new");
+    await until(()=>evaluate(`!!document.querySelector('[data-image-upload]')`),"Thumbnail uploader mounted");
+    await chooseThumbnail("cover.txt","text/plain");
+    await until(()=>evaluate(`document.querySelector('[data-image-upload]').dataset.uploadPhase==='error'`),"Unsupported file feedback");
+    assert.equal(await evaluate(`document.querySelector('[data-course-next-info]').disabled`),true);
+    await evaluate(`document.querySelector('[data-thumbnail-discard]').click()`);
+    state.thumbnailDelay=700;
+    await chooseThumbnail();
+    await until(()=>evaluate(`document.querySelector('[data-image-upload]').dataset.uploadPhase==='uploading'`),"Upload in progress");
+    assert.equal(await evaluate(`document.querySelector('[data-course-next-info]').disabled`),true);
+    assert.equal(await evaluate(`document.querySelector('[data-thumbnail-preview]').src.startsWith('blob:')`),true);
+    await evaluate(`document.querySelector('[data-image-upload] > div').dispatchEvent(new DragEvent('drop',{bubbles:true,dataTransfer:new DataTransfer()}))`);
+    await until(()=>evaluate(`document.querySelector('[data-image-upload]').dataset.uploadPhase==='success'`),"Empty drop must preserve active upload");
+    checks++;
+    await chooseThumbnail();
+    await until(()=>evaluate(`document.querySelector('[data-image-upload]').dataset.uploadPhase==='uploading'`),"Cancelable upload in progress");
+    await evaluate(`document.querySelector('[data-thumbnail-cancel]').click()`);
+    await until(()=>evaluate(`document.querySelector('[data-image-upload]').dataset.uploadPhase==='idle'`),"Cancel restores previous artwork");
+    state.thumbnailDelay=0;state.thumbnailFailure=true;
+    await chooseThumbnail();
+    await until(()=>evaluate(`document.querySelector('[data-image-upload]').dataset.uploadPhase==='error'`),"Provider failure feedback");
+    assert.equal(await evaluate(`document.querySelector('[data-course-next-info]').disabled`),true);
+    state.thumbnailFailure=false;
+    await evaluate(`document.querySelector('[data-thumbnail-retry]').click()`);
+    await until(()=>evaluate(`document.querySelector('[data-image-upload]').dataset.uploadPhase==='success'`),"Upload retry acknowledged");
+    const accepted=await evaluate(`document.querySelector('[data-thumbnail-preview]').src`);
+    state.thumbnailDelay=500;await chooseThumbnail("old.png");
+    await until(()=>evaluate(`document.querySelector('[data-image-upload]').dataset.uploadPhase==='uploading'`),"Replacement uploading");
+    await evaluate(`document.querySelector('[data-thumbnail-cancel]').click()`);
+    assert.equal(await evaluate(`document.querySelector('[data-thumbnail-preview]').src`),accepted);
+    state.thumbnailDelay=0;
+    await chooseThumbnail("dropped.png","image/png",true);
+    await until(()=>evaluate(`document.querySelector('[data-image-upload]').dataset.uploadPhase==='success'`),"Drop accepted");
+    await evaluate(`document.querySelector('[data-thumbnail-remove]').click()`);
+    assert.equal(await evaluate(`!!document.querySelector('[data-thumbnail-preview]')`),false);
+    checks+=10;
     // A committed create with a lost response cannot become a second draft after editing its slug.
     await seed("ADMIN", "en");
     await go("/admin/courses/new");
@@ -258,10 +298,14 @@ export async function checkAdminCourseManagement({
           );
           checks++;
           await set("course-slug", slug);
-          await set(
-            "course-thumbnailUrl",
-            "https://images.example.test/course.jpg",
-          );
+          state.thumbnailDelay=700;
+          await chooseThumbnail();
+          await until(()=>evaluate(`document.querySelector('[data-thumbnail-preview]')?.naturalWidth>0 && document.querySelector('[data-image-upload]').dataset.uploadPhase==='uploading'`),"Local thumbnail preview loaded");
+          await evaluate(`document.fonts.ready`);
+          await shot(`admin-course-thumbnail-${role}-${locale}-${width}.png`);
+          state.thumbnailDelay=0;
+          await until(()=>evaluate(`document.querySelector('[data-image-upload]').dataset.uploadPhase==='success'`),"Course thumbnail uploaded");
+          checks++;
           if (role === "ADMIN" && locale === "en" && width === 320) {
             state.createFailure = true;
             await evaluate(

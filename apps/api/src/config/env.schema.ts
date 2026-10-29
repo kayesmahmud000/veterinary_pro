@@ -1,8 +1,17 @@
 import { z } from "zod";
-import { recoveryBoolean, recoveryProxyCidrs, validateRecoveryConfig } from "./account-recovery.config";
+import {
+  thumbnailConfigFields,
+  validateThumbnailConfig,
+} from "./course-thumbnails.config";
+import {
+  recoveryBoolean,
+  recoveryProxyCidrs,
+  validateRecoveryConfig,
+} from "./account-recovery.config";
 
 export const EnvSchema = z
   .object({
+    ...thumbnailConfigFields,
     NODE_ENV: z
       .enum(["development", "staging", "production", "test"])
       .default("development"),
@@ -89,6 +98,7 @@ export const EnvSchema = z
   .superRefine((data, ctx) => {
     // Recovery checks must precede the legacy serverless integration bypass.
     validateRecoveryConfig(data, ctx);
+    validateThumbnailConfig(data, ctx);
     // Skip strict Stripe and AWS validation on Vercel unless explicitly requested
     const isVercel =
       Boolean(process.env["VERCEL"]) ||

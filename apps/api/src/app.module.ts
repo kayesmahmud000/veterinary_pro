@@ -1,3 +1,4 @@
+import { CourseThumbnailsModule } from "./modules/course-thumbnails/course-thumbnails.module";
 import { CoursesModule } from "./modules/courses/courses.module";
 import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
@@ -67,6 +68,7 @@ import { AdministrationModule } from "./modules/administration/administration.mo
     ConsultationsModule,
     ProductsModule,
     CoursesModule,
+    CourseThumbnailsModule,
     MediaModule,
     IdempotencyModule,
     OrdersModule,

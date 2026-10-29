@@ -31,8 +31,8 @@ const copy = {
     "ভবিষ্যৎ ছাড়ের মূল্য (ঐচ্ছিক)",
   ],
   thumbnail: [
-    "Public thumbnail URL (optional)",
-    "পাবলিক থাম্বনেইলের URL (ঐচ্ছিক)",
+    "Course thumbnail (optional)",
+    "কোর্সের থাম্বনেইল (ঐচ্ছিক)",
   ],
   thumbnailHint: [
     "Use a public HTTPS image. Leave empty to use a public demo thumbnail or the course fallback.",
