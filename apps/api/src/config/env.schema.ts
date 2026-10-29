@@ -23,6 +23,7 @@ export const EnvSchema = z
       .string()
       .url("DATABASE_REPLICA_URL must be a valid connection URL")
       .optional(),
+    REDIS_ENABLED: z.union([z.boolean(), z.enum(["true", "false"]).transform(value => value === "true")]).default(true),
     REDIS_URL: z
       .string()
       .url("REDIS_URL must be a valid Redis connection URL")

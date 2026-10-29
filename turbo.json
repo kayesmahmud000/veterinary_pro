@@ -4,6 +4,7 @@
   "globalEnv": [
     "DATABASE_URL",
     "REDIS_URL",
+    "REDIS_ENABLED",
     "NODE_ENV",
     "PORT",
     "CORS_ORIGINS",

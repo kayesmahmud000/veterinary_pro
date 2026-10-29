@@ -22,3 +22,11 @@ Requires Node **20.9+** (verified locally on Node 22) and pnpm **10.18.3**. The 
 For a separately requested deployment, set the same five configuration names on the **API host**, plus its existing database/auth/Redis settings. Set the web's `API_BASE_URL` to that backend. Native sharp packaging, host request limits and deployed authentication/public delivery still need target-host acceptance. No deployment was performed in this task.
 
 See [the plan and evidence](plan.md) and [acceptance specification](spec.md).
+
+## Upload returns 503
+
+Check the failed upload response code and the API terminal's errorCode. `RATE_LIMIT_UNAVAILABLE` means the Redis-backed upload limiter could not complete; it does not establish a Cloudinary failure. A healthy Redis `PING` alone does not prove that the limiter's `EVAL` is accepted.
+
+On 2026-10-29, a real configured-provider upload/public GET succeeded while Redis rejected the limiter command with `ERR max requests limit exceeded` (500,000 allowed; 500,002 reported used). Upstash documents this as the monthly request limit being exceeded; [restore capacity through the account plan or reduce command usage](https://upstash.com/docs/redis/troubleshooting/max_requests_limit). A new application deployment or different image will not restore exhausted Redis capacity.
+
+Restore capacity on the existing Redis, or configure a deliberately selected replacement using the API's `REDIS_URL` and restart the API. Changing Redis also changes queue/idempotency/rate-limit state; it is not an automatic thumbnail-only fallback. After capacity is restored, verify an authenticated upload before saving course metadata. Keep the limiter enabled.

@@ -40,7 +40,7 @@ export class HealthController {
   > {
     const result = await this.health.check([
       () => this.prismaHealth.isHealthy("database"),
-      () => this.redisHealth.isHealthy("redis"),
+      ...(this.envService.redisEnabled === false ? [] : [() => this.redisHealth.isHealthy("redis")]),
     ]);
 
     const memoryUsage = process.memoryUsage();
@@ -51,6 +51,7 @@ export class HealthController {
         memoryUsageMb:
           Math.round((memoryUsage.heapUsed / 1024 / 1024) * 100) / 100,
         environment: this.envService.nodeEnv,
+        redisMode: this.envService.redisEnabled === false ? "memory" : "redis",
         timestamp: new Date().toISOString(),
       },
     };
@@ -80,10 +81,11 @@ export class HealthController {
     description: "Not ready to accept traffic",
   })
   @ResponseMessage("Service is ready to accept traffic")
-  async checkReadiness(): Promise<HealthCheckResult> {
-    return this.health.check([
+  async checkReadiness(): Promise<HealthCheckResult & { system: { redisMode: string } }> {
+    const result = await this.health.check([
       () => this.prismaHealth.isHealthy("database"),
-      () => this.redisHealth.isHealthy("redis"),
+      ...(this.envService.redisEnabled === false ? [] : [() => this.redisHealth.isHealthy("redis")]),
     ]);
+    return { ...result, system: { redisMode: this.envService.redisEnabled === false ? "memory" : "redis" } };
   }
 }

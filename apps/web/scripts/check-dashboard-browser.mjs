@@ -393,6 +393,8 @@ try {
     process.env.CHROME_PATH || "/usr/bin/google-chrome",
     [
       "--headless=new",
+      // Headless Linux may report no pointer; begin with an actual desktop input profile.
+      "--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4",
       ...(process.env.CHROME_NO_SANDBOX === "1" ? ["--no-sandbox"] : []),
       "--remote-debugging-port=9341",
       "--no-first-run",

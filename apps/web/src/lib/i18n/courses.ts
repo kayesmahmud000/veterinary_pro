@@ -1,5 +1,11 @@
 import type { Locale } from "./locale";
 const copy = {
+  enrollCourse: ["Enroll course", "কোর্সে এনরোল করুন"],
+  demoAction: ["Demo", "ডেমো"],
+  noDemo: [
+    "No public demo is available for this course yet.",
+    "এই কোর্সের পাবলিক ডেমো এখনো পাওয়া যাচ্ছে না।",
+  ],
   manageCourses: ["Manage courses", "কোর্স পরিচালনা করুন"],
   manageCourse: ["Manage this course", "এই কোর্স পরিচালনা করুন"],
   administrator: [

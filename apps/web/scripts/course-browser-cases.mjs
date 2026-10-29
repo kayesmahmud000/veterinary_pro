@@ -134,6 +134,12 @@ export function handleCourseFixture(
     send(200,{...course,slug:"গরুর-স্বাস্থ্য",title:"Bangla slug course"});
     return true;
   }
+  if (["courses/slug/synthetic-no-demo-course","courses/slug/synthetic-long-course"].includes(route)) {
+    const noDemo=route.endsWith("synthetic-no-demo-course");
+    const lessons=noDemo ? course.lessons.filter(item=>item.access!=="PUBLIC_DEMO") : [...course.lessons,...Array.from({length:22},(_,index)=>({...course.lessons[0],id:`cc0e8400-e29b-41d4-a716-${String(index+100).padStart(12,"0")}`,title:`Additional learning lesson ${index+4}`,position:index+4}))];
+    send(200,{...course,slug:route.split("/").at(-1),title:noDemo?"Course without a demo":"Course with many lessons",lessonCount:lessons.length,demoCount:noDemo?0:1,lessons});
+    return true;
+  }
   if (route.startsWith("courses/slug/")) {
     const found = catalog.find((item) => item.slug === route.split("/").at(-1));
     send(found ? 200 : 404, found ?? null);
@@ -153,7 +159,8 @@ export function handleCourseFixture(
     return true;
   }
   if (route === `me/courses/${id}`) {
-    send(200, { ...course, enrollment: memberships.get(actorId) ?? null });
+    const reply=()=>send(200, { ...course, enrollment: memberships.get(actorId) ?? null });
+    if(fixture.slowMembership)setTimeout(reply,2000);else reply();
     return true;
   }
   if (route === `me/courses/${id}/enrollment` && method === "POST") {
@@ -420,8 +427,30 @@ export async function checkLearnerCourses({
       "Learner routes do not mount dashboard sidebar",
     );
     checks++;
-    for (const locale of ["bn", "en"])
-      for (const width of [320, 768, 1440]) {
+    await go("/courses/synthetic-no-demo-course");
+    await until(()=>evaluate(`!!document.querySelector('[data-course-demo-toggle]')`),"Course with no public demo");
+    assert.equal(await evaluate(`document.querySelector('[data-course-demo-toggle]').disabled`),true);
+    assert.equal(await evaluate(`!!document.querySelector('[data-youtube-player]')`),false);
+    checks+=2;
+    await go("/courses/synthetic-long-course");
+    await until(()=>evaluate(`document.querySelectorAll('[data-course-outline] li').length===25`),"Long lesson list");
+    assert.equal(await evaluate(`(()=>{const list=document.querySelector('[data-course-outline] ol');return list.scrollHeight>list.clientHeight && list.clientHeight<=514;})()`),true,"Long lesson list scrolls inside a bounded panel");
+    checks++;
+    fixture.slowMembership=true;
+    await go(`/courses/${course.slug}`);
+    await until(()=>evaluate(`!!document.querySelector('[data-course-demo-toggle]') && !document.querySelector('[data-course-enroll]')`),"Demo available during membership lookup");
+    await evaluate(`document.querySelector('[data-course-demo-toggle]').click()`);
+    await until(()=>evaluate(`!!document.querySelector('[data-course-media] [data-youtube-player]')`),"Demo plays while membership loads");
+    await until(()=>evaluate(`!!document.querySelector('[data-course-enroll]')`),"Membership lookup settles and action subtree changes");
+    fixture.slowMembership=false;
+    await evaluate(`document.querySelector('[data-course-close-demo]').click()`);
+    await until(()=>evaluate(`!document.querySelector('[data-youtube-player]')`),"Demo closed after membership lookup");
+    assert.equal(await evaluate(`document.activeElement===document.querySelector('[data-course-demo-toggle]')`),true,"Close restores the connected Demo control after membership lookup");
+    checks+=2;
+    // Run mouse viewports before touch: disabling CDP touch emulation does not restore
+    // the headless browser's initial mouse media profile.
+    for (const width of [1440, 768, 320])
+      for (const locale of ["bn", "en"]) {
         memberships.clear();
         await seed("LEARNER", locale);
         await call("Network.deleteCookies", {
@@ -438,6 +467,7 @@ export async function checkLearnerCourses({
           deviceScaleFactor: 1,
           mobile: width < 600,
         });
+        if(width<600)await call("Emulation.setTouchEmulationEnabled",{enabled:true});
         await go("/courses");
         await until(
           () => evaluate(`!!document.querySelector('[data-course-card]')`),
@@ -530,6 +560,45 @@ export async function checkLearnerCourses({
           true,
           "Restricted lessons have an actionable control",
         );
+        assert.equal(await evaluate(`!!document.querySelector('[data-course-media]') && !!document.querySelector('[data-course-outline]') && !!document.querySelector('[data-course-about]')`),true,"Media, right lessons and About have dedicated layout regions");
+        assert.equal(await evaluate(`(()=>{const media=document.querySelector('[data-course-media]').getBoundingClientRect(),outline=document.querySelector('[data-course-outline]').getBoundingClientRect(),about=document.querySelector('[data-course-about]').getBoundingClientRect(),art=document.querySelector('[data-course-media] [data-course-artwork]').getBoundingClientRect(),enroll=document.querySelector('[data-course-media] [data-course-enroll]').getBoundingClientRect(),demo=document.querySelector('[data-course-demo-toggle]').getBoundingClientRect();return enroll.top>=art.top && enroll.bottom<=art.bottom && demo.top>=art.top && demo.bottom<=art.bottom && Math.abs((enroll.left+demo.right)/2-(art.left+art.right)/2)<4 && Math.abs((enroll.top+enroll.bottom)/2-(art.top+art.bottom)/2)<90 && about.top>=Math.max(media.bottom,outline.bottom) && (innerWidth>=1024 ? outline.left>=media.right && Math.abs(outline.top-media.top)<3 : outline.top>=media.bottom);})()`),true,"Enrollment/Demo overlay the middle of artwork; desktop lessons are right, mobile lessons follow; About is underneath both");
+        assert.equal(await evaluate(`document.querySelectorAll('[data-course-outline] [data-locked-lesson]').length`),2);
+        await evaluate(`document.activeElement?.blur();document.querySelector('[data-course-media]').scrollIntoView({block:'center'});`);
+        await call("Input.dispatchMouseEvent",{type:"mouseMoved",x:0,y:0});
+        const hoverCapable=await evaluate(`matchMedia('(hover:hover)').matches`);
+        assert.equal(hoverCapable,width>=600,"Desktop mouse and mobile touch input modes are exercised");
+        await until(()=>evaluate(`Number(getComputedStyle(document.querySelector('[data-course-thumbnail-overlay]')).opacity)===${hoverCapable?0:1}`),"Overlay hidden for mouse; visible without hover");
+        await evaluate(`document.querySelector('[data-course-enroll]').focus()`);
+        await until(()=>evaluate(`Number(getComputedStyle(document.querySelector('[data-course-thumbnail-overlay]')).opacity)===1`),"Keyboard focus reveals thumbnail actions");
+        await evaluate(`document.activeElement.blur()`);
+        const mediaCenter=await evaluate(`(()=>{const r=document.querySelector('[data-course-artwork]').getBoundingClientRect();return {x:(r.left+r.right)/2,y:(r.top+r.bottom)/2};})()`);
+        await call("Input.dispatchMouseEvent",{type:"mouseMoved",...mediaCenter});
+        await until(()=>evaluate(`Number(getComputedStyle(document.querySelector('[data-course-thumbnail-overlay]')).opacity)===1`),"Mouse hover reveals thumbnail actions");
+        checks+=4;
+        await evaluate(`document.fonts.ready`);
+        await until(()=>evaluate(`document.querySelector('[data-course-media] img')?.complete && document.querySelector('[data-course-media] img')?.naturalWidth>0`),"Thumbnail loaded before screenshot");
+        const detailShot=await call("Page.captureScreenshot",{format:"png",captureBeyondViewport:true});
+        await writeFile(path.join(temp,`course-detail-layout-${locale}-${width}.png`),Buffer.from(detailShot.data,"base64"));
+        assert.equal(await evaluate(`document.documentElement.scrollWidth<=innerWidth+1`),true,"Thumbnail overlay stays inside the viewport");
+        checks++;
+        await evaluate(`document.querySelector('[data-course-demo-toggle]').scrollIntoView({block:'center',behavior:'instant'})`);
+        const demoBounds=await evaluate(`(()=>{const r=document.querySelector('[data-course-demo-toggle]').getBoundingClientRect();return {x:(r.left+r.right)/2,y:(r.top+r.bottom)/2};})()`);
+        if(width<600){
+          await call("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[demoBounds]});
+          await call("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});
+        }else{
+          await call("Input.dispatchMouseEvent",{type:"mousePressed",...demoBounds,button:"left",clickCount:1});
+          await call("Input.dispatchMouseEvent",{type:"mouseReleased",...demoBounds,button:"left",clickCount:1});
+        }
+        await until(()=>evaluate(`!!document.querySelector('[data-course-media] [data-youtube-player]')`),"Top Demo opens in media panel by real pointer/touch input");
+        assert.equal(await evaluate(`document.querySelector('[data-course-thumbnail]').hidden`),true,"Thumbnail overlay is hidden during demo playback");
+        checks++;
+        assert.equal(await evaluate(`document.querySelectorAll('[data-youtube-player]').length`),1);
+        await evaluate(`document.querySelector('[data-course-close-demo]').click()`);
+        await until(()=>evaluate(`!document.querySelector('[data-youtube-player]') && !!document.querySelector('[data-course-media] [data-course-artwork]')`),"Close demo restores thumbnail");
+        assert.equal(await evaluate(`document.activeElement===document.querySelector('[data-course-demo-toggle]')`),true,"Demo close returns focus to its top trigger");
+        checks+=5;
+
         checks++;
         assert.equal(
           await evaluate(`document.body.innerHTML.includes('MainVid_001')`),
@@ -690,6 +759,11 @@ export async function checkLearnerCourses({
           path.join(temp, `course-watch-${locale}-${width}.png`),
           Buffer.from(shot.data, "base64"),
         );
+        await go(`/courses/${course.slug}`);
+        await until(()=>evaluate(`!!document.querySelector('[data-course-enrollment] a[href="/account/courses/${id}/lessons/${mainId}"]')`),"Public details recognizes existing enrollment");
+        assert.equal(await evaluate(`!!document.querySelector('[data-course-enroll]')`),false,"Existing membership shows Continue, not a second enrollment");
+        assert.equal(await evaluate(`document.querySelectorAll('[data-course-outline] a[href*="/lessons/"]').length`),3,"Enrolled outline opens lessons");
+        checks+=2;
         await go("/account/courses");
         await until(
           () =>

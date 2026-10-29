@@ -1,0 +1,11 @@
+# Public course details layout
+
+User request, revised 2026-10-29: on public course details, use the thumbnail as a background and show **Enroll course** and **Demo** in its middle on hover, replacing the former buttons above the thumbnail. Keep the right-hand lesson list with its unlock/access actions, and **About this course** below both columns.
+
+- Desktop (1024px+): left media/action panel and right lesson panel. Mobile/tablet stack media, lessons, then About; keep the existing centered w-11/12 container and bilingual styling.
+- Mouse: hide the thumbnail action overlay until hovered. Keyboard focus anywhere in its controls reveals it; no-hover/touch devices keep it visible. Center the action panel over the background, with readable account/selection/error information and room for long content. Respect reduced motion. Hide the thumbnail overlay during demo playback and restore it and focus after closing.
+- Enroll invokes the existing explicit authenticated enrollment/login flow, retaining the chosen locked lesson, signed-in account context, busy/error/retry and idempotency behavior. Do not enroll on view/login or change API/access rules. Existing members get Continue; administrators get Manage rather than student enrollment.
+- Demo opens the first PUBLIC_DEMO lesson inline in the left media panel, without autoplay or exposing restricted sources. Lesson-level demo controls also work. Only one player is mounted; close restores artwork/focus to its trigger. With no public demo, show the Demo button disabled with a localized explanation.
+- Right panel lists all lessons, numbering and locked/demo/available states, using the existing real unlock/demo/open/manage actions. A long list scrolls inside a bounded panel. Selecting a locked lesson focuses and names it at the enrollment action area, preserving the exact auth return route.
+- About follows the complete media/lesson grid. Keep real title/counts/description and image/loading/error fallbacks; invent no durations, ratings or instructors.
+- Use existing Tailwind/Button/Lucide foundations, accessible labels/focus, Bangla and English. No API/database/dependency changes, Git writes, deployment or live enrollment/provider writes.

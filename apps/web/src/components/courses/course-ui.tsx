@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { type Course, courseEnrollmentSchema } from "@vetralink/shared-types";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -9,6 +9,7 @@ import { workspaceRequest } from "@/lib/workspace/client";
 import { getCourseMessages } from "@/lib/i18n/courses";
 import { Button, buttonVariants } from "@/components/ui/button";
 import styles from "./course.styles";
+import { cn } from "@/lib/ui/cn";
 
 export function CourseLoading({ cards = false }: { cards?: boolean }) {
   const t = getCourseMessages(useAuth().locale);
@@ -72,11 +73,17 @@ export function EnrollmentButton({
   enrolled,
   lessonId,
   afterEnroll,
+  compact = false,
+  secondaryAction,
+  buttonLabel,
 }: {
   course: Course;
   enrolled: boolean;
   lessonId?: string;
   afterEnroll?: () => void;
+  compact?: boolean;
+  secondaryAction?: ReactNode;
+  buttonLabel?: string;
 }) {
   const auth = useAuth(),
     t = getCourseMessages(auth.locale),
@@ -123,46 +130,75 @@ export function EnrollmentButton({
       else router.push(destination);
     } else setCode(result.code ?? "UNAVAILABLE");
   }
-  return (
-    <div className="space-y-4" data-course-enrollment>
-      {!(enrolled || saved) && (
-        <>
-          {auth.user ? (
-            <div className="rounded-xl bg-paper p-4">
-              <p className="mb-2 text-sm font-semibold">
-                {t.enrollmentAccount}
-              </p>
-              <strong className="block break-words">{auth.user.name}</strong>
-              <span className="block break-all text-sm text-muted">
-                {auth.user.email}
-              </span>
-              <p className="mb-0 mt-2 text-sm">{t.enrollmentInfo}</p>
-            </div>
-          ) : (
-            <p>{t.enrollmentSignIn}</p>
-          )}
-        </>
-      )}
-      {enrolled || saved ? (
-        <Link className={buttonVariants()} href={destination}>
-          {t.continue}
-        </Link>
+  const account =
+    !(enrolled || saved) &&
+    (auth.user ? (
+      compact ? (
+        <p className="m-0 break-words text-sm text-muted">
+          {t.enrollmentAccount}:{" "}
+          <strong className="text-ink">{auth.user.name}</strong>{" "}
+          <span className="break-all">({auth.user.email})</span>
+        </p>
       ) : (
-        <Button
-          data-course-enroll
-          disabled={auth.checking || !!auth.error || busy}
-          onClick={() => void enroll()}
-        >
-          {busy && (
-            <Loader2
-              size={18}
-              className="motion-safe:animate-spin"
-              aria-hidden="true"
-            />
-          )}
-          {busy ? t.enrolling : t.enroll}
-        </Button>
+        <div className="rounded-xl bg-paper p-4">
+          <p className="mb-2 text-sm font-semibold">{t.enrollmentAccount}</p>
+          <strong className="block break-words">{auth.user.name}</strong>
+          <span className="block break-all text-sm text-muted">
+            {auth.user.email}
+          </span>
+          <p className="mb-0 mt-2 text-sm">{t.enrollmentInfo}</p>
+        </div>
+      )
+    ) : (
+      <p className={compact ? "m-0 text-sm text-muted" : undefined}>
+        {t.enrollmentSignIn}
+      </p>
+    ));
+  const action =
+    enrolled || saved ? (
+      <Link
+        className={cn(
+          buttonVariants(),
+          compact && "w-full min-w-0 whitespace-normal px-3",
+        )}
+        href={destination}
+      >
+        {t.continue}
+      </Link>
+    ) : (
+      <Button
+        data-course-enroll
+        disabled={auth.checking || !!auth.error || busy}
+        className={
+          compact ? "w-full min-w-0 whitespace-normal px-3" : undefined
+        }
+        onClick={() => void enroll()}
+      >
+        {busy && (
+          <Loader2
+            size={18}
+            className="motion-safe:animate-spin"
+            aria-hidden="true"
+          />
+        )}
+        {busy ? t.enrolling : (buttonLabel ?? t.enroll)}
+      </Button>
+    );
+  return (
+    <div
+      className={compact ? "min-w-0 space-y-3" : "space-y-4"}
+      data-course-enrollment
+    >
+      {!compact && account}
+      {compact ? (
+        <div className="grid grid-cols-2 gap-3">
+          {action}
+          {secondaryAction}
+        </div>
+      ) : (
+        action
       )}
+      {compact && account}
       {saved && <p role="status">{t.saved}</p>}
       {code && <p role="alert">{t.enrollmentError}</p>}
       {auth.error && (
@@ -173,7 +209,7 @@ export function EnrollmentButton({
           </Button>
         </div>
       )}
-      <p className="mb-0 text-sm text-muted">{t.noPayment}</p>
+      {!compact && <p className="mb-0 text-sm text-muted">{t.noPayment}</p>}
     </div>
   );
 }

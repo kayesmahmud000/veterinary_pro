@@ -71,6 +71,16 @@ describe("HealthController (health.controller.ts)", () => {
     controller = module.get<HealthController>(HealthController);
   });
 
+  it("skips disabled Redis for health/readiness while retaining database probes", async () => {
+    Object.assign(envService, { redisEnabled: false });
+    const health = await controller.check();
+    const readiness = await controller.checkReadiness();
+    expect(health.system.redisMode).toBe("memory");
+    expect(readiness).toMatchObject({ system: { redisMode: "memory" } });
+    expect(health.info).toEqual({ database: {status:"up", latencyMs:2} });
+    expect(prismaHealth.isHealthy).toHaveBeenCalledTimes(2);
+    expect(redisHealth.isHealthy).not.toHaveBeenCalled();
+  });
   it("should be defined", () => {
     expect(controller).toBeDefined();
   });

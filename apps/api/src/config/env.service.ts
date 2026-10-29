@@ -18,6 +18,7 @@ export interface IEnvService {
   readonly isTest: boolean;
   readonly databaseUrl: string;
   readonly databaseReplicaUrl?: string;
+  readonly redisEnabled: boolean;
   readonly redisUrl: string;
   readonly jwtAccessSecret: string;
   readonly jwtRefreshSecret: string;
@@ -118,6 +119,10 @@ export class EnvService implements IEnvService {
 
   get databaseReplicaUrl(): string | undefined {
     return this.configService.get("DATABASE_REPLICA_URL", { infer: true });
+  }
+
+  get redisEnabled(): boolean {
+    return this.configService.get("REDIS_ENABLED", { infer: true });
   }
 
   get redisUrl(): string {
