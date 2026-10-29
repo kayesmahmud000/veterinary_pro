@@ -54,7 +54,7 @@ export function CoursePlayer({
         {t.backLibrary}
       </Link>
       <header>
-        <Link href={`/courses/${course.slug}`} className={styles.link}>
+        <Link href={`/courses/${encodeURIComponent(course.slug)}`} className={styles.link}>
           {t.back}
         </Link>
         <h1 className={`${styles.heading} mt-3`}>{course.title}</h1>

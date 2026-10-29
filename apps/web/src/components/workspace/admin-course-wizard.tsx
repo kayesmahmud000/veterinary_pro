@@ -14,6 +14,7 @@ import {
   adminProductCreateSchema,
   adminProductEditSchema,
   adminCurriculumSchema,
+  generateCourseSlug,
   type AdminProduct,
   type AdminCurriculum,
 } from "@vetralink/shared-types";
@@ -59,6 +60,9 @@ function Wizard({
     [curriculum, setCurriculum] = useState(initialCurriculum),
     [values, setValues] = useState(() => information(initial)),
     [savedInfo, setSavedInfo] = useState(() => information(initial)),
+    [slugCustomized, setSlugCustomized] = useState(
+      () => !!initial && initial.slug !== generateCourseSlug(initial.title),
+    ),
     [step, setStep] = useState(1),
     [busy, setBusy] = useState(false),
     [code, setCode] = useState(""),
@@ -104,12 +108,23 @@ function Wizard({
   );
   useUnsavedChanges(dirty, t.discardInfo, () => {
     setValues(savedInfo);
+    setSlugCustomized(
+      !!savedInfo.slug &&
+        savedInfo.slug !== generateCourseSlug(savedInfo.title),
+    );
     setEditorRevision((v) => v + 1);
     setLessonState({ dirty: false, busy: false });
   });
   const change = (key: keyof typeof values, value: string) => {
     if (key === "slug" && !product && submittedSlug) return;
-    setValues((v) => ({ ...v, [key]: value }));
+    if (key === "slug") setSlugCustomized(!!value.trim());
+    setValues((v) => ({
+      ...v,
+      [key]: value,
+      ...(key === "title" && !slugCustomized && (product || !submittedSlug)
+        ? { slug: value.trim() ? generateCourseSlug(value) : "" }
+        : {}),
+    }));
     if (!pendingCreateSlug) setCode("");
     setIssues({});
     setNotice("");
@@ -126,7 +141,10 @@ function Wizard({
       return;
     const fields = {
       title: values.title,
-      slug: !product && submittedSlug ? submittedSlug : values.slug,
+      slug:
+        !product && submittedSlug
+          ? submittedSlug
+          : generateCourseSlug(values.title, values.slug),
       description: values.description,
       thumbnailUrl: values.thumbnailUrl.trim() || null,
       priceCents: values.mode === "FREE" ? 0 : Number(values.priceCents),
@@ -178,6 +196,7 @@ function Wizard({
       return;
     }
     running.current = true;
+    setValues((current) => ({ ...current, slug: fields.slug }));
     if (!product) setSubmittedSlug(fields.slug.trim());
     setBusy(true);
     setCode("");
@@ -281,6 +300,7 @@ function Wizard({
     setProduct(info.data);
     setCurriculum(lessons.data);
     setValues(information(info.data));
+    setSlugCustomized(info.data.slug !== generateCourseSlug(info.data.title));
     setSavedInfo(information(info.data));
     setEditorRevision((v) => v + 1);
     setLessonState({ dirty: false, busy: false });
@@ -422,14 +442,15 @@ function Wizard({
               <Field
                 key={key}
                 name={`course-${key}`}
-                label={common[key]}
+                label={key === "slug" ? t.slug : common[key]}
+                hint={key === "slug" ? t.slugHint : undefined}
                 error={issues[key]}
               >
                 <input
                   id={`course-${key}`}
                   readOnly={key === "slug" && !product && !!submittedSlug}
-                  required
-                  minLength={3}
+                  required={key === "title"}
+                  minLength={key === "title" ? 3 : undefined}
                   maxLength={key === "title" ? 255 : 200}
                   value={values[key]}
                   aria-invalid={!!issues[key]}

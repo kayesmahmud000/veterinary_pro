@@ -1,5 +1,10 @@
 import type { Locale } from "./locale";
 const copy = {
+  slug: ["Slug (optional)", "স্লাগ (ঐচ্ছিক)"],
+  slugHint: [
+    "Generated from the title. You can edit it, or leave it empty to use the title.",
+    "শিরোনাম থেকে তৈরি হয়। নিজে বদলাতে পারেন, অথবা খালি রাখলে শিরোনাম থেকে তৈরি হবে।",
+  ],
   course: ["Course", "কোর্স"],
   actions: ["Actions", "কার্যক্রম"],
   addNew: ["Add new course", "নতুন কোর্স যোগ করুন"],
@@ -30,10 +35,7 @@ const copy = {
     "Future discount price (optional)",
     "ভবিষ্যৎ ছাড়ের মূল্য (ঐচ্ছিক)",
   ],
-  thumbnail: [
-    "Course thumbnail (optional)",
-    "কোর্সের থাম্বনেইল (ঐচ্ছিক)",
-  ],
+  thumbnail: ["Course thumbnail (optional)", "কোর্সের থাম্বনেইল (ঐচ্ছিক)"],
   thumbnailHint: [
     "Use a public HTTPS image. Leave empty to use a public demo thumbnail or the course fallback.",
     "পাবলিক HTTPS ছবির লিংক দিন। খালি রাখলে পাবলিক ডেমোর ছবি বা কোর্সের বিকল্প নকশা দেখা যাবে।",

@@ -66,6 +66,48 @@ export async function checkAdminCourseManagement({
     await writeFile(path.join(temp, name), Buffer.from(s.data, "base64"));
   };
   try {
+    // The slug remains editable, defaults from title, and is optional at save.
+    await seed("ADMIN","en");
+    await go("/admin/courses/new");
+    await until(()=>evaluate(`!!document.getElementById('course-title')`),"Automatic slug form");
+    await set("course-title","Discard this automatic title");
+    await evaluate(`window.confirm=()=>true;document.querySelector('form[data-locale-switcher] button[value=bn]').click()`);
+    await until(()=>evaluate(`document.documentElement.lang==='bn' && document.getElementById('course-title')?.value===''`),"Locale discard resets new course");
+    await set("course-title","গরুর স্বাস্থ্য পরিচর্যা");
+    assert.equal(await evaluate(`document.getElementById('course-slug').value`),"গরুর-স্বাস্থ্য-পরিচর্যা");
+    await set("course-title","Automatic Care & Health");
+    assert.equal(await evaluate(`document.getElementById('course-slug').value`),"automatic-care-health");
+    await set("course-slug","MY custom path!");
+    await set("course-title","Automatic course from title");
+    assert.equal(await evaluate(`document.getElementById('course-slug').value`),"MY custom path!");
+    assert.deepEqual(await evaluate(`(()=>{const e=document.getElementById('course-slug');return [e.required,e.hasAttribute('pattern'),e.hasAttribute('minlength')];})()`),[false,false,false]);
+    await set("course-slug","");
+    await set("course-description","Automatically generated course slug without a required slug field.");
+    assert.equal(await evaluate(`document.querySelector('[data-admin-course-form]').checkValidity()`),true);
+    await evaluate(`document.querySelector('[data-admin-course-form]').requestSubmit()`);
+    await until(()=>evaluate(`!!document.querySelector('[data-course-editor]')`),"Title-only slug save");
+    const automatic=[...products.values()].find(p=>p.title==="Automatic course from title");
+    assert.equal(automatic.slug,"automatic-course-from-title");
+    await go(`/admin/courses/${automatic.id}`);
+    await until(()=>evaluate(`document.getElementById('course-title')?.value==='Automatic course from title'`),"Automatic slug edit form");
+    await set("course-title","Renamed automatic course");
+    assert.equal(await evaluate(`document.getElementById('course-slug').value`),"renamed-automatic-course");
+    await set("course-slug","a");
+    await set("course-title","Renamed manual course");
+    assert.equal(await evaluate(`document.getElementById('course-slug').value`),"a");
+    await evaluate(`document.querySelector('[data-admin-course-form]').requestSubmit()`);
+    await until(()=>evaluate(`document.querySelector('[data-admin-course-form]').hidden`),"Short manual slug saved");
+    assert.equal(products.get(automatic.id).slug,"a");
+    await go(`/admin/courses/${automatic.id}`);
+    await until(()=>evaluate(`document.getElementById('course-slug')?.value==='a'`),"Custom slug reload");
+    await set("course-title","Keep custom URL on edit");
+    assert.equal(await evaluate(`document.getElementById('course-slug').value`),"a");
+    await evaluate(`document.querySelector('[data-admin-course-form]').requestSubmit()`);
+    await until(()=>evaluate(`document.querySelector('[data-admin-course-form]').hidden`),"Custom URL saved after title edit");
+    assert.equal(products.get(automatic.id).slug,"a");
+    await go(`/courses/${encodeURIComponent("গরুর-স্বাস্থ্য")}`);
+    await until(()=>evaluate(`document.querySelector('h1')?.textContent.includes('Bangla slug course')`),"Public Unicode slug page");
+    checks+=13;
     // Real browser file/drop/progress/cancel/retry behavior against a controlled upload provider.
     await seed("ADMIN", "en");
     await go("/admin/courses/new");
@@ -281,7 +323,8 @@ export async function checkAdminCourseManagement({
           const slug = `wizard-${role.toLowerCase().replaceAll("_", "-")}-${locale}-${width}`,
             title = `Course ${role} ${locale} ${width}`;
           await set("course-title", title);
-          await set("course-slug", "Invalid Slug");
+          assert.equal(await evaluate(`document.getElementById('course-slug').value`),title.toLowerCase().replace(/[^a-z0-9]+/g,"-"));
+          await set("course-title", "");
           await set(
             "course-description",
             "A practical course description for complete course management.",
@@ -292,11 +335,12 @@ export async function checkAdminCourseManagement({
           await until(
             () =>
               evaluate(
-                `!!document.querySelector('[data-admin-course-form] [aria-invalid=true]')`,
+                `document.getElementById('course-title').validity.valueMissing`,
               ),
-            "Slug validation",
+            "Title remains required",
           );
           checks++;
+          await set("course-title", title);
           await set("course-slug", slug);
           state.thumbnailDelay=700;
           await chooseThumbnail();

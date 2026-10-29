@@ -95,6 +95,10 @@ describe("Admin product policy", () => {
     await service.edit(claims,id,{expectedVersion:2,title:row.title,slug:row.slug,description:row.description,priceCents:row.priceCents,discountPriceCents:null,currency:row.currency,minSubscriptionTier:row.minSubscriptionTier as any,thumbnailUrl});
     expect(repo.save).toHaveBeenCalledWith(id,expect.objectContaining({metadata:{privateNote:"preserved",adminManaged:true,courseThumbnailUrl:thumbnailUrl}}),tx);
   });
+  it.each(["a","গরুর-স্বাস্থ্য"])("keeps legacy slug requirements for non-course edits %s",async slug=>{
+    await expect(service.edit(claims,id,{expectedVersion:2,title:row.title,slug,description:row.description,priceCents:row.priceCents,discountPriceCents:null,currency:row.currency,minSubscriptionTier:row.minSubscriptionTier as any})).rejects.toThrow();
+    expect(repo.save).not.toHaveBeenCalled();
+  });
   it("soft deletes and audits through one transaction", async () => {
     await service.action(claims, id, {
       action: "DELETE",

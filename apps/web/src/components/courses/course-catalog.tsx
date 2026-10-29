@@ -161,7 +161,7 @@ export function CourseCatalog() {
                 href={
                   administrative
                     ? `/admin/courses/${course.id}`
-                    : `/courses/${course.slug}`
+                    : `/courses/${encodeURIComponent(course.slug)}`
                 }
                 action={administrative ? t.manageCourse : t.details}
                 priority={index === 0}

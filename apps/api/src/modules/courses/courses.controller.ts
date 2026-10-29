@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   Body,
   Controller,
@@ -10,11 +11,11 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
-import { z } from "zod";
 import {
   JwtPayload,
   CourseQuery,
   courseQuerySchema,
+  courseSlugSchema,
   courseLibraryQuerySchema,
 } from "@vetralink/shared-types";
 import { Public, CurrentUser } from "../../common/decorators";
@@ -33,11 +34,7 @@ export class CoursesController {
     @Param(
       "slug",
       new SchemaValidationPipe(
-        z
-          .string()
-          .min(3)
-          .max(200)
-          .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+        courseSlugSchema,
       ),
     )
     slug: string,

@@ -130,6 +130,10 @@ export function handleCourseFixture(
     else reply();
     return true;
   }
+  if (route === `courses/slug/${encodeURIComponent("গরুর-স্বাস্থ্য")}`) {
+    send(200,{...course,slug:"গরুর-স্বাস্থ্য",title:"Bangla slug course"});
+    return true;
+  }
   if (route.startsWith("courses/slug/")) {
     const found = catalog.find((item) => item.slug === route.split("/").at(-1));
     send(found ? 200 : 404, found ?? null);

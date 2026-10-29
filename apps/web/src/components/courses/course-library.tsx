@@ -43,7 +43,7 @@ function Library() {
               href={
                 course.firstLessonId
                   ? `/account/courses/${course.id}/lessons/${course.firstLessonId}`
-                  : `/courses/${course.slug}`
+                  : `/courses/${encodeURIComponent(course.slug)}`
               }
               action={t.continue}
               priority={index === 0}

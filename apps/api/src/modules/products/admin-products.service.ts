@@ -140,6 +140,9 @@ export class AdminProductsService {
     return this.transactions.run(async (tx) => {
       await this.authorize(claims, tx);
       const current = await this.locked(id, expectedVersion, tx);
+      // The edit transport has no type; enforce unchanged non-course rules after lookup.
+      if (current.type !== "VIDEO_COURSE" || current.contentProvider !== "YOUTUBE")
+        validateWorkflow(adminProductCreateSchema, { ...input, type: current.type, contentProvider: current.contentProvider });
       if (
         current.isPublished &&
         current.contentProvider === "YOUTUBE" &&

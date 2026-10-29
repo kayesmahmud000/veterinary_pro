@@ -47,3 +47,14 @@ test('admin course recovery accepts exact slugs up to the product limit without 
  assert.equal(endpoint.query.safeParse({slug,limit:'1'}).data.slug,slug);
  assert.equal(endpoint.query.safeParse({slug:'a'.repeat(201)}).success,false);
 });
+
+test('Bangla and short course slug routes retain exact identity and encode one upstream segment',async t=>{
+ const original=globalThis.fetch;t.after(()=>globalThis.fetch=original);
+ for(const slug of ['গরুর-স্বাস্থ্য','a']){
+  const endpoint=resolvePublicCourse(['slug',slug]);assert.equal(endpoint.upstream,`courses/slug/${encodeURIComponent(slug)}`);
+  const calls=[];globalThis.fetch=async(url,init)=>{calls.push(new URL(url));return Response.json({success:true,data:{...course,slug}});};
+  const response=await handleCourses(new NextRequest(`http://localhost/api/courses/slug/${encodeURIComponent(slug)}`),['slug',slug]);
+  assert.equal(response.status,200);assert.equal((await response.json()).data.slug,slug);assert.equal(calls[0].pathname,`/api/v1/courses/slug/${encodeURIComponent(slug)}`);assert.equal(calls[0].search,'');
+ }
+ for(const slug of ['../admin','foo/bar','foo?x=1','foo#bar','foo\\bar'])assert.equal(resolvePublicCourse(['slug',slug]),null);
+});

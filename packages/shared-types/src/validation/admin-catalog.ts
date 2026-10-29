@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { courseSlugSchema } from "./course-slug.js";
 import { ProductType, SubscriptionTier } from "../enums/index.js";
 import {
   ProductContentProvider,
@@ -10,15 +11,11 @@ const date = z
   .string()
   .datetime({ offset: true })
   .refine((v) => Number.isFinite(Date.parse(v)));
+const legacyProductSlugSchema=z.string().trim().min(3).max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const productFields = {
   thumbnailUrl: courseThumbnailUrlSchema.nullable().optional(),
   title: z.string().trim().min(3).max(255),
-  slug: z
-    .string()
-    .trim()
-    .min(3)
-    .max(200)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  slug: courseSlugSchema,
   description: z.string().trim().min(10).max(5000),
   priceCents: z.number().int().min(0).max(2147483647),
   discountPriceCents: z.number().int().min(0).max(2147483647).nullable(),
@@ -42,7 +39,8 @@ export const adminProductCreateSchema = z
       v.contentProvider !== ProductContentProvider.YOUTUBE ||
       v.type === ProductType.VIDEO_COURSE,
     { path: ["contentProvider"] },
-  );
+  )
+  .refine(v => (v.type === ProductType.VIDEO_COURSE && v.contentProvider === ProductContentProvider.YOUTUBE) || legacyProductSlugSchema.safeParse(v.slug).success, { path: ["slug"] });
 export const adminProductEditSchema = z
   .object({ ...productFields, expectedVersion: version })
   .strict()
