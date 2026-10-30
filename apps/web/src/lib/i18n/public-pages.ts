@@ -71,7 +71,7 @@ export const publicPagesEn = {
     services: {
       title: "What is Khamar School?",
       description:
-        "From treatment and breeding to feed, dairy farming and everyday planning, Khamar School brings the key areas of animal care and farm management together with practical learning and connected records.",
+        "From treatment and breeding to ration planning, livestock fattening and everyday planning, Khamar School brings the key areas of animal care and farm management together with practical learning and connected records.",
       items: {
         treatment: "Treatment management",
         breeding: "Breeding management",
@@ -79,8 +79,8 @@ export const publicPagesEn = {
         vaccination: "Deworming & vaccination\nmanagement",
         planning: "Farm planning",
         farm: "Farm management",
-        supplies: "Supplies management",
-        dairy: "Dairy farm management",
+        ration: "Ration management",
+        fattening: "Fattening management",
       },
     },
     missionTitle: "A clearer picture of everyday work",
@@ -227,7 +227,7 @@ export const publicPagesBn: typeof publicPagesEn = {
     services: {
       title: "খামার স্কুল কী?",
       description:
-        "চিকিৎসা ও প্রজনন থেকে শুরু করে রসদ, দুগ্ধ খামার ও দৈনন্দিন পরিকল্পনা—প্রাণীর যত্ন এবং খামার ব্যবস্থাপনার প্রয়োজনীয় বিষয়গুলোকে ব্যবহারিক শিক্ষা ও গোছানো রেকর্ডের সঙ্গে যুক্ত করে খামার স্কুল।",
+        "চিকিৎসা ও প্রজনন থেকে শুরু করে রেশন, মোটাতাজাকরণ ও দৈনন্দিন পরিকল্পনা—প্রাণীর যত্ন এবং খামার ব্যবস্থাপনার প্রয়োজনীয় বিষয়গুলোকে ব্যবহারিক শিক্ষা ও গোছানো রেকর্ডের সঙ্গে যুক্ত করে খামার স্কুল।",
       items: {
         treatment: "চিকিৎসা ব্যবস্থাপনা",
         breeding: "প্রজনন ব্যবস্থাপনা",
@@ -235,8 +235,8 @@ export const publicPagesBn: typeof publicPagesEn = {
         vaccination: "কৃমিনাশক ও টিকা\nব্যবস্থাপনা",
         planning: "খামার পরিকল্পনা",
         farm: "খামার ব্যবস্থাপনা",
-        supplies: "রসদ ব্যবস্থাপনা",
-        dairy: "দুগ্ধ খামার ব্যবস্থাপনা",
+        ration: "রেশন ব্যবস্থাপনা",
+        fattening: "ফ্যাটেনিং (মোটাতাজাকরণ)\nব্যবস্থাপনা",
       },
     },
     missionTitle: "প্রতিদিনের কাজের আরও পূর্ণ চিত্র",

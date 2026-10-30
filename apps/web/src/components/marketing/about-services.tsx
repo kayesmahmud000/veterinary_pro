@@ -1,12 +1,12 @@
 import {
+  Beef,
   ClipboardList,
   HeartPulse,
-  Milk,
-  Package,
   Sprout,
   Stethoscope,
   Syringe,
   Tractor,
+  Wheat,
 } from "lucide-react";
 import type { publicPagesEn } from "@/lib/i18n/public-pages";
 import { BrandLogo } from "@/components/brand/site-brand";
@@ -42,8 +42,8 @@ const services = [
     y: 735,
   },
   { key: "farm", Icon: Tractor, color: "text-[#a639b2]", x: 175, y: 650 },
-  { key: "supplies", Icon: Package, color: "text-[#2badd7]", x: 90, y: 400 },
-  { key: "dairy", Icon: Milk, color: "text-[#f5a32c]", x: 175, y: 165 },
+  { key: "ration", Icon: Wheat, color: "text-[#2badd7]", x: 90, y: 400 },
+  { key: "fattening", Icon: Beef, color: "text-[#f5a32c]", x: 175, y: 165 },
 ] as const;
 
 type AboutCopy = typeof publicPagesEn.about;

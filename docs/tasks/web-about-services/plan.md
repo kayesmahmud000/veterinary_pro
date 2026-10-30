@@ -61,3 +61,13 @@ Suggested follow-up commit: `fix(web): reuse site logo in about services overvie
 **Observed behavior:** styling guard passed, styling tests passed 14/14, and `pnpm --dir /tmp/web-about-logo-only-5lhv6vkf build` passed. `node /tmp/check-veterinary-about-logo-only.mjs` passed ten bilingual viewport checks at 320, 375, 768, 1440 and 1920px, verifying loaded site-logo artwork, desktop logo center (400, 400), absence of separate brand text in desktop/mobile branding, eight retained service labels and no clipping/overflow. Inspected the Bangla desktop screenshot in `/tmp/about-logo-only-browser-0CCt0N/`. Final source/diff review found no material issues.
 
 Suggested commit: `fix(web): center about logo and remove duplicate brand text`.
+
+## Follow-up: fattening and ration categories (2026-10-30)
+
+- [x] Inspect current service copy and component; identify the dairy and supplies entries.
+- [x] Rename those two categories in both languages, align introduction/icon copy, and preserve the eight-service layout.
+- [x] Run styling checks/tests, production build and bilingual narrow/desktop browser checks; review the final diff.
+
+**Observed behavior (2026-10-30):** `check:styles` passed, `test:styles` passed 14/14, `test:public-content` passed 6/6, and `pnpm --dir /tmp/web-about-ration-oy7t6lce build` passed. `node /tmp/check-veterinary-about-ration.mjs` passed all ten Bangla/English viewport combinations (320, 375, 768, 1440, 1920px), checking both new labels, absence of replaced labels within the service list, eight total services and no SVG clipping or horizontal overflow. Inspected the Bangla desktop/mobile captures at `/tmp/about-ration-browser-t2Pg3p/`. Beef and wheat icons replace the old milk/supplies icons; positions, colors and central site logo remain intact. Final scoped self-review and `git diff --check` found no material issues; no API or persistence changes.
+
+Suggested commit: `fix(web): rename about services to fattening and ration management`.

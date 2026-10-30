@@ -17,6 +17,8 @@ Follow-up requirement (2026-10-29): the central mark beside the Khamar School na
 
 Latest refinement (2026-10-29, supersedes the separate name beside the logo): show only the supplied logo in the center, because its artwork already includes the brand name. Center a 220 × 220 logo at SVG coordinates (400, 400); mobile shows the logo alone at 96 × 96. Remove the redundant rendered brand-name text and its unused translation keys; retain the explanatory section heading and all services.
 
+Service refinement (2026-10-30, supersedes the original dairy/supplies categories): replace dairy farm management with “ফ্যাটেনিং (মোটাতাজাকরণ) ব্যবস্থাপনা” / “Fattening management”, and supplies management with “রেশন ব্যবস্থাপনা” / “Ration management”. Reflect these categories in the introduction and use matching livestock/feed icons. Keep the same eight positions, colors and centered site logo. The longer Bangla fattening label wraps over two lines in the desktop SVG.
+
 ## Contracts, impact and acceptance
 
 No API, authentication, clinical workflow, persistence or dependency changes. This is informational content without booking actions. UI/UX, frontend and Code Reviewer/QA perspectives apply. Existing unrelated local changes must be preserved; Git remains human-managed.
