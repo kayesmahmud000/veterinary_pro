@@ -83,3 +83,17 @@ Scope: remove the thumbnail white panel/account copy, align lesson actions with 
 **Limits:** browser HTTP/player responses are controlled fixtures, not live enrollment persistence or actual YouTube playback/deployment. Checks use Chrome; alternate browser engines were not exercised. Existing lint-tooling limitations remain. No live writes, Git staging/commit/merge/push or deployment.
 
 Suggested commit: `feat(web): confirm course enrollment and simplify hover actions`.
+
+## Follow-up: deeper thumbnail shade — 2026-10-30
+
+User requested a darker thumbnail hover shadow. Scope: change the existing Tailwind overlay from 40% to 70% black, preserving hover/focus/touch controls. This is a visual-only adjustment with no access, API or enrollment changes.
+
+- [x] Inspect the existing overlay and update the visual requirement.
+- [x] Increase the black overlay opacity using the existing Tailwind utility.
+- [x] Verify actual browser hover rendering and button visibility; run style/build checks and review the final diff.
+
+**Observed browser verification:** `node /tmp/vetralink-deep-hover.mjs` passed against the running localhost web and its selected live backend using read-only public course data. Chrome computed the hovered background as `rgba(0, 0, 0, 0.7)`; idle hiding, keyboard reveal, visible touch controls, minimum 44px buttons and 320px horizontal sizing passed. Inspected `/tmp/vetralink-deep-hover.png`: artwork is darker and both actions remain readable. No enrollment or account writes.
+
+`pnpm --filter @vetralink/web check:styles` passed; `test:styles` passed 14 tests. Review confirmed a single utility change with existing interaction classes retained. Production build result and final checks follow.
+
+The isolated production build `API_BASE_URL=http://localhost:3411/api/v1 pnpm --filter @vetralink/web exec next build /tmp/vetralink-course-confirmation/web` passed (`/tmp/vetralink-deep-hover-build.log`). Context validation and `git diff --check` passed. Final review found no material issue in the scoped visual change; prior local-login documentation remains untouched. Suggested commit: `style(web): deepen course thumbnail hover overlay`.

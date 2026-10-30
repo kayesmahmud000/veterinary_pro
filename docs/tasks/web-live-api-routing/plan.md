@@ -87,3 +87,13 @@ Added one synthetic legacy product only to the disposable restored `adm3_test` d
 Suggested human-managed documentation commit: `docs(courses): record verified live database repair`.
 
 **Final documentation verification:** `python -X utf8 .context/scripts/validate.py` passes 48 Markdown documents / 331 local links / 95 source entries; `git diff --check` passes. Final review confirms no migration file changes, no remaining task-created database container and retention of the restricted backup. The existing `.gitignore` line-ending warning is unchanged.
+
+## Local login routing restoration — 2026-10-30
+
+The user reported `POST http://localhost:3000/api/auth/login` returning HTTP 503 `{user:null,code:unavailable}` and explicitly selected the existing live backend again. **Observed cause:** ignored `apps/web/.env.local` overrode the shipped live default with `http://localhost:3001/api/v1`; nothing listened on port 3001. A diagnostic local API startup also failed because its configured Upstash service had exceeded its request quota; that process exited. No Redis service, account, database migration or deployment was changed.
+
+**Correction:** restored only the active web `API_BASE_URL` to `https://veterinary-api-mocha.vercel.app/api/v1`, preserving other local settings. The running Next development process reloaded the configuration without a manual restart.
+
+**Observed verification:** direct live liveness returned HTTP 200. A synthetic invalid account login through the existing localhost web handler returned HTTP 401 `invalid_credentials`, replacing the prior 503; the same direct live API probe returned HTTP 401. These probes verify transport and authentication rejection, not successful authentication with a real user's credentials. No real credentials were supplied or account created. Existing auth regression suite and context/diff checks are recorded below. No application code or cookie/security behavior changed.
+
+`pnpm --filter @vetralink/web test:auth` passed (12 tests, zero failures). `python3 .context/scripts/validate.py` and `git diff --check` passed. Final review confirmed only the ignored web upstream configuration and this evidence record changed. Suggested documentation commit: `docs: record local login upstream restoration`.

@@ -135,7 +135,7 @@ export function CourseCatalog() {
           )}
         </div>
         {data.loading ? (
-          <CourseLoading cards />
+          <CourseLoading cards gridClassName={styles.catalogGrid} />
         ) : data.code ? (
           <CourseError code={data.code} retry={data.reload} />
         ) : !data.data?.items.length ? (
@@ -153,7 +153,7 @@ export function CourseCatalog() {
             )}
           </div>
         ) : (
-          <div className={styles.grid}>
+          <div className={styles.catalogGrid}>
             {data.data.items.map((course, index) => (
               <CourseCard
                 key={course.id}

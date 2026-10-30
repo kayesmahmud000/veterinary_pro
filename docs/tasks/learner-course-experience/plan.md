@@ -108,3 +108,17 @@ The task-owned PostgreSQL 18.6 cluster on loopback port 55438 was started only f
 User additionally requested a notification-description display fix without identifying a screen or symptom. The only notification-history implementation found deliberately uses safe evidence without message bodies. A concise clarification is pending; no speculative notification/body/API change was made.
 
 Suggested human-managed commit: `feat(courses): complete public discovery and focused learner experience`.
+
+## Public catalog four-column layout — 2026-10-30
+
+User requested four public course cards per desktop row. Confirmed from code: the catalog shared a one/two/three-column utility with the private library. Add a public-only `catalogGrid` (one column below 768px, two from 768px, four from 1280px) and pass it to catalog loading placeholders through the existing loading component. Private library layout, API, access and course data remain unchanged.
+
+- [x] Inspect catalog/card/loading consumers and existing layout contract.
+- [x] Implement the scoped Tailwind composition and update the requirement.
+- [x] Check actual desktop/tablet/mobile columns and rendered card sizing, styling policy, production build and final diff.
+
+**Observed browser evidence:** `node /tmp/vetralink-catalog-four.mjs` passed against the running localhost web. The browser received eight temporary render-only cards derived from one public course; no accounts/content were created. Verified computed columns and row geometry at 1440px (four), 768px (two) and 320px (one), with no horizontal overflow. Inspected `/tmp/vetralink-catalog-four-1440.png`; cards align in two rows of four with readable titles/actions. Tablet/mobile captures use the corresponding filename widths. This verifies controlled browser layout, not additional live course inventory.
+
+`pnpm --filter @vetralink/web check:styles` passed; `test:styles` passed 14 tests (`/tmp/vetralink-catalog-four-styles.log`). Source self-review confirmed only public catalog/loading classes change; default loading and private library consumers retain their original grid.
+
+The isolated production build `API_BASE_URL=http://localhost:3411/api/v1 pnpm --filter @vetralink/web exec next build /tmp/vetralink-course-confirmation/web` passed (`/tmp/vetralink-catalog-four-build.log`). Context validation and `git diff --check` passed. Final scoped self-review found no material issue. Earlier hover/login work was preserved. Suggested commit: `style(web): show four public course cards per desktop row`.

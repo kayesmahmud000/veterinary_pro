@@ -11,7 +11,13 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import styles from "./course.styles";
 import { cn } from "@/lib/ui/cn";
 
-export function CourseLoading({ cards = false }: { cards?: boolean }) {
+export function CourseLoading({
+  cards = false,
+  gridClassName = styles.grid,
+}: {
+  cards?: boolean;
+  gridClassName?: string;
+}) {
   const t = getCourseMessages(useAuth().locale);
   return (
     <div role="status" className="space-y-5">
@@ -24,7 +30,7 @@ export function CourseLoading({ cards = false }: { cards?: boolean }) {
         {t.loading}
       </span>
       {cards && (
-        <div aria-hidden="true" className={styles.grid}>
+        <div aria-hidden="true" className={gridClassName}>
           {[0, 1, 2].map((i) => (
             <div
               key={i}

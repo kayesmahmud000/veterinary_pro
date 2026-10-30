@@ -145,7 +145,7 @@ function CourseOverview({ course }: { course: Course }) {
             </div>
             <div
               data-course-thumbnail-overlay
-              className="pointer-events-none absolute inset-0 box-border flex items-center justify-center bg-black/40 p-4 opacity-0 transition-opacity duration-150 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 motion-reduce:transition-none [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100"
+              className="pointer-events-none absolute inset-0 box-border flex items-center justify-center bg-black/70 p-4 opacity-0 transition-opacity duration-150 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 motion-reduce:transition-none [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100"
             >
               <section
                 ref={enrollmentPanel}

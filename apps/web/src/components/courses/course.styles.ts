@@ -4,6 +4,7 @@ const styles = {
     "min-w-0 rounded-2xl border border-solid border-line bg-white p-5 sm:p-7",
   heading: "mb-3 break-words text-3xl font-semibold leading-tight sm:text-4xl",
   grid: "grid min-w-0 gap-6 md:grid-cols-2 xl:grid-cols-3",
+  catalogGrid: "grid min-w-0 gap-6 md:grid-cols-2 xl:grid-cols-4",
   link: "inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-semibold text-green underline-offset-4 hover:underline",
   badge:
     "inline-flex items-center gap-2 rounded-full bg-[#eff4ec] px-3 py-1 text-sm font-semibold text-green",
