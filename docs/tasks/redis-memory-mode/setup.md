@@ -1,5 +1,7 @@
 # Redis-free development and Vercel testing
 
+**Implementation status — 2026-10-30:** this guide describes the intended complete profile. Current source implements memory workflow limits and skips Redis health/platform probes when `REDIS_ENABLED=false`, but BullMQ registrations remain unconditional and the idempotency provider still selects Redis outside tests. The flag alone does **not** yet disable all Redis clients, workers or queues. Treat the queue/idempotency behavior described below as pending implementation; see [the hosted thumbnail investigation](../course-thumbnail-r2/plan.md#hosted-503-follow-up--2026-10-30). The thumbnail limiter can use the flag independently as a temporary testing mitigation.
+
 This profile is for the project's current development/testing phase, including a Vercel runtime whose `NODE_ENV` is `production`. It is selected explicitly; Redis outages never activate it automatically.
 
 ## Local development and the second PC
