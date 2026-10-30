@@ -13,7 +13,12 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { getCourseMessages } from "@/lib/i18n/courses";
 import { useCourseData } from "@/lib/courses/client";
 import { useRemote } from "@/components/workspace/workspace-ui";
-import { CourseError, CourseLoading, EnrollmentButton } from "./course-ui";
+import {
+  CourseError,
+  CourseLoading,
+  EnrollmentButton,
+  CourseEnrollmentDialog,
+} from "./course-ui";
 import { CourseArtwork } from "./course-artwork";
 import { YouTubePlayer } from "./youtube-player";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -47,7 +52,8 @@ function CourseOverview({ course }: { course: Course }) {
     t = getCourseMessages(auth.locale),
     number = new Intl.NumberFormat(auth.locale);
   const [demo, setDemo] = useState<string | null>(null),
-    [selected, setSelected] = useState<string | null>(null);
+    [selected, setSelected] = useState<string | null>(null),
+    [confirmEnrollment, setConfirmEnrollment] = useState(false);
   const enrollmentPanel = useRef<HTMLElement>(null),
     demoPanel = useRef<HTMLElement>(null),
     demoTrigger = useRef<HTMLButtonElement | null>(null),
@@ -65,14 +71,7 @@ function CourseOverview({ course }: { course: Course }) {
   );
   const enrolled =
     !auth.checking && !auth.error && !!membership.data?.enrollment;
-  const lesson = course.lessons.find((item) => item.id === selected),
-    firstDemo = course.lessons.find((item) => item.access === "PUBLIC_DEMO");
-  useEffect(() => {
-    if (selected) {
-      enrollmentPanel.current?.focus();
-      enrollmentPanel.current?.scrollIntoView({ block: "center" });
-    }
-  }, [selected]);
+  const firstDemo = course.lessons.find((item) => item.access === "PUBLIC_DEMO");
   useEffect(() => {
     if (demo) {
       demoPanel.current?.focus();
@@ -153,7 +152,7 @@ function CourseOverview({ course }: { course: Course }) {
                 tabIndex={-1}
                 data-course-enrollment-panel
                 aria-labelledby="enrollment-heading"
-                className="box-border max-h-full w-full min-w-0 max-w-md space-y-4 overflow-y-auto rounded-xl bg-white/95 p-4"
+                className="box-border max-h-full w-full min-w-0 max-w-md space-y-4 overflow-y-auto p-4 text-ink"
               >
                 <h2 id="enrollment-heading" className="sr-only">
                   {administrative
@@ -162,17 +161,6 @@ function CourseOverview({ course }: { course: Course }) {
                       ? t.available
                       : t.enrollmentHeading}
                 </h2>
-                {lesson && (
-                  <div role="status" className="rounded-xl bg-[#eff4ec] p-4">
-                    <span className="block text-sm text-muted">
-                      {t.selectedLesson}
-                    </span>
-                    <strong className="mt-1 block break-words">
-                      {lesson.title}
-                    </strong>
-                    <p className="mb-0 mt-2">{t.locked}</p>
-                  </div>
-                )}
                 {administrative ? (
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
@@ -188,7 +176,6 @@ function CourseOverview({ course }: { course: Course }) {
                       </Link>
                       {demoAction}
                     </div>
-                    <p className="m-0 text-sm text-muted">{t.administrator}</p>
                   </div>
                 ) : auth.checking ||
                   (auth.user && !auth.error && membership.loading) ? (
@@ -229,10 +216,14 @@ function CourseOverview({ course }: { course: Course }) {
                     compact
                     buttonLabel={t.enrollCourse}
                     secondaryAction={demoAction}
+                    onRequestEnroll={() => {
+                      setSelected(null);
+                      setConfirmEnrollment(true);
+                    }}
                   />
                 )}
                 {!firstDemo && (
-                  <p role="status" className="m-0 text-sm text-muted">
+                  <p role="status" className="sr-only">
                     {t.noDemo}
                   </p>
                 )}
@@ -290,13 +281,13 @@ function CourseOverview({ course }: { course: Course }) {
             {course.lessons.map((item) => (
               <li
                 key={item.id}
-                className="grid min-w-0 grid-cols-[2rem_minmax(0,1fr)] gap-3 p-4"
+                className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2 p-2 sm:gap-3 sm:p-4"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-paper text-sm font-semibold text-green">
-                  {number.format(item.position)}
-                </span>
                 <div className="min-w-0 space-y-2">
                   <h3 className="m-0 break-words text-base font-semibold leading-snug">
+                    <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-lg bg-paper align-middle text-sm font-semibold text-green">
+                      {number.format(item.position)}
+                    </span>
                     {item.title}
                   </h3>
                   <span className="inline-flex items-center gap-2 text-sm text-muted">
@@ -323,7 +314,7 @@ function CourseOverview({ course }: { course: Course }) {
                   <Link
                     className={cn(
                       buttonVariants({ variant: "outline" }),
-                      "col-start-2 min-w-0 justify-self-start whitespace-normal px-3",
+                      styles.lessonAction,
                     )}
                     href={`/admin/courses/${course.id}`}
                   >
@@ -333,7 +324,7 @@ function CourseOverview({ course }: { course: Course }) {
                   <Link
                     className={cn(
                       buttonVariants({ variant: "outline" }),
-                      "col-start-2 min-w-0 justify-self-start whitespace-normal px-3",
+                      styles.lessonAction,
                     )}
                     href={`/account/courses/${course.id}/lessons/${item.id}`}
                   >
@@ -343,7 +334,7 @@ function CourseOverview({ course }: { course: Course }) {
                   <Button
                     data-demo-lesson={item.id}
                     variant="outline"
-                    className="col-start-2 min-w-0 justify-self-start whitespace-normal px-3"
+                    className={styles.lessonAction}
                     onClick={(event) => openDemo(item.id, event.currentTarget)}
                   >
                     <Play size={16} aria-hidden="true" />
@@ -353,14 +344,11 @@ function CourseOverview({ course }: { course: Course }) {
                   <Button
                     data-locked-lesson={item.id}
                     variant="outline"
-                    className="col-start-2 min-w-0 justify-self-start whitespace-normal px-3"
-                    onClick={() => {
-                      setDemo(null);
+                    className={styles.lessonAction}
+                    onClick={(event) => {
+                      event.currentTarget.focus();
                       setSelected(item.id);
-                      enrollmentPanel.current?.focus();
-                      enrollmentPanel.current?.scrollIntoView({
-                        block: "center",
-                      });
+                      setConfirmEnrollment(true);
                     }}
                   >
                     <LockKeyhole size={16} aria-hidden="true" />
@@ -372,6 +360,13 @@ function CourseOverview({ course }: { course: Course }) {
           </ol>
         </section>
       </div>
+      {confirmEnrollment && (
+        <CourseEnrollmentDialog
+          course={course}
+          lessonId={selected ?? undefined}
+          close={() => setConfirmEnrollment(false)}
+        />
+      )}
       <section data-course-about className={`${styles.panel} space-y-4`}>
         <h2 className="mb-0 text-2xl font-semibold">{t.overview}</h2>
         <p className="mb-0 whitespace-pre-wrap break-words">

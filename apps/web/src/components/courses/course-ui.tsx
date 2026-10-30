@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { type Course, courseEnrollmentSchema } from "@vetralink/shared-types";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -76,6 +76,8 @@ export function EnrollmentButton({
   compact = false,
   secondaryAction,
   buttonLabel,
+  onRequestEnroll,
+  onBusyChange,
 }: {
   course: Course;
   enrolled: boolean;
@@ -84,6 +86,8 @@ export function EnrollmentButton({
   compact?: boolean;
   secondaryAction?: ReactNode;
   buttonLabel?: string;
+  onRequestEnroll?: () => void;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const auth = useAuth(),
     t = getCourseMessages(auth.locale),
@@ -113,6 +117,7 @@ export function EnrollmentButton({
     }
     submitting.current = true;
     setBusy(true);
+    onBusyChange?.(true);
     setCode("");
     const result = await workspaceRequest(
       `me/courses/${course.id}/enrollment`,
@@ -124,6 +129,7 @@ export function EnrollmentButton({
     if (!active.current) return;
     submitting.current = false;
     setBusy(false);
+    onBusyChange?.(false);
     if (result.data) {
       setSaved(true);
       if (afterEnroll) afterEnroll();
@@ -133,22 +139,14 @@ export function EnrollmentButton({
   const account =
     !(enrolled || saved) &&
     (auth.user ? (
-      compact ? (
-        <p className="m-0 break-words text-sm text-muted">
-          {t.enrollmentAccount}:{" "}
-          <strong className="text-ink">{auth.user.name}</strong>{" "}
-          <span className="break-all">({auth.user.email})</span>
-        </p>
-      ) : (
-        <div className="rounded-xl bg-paper p-4">
-          <p className="mb-2 text-sm font-semibold">{t.enrollmentAccount}</p>
-          <strong className="block break-words">{auth.user.name}</strong>
-          <span className="block break-all text-sm text-muted">
-            {auth.user.email}
-          </span>
-          <p className="mb-0 mt-2 text-sm">{t.enrollmentInfo}</p>
-        </div>
-      )
+      <div className="rounded-xl bg-paper p-4">
+        <p className="mb-2 text-sm font-semibold">{t.enrollmentAccount}</p>
+        <strong className="block break-words">{auth.user.name}</strong>
+        <span className="block break-all text-sm text-muted">
+          {auth.user.email}
+        </span>
+        <p className="mb-0 mt-2 text-sm">{t.enrollmentInfo}</p>
+      </div>
     ) : (
       <p className={compact ? "m-0 text-sm text-muted" : undefined}>
         {t.enrollmentSignIn}
@@ -172,7 +170,12 @@ export function EnrollmentButton({
         className={
           compact ? "w-full min-w-0 whitespace-normal px-3" : undefined
         }
-        onClick={() => void enroll()}
+        onClick={(event) => {
+          if (onRequestEnroll) {
+            event.currentTarget.focus();
+            onRequestEnroll();
+          } else void enroll();
+        }}
       >
         {busy && (
           <Loader2
@@ -190,7 +193,7 @@ export function EnrollmentButton({
       data-course-enrollment
     >
       {!compact && account}
-      {compact ? (
+      {compact && secondaryAction ? (
         <div className="grid grid-cols-2 gap-3">
           {action}
           {secondaryAction}
@@ -198,7 +201,6 @@ export function EnrollmentButton({
       ) : (
         action
       )}
-      {compact && account}
       {saved && <p role="status">{t.saved}</p>}
       {code && <p role="alert">{t.enrollmentError}</p>}
       {auth.error && (
@@ -211,5 +213,118 @@ export function EnrollmentButton({
       )}
       {!compact && <p className="mb-0 text-sm text-muted">{t.noPayment}</p>}
     </div>
+  );
+}
+
+export function CourseEnrollmentDialog({
+  course,
+  lessonId,
+  close,
+}: {
+  course: Course;
+  lessonId?: string;
+  close: () => void;
+}) {
+  const auth = useAuth(),
+    t = getCourseMessages(auth.locale),
+    ref = useRef<HTMLDialogElement>(null),
+    titleId = useId(),
+    descriptionId = useId();
+  const [busy, setBusy] = useState(false);
+  const lesson = course.lessons.find((item) => item.id === lessonId);
+  useEffect(() => {
+    const dialog = ref.current;
+    const opener = document.activeElement as HTMLElement | null;
+    const locked = document.body.classList.contains("overflow-hidden");
+    dialog?.showModal();
+    document.body.classList.add("overflow-hidden");
+    return () => {
+      dialog?.close();
+      if (!locked) document.body.classList.remove("overflow-hidden");
+      if (opener?.isConnected) opener.focus();
+    };
+  }, []);
+  return (
+    <dialog
+      ref={ref}
+      data-course-enrollment-dialog
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
+      aria-busy={busy}
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!busy) close();
+      }}
+      className="fixed inset-0 box-border m-auto max-h-[90dvh] w-[min(480px,calc(100vw_-_24px))] max-w-none space-y-5 overflow-y-auto rounded-2xl border border-solid border-line bg-white p-5 text-ink shadow-xl sm:p-7 [&::backdrop]:bg-black/60"
+    >
+      <h2 id={titleId} className="m-0 text-2xl font-semibold">
+        {t.confirmEnrollment}
+      </h2>
+      <div className="space-y-2">
+        <strong className="block break-words">{course.title}</strong>
+        {lesson && (
+          <p className="m-0 break-words">
+            {t.selectedLesson}: {lesson.title}
+          </p>
+        )}
+        <p id={descriptionId} className="m-0 text-sm text-muted">
+          {auth.user ? t.enrollmentConfirmation : t.enrollmentSignIn}
+        </p>
+      </div>
+      {auth.user ? (
+        <EnrollmentButton
+          course={course}
+          enrolled={false}
+          lessonId={lessonId}
+          compact
+          buttonLabel={t.confirmEnrollment}
+          onBusyChange={setBusy}
+        />
+      ) : (
+        <div className="space-y-3">
+          {auth.error && (
+            <div className="space-y-3">
+              <p role="alert" className="m-0">
+                {t.membershipError}
+              </p>
+              <Button
+                data-course-session-retry
+                variant="outline"
+                disabled={auth.checking}
+                onClick={() => void auth.restore()}
+              >
+                {t.retry}
+              </Button>
+            </div>
+          )}
+          <Button
+            data-course-enroll
+            className="w-full whitespace-normal"
+            disabled={auth.checking || !!auth.error}
+            onClick={() => {
+              const target = lesson?.id ?? course.firstLessonId;
+              close();
+              auth.open(
+                "login",
+                target
+                  ? `/account/courses/${course.id}/lessons/${target}`
+                  : "/account/courses",
+              );
+            }}
+          >
+            {t.confirmEnrollment}
+          </Button>
+        </div>
+      )}
+      <Button
+        data-course-enrollment-cancel
+        variant="outline"
+        className="w-full whitespace-normal"
+        disabled={busy}
+        onClick={close}
+      >
+        {t.cancelEnrollment}
+      </Button>
+    </dialog>
   );
 }

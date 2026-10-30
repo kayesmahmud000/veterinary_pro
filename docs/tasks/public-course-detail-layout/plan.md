@@ -53,3 +53,33 @@ Required behavior: thumbnail is the background; center Enroll/Demo over it and r
 - Final context validation passed (48 documents, 378 links, 95 source entries), as did `git diff --check`. Final re-review found no outstanding material issue; changes remain uncommitted.
 
 The earlier synthetic-browser/provider/deployment and lint-tooling limits still apply. Suggested revised commit: `feat(web): show course actions over thumbnail on hover`.
+
+## Revision: clean hover actions and enrollment confirmation — 2026-10-30
+
+Scope: remove the thumbnail white panel/account copy, align lesson actions with titles, and require confirmation from thumbnail Enroll and lesson Unlock. Existing API/access rules and the protected-player enrollment component retain their contracts. Frontend/UI implementation, UI/UX, Code Reviewer and QA perspectives apply; no schema, financial, clinical or offline changes.
+
+- [x] Inspect existing detail/enrollment components, browser fixtures and task contracts.
+- [x] Extend browser cases and observe the missing confirmation fail against the baseline.
+- [x] Implement shared detail confirmation, clean overlay and responsive title/action rows.
+- [x] Review focus, auth/actor changes, duplicate submits and error/retry behavior.
+- [x] Run isolated production build, types/styles, relevant contract/browser checks and visual inspection.
+- [x] Re-review final diff and record results/limits.
+
+**Confirmed from code:** `CourseEnrollmentDialog` reuses the existing actor-scoped, empty-body, idempotent enrollment request through `EnrollmentButton`. Detail state chooses the selected lesson or first lesson. Native modal semantics trap focus; Cancel/Escape restore the opener, and cancellation is disabled during submission. Guest confirmation closes before opening login with the exact return route. The thumbnail compact presentation omits account copy; the full protected-player presentation remains available. Lesson number badges share the title area to preserve space for long titles beside actions on narrow screens. No backend/schema/provider/dependency changes.
+
+**Review:** a read-only reviewer and the implementation self-review identified white-on-white membership error text from an overly broad foreground override, and missing guest session-error recovery in the dialog. Both were corrected. A new controlled-session browser test failed before the latter fix (`session-red.log`) and passed afterward. Visual inspection also led to a wider mobile title area. Final read-only source re-review reported no remaining material findings.
+
+**Observed local evidence** (2026-10-30; logs `/tmp/vetralink-course-confirmation/`):
+
+- Baseline isolated production build passed; extended browser acceptance then failed as expected on missing Unlock confirmation (`browser-red.log`).
+- `API_BASE_URL=http://localhost:3411/api/v1 pnpm --filter @vetralink/web exec next build /tmp/vetralink-course-confirmation/web` — passed (`build-final.log`). Isolated source copy excludes runtime credentials.
+- `pnpm --filter @vetralink/web exec tsc --noEmit --incremental false` — passed (`types-final.log`).
+- `pnpm --filter @vetralink/web check:styles` — passed; `pnpm --filter @vetralink/web test:styles` — 14 passed (`styles-final.log`).
+- `pnpm --filter @vetralink/web exec node --test scripts/check-youtube-courses.mjs scripts/check-workspace.mjs` — 24 passed (`contracts.log`).
+- `WORKSPACE_BROWSER_FOCUS=courses WEB_TEST_BUILD_DIR=/tmp/vetralink-course-confirmation/web CHROME_NO_SANDBOX=1 pnpm --filter @vetralink/web exec node scripts/check-dashboard-browser.mjs` — **380 passed** (`browser-final.log`). Covers bn/en at 320/768/1440px, transparent thumbnail action panel without email, title/action alignment, Unlock/Enroll confirmation, Cancel/Escape without writes, focus return, guest session-error retry and selected-lesson login, enrollment failure/retry, duplicate Confirm suppression, exact selected/first lesson navigation, existing membership/admin actions and prior demo/player regressions.
+- Manually inspected final Bangla 320px details and confirmation plus English desktop details. Final screenshots: `/tmp/khamar-workspace-qa-KXNrsM/`; no horizontal overflow.
+- `python3 .context/scripts/validate.py` and `git diff --check` — passed.
+
+**Limits:** browser HTTP/player responses are controlled fixtures, not live enrollment persistence or actual YouTube playback/deployment. Checks use Chrome; alternate browser engines were not exercised. Existing lint-tooling limitations remain. No live writes, Git staging/commit/merge/push or deployment.
+
+Suggested commit: `feat(web): confirm course enrollment and simplify hover actions`.

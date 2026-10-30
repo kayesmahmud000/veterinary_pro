@@ -1,6 +1,12 @@
 import type { Locale } from "./locale";
 const copy = {
   enrollCourse: ["Enroll course", "কোর্সে এনরোল করুন"],
+  confirmEnrollment: ["Confirm enrollment", "এনরোলমেন্ট নিশ্চিত করুন"],
+  cancelEnrollment: ["Cancel", "বাতিল"],
+  enrollmentConfirmation: [
+    "Enroll in this course for free and start learning? No payment or subscription is required.",
+    "বিনামূল্যে এই কোর্সে এনরোল করে শেখা শুরু করবেন? কোনো মূল্য বা সাবস্ক্রিপশন লাগবে না।",
+  ],
   demoAction: ["Demo", "ডেমো"],
   noDemo: [
     "No public demo is available for this course yet.",

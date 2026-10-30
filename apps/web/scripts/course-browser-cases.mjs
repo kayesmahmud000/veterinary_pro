@@ -616,9 +616,9 @@ export async function checkLearnerCourses({
         await until(
           () =>
             evaluate(
-              `document.activeElement===document.querySelector('[data-course-enrollment-panel]') && document.querySelector('[data-course-enrollment-panel]').textContent.includes('Selected advanced lesson')`,
+              `!!document.querySelector('[data-course-enrollment-dialog][open]') && document.querySelector('[data-course-enrollment-dialog]').contains(document.activeElement) && document.querySelector('[data-course-enrollment-dialog]').textContent.includes('Selected advanced lesson')`,
             ),
-          "Locked lesson prompt focuses and names chosen lesson",
+          "Unlock opens focused confirmation naming the chosen lesson",
         );
         assert.equal(
           requests
@@ -627,7 +627,31 @@ export async function checkLearnerCourses({
           false,
           "Locked selection makes no source request",
         );
-        checks += 2;
+        const confirmationShot=await call("Page.captureScreenshot",{format:"png",captureBeyondViewport:true});
+        await writeFile(path.join(temp,`course-confirmation-${locale}-${width}.png`),Buffer.from(confirmationShot.data,"base64"));
+        assert.equal(requests.slice(beforeLocked).some(request=>request.route.endsWith('/enrollment')),false,"Opening confirmation never enrolls");
+        await evaluate(`document.querySelector('[data-course-enrollment-cancel]').click()`);
+        await until(()=>evaluate(`!document.querySelector('[data-course-enrollment-dialog][open]')`),"Cancel dismisses enrollment");
+        assert.equal(await evaluate(`document.activeElement===document.querySelector('[data-locked-lesson="${lastId}"]')`),true,"Cancel returns focus to Unlock");
+        await evaluate(`document.querySelector('[data-course-enroll]').focus();document.querySelector('[data-course-enroll]').click()`);
+        await until(()=>evaluate(`!!document.querySelector('[data-course-enrollment-dialog][open]')`),"Thumbnail Enroll opens confirmation");
+        await call("Input.dispatchKeyEvent",{type:"keyDown",key:"Escape",code:"Escape",windowsVirtualKeyCode:27});
+        await call("Input.dispatchKeyEvent",{type:"keyUp",key:"Escape",code:"Escape",windowsVirtualKeyCode:27});
+        await until(()=>evaluate(`!document.querySelector('[data-course-enrollment-dialog][open]')`),"Escape cancels confirmation");
+        assert.equal(requests.slice(beforeLocked).some(request=>request.route.endsWith('/enrollment')),false,"Cancel and Escape never enroll");
+        checks += 7;
+        if(width===1440 && locale==="bn") {
+          sessionUnavailable=true;
+          await evaluate(`window.dispatchEvent(new Event('vetralink-session-updated'))`);
+          await until(()=>evaluate(`!!document.querySelector('[data-course-enrollment] [role="alert"]')`),"Guest session failure is visible");
+          await evaluate(`document.querySelector('[data-locked-lesson="${lastId}"]').click()`);
+          await until(()=>evaluate(`!!document.querySelector('[data-course-enrollment-dialog][open] [role="alert"]')`),"Guest confirmation explains session failure");
+          sessionUnavailable=false;
+          await evaluate(`document.querySelector('[data-course-enrollment-dialog] [data-course-session-retry]').click()`);
+          await until(()=>evaluate(`!!document.querySelector('[data-course-enrollment-dialog] [data-course-enroll]:not([disabled])')`),"Guest can retry session restoration inside confirmation");
+          await evaluate(`document.querySelector('[data-course-enrollment-cancel]').click()`);
+          checks+=3;
+        }
         await evaluate(`document.querySelector('[data-demo-lesson]').click()`);
         await until(
           () => evaluate(`!!document.querySelector('[data-youtube-player]')`),
@@ -659,6 +683,38 @@ export async function checkLearnerCourses({
           Buffer.from(publicShot.data, "base64"),
         );
         await seed("LEARNER", locale);
+        await go(`/courses/${course.slug}`);
+        await until(()=>evaluate(`!!document.querySelector('[data-course-enroll]:not([disabled])')`),"Signed-in thumbnail enrollment available");
+        assert.equal(await evaluate(`document.querySelector('[data-course-thumbnail-overlay]').textContent.includes('learner@example.test')`),false,"No account email on thumbnail");
+        assert.equal(await evaluate(`getComputedStyle(document.querySelector('[data-course-enrollment-panel]')).backgroundColor`),"rgba(0, 0, 0, 0)","Thumbnail actions have no white panel");
+        assert.equal(await evaluate(`(()=>{const button=document.querySelector('[data-locked-lesson]'),title=button.closest('li').querySelector('h3');const b=button.getBoundingClientRect(),t=title.getBoundingClientRect();return b.left>=t.right && Math.abs(b.top-t.top)<5;})()`),true,"Lesson title and Unlock share a row");
+        const beforeConfirmation=requests.filter(request=>request.route.endsWith('/enrollment')).length;
+        await evaluate(`document.querySelector('[data-course-enroll]').focus();document.querySelector('[data-course-enroll]').click()`);
+        await until(()=>evaluate(`!!document.querySelector('[data-course-enrollment-dialog][open]')`),"Signed-in Enroll requests confirmation");
+        assert.equal(requests.filter(request=>request.route.endsWith('/enrollment')).length,beforeConfirmation,"Thumbnail click does not enroll before confirmation");
+        await evaluate(`document.querySelector('[data-course-enrollment-cancel]').click()`);
+        await until(()=>evaluate(`!document.querySelector('[data-course-enrollment-dialog]')`),"Signed-in cancellation");
+        assert.equal(await evaluate(`document.activeElement===document.querySelector('[data-course-enroll]')`),true,"Cancel restores thumbnail trigger focus");
+        await evaluate(`document.querySelector('[data-locked-lesson="${lastId}"]').focus();document.querySelector('[data-locked-lesson="${lastId}"]').click()`);
+        await until(()=>evaluate(`!!document.querySelector('[data-course-enrollment-dialog][open]')`),"Unlock shares confirmation");
+        fixture.failEnrollment=true;
+        await evaluate(`document.querySelector('[data-course-enrollment-dialog] [data-course-enroll]').click()`);
+        await until(()=>evaluate(`!!document.querySelector('[data-course-enrollment-dialog][open] [role="alert"]')`),"Enrollment failure remains in confirmation for retry");
+        assert.equal(await evaluate(`location.pathname`),`/courses/${course.slug}`,"Failed acknowledgement does not navigate");
+        const attemptsBeforeRetry=requests.filter(request=>request.route.endsWith('/enrollment')).length;
+        await evaluate(`document.querySelector('[data-course-enrollment-dialog] [data-course-enroll]').click();document.querySelector('[data-course-enrollment-dialog] [data-course-enroll]').click()`);
+        await until(()=>evaluate(`location.pathname==='/account/courses/${id}/lessons/${lastId}' && !!document.querySelector('[data-youtube-player]')`),"Confirmation enrolls and opens selected lesson");
+        assert.equal(requests.filter(request=>request.route.endsWith('/enrollment')).length,attemptsBeforeRetry+1,"Rapid Confirm clicks submit once");
+        checks+=11;
+        memberships.clear();
+        await go(`/courses/${course.slug}`);
+        await until(()=>evaluate(`!!document.querySelector('[data-course-enroll]:not([disabled])')`),"Fresh thumbnail enrollment");
+        await evaluate(`document.querySelector('[data-course-enroll]').click()`);
+        await until(()=>evaluate(`!!document.querySelector('[data-course-enrollment-dialog][open]')`),"Thumbnail confirmation opens");
+        await evaluate(`document.querySelector('[data-course-enrollment-dialog] [data-course-enroll]').click()`);
+        await until(()=>evaluate(`location.pathname==='/account/courses/${id}/lessons/${mainId}' && !!document.querySelector('[data-youtube-player]')`),"Thumbnail Confirm enrolls and opens first lesson");
+        checks++;
+        memberships.clear();
         await go(`/account/courses/${id}/lessons/${mainId}`);
         await until(
           () => evaluate(`!!document.querySelector('[data-course-enroll]')`),
@@ -861,11 +917,11 @@ export async function checkLearnerCourses({
     await until(
       () =>
         evaluate(
-          `document.querySelector('[data-course-enrollment-panel]').textContent.includes('Selected advanced lesson')`,
+          `document.querySelector('[data-course-enrollment-dialog][open]')?.textContent.includes('Selected advanced lesson')`,
         ),
       "Selected lesson prompt rendered before confirming",
     );
-    await evaluate(`document.querySelector('[data-course-enroll]').click()`);
+    await evaluate(`document.querySelector('[data-course-enrollment-dialog] [data-course-enroll]').click()`);
     await until(
       () =>
         evaluate(
