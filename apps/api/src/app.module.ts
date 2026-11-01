@@ -1,3 +1,4 @@
+import { CourseThumbnailsModule } from "./modules/course-thumbnails/course-thumbnails.module";
 import { CoursesModule } from "./modules/courses/courses.module";
 import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
@@ -7,6 +8,7 @@ import { AuditModule } from "./modules/audit";
 import { HealthModule } from "./modules/health/health.module";
 import { UsersModule } from "./modules/users";
 import { AuthModule } from "./modules/auth";
+import { AccountRecoveryModule } from "./modules/auth/recovery/account-recovery.module";
 import { FarmsModule } from "./modules/farms";
 import { ProductsModule } from "./modules/products";
 import { MediaModule } from "./modules/media";
@@ -56,6 +58,7 @@ import { AdministrationModule } from "./modules/administration/administration.mo
     HealthModule,
     UsersModule,
     AuthModule,
+    AccountRecoveryModule,
     FarmsModule,
     AnimalsModule,
     MilkLogsModule,
@@ -65,6 +68,7 @@ import { AdministrationModule } from "./modules/administration/administration.mo
     ConsultationsModule,
     ProductsModule,
     CoursesModule,
+    CourseThumbnailsModule,
     MediaModule,
     IdempotencyModule,
     OrdersModule,

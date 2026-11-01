@@ -1,5 +1,6 @@
 import {
   ProductListItemDto,
+  courseSlugSchema,
   ProductResponseDto,
   ProductType, ProductContentProvider, isProductAssetReady,
   SubscriptionTier,
@@ -96,17 +97,22 @@ export class ProductEntity {
       );
     }
 
-    if (!this._slug || this._slug.length < 3) {
-      throw new ValidationDomainException(
-        "Product slug must be at least 3 characters long."
-      );
-    }
+    if (this._type === ProductType.VIDEO_COURSE && this._contentProvider === ProductContentProvider.YOUTUBE) {
+      if (!courseSlugSchema.safeParse(this._slug).success)
+        throw new ValidationDomainException("Invalid course slug.");
+    } else {
+      if (!this._slug || this._slug.length < 3) {
+        throw new ValidationDomainException(
+          "Product slug must be at least 3 characters long."
+        );
+      }
 
-    const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-    if (!slugRegex.test(this._slug)) {
-      throw new ValidationDomainException(
-        "Product slug must consist only of lowercase alphanumeric characters separated by single hyphens."
-      );
+      const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+      if (!slugRegex.test(this._slug)) {
+        throw new ValidationDomainException(
+          "Product slug must consist only of lowercase alphanumeric characters separated by single hyphens."
+        );
+      }
     }
 
     if (!this._description || this._description.length < 10) {
@@ -137,7 +143,7 @@ export class ProductEntity {
       }
     }
 
-    if (this._contentProvider === ProductContentProvider.YOUTUBE && (this._type !== ProductType.VIDEO_COURSE || this._priceCents !== 0 || this._discountPriceCents !== null || this._contentS3Key !== "")) throw new ValidationDomainException("YouTube courses require free video content without a storage key.");
+    if (this._contentProvider === ProductContentProvider.YOUTUBE && (this._type !== ProductType.VIDEO_COURSE || (this._isPublished && (this._priceCents !== 0 || this._discountPriceCents !== null)) || this._contentS3Key !== "")) throw new ValidationDomainException("YouTube courses require free video content without a storage key.");
 
     if (this._contentProvider !== ProductContentProvider.YOUTUBE && this._isPublished && (!this._contentS3Key || this._contentS3Key.trim().length === 0)) {
       throw new ValidationDomainException(

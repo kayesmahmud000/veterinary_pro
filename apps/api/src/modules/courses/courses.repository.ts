@@ -15,6 +15,7 @@ const outline = {
   slug: true,
   title: true,
   description: true,
+  metadata: true,
   courseLessons: {
     where: { deletedAt: null },
     orderBy: { position: "asc" },
@@ -25,6 +26,7 @@ const outline = {
       summary: true,
       position: true,
       access: true,
+      youtubeVideoId: true,
     },
   },
 } satisfies Prisma.ProductSelect;

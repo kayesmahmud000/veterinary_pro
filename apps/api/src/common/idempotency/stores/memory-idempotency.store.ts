@@ -20,7 +20,7 @@ export class MemoryIdempotencyStore implements IIdempotencyStore {
       return null;
     }
 
-    if (Date.now() > entry.expiresAt) {
+    if (Date.now() >= entry.expiresAt) {
       this.store.delete(key);
       return null;
     }
@@ -33,8 +33,9 @@ export class MemoryIdempotencyStore implements IIdempotencyStore {
     payloadHash: string,
     ttlSeconds: number
   ): Promise<boolean> {
-    const existing = await this.get(key);
-    if (existing) {
+    // Keep the read/claim synchronous within this process.
+    const existing = this.store.get(key);
+    if (existing && existing.expiresAt > Date.now()) {
       return false;
     }
 

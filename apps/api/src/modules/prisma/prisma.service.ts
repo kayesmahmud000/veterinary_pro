@@ -29,7 +29,7 @@ export class PrismaService
         { emit: "event", level: "query" },
         { emit: "stdout", level: "info" },
         { emit: "stdout", level: "warn" },
-        { emit: "stdout", level: "error" },
+        { emit: "event", level: "error" },
       ],
     });
 
@@ -48,11 +48,12 @@ export class PrismaService
   }
 
   private registerQueryMetrics(): void {
+    // Database error bodies can echo bound secrets. The original exception still
+    // reaches the caller, whose scoped filter chooses the safe public response.
+    this.$on("error", () => this.logger.error("Database operation failed."));
     this.$on("query", (event: Prisma.QueryEvent) => {
       if (event.duration >= this.slowQueryThresholdMs) {
-        const queryText = this.isProduction
-          ? event.query.replace(/\s+/g, " ").trim()
-          : `${event.query.replace(/\s+/g, " ").trim()} [params: ${event.params}]`;
+        const queryText = event.query.replace(/\s+/g, " ").trim();
 
         this.logger.warn(
           `⚡ SLOW QUERY (${event.duration}ms): ${queryText}`

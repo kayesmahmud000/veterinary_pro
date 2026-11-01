@@ -383,6 +383,8 @@ model User {
   supportRequests SupportTicket[] @relation("SupportRequester")
   supportAssignments SupportTicket[] @relation("SupportAssignee")
   supportMessages SupportMessage[]
+  passwordResetCredentials PasswordResetCredential[]
+  accountRecoveryJobs AccountRecoveryJob[]
 
   @@index([email])
   @@index([phoneHash])
@@ -424,6 +426,68 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+enum AccountRecoveryJobKind {
+  RESET_REQUEST
+  PASSWORD_CHANGED
+}
+
+enum AccountRecoveryJobStatus {
+  PENDING
+  ACCEPTED
+  TEST_ACCEPTED
+  SKIPPED
+  FAILED
+  CANCELLED
+}
+
+model PasswordResetCredential {
+  id String @id @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  tokenHash String @unique @map("token_hash") @db.VarChar(64)
+  emailHmac String @map("email_hmac") @db.VarChar(64)
+  authorizationVersion Int @map("authorization_version")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz(6)
+  invalidatedAt DateTime? @map("invalidated_at") @db.Timestamptz(6)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  job AccountRecoveryJob?
+
+  @@index([userId, expiresAt])
+  @@map("password_reset_credentials")
+}
+
+model AccountRecoveryJob {
+  id String @id @db.Uuid
+  kind AccountRecoveryJobKind
+  status AccountRecoveryJobStatus @default(PENDING)
+  userId String? @map("user_id") @db.Uuid
+  credentialId String? @unique @map("credential_id") @db.Uuid
+  authorizationVersion Int? @map("authorization_version")
+  locale String @db.VarChar(2)
+  emailHmac String @map("email_hmac") @db.VarChar(64)
+  payload String? @db.Text
+  templateVersion Int @default(1) @map("template_version")
+  originVersion String @map("origin_version") @db.VarChar(64)
+  providerPayloadHmac String? @map("provider_payload_hmac") @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  deadlineAt DateTime @map("deadline_at") @db.Timestamptz(6)
+  availableAt DateTime @default(now()) @map("available_at") @db.Timestamptz(6)
+  leaseUntil DateTime? @map("lease_until") @db.Timestamptz(6)
+  leaseId String? @map("lease_id") @db.Uuid
+  attempts Int @default(0)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+  failureCode String? @map("failure_code") @db.VarChar(40)
+  user User? @relation(fields: [userId], references: [id], onDelete: Restrict)
+  credential PasswordResetCredential? @relation(fields: [credentialId], references: [id], onDelete: Restrict)
+
+  @@index([status, availableAt, leaseUntil])
+  @@index([kind, status, createdAt])
+  @@index([userId, createdAt])
+  @@index([emailHmac, kind, status])
+  @@map("account_recovery_jobs")
 }
 
 // ==========================================

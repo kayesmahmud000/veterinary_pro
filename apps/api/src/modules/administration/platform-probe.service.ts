@@ -94,6 +94,16 @@ export class PlatformProbe {
         registeredWorkers: null,
       }),
     );
+    if (this.env.redisEnabled === false) {
+      const roleEmail = await database;
+      return platformSystemSchema.parse({
+        checkedAt,
+        database: roleEmail ? "UP" : "UNAVAILABLE",
+        redis: "UNAVAILABLE",
+        queues: unavailable,
+        roleEmail,
+      });
+    }
     let queues = unavailable;
     let redis: PlatformSystem["redis"] = "UNAVAILABLE";
     const connection = new Redis(this.env.redisUrl, {

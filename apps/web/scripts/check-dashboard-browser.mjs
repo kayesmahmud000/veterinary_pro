@@ -6,7 +6,8 @@ import { handleConsultationsFixture, checkAdminConsultations } from "./admin-con
 import { handleFinanceFixture, checkAdminFinance } from "./admin-finance-browser-cases.mjs";
 import { handleCommunicationsFixture, checkAdminCommunications } from "./admin-communications-browser-cases.mjs";
 import { handlePlatformFixture, checkAdminPlatform } from "./admin-platform-browser-cases.mjs";
-import {handleCourseFixture,checkLearnerCourses} from "./course-browser-cases.mjs";
+import { checkUnsavedEditors } from "./unsaved-editor-browser-cases.mjs";
+import {handleCourseFixture,checkLearnerCourses,checkRealCourseProvider} from "./course-browser-cases.mjs";
 import { handleCatalogFixture, handleCatalogObject, checkAdminCatalog, checkAdminCourses } from "./admin-catalog-browser-cases.mjs";
 import assert from "node:assert/strict";
 import { handleAdminFixture, checkAdminDashboard } from "./admin-dashboard-browser-cases.mjs";
@@ -106,7 +107,7 @@ const upstream = http.createServer(async (req, res) => {
   if (await handleCatalogObject(req, res, requests)) return;
   let text = "";
   for await (const chunk of req) text += chunk;
-  const data = text ? JSON.parse(text) : {};
+  const data = req.headers["content-type"]?.startsWith("multipart/form-data") ? { multipartBytes: Buffer.byteLength(text) } : text ? JSON.parse(text) : {};
   const route = new URL(req.url, "http://local").pathname.replace(
     "/api/v1/",
     "",
@@ -296,7 +297,7 @@ const upstream = http.createServer(async (req, res) => {
   }
   if (route === "users/me/role-requests")
     return send(200, { requests: [], nextCursor: null });
-  if(handleCourseFixture(route,role,send,query,req.method,data,res))return;
+  if(handleCourseFixture(route,role,send,query,req.method,data,res,users.get(role)?.id))return;
   if (handleCatalogFixture(route, role, send, query, req.method, data, res)) return;
   if (handleDirectoryFixture(route, role, send, query, req.method, data, res)) return;
   if (handleAdminFixture(route, role, send)) return;
@@ -392,6 +393,8 @@ try {
     process.env.CHROME_PATH || "/usr/bin/google-chrome",
     [
       "--headless=new",
+      // Headless Linux may report no pointer; begin with an actual desktop input profile.
+      "--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4",
       ...(process.env.CHROME_NO_SANDBOX === "1" ? ["--no-sandbox"] : []),
       "--remote-debugging-port=9341",
       "--no-first-run",
@@ -416,8 +419,16 @@ try {
   let seq = 0;
   const pending = new Map();
   const exceptions = [];
+  let dialogHandler;
+  const eventListeners = new Map();
+  const subscribe = (method, handler) => {
+    eventListeners.set(method, handler);
+    return () => eventListeners.delete(method);
+  };
   ws.onmessage = ({ data }) => {
     const r = JSON.parse(data);
+    if (r.method) eventListeners.get(r.method)?.(r.params);
+    if (r.method === "Page.javascriptDialogOpening") void dialogHandler?.(r.params);
     if (r.method === "Runtime.exceptionThrown") {
       exceptions.push(r.params.exceptionDetails.exception?.description);
       console.error(r.params.exceptionDetails.exception?.description);
@@ -480,6 +491,7 @@ try {
   }
   if (process.env.WORKSPACE_BROWSER_FOCUS === "admin-release") {
     const context = { seed, go, call, evaluate, until, temp, requests, origin, users };
+<<<<<<< HEAD
     for (const [name, check] of [
       ["overview", checkAdminDashboard],
       ["directory", checkAdminDirectory],
@@ -497,6 +509,27 @@ try {
     }
     assert.deepEqual(exceptions, []);
     console.log(`Passed ${checks} controlled administration browser checks. Screenshots: ${temp}`);
+=======
+    // Run every selected administration batch on the same production build.
+    // The default workspace run predates the later administrative batches.
+    for (const check of [
+      checkAdminDashboard,
+      checkAdminDirectory,
+      checkAdminCatalog,
+      checkAdminBilling,
+      checkAdminConsultations,
+      checkAdminFinance,
+      checkAdminCommunications,
+      checkAdminPlatform,
+    ]) {
+      checks += await check(context);
+      assert.deepEqual(exceptions, []);
+    }
+    console.log(`Passed ${checks} integrated admin release browser checks. Screenshots: ${temp}`);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "unsaved") {
+    checks += await checkUnsavedEditors({ seed, go, call, evaluate, until, temp, requests, setDialogHandler: (handler) => { dialogHandler = handler; } });
+    assert.deepEqual(exceptions, []);
+>>>>>>> f0dbce1bf6a67d4b4ab0e96331522ac1cc8df952
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "platform") {
     checks += await checkAdminPlatform({seed,go,call,evaluate,until,temp,requests});
     assert.deepEqual(exceptions, []);
@@ -516,7 +549,10 @@ try {
     checks += await checkAdminCourses({seed,go,call,evaluate,until,temp,requests});
     assert.deepEqual(exceptions, []);
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "courses") {
-    checks += await checkLearnerCourses({seed,go,call,evaluate,until,temp,requests,origin});
+    checks += await checkLearnerCourses({seed,go,call,evaluate,until,temp,requests,origin,subscribe,replaceLearner:patch=>{const previous=users.get('LEARNER');users.set('LEARNER',{...previous,...patch});return previous;}});
+    assert.deepEqual(exceptions, []);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "courses-provider") {
+    checks += await checkRealCourseProvider({seed,go,call,evaluate,until,temp,origin});
     assert.deepEqual(exceptions, []);
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "catalog") {
     checks += await checkAdminCatalog({seed,go,call,evaluate,until,temp,requests});

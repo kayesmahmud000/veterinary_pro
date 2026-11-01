@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { Prisma } from "@prisma/client";
 import { TransactionManager } from "./transaction.manager";
 import { PrismaService } from "../prisma.service";
+import { Logger } from "@nestjs/common";
 
 describe("TransactionManager (transaction.manager.ts)", () => {
   let manager: TransactionManager;
@@ -85,5 +86,18 @@ describe("TransactionManager (transaction.manager.ts)", () => {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       }
     );
+  });
+
+  it("does not log sensitive database exception contents when a transaction rolls back", async () => {
+    const warning = jest.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    const error = new Error("synthetic-password-hash and synthetic-ciphertext");
+    (prismaService.$transaction as jest.Mock).mockRejectedValueOnce(error);
+    try {
+      await expect(manager.run(async () => undefined)).rejects.toBe(error);
+      expect(JSON.stringify(warning.mock.calls)).not.toContain("synthetic-password-hash");
+      expect(JSON.stringify(warning.mock.calls)).not.toContain("synthetic-ciphertext");
+    } finally {
+      warning.mockRestore();
+    }
   });
 });

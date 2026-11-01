@@ -35,3 +35,11 @@ Acceptance covers strict input/output projections, wrong-role/foreign-ticket den
 ## Persistence and recovery
 
 Add EditorialDocument, EditorialRevision, SupportTicket and SupportMessage tables and role-delivery retryGeneration to the active API schema, with bounded keys, FK preservation, version/default/check constraints and query indexes. No old row is rewritten or old migration changed. Rehearse new migration on explicitly disposable PostgreSQL with representative old rows; production rollout requires backup/restore and migration before code. Revert code while preserving additive tables for recovery; do not drop authored/support data. No offline/mobile protocol or financial model changes.
+
+## UXR-1 — Unsaved content edits (2026-10-22)
+
+Extend the existing editor without changing API, authorization, version or publication contracts. Dirty means editable persisted fields differ from the last acknowledged saved snapshot; reverting all fields clears it. Use the shared curriculum navigation-guard pattern for same-tab links, browser Back/Forward and language submissions. Cancel retains every field; accepting explicitly discards the draft. Reload/close uses the browser's native unload warning, whose text is browser controlled. Same-page anchors, downloads, new-tab links and the currently selected language must not discard work.
+
+Explicit reload of saved data requires discard confirmation while dirty. Save validation, rejection, stale-version conflicts and uncertain failures retain the draft and existing retry/reload restrictions. Only acknowledged save or confirmed discard clears dirty state. Successful saves allow navigation without warnings. Language changes that preserve React state must still discard only after confirmation. No local/session storage, password persistence, schema, migration or provider changes. Identity revocation retains the existing fail-closed boundary.
+
+Acceptance: bn/en at 320/1440px; edit and cancel sidebar, Back/Forward, language and reload exits; verify exact draft retention and no write; accept discard and navigate; exercise rejected/conflicting saves and acknowledged save; recheck curriculum navigation. Native unload evidence is separate from simulated confirm checks and cross-browser acceptance.

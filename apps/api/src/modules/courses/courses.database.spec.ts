@@ -111,9 +111,11 @@ if (url && !new URL(url).pathname.endsWith("/adm3_test"))
     expect(JSON.stringify(await service.bySlug(slug))).not.toContain(
       "MainVid_001",
     );
-    expect(JSON.stringify(await service.list({ limit: 50 }))).not.toContain(
-      "DemoVid_001",
+    const page = await service.list({ limit: 50 });
+    expect(page.items.find((item) => item.id === productId)?.thumbnailUrl).toBe(
+      "https://i.ytimg.com/vi/DemoVid_001/hqdefault.jpg",
     );
+    expect(JSON.stringify(page)).not.toContain("MainVid_001");
     expect((await service.demoPlayback(productId, demoId)).videoId).toBe(
       "DemoVid_001",
     );

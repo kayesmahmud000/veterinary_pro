@@ -41,7 +41,133 @@ const server = compile("../src/lib/workspace/server.ts", {
 const nav = compile("../src/lib/workspace/navigation.ts", {
   "../i18n/workspace-shell": compile("../src/lib/i18n/workspace-shell.ts"),
 });
+test("report currency preserves exact major units and localized fractional digits", () => {
+  const { formatReportAmount } = compile("../src/lib/i18n/report-amount.ts");
+  const examples = [
+    ["1234567", "12,345.67", "১২,৩৪৫.৬৭"],
+    ["1", "0.01", "০.০১"],
+    ["0", "0.00", "০.০০"],
+    ["10", "0.10", "০.১০"],
+    ["100", "1.00", "১.০০"],
+    ["000001", "0.01", "০.০১"],
+    ["9007199254740993", "90,071,992,547,409.93", "৯,০০,৭১,৯৯,২৫,৪৭,৪০৯.৯৩"],
+    [
+      "999999999999999999999999999999",
+      "9,999,999,999,999,999,999,999,999,999.99",
+      "৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯৯.৯৯",
+    ],
+  ];
+  for (const currency of ["USD", "BDT"])
+    for (const [minor, en, bn] of examples) {
+      assert.equal(
+        formatReportAmount(minor, currency, "en"),
+        `${currency} ${en}`,
+      );
+      assert.equal(
+        formatReportAmount(minor, currency, "bn"),
+        `${currency} ${bn}`,
+      );
+    }
+});
+test("report currency keeps unspecified denominations labelled in raw units and rejects malformed inputs", () => {
+  const { formatReportAmount } = compile("../src/lib/i18n/report-amount.ts");
+  for (const currency of ["JPY", "KWD", "ZZZ"]) {
+    assert.equal(
+      formatReportAmount("1234567", currency, "en"),
+      `${currency} 1,234,567 (minor units)`,
+    );
+    assert.equal(
+      formatReportAmount("1234567", currency, "bn"),
+      `${currency} ১২,৩৪,৫৬৭ (ক্ষুদ্র এককে)`,
+    );
+  }
+  for (const minor of ["", "-1", "1.1", "1e3", " 1", "১", "9".repeat(31)]) {
+    assert.throws(() => formatReportAmount(minor, "USD", "en"), RangeError);
+  }
+  assert.throws(() => formatReportAmount("1", "usd", "en"), RangeError);
+});
 const query = { from: "2026-10-01", to: "2026-10-02", timezone: "Asia/Dhaka" };
+test("report dates distinguish field errors, ordering and the exact 366-day limit", () => {
+  const { validateReportRange } = compile(
+    "../src/lib/workspace/report-range.ts",
+  );
+  const now = new Date("2026-10-22T12:00:00Z");
+  for (const to of ["2026-10-01", "2026-09-30"]) {
+    assert.deepEqual(validateReportRange({ ...query, to }, now), {
+      success: false,
+      issues: { to: "order" },
+    });
+  }
+  assert.deepEqual(validateReportRange({ ...query, from: "", to: "" }, now), {
+    success: false,
+    issues: { from: "required", to: "required" },
+  });
+  assert.deepEqual(validateReportRange({ ...query, from: "2026-02-30" }, now), {
+    success: false,
+    issues: { from: "calendar" },
+  });
+  assert.deepEqual(
+    validateReportRange(
+      {
+        ...query,
+        from: "1999-12-31",
+        to: "not-a-date",
+        timezone: "Europe/London",
+      },
+      now,
+    ),
+    {
+      success: false,
+      issues: { from: "calendar", to: "calendar", timezone: "timezone" },
+    },
+  );
+  assert.deepEqual(
+    validateReportRange(
+      { ...query, from: "2024-01-01", to: "2025-01-02" },
+      now,
+    ),
+    { success: false, issues: { to: "length" } },
+  );
+  for (const timezone of ["UTC", "Asia/Dhaka"]) {
+    const input = { from: "2024-01-01", to: "2025-01-01", timezone };
+    assert.deepEqual(validateReportRange(input, now), {
+      success: true,
+      data: input,
+    });
+  }
+});
+test("report dates use tomorrow in the selected timezone across local midnight", () => {
+  const { validateReportRange } = compile(
+    "../src/lib/workspace/report-range.ts",
+  );
+  const input = {
+    from: "2026-10-22",
+    to: "2026-10-24",
+    timezone: "Asia/Dhaka",
+  };
+  assert.deepEqual(
+    validateReportRange(input, new Date("2026-10-22T17:59:59Z")),
+    { success: false, issues: { to: "future" } },
+  );
+  assert.deepEqual(
+    validateReportRange(input, new Date("2026-10-22T18:00:00Z")),
+    { success: true, data: input },
+  );
+  assert.deepEqual(
+    validateReportRange(
+      { ...input, timezone: "UTC" },
+      new Date("2026-10-22T18:00:00Z"),
+    ),
+    { success: false, issues: { to: "future" } },
+  );
+  assert.deepEqual(
+    validateReportRange(
+      { ...input, timezone: "UTC", to: "2026-10-23" },
+      new Date("2026-10-22T18:00:00Z"),
+    ).success,
+    true,
+  );
+});
 const confirmation = {
   actorPassword: "synthetic",
   reason: "Reviewed synthetic operation",
@@ -94,7 +220,10 @@ const handle = (path, body, role, headers) =>
   );
 test("ADM8 fixed mappings reject arbitrary provider tests and job replay", () => {
   for (const name of ["toString", "constructor", "__proto__"])
-    assert.equal(server.resolveEndpoint(["admin", "platform", name], "GET"), null);
+    assert.equal(
+      server.resolveEndpoint(["admin", "platform", name], "GET"),
+      null,
+    );
   for (const path of [
     "admin/platform/env",
     "admin/platform/system/retry",

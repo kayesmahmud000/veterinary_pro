@@ -1,3 +1,5 @@
+import Redis from "ioredis";
+import { Queue } from "bullmq";
 import { PlatformProbe } from "./platform-probe.service";
 import { EnvService } from "../../config";
 import { PlatformRepository } from "./platform.repository";
@@ -50,6 +52,16 @@ describe("ADM8 redacted read-only probes with controlled dependencies", () => {
     });
     repo.databaseProbe.mockResolvedValue({ pending: 1, failed: 2 });
     probe = new PlatformProbe(env, repo as unknown as PlatformRepository);
+  });
+  it("reports disabled Redis and queues unavailable without constructing clients", async () => {
+    const disabled = new PlatformProbe({ ...env, redisEnabled: false } as unknown as EnvService, repo as unknown as PlatformRepository);
+    const result = await disabled.system();
+    expect(result.database).toBe("UP");
+    expect(result.redis).toBe("UNAVAILABLE");
+    expect(result.queues.every(q => q.status === "UNAVAILABLE" && q.counts === null)).toBe(true);
+    expect(repo.databaseProbe).toHaveBeenCalledTimes(1);
+    expect(Redis).not.toHaveBeenCalled();
+    expect(Queue).not.toHaveBeenCalled();
   });
   it("reads only fixed queue counters and worker registrations, then closes all clients", async () => {
     const result = await probe.system();

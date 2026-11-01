@@ -47,7 +47,7 @@ export function WorkspaceShell({
   }, [open]);
   return (
     <FarmContextProvider>
-      <div data-workspace-shell className="min-h-screen bg-paper">
+      <div data-workspace-shell className="min-h-screen bg-white">
         <div className="grid w-full grid-cols-[minmax(0,1fr)] min-[1024px]:grid-cols-[240px_minmax(0,1fr)]">
           <aside className="sticky top-0 hidden h-screen min-w-0 flex-col gap-8 overflow-y-auto border-y-0 border-l-0 border-r border-solid border-line bg-white px-4 py-6 min-[1024px]:flex">
             <SiteBrand

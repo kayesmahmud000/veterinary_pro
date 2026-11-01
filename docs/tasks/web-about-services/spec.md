@@ -1,0 +1,32 @@
+# About services section
+
+Status: Verified locally
+Date: 2026-10-29
+
+## Outcome and scope
+
+Add the supplied reference's service overview to `/about`, with Khamar School replacing PraniSheba Vet. Retain all eight categories: treatment, breeding, grass cultivation, deworming and vaccination, farm planning, farm management, supplies, and dairy farm management. Preserve existing About content and bilingual locale behavior.
+
+## Current implementation and design
+
+**Confirmed from code:** `apps/web/src/app/(marketing)/about/page.tsx` renders the shared public shell and translated introductory, mission, audience and values content from `src/lib/i18n/public-pages.ts`; it has no service diagram.
+
+Use a server-rendered `AboutServices` component in `src/components/marketing/about-services.tsx`. At wide desktop widths, show the circular eight-service diagram beside an introduction headed “What is Khamar School?”; stack at intermediate widths. Below 768px, render the same services as a readable two-column semantic list. Use native SVG geometry, Lucide icons and complete Tailwind classes. Reuse the existing introduction without importing the reference's government-approval or hospital claims.
+
+Follow-up requirement (2026-10-29): the central mark beside the Khamar School name must reuse the header/footer's `BrandLogo` component and supplied green seal, including the same circular crop, on desktop and mobile. Keep all service icons and labels unchanged. Allow a caller-supplied image `sizes` hint while preserving the shared logo's existing default.
+
+Latest refinement (2026-10-29, supersedes the separate name beside the logo): show only the supplied logo in the center, because its artwork already includes the brand name. Center a 220 × 220 logo at SVG coordinates (400, 400); mobile shows the logo alone at 96 × 96. Remove the redundant rendered brand-name text and its unused translation keys; retain the explanatory section heading and all services.
+
+Service refinement (2026-10-30, supersedes the original dairy/supplies categories): replace dairy farm management with “ফ্যাটেনিং (মোটাতাজাকরণ) ব্যবস্থাপনা” / “Fattening management”, and supplies management with “রেশন ব্যবস্থাপনা” / “Ration management”. Reflect these categories in the introduction and use matching livestock/feed icons. Keep the same eight positions, colors and centered site logo. The longer Bangla fattening label wraps over two lines in the desktop SVG.
+
+## Contracts, impact and acceptance
+
+No API, authentication, clinical workflow, persistence or dependency changes. This is informational content without booking actions. UI/UX, frontend and Code Reviewer/QA perspectives apply. Existing unrelated local changes must be preserved; Git remains human-managed.
+
+- Center branding and introduction use Khamar School in both locales.
+- All eight reference services appear with distinct colored icons; assistive technology receives the service list without duplicate diagram content.
+- Bangla remains the default; English follows the existing locale switch.
+- Verify both locales at 320, 375, 768, 1440 and 1920px, including overflow and long labels.
+- Run the styling guard/tests, production build, relevant public-page and localization checks; record evidence in the plan.
+
+Parent contracts: [public site](../../features/web-public-site/spec.md), [localization](../web-localization/spec.md). Rollback consists of removing the component invocation, component and added translation keys.

@@ -1,20 +1,21 @@
 import { z } from "zod";
+import { courseSlugSchema } from "./course-slug.js";
 import { ProductType, SubscriptionTier } from "../enums/index.js";
-import { ProductContentProvider } from "./youtube-courses.js";
+import {
+  ProductContentProvider,
+  courseThumbnailUrlSchema,
+} from "./youtube-courses.js";
 const uuid = z.string().uuid(),
   version = z.number().int().nonnegative();
 const date = z
   .string()
   .datetime({ offset: true })
   .refine((v) => Number.isFinite(Date.parse(v)));
+const legacyProductSlugSchema=z.string().trim().min(3).max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const productFields = {
+  thumbnailUrl: courseThumbnailUrlSchema.nullable().optional(),
   title: z.string().trim().min(3).max(255),
-  slug: z
-    .string()
-    .trim()
-    .min(3)
-    .max(200)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  slug: courseSlugSchema,
   description: z.string().trim().min(10).max(5000),
   priceCents: z.number().int().min(0).max(2147483647),
   discountPriceCents: z.number().int().min(0).max(2147483647).nullable(),
@@ -26,10 +27,20 @@ const pricing = (v: {
   discountPriceCents: number | null;
 }) => v.discountPriceCents === null || v.discountPriceCents < v.priceCents;
 export const adminProductCreateSchema = z
-  .object({ ...productFields, type: z.nativeEnum(ProductType), contentProvider: z.nativeEnum(ProductContentProvider).optional() })
+  .object({
+    ...productFields,
+    type: z.nativeEnum(ProductType),
+    contentProvider: z.nativeEnum(ProductContentProvider).optional(),
+  })
   .strict()
   .refine(pricing, { path: ["discountPriceCents"] })
-  .refine(v => v.contentProvider !== ProductContentProvider.YOUTUBE || (v.type === ProductType.VIDEO_COURSE && v.priceCents === 0 && v.discountPriceCents === null), {path:["contentProvider"]});
+  .refine(
+    (v) =>
+      v.contentProvider !== ProductContentProvider.YOUTUBE ||
+      v.type === ProductType.VIDEO_COURSE,
+    { path: ["contentProvider"] },
+  )
+  .refine(v => (v.type === ProductType.VIDEO_COURSE && v.contentProvider === ProductContentProvider.YOUTUBE) || legacyProductSlugSchema.safeParse(v.slug).success, { path: ["slug"] });
 export const adminProductEditSchema = z
   .object({ ...productFields, expectedVersion: version })
   .strict()
@@ -45,7 +56,12 @@ export const adminAssetAttachSchema = z
   .object({ uploadId: uuid, expectedVersion: version })
   .strict();
 export const adminProductSchema = z.object({
-  contentProvider: z.nativeEnum(ProductContentProvider).default(ProductContentProvider.INTERNAL),
+  previewImageUrl: courseThumbnailUrlSchema.nullable().optional(),
+  lessonCount: z.number().int().nonnegative().optional(),
+  enrollmentCount: z.number().int().nonnegative().optional(),
+  contentProvider: z
+    .nativeEnum(ProductContentProvider)
+    .default(ProductContentProvider.INTERNAL),
   id: uuid,
   version,
   ...productFields,
@@ -61,6 +77,7 @@ export const adminProductQuerySchema = z
     limit: z.coerce.number().int().min(1).max(100).default(20),
     cursor: uuid.optional(),
     search: z.string().trim().max(100).optional(),
+    slug: z.string().trim().max(200).optional(),
     type: z.nativeEnum(ProductType).optional(),
     publication: z.enum(["DRAFT", "PUBLISHED"]).optional(),
   })

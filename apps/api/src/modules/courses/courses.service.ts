@@ -12,6 +12,7 @@ import {
   myCourseSchema,
   courseLibrarySchema,
   coursePlaybackSchema,
+  readCourseThumbnail,
 } from "@vetralink/shared-types";
 import { CoursesRepository } from "./courses.repository";
 import {
@@ -56,10 +57,16 @@ export class CoursesService {
       );
   }
   private card(row: Outline) {
+    const demo = row.courseLessons.find(
+      (lesson) => lesson.access === "PUBLIC_DEMO",
+    );
     return courseCardSchema.parse({
       ...row,
       provider: "YOUTUBE",
       access: "FREE_ENROLLMENT",
+      thumbnailUrl: readCourseThumbnail(row.metadata) ?? (demo
+        ? `https://i.ytimg.com/vi/${demo.youtubeVideoId}/hqdefault.jpg`
+        : null),
       lessonCount: row.courseLessons.length,
       demoCount: row.courseLessons.filter((l) => l.access === "PUBLIC_DEMO")
         .length,

@@ -2,20 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
   courseQuerySchema,
+  decodeCourseSlugSegment,
   courseListSchema,
   courseSchema,
   coursePlaybackSchema,
 } from "@vetralink/shared-types";
 import { fetchWithDiagnostics } from "../api-diagnostics";
-const uuid = z.string().uuid(),
-  slug = z
-    .string()
-    .min(3)
-    .max(200)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
-export function resolvePublicCourse(
-  path: string[],
-): {
+const uuid = z.string().uuid();
+export function resolvePublicCourse(path: string[]): {
   upstream: string;
   schema: z.ZodTypeAny;
   query?: z.ZodTypeAny;
@@ -29,15 +23,15 @@ export function resolvePublicCourse(
       schema: courseListSchema,
       query: courseQuerySchema,
     };
-  if (
-    path.length === 2 &&
-    path[0] === "slug" &&
-    slug.safeParse(path[1]).success
-  )
+  const requestedSlug =
+    path.length === 2 && path[0] === "slug"
+      ? decodeCourseSlugSegment(path[1])
+      : null;
+  if (requestedSlug !== null)
     return {
-      upstream: `courses/slug/${path[1]}`,
+      upstream: `courses/slug/${encodeURIComponent(requestedSlug)}`,
       schema: courseSchema,
-      slug: path[1],
+      slug: requestedSlug,
     };
   if (
     path.length === 4 &&

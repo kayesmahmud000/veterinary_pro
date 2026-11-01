@@ -10,10 +10,12 @@ import { protectedEntryUrl } from "@/lib/workspace/navigation";
 export function WorkspaceGate({
   allowedRoles,
   requireFarmerSetupComplete = false,
+  loadingFallback,
   children,
 }: {
   allowedRoles?: readonly UserRole[];
   requireFarmerSetupComplete?: boolean;
+  loadingFallback?: ReactNode;
   children: ReactNode;
 }) {
   const auth = useAuth(),
@@ -64,7 +66,7 @@ export function WorkspaceGate({
   }, [setup, auth.checking, auth.error, router]);
   let feedback: ReactNode = null;
   if (auth.checking || setup)
-    feedback = (
+    feedback = loadingFallback ?? (
       <p role="status" aria-live="polite">
         {t.loading}
       </p>

@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { YouTubePlayer } from "@/components/courses/youtube-player";
 import Link from "next/link";
 import {
   adminCurriculumSchema,
@@ -13,7 +14,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { getAdminCourseMessages } from "@/lib/i18n/admin-courses";
 import { getCatalogMessages } from "@/lib/i18n/admin-catalog";
 import { workspaceRequest } from "@/lib/workspace/client";
-import { useNavigationGuard } from "./navigation-guard";
+import { useUnsavedChanges } from "./use-unsaved-changes";
 import { WorkspaceGate } from "./workspace-gate";
 import { Field, useRemote } from "./workspace-ui";
 import { CatalogError } from "./admin-products";
@@ -26,16 +27,26 @@ type Row = {
   access: "PUBLIC_DEMO" | "ENROLLED";
   videoUrl: string;
 };
-function Editor({
+export function CourseLessonEditor({
   initial,
   reload,
   courseWorkspace = false,
   courseTitle,
+  embedded = false,
+  locked = false,
+  previewEnabled = true,
+  onSaved,
+  onStateChange,
 }: {
   initial: AdminCurriculum;
   reload: () => void;
   courseWorkspace?: boolean;
   courseTitle?: string;
+  embedded?: boolean;
+  locked?: boolean;
+  previewEnabled?: boolean;
+  onSaved?: (value: AdminCurriculum) => void;
+  onStateChange?: (value: { dirty: boolean; busy: boolean }) => void;
 }) {
   const auth = useAuth(),
     t = getAdminCourseMessages(auth.locale),
@@ -58,85 +69,31 @@ function Editor({
     [preview, setPreview] = useState<{ id: string; title: string } | null>(
       null,
     );
-  const disabled = busy || initial.isPublished;
-  const registerGuard = useNavigationGuard();
+  const running = useRef(false),
+    active = useRef(true);
   useEffect(() => {
-    if (!dirty) return;
-    const source = location.href,
-      sourceState = history.state;
-    const navigation = (
-      window as Window & { navigation?: { currentEntry?: { index: number } } }
-    ).navigation;
-    const sourceIndex = navigation?.currentEntry?.index;
-    let restoring = false;
-    const confirm = () => window.confirm(t.discard);
-    const click = (event: MouseEvent) => {
-      if (
-        event.defaultPrevented ||
-        event.button !== 0 ||
-        event.ctrlKey ||
-        event.metaKey ||
-        event.shiftKey ||
-        event.altKey
-      )
-        return;
-      const link = (event.target as Element).closest?.(
-        "a[href]",
-      ) as HTMLAnchorElement | null;
-      if (
-        !link ||
-        link.target === "_blank" ||
-        link.hasAttribute("download") ||
-        link.href === source
-      )
-        return;
-      const target = new URL(link.href);
-      if (
-        target.pathname === location.pathname &&
-        target.search === location.search
-      )
-        return;
-      if (confirm()) setDirty(false);
-      else {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    };
-    const pop = (event: PopStateEvent) => {
-      if (restoring) {
-        event.stopImmediatePropagation();
-        restoring = false;
-        return;
-      }
-      if (location.href === source) return;
-      if (confirm()) {
-        setDirty(false);
-        return;
-      }
-      event.stopImmediatePropagation();
-      const destinationIndex = navigation?.currentEntry?.index;
-      if (
-        sourceIndex !== undefined &&
-        destinationIndex !== undefined &&
-        sourceIndex !== destinationIndex
-      ) {
-        restoring = true;
-        history.go(sourceIndex - destinationIndex);
-      } else history.pushState(sourceState, "", source);
-    };
-    const before = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    document.addEventListener("click", click, true);
-    const unregister = registerGuard(pop);
-    window.addEventListener("beforeunload", before);
+    active.current = true;
     return () => {
-      document.removeEventListener("click", click, true);
-      unregister();
-      window.removeEventListener("beforeunload", before);
+      active.current = false;
     };
-  }, [dirty, t.discard, registerGuard]);
+  }, []);
+  const disabled =
+    locked || busy || initial.isPublished || auth.checking || !!auth.error;
+  const [savedRows, setSavedRows] = useState(rows);
+  useEffect(() => setVersion(initial.version), [initial.version]);
+  useEffect(
+    () => onStateChange?.({ dirty, busy }),
+    [dirty, busy, onStateChange],
+  );
+  const confirmDiscard = useUnsavedChanges(
+    !embedded && dirty,
+    t.discard,
+    () => {
+      setRows(savedRows);
+      setDirty(false);
+      setPreview(null);
+    },
+  );
   function change(next: Row[]) {
     setRows(next);
     setDirty(true);
@@ -150,7 +107,7 @@ function Editor({
     change(next);
   }
   async function save() {
-    if (disabled) return;
+    if (disabled || running.current) return;
     const input = adminCurriculumWriteSchema.safeParse({
       expectedVersion: version,
       lessons: rows.map(({ key, ...row }) => row),
@@ -159,6 +116,7 @@ function Editor({
       setCode("INVALID_CURRICULUM");
       return;
     }
+    running.current = true;
     setBusy(true);
     setCode("");
     setSaved(false);
@@ -168,39 +126,64 @@ function Editor({
       adminCurriculumSchema,
       "PUT",
       input.data,
+      auth.user
+        ? `${auth.user.id}:${auth.user.role}:${auth.user.roleVersion ?? 0}`
+        : undefined,
     );
+    if (!active.current) return;
+    running.current = false;
     setBusy(false);
     if (result.data) {
       setVersion(result.data.version);
-      setRows(
-        result.data.lessons.map((lesson) => ({
-          id: lesson.id,
-          title: lesson.title,
-          summary: lesson.summary,
-          access: lesson.access,
-          key: lesson.id,
-          videoUrl: `https://www.youtube.com/watch?v=${lesson.youtubeVideoId}`,
-        })),
-      );
+      const nextRows = result.data.lessons.map((lesson) => ({
+        id: lesson.id,
+        title: lesson.title,
+        summary: lesson.summary,
+        access: lesson.access,
+        key: lesson.id,
+        videoUrl: `https://www.youtube.com/watch?v=${lesson.youtubeVideoId}`,
+      }));
+      setRows(nextRows);
+      setSavedRows(nextRows);
       setDirty(false);
       setSaved(true);
+      onSaved?.(result.data);
     } else setCode(result.code ?? "DEFAULT");
   }
   return (
     <div data-course-editor className="space-y-6">
       {courseTitle && <h2 className="text-xl font-semibold">{courseTitle}</h2>}
-      <Link
-        className={styles.secondary}
-        href={courseWorkspace ? "/admin/courses" : `/admin/products/${initial.productId}`}
-      >
-        {courseWorkspace ? t.backCourses : common.back}
-      </Link>
-      {courseWorkspace && <Link className={styles.secondary} href={`/admin/products/${initial.productId}`}>{t.courseDetails}</Link>}
-      <p>{t.hint}</p>
-      <Link className={styles.secondary} href="/courses">{getCatalogMessages(auth.locale).viewCourses}</Link>
+      {!embedded && (
+        <>
+          <Link
+            className={styles.secondary}
+            href={
+              courseWorkspace
+                ? "/admin/courses"
+                : `/admin/products/${initial.productId}`
+            }
+          >
+            {courseWorkspace ? t.backCourses : common.back}
+          </Link>
+          {courseWorkspace && (
+            <Link
+              className={styles.secondary}
+              href={`/admin/products/${initial.productId}`}
+            >
+              {t.courseDetails}
+            </Link>
+          )}
+        </>
+      )}
+      <p>{embedded ? t.publicHint : t.hint}</p>
+      {!embedded && (
+        <Link className={styles.secondary} href="/courses">
+          {getCatalogMessages(auth.locale).viewCourses}
+        </Link>
+      )}
       {initial.isPublished && (
         <p role="status" className={styles.notice}>
-          {t.published}
+          {embedded ? t.publishedEditing : t.published}
         </p>
       )}
       {code &&
@@ -368,10 +351,11 @@ function Editor({
           </button>
           <button
             type="button"
-            disabled={busy}
+            data-reload-lessons
+            disabled={busy || locked}
             className={styles.secondary}
             onClick={() => {
-              if (!dirty || window.confirm(t.discard)) reload();
+              if (embedded || !dirty || confirmDiscard()) reload();
             }}
           >
             {t.reload}
@@ -387,7 +371,7 @@ function Editor({
                 key={row.key}
                 type="button"
                 className={styles.secondary}
-                disabled={busy}
+                disabled={busy || locked}
                 onClick={() => {
                   try {
                     setPreview({
@@ -404,18 +388,24 @@ function Editor({
               </button>
             ))}
           </div>
-          {preview && (
+          {preview && previewEnabled && !auth.checking && !auth.error && (
             <>
-              <iframe
-                key={`${preview.id}:${preview.title}`}
-                data-youtube-preview
-                className="aspect-video min-h-[200px] w-full rounded-xl border-0"
-                title={preview.title}
-                src={`https://www.youtube-nocookie.com/embed/${preview.id}?autoplay=0&controls=1&playsinline=1&rel=0&hl=${auth.locale}`}
-                referrerPolicy="strict-origin-when-cross-origin"
-                allow="encrypted-media; picture-in-picture; fullscreen"
-                allowFullScreen
-              />
+              {embedded ? (
+                <div data-admin-video-preview>
+                  <YouTubePlayer videoId={preview.id} title={preview.title} />
+                </div>
+              ) : (
+                <iframe
+                  key={`${preview.id}:${preview.title}`}
+                  data-youtube-preview
+                  className="aspect-video min-h-[200px] w-full rounded-xl border-0"
+                  title={preview.title}
+                  src={`https://www.youtube-nocookie.com/embed/${preview.id}?autoplay=0&controls=1&playsinline=1&rel=0&hl=${auth.locale}`}
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allow="encrypted-media; picture-in-picture; fullscreen"
+                  allowFullScreen
+                />
+              )}
               <button
                 type="button"
                 className={styles.secondary}
@@ -431,24 +421,52 @@ function Editor({
     </div>
   );
 }
-function Curriculum({ id, courseWorkspace }: { id: string; courseWorkspace: boolean }) {
+function Curriculum({
+  id,
+  courseWorkspace,
+}: {
+  id: string;
+  courseWorkspace: boolean;
+}) {
   const data = useRemote(
       `admin/products/${id}/curriculum`,
       adminCurriculumSchema,
     ),
-    product = useRemote(courseWorkspace ? `admin/products/${id}` : null, adminProductSchema),
+    product = useRemote(
+      courseWorkspace ? `admin/products/${id}` : null,
+      adminProductSchema,
+    ),
     t = getCatalogMessages(useAuth().locale);
   if (data.loading || product.loading) return <p role="status">{t.loading}</p>;
   if (courseWorkspace && (product.code || !product.data))
-    return <CatalogError code={product.code ?? "NOT_FOUND"} retry={product.reload} />;
+    return (
+      <CatalogError code={product.code ?? "NOT_FOUND"} retry={product.reload} />
+    );
   if (data.code || !data.data)
     return <CatalogError code={data.code ?? "NOT_FOUND"} retry={data.reload} />;
-  return <Editor initial={data.data} reload={data.reload} courseWorkspace={courseWorkspace} courseTitle={product.data?.title} />;
+  return (
+    <CourseLessonEditor
+      initial={data.data}
+      reload={data.reload}
+      courseWorkspace={courseWorkspace}
+      courseTitle={product.data?.title}
+    />
+  );
 }
-export function AdminCourseCurriculum({ id, courseWorkspace = false }: { id: string; courseWorkspace?: boolean }) {
+export function AdminCourseCurriculum({
+  id,
+  courseWorkspace = false,
+}: {
+  id: string;
+  courseWorkspace?: boolean;
+}) {
   const t = getAdminCourseMessages(useAuth().locale);
   return (
-    <main id="main-content" data-admin-course-workspace={courseWorkspace || undefined} className={styles.shell}>
+    <main
+      id="main-content"
+      data-admin-course-workspace={courseWorkspace || undefined}
+      className={styles.shell}
+    >
       <h1 className={styles.heading}>{t.heading}</h1>
       <WorkspaceGate allowedRoles={[UserRole.ADMIN, UserRole.SUPER_ADMIN]}>
         <Curriculum id={id} courseWorkspace={courseWorkspace} />

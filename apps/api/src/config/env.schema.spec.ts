@@ -143,3 +143,20 @@ describe("Environment Schema & Validation (env.schema.ts)", () => {
     });
   });
 });
+
+
+describe("explicit Redis runtime profile", () => {
+  const base = { DATABASE_URL: "postgresql://test:test@localhost:5432/test" };
+  it("defaults to Redis and strictly parses explicit booleans", () => {
+    expect((EnvSchema.parse(base) as Record<string, unknown>).REDIS_ENABLED).toBe(true);
+    for (const value of [false, "false"]) expect((EnvSchema.parse({ ...base, REDIS_ENABLED: value }) as Record<string, unknown>).REDIS_ENABLED).toBe(false);
+    for (const value of [true, "true"]) expect((EnvSchema.parse({ ...base, REDIS_ENABLED: value }) as Record<string, unknown>).REDIS_ENABLED).toBe(true);
+    for (const value of ["", "0", "FALSE", "no", 0, null]) expect(EnvSchema.safeParse({ ...base, REDIS_ENABLED: value }).success).toBe(false);
+  });
+  it("allows explicit memory mode in a production Vercel test deployment", () => {
+    const previous = process.env.VERCEL;
+    process.env.VERCEL = "1";
+    try { expect((EnvSchema.parse({ ...base, NODE_ENV: "production", REDIS_ENABLED: "false" }) as Record<string, unknown>).REDIS_ENABLED).toBe(false); }
+    finally { if (previous === undefined) delete process.env.VERCEL; else process.env.VERCEL = previous; }
+  });
+});

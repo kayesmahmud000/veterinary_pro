@@ -33,6 +33,7 @@ export function getPublicNavGroups(
 ): readonly PublicNavGroup[] {
   const t = messages.navigation;
   return [
+    { label: t.courses, href: "/courses" },
     {
       label: t.farm,
       href: "/farm-management",
@@ -49,7 +50,6 @@ export function getPublicNavGroups(
         { label: t.guides, href: "/learning#guides" },
       ],
     },
-    { label: t.courses, href: "/courses" },
     {
       label: t.veterinary,
       href: "/veterinary-care",

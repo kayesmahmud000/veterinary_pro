@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
+import { checkReportDates } from "./report-date-browser-cases.mjs";
 import {
   platformId,
   platformSettingsFixture,
@@ -15,7 +16,24 @@ export const platformState = {
   conflict: false,
   writeFailure: false,
   malformed: false,
+  amountCases: false,
 };
+function reportFixture(query, settings) {
+  const report = platformReportFixture(query, settings);
+  if (platformState.amountCases)
+    report.orders.push(
+      { currency: "USD", status: "PENDING", count: 1, totalMinor: "0" },
+      { currency: "BDT", status: "PENDING", count: 1, totalMinor: "1" },
+      {
+        currency: "USD",
+        status: "CANCELLED",
+        count: 1,
+        totalMinor: "999999999999999999999999999999",
+      },
+      { currency: "JPY", status: "PENDING", count: 1, totalMinor: "1234567" },
+    );
+  return report;
+}
 export function handlePlatformFixture(req, res, data, route, role) {
   if (!route.startsWith("admin/platform/")) return false;
   const send = (status, value, code) => {
@@ -46,7 +64,7 @@ export function handlePlatformFixture(req, res, data, route, role) {
       const query = Object.fromEntries(
         new URL(req.url, "http://fixture").searchParams,
       );
-      const report = platformReportFixture(query, settings);
+      const report = reportFixture(query, settings);
       return send(
         200,
         platformState.malformed
@@ -80,7 +98,7 @@ export function handlePlatformFixture(req, res, data, route, role) {
   if (type === "reports")
     return send(200, {
       exportId: platformId,
-      report: platformReportFixture(data.query, settings),
+      report: reportFixture(data.query, settings),
     });
   if (type === "audit-export")
     return send(200, platformAuditFixture(data.query));
@@ -96,6 +114,7 @@ export async function checkAdminPlatform({
   requests,
 }) {
   let checks = 0;
+  platformState.amountCases = true;
   const set = (id, value) =>
     evaluate(
       `(()=>{const e=document.getElementById(${JSON.stringify(id)});const proto=e.tagName==='SELECT'?HTMLSelectElement.prototype:e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(proto,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event(e.tagName==='SELECT'?'change':'input',{bubbles:true}));})()`,
@@ -156,6 +175,38 @@ export async function checkAdminPlatform({
           true,
         );
         checks++;
+        const expectedMoney =
+          locale === "bn"
+            ? [
+                "USD ১২,৩৪৫.৬৭",
+                "USD ৯,০০,৭১,৯৯,২৫,৪৭,৪০৯.৯৩",
+                "BDT ৪,২৯,৪৯,৬৭২.৯৪",
+                "USD ০.০০",
+                "BDT ০.০১",
+                "USD ৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯,৯৯৯.৯৯",
+                "JPY ১২,৩৪,৫৬৭ (ক্ষুদ্র এককে)",
+              ]
+            : [
+                "USD 12,345.67",
+                "USD 90,071,992,547,409.93",
+                "BDT 42,949,672.94",
+                "USD 0.00",
+                "BDT 0.01",
+                "USD 9,999,999,999,999,999,999,999,999,999.99",
+                "JPY 1,234,567 (minor units)",
+              ];
+        for (const amount of expectedMoney) {
+          assert.equal(
+            await evaluate(
+              `document.querySelector('[data-platform-report]').textContent.includes(${JSON.stringify(amount)})`,
+            ),
+            true,
+            `Readable exact metrics: ${amount}`,
+          );
+          checks++;
+        }
+        assert.equal(await evaluate(`Array.from(document.querySelectorAll('[data-platform-report] li span')).filter(s=>s.textContent.includes(${JSON.stringify(expectedMoney[2])})).length`), 2, "Orders and monthly orders share exact formatting");
+        checks++;
         assert.equal(
           await evaluate(
             `document.querySelectorAll('main [data-platform-action]').length`,
@@ -177,6 +228,17 @@ export async function checkAdminPlatform({
         );
         await wait("2026-10-01T00:00:00.000Z");
         checks++;
+        for (const amount of expectedMoney) {
+          assert.equal(
+            await evaluate(
+              `document.querySelector('[data-platform-report]').textContent.includes(${JSON.stringify(amount)})`,
+            ),
+            true,
+            `Readable exact report: ${amount}`,
+          );
+          checks++;
+        }
+        checks += await checkReportDates({ evaluate, call, until, requests, set, role, locale, width, temp });
         await action("admin/platform/reports/export");
         await until(
           () =>
@@ -190,7 +252,16 @@ export async function checkAdminPlatform({
         );
         assert.equal(exported.report.range.timezone, "UTC");
         assert.equal(exported.report.orders[1].totalMinor, "9007199254740993");
-        checks += 2;
+        assert.equal(
+          exported.report.subscriptions.estimatedMrr.totalMinor,
+          "1234567",
+        );
+        assert.equal(exported.report.orderMonths[0].totalMinor, "4294967294");
+        assert.deepEqual(
+          exported.report.orders.slice(2).map((r) => r.totalMinor),
+          ["0", "1", "999999999999999999999999999999", "1234567"],
+        );
+        checks += 5;
         await set("audit-action", "USER_SUSPENDED");
         assert.equal(
           await evaluate(
@@ -301,7 +372,7 @@ export async function checkAdminPlatform({
   checks++;
   platformState.conflict = false;
   await evaluate(
-    `Array.from(document.querySelectorAll('[data-platform-action] button')).find(b=>b.textContent.includes('Reload')).click()`,
+    `(()=>{const original=window.confirm;window.confirm=()=>true;try{Array.from(document.querySelectorAll('[data-platform-action] button')).find(b=>b.textContent.includes('Reload')).click()}finally{window.confirm=original}})()`,
   );
   await until(
     () => evaluate(`!!document.getElementById('organizationEn')`),
@@ -362,6 +433,7 @@ export async function checkAdminPlatform({
       ),
   );
   checks++;
+  platformState.amountCases = false;
   console.log(`ADM8 platform browser: ${checks} checks passed`);
   return checks;
 }

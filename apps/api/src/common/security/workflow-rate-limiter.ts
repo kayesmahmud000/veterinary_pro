@@ -5,9 +5,12 @@ import { WorkflowException } from "../exceptions/domain.exception";
 
 @Injectable()
 export class WorkflowRateLimiter implements OnModuleDestroy {
-  private readonly redis: Redis;
+  private readonly redis?: Redis;
+  private readonly counters = new Map<string, { count: number; expiresAt: number }>();
+  private readonly maxMemoryCounters = 10_000;
   private connecting?: Promise<void>;
   constructor(env: EnvService) {
+    if (env.redisEnabled === false) return;
     this.redis = new Redis(env.redisUrl, {
       lazyConnect: true,
       maxRetriesPerRequest: 1,
@@ -23,6 +26,29 @@ export class WorkflowRateLimiter implements OnModuleDestroy {
     limit: number,
     seconds: number,
   ): Promise<void> {
+    if (!this.redis) {
+      const now = Date.now();
+      const key = JSON.stringify([scope, userId]);
+      let entry = this.counters.get(key);
+      if (!entry || entry.expiresAt <= now) {
+        // Reclaim expired entries before admitting a new identity. Never evict a
+        // live counter: that would let callers bypass limits under load.
+        if (this.counters.size >= this.maxMemoryCounters) {
+          for (const [existingKey, counter] of this.counters) {
+            if (counter.expiresAt <= now) this.counters.delete(existingKey);
+          }
+        }
+        if (!this.counters.has(key) && this.counters.size >= this.maxMemoryCounters)
+          throw new WorkflowException("RATE_LIMIT_UNAVAILABLE", "Please retry shortly.", 503);
+        entry = { count: 0, expiresAt: now + seconds * 1000 };
+        this.counters.set(key, entry);
+      }
+      // No await between reading and updating: concurrent calls share one claim.
+      entry.count += 1;
+      if (entry.count > limit)
+        throw new WorkflowException("RATE_LIMITED", "Too many attempts. Please try again later.", 429);
+      return;
+    }
     let count: number;
     try {
       if (this.redis.status === "wait" && !this.connecting)
@@ -53,7 +79,8 @@ export class WorkflowRateLimiter implements OnModuleDestroy {
       );
   }
   onModuleDestroy() {
-    this.redis.disconnect();
+    this.redis?.disconnect();
+    this.counters.clear();
   }
 }
 @Module({

@@ -33,6 +33,25 @@ function serverlessCandidates() {
   ];
 }
 
+function recoveryError(res, status, code) {
+  if (res.headersSent) return;
+  const message = status === 503
+    ? "Account recovery is unavailable. Please retry later."
+    : status === 404 ? "Not found." : "Validation failed.";
+  const traceId = require("node:crypto").randomUUID();
+  res.setHeader("Cache-Control", "private, no-store");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("x-trace-id", traceId);
+  return res.status(status).json({
+    success: false, statusCode: status, message, data: null,
+    errorDetails: {
+      type: `https://vetralink.pro/errors/${code.toLowerCase().replace(/_/g, "-")}`,
+      title: code, status, detail: message, instance: "/api/v1/auth/password-reset",
+    },
+    traceId, timestamp: new Date().toISOString(),
+  });
+}
+
 function renderLandingHtml() {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -261,6 +280,37 @@ module.exports = async (req, res) => {
   const matchedPath = req.headers["x-matched-path"] || "";
   const effectivePath = matchedPath || rawUrl;
   const acceptHeader = req.headers["accept"] || "";
+
+  // Sensitive recovery requests must never enter the legacy diagnostic/root
+  // shortcuts or lose a submitted query during matched-path rewriting.
+  const recoveryPrefix = /^\/api\/v1\/auth\/password-reset(?:[/?]|$)/i;
+  const isRecovery = [rawUrl, matchedPath].some(
+    (value) => typeof value === "string" && recoveryPrefix.test(value),
+  );
+  if (isRecovery) {
+    res.setHeader("Cache-Control", "private, no-store");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    if (rawUrl.includes("?") || (typeof matchedPath === "string" && matchedPath.includes("?")))
+      return recoveryError(res, 400, "VALIDATION_FAILED");
+    if (matchedPath && (typeof matchedPath !== "string" || !recoveryPrefix.test(matchedPath)))
+      return recoveryError(res, 400, "VALIDATION_FAILED");
+    const recoveryPath = matchedPath || rawUrl;
+    if (req.method !== "POST" || !/^\/api\/v1\/auth\/password-reset\/(request|complete)\/?$/i.test(recoveryPath))
+      return recoveryError(res, 404, "NOT_FOUND");
+    try {
+      if (!cachedHandler) {
+        const resolved = serverlessCandidates().find((candidate) => fs.existsSync(candidate));
+        if (!resolved) return recoveryError(res, 503, "RECOVERY_UNAVAILABLE");
+        const imported = require(resolved);
+        cachedHandler = imported.default || imported;
+      }
+      req.url = recoveryPath;
+      return await cachedHandler(req, res);
+    } catch {
+      // Never expose module resolution, paths, provider/config errors or stacks.
+      return recoveryError(res, 503, "RECOVERY_UNAVAILABLE");
+    }
+  }
 
   // 1. Direct Root Landing Page & Navigation Button
   if (

@@ -29,8 +29,32 @@ test('playback mapping binds both product and lesson IDs and forbids caller user
  assert.equal(resolveEndpoint(['me','courses',id,'enrollment'],'POST').body.safeParse({userId:id}).success,false);
 });
 const {youtubeEmbedUrl}=compile('../src/lib/courses/youtube-player.ts');
+test('course artwork allows validated public HTTPS images and remains backwards compatible',()=>{
+ const {courseSchema}=require('@vetralink/shared-types');
+ assert.equal(courseSchema.safeParse(course).success,true);
+ for(const thumbnailUrl of [null,'https://i.ytimg.com/vi/M7lc1UVf-VE/hqdefault.jpg','https://images.example.test/course.jpg'])assert.equal(courseSchema.safeParse({...course,thumbnailUrl}).success,true);
+ for(const thumbnailUrl of ['http://images.example.test/course.jpg','javascript:alert(1)','https://user:secret@images.example.test/image.jpg','not a URL'])assert.equal(courseSchema.safeParse({...course,thumbnailUrl}).success,false);
+});
 test('player constructs only official privacy-enhanced iframe URLs with origin and no autoplay',()=>{
  const url=new URL(youtubeEmbedUrl('M7lc1UVf-VE','https://school.example.test','bn'));
  assert.equal(url.origin,'https://www.youtube-nocookie.com');assert.equal(url.pathname,'/embed/M7lc1UVf-VE');assert.equal(url.searchParams.get('origin'),'https://school.example.test');assert.equal(url.searchParams.get('autoplay'),'0');assert.equal(url.searchParams.get('enablejsapi'),'1');
  assert.throws(()=>youtubeEmbedUrl('bad/video','https://school.example.test','en'));assert.throws(()=>youtubeEmbedUrl('M7lc1UVf-VE','javascript:alert(1)','en'));
+});
+
+test('admin course recovery accepts exact slugs up to the product limit without substring search',()=>{
+ const endpoint=resolveEndpoint(['admin','products'],'GET');
+ const slug='a'.repeat(200);
+ assert.equal(endpoint.query.safeParse({slug,limit:'1'}).data.slug,slug);
+ assert.equal(endpoint.query.safeParse({slug:'a'.repeat(201)}).success,false);
+});
+
+test('Bangla and short course slug routes retain exact identity and encode one upstream segment',async t=>{
+ const original=globalThis.fetch;t.after(()=>globalThis.fetch=original);
+ for(const slug of ['গরুর-স্বাস্থ্য','a']){
+  const endpoint=resolvePublicCourse(['slug',slug]);assert.equal(endpoint.upstream,`courses/slug/${encodeURIComponent(slug)}`);
+  const calls=[];globalThis.fetch=async(url,init)=>{calls.push(new URL(url));return Response.json({success:true,data:{...course,slug}});};
+  const response=await handleCourses(new NextRequest(`http://localhost/api/courses/slug/${encodeURIComponent(slug)}`),['slug',slug]);
+  assert.equal(response.status,200);assert.equal((await response.json()).data.slug,slug);assert.equal(calls[0].pathname,`/api/v1/courses/slug/${encodeURIComponent(slug)}`);assert.equal(calls[0].search,'');
+ }
+ for(const slug of ['../admin','foo/bar','foo?x=1','foo#bar','foo\\bar'])assert.equal(resolvePublicCourse(['slug',slug]),null);
 });

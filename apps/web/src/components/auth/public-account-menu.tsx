@@ -190,7 +190,19 @@ export function PublicAccountMenu({
               <DestinationIcon size={18} aria-hidden="true" />
               {learner ? t.profile : t.dashboard}
             </Link>
-            <Link data-my-courses href="/account/courses" className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-ink hover:bg-paper" onClick={()=>{close();onNavigate?.();}}>{t.courses}</Link>
+            {!isAdministrativeRole(user.role) && (
+              <Link
+                data-my-courses
+                href="/account/courses"
+                className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-ink hover:bg-paper"
+                onClick={() => {
+                  close();
+                  onNavigate?.();
+                }}
+              >
+                {t.courses}
+              </Link>
+            )}
             <button
               data-public-signout
               type="button"

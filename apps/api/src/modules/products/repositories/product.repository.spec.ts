@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import {
   ProductSortBy,
+  ProductContentProvider,
   ProductType,
   SubscriptionTier,
 } from "@vetralink/shared-types";
@@ -109,6 +110,16 @@ describe("ProductRepository", () => {
   });
 
   describe("findMany", () => {
+    it.each(["গরুর-স্বাস্থ্য", "a"])("hydrates published course slug %s in the generic catalogue",async slug=>{
+      const row={...mockDbRow,slug,contentProvider:ProductContentProvider.YOUTUBE,priceCents:0,discountPriceCents:null,contentS3Key:""};
+      (prisma.product.findMany as jest.Mock).mockResolvedValueOnce([row]);
+      (prisma.product.count as jest.Mock).mockResolvedValueOnce(1);
+      const result=await repository.findMany({isPublished:true,skip:0,take:10});
+      expect(result.products[0].slug).toBe(slug);
+      (prisma.product.findFirst as jest.Mock).mockResolvedValueOnce(row);
+      await expect(repository.findBySlug(slug)).resolves.toHaveProperty("slug",slug);
+    });
+
     it("should return list of products and total count", async () => {
       (prisma.product.findMany as jest.Mock).mockResolvedValueOnce([mockDbRow]);
       (prisma.product.count as jest.Mock).mockResolvedValueOnce(1);

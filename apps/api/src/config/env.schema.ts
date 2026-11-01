@@ -1,7 +1,17 @@
 import { z } from "zod";
+import {
+  thumbnailConfigFields,
+  validateThumbnailConfig,
+} from "./course-thumbnails.config";
+import {
+  recoveryBoolean,
+  recoveryProxyCidrs,
+  validateRecoveryConfig,
+} from "./account-recovery.config";
 
 export const EnvSchema = z
   .object({
+    ...thumbnailConfigFields,
     NODE_ENV: z
       .enum(["development", "staging", "production", "test"])
       .default("development"),
@@ -13,6 +23,7 @@ export const EnvSchema = z
       .string()
       .url("DATABASE_REPLICA_URL must be a valid connection URL")
       .optional(),
+    REDIS_ENABLED: z.union([z.boolean(), z.enum(["true", "false"]).transform(value => value === "true")]).default(true),
     REDIS_URL: z
       .string()
       .url("REDIS_URL must be a valid Redis connection URL")
@@ -81,8 +92,14 @@ export const EnvSchema = z
     API_BASE_URL: z.string().url().default("http://localhost:3001"),
     WEB_BASE_URL: z.string().url().default("http://localhost:3000"),
     AUTH_LEGACY_CLAIMS_UNTIL: z.string().datetime().optional(),
+    ACCOUNT_RECOVERY_ENABLED: recoveryBoolean,
+    ACCOUNT_RECOVERY_TEST_TRANSPORT: recoveryBoolean,
+    RECOVERY_TRUSTED_PROXY_CIDRS: recoveryProxyCidrs,
   })
   .superRefine((data, ctx) => {
+    // Recovery checks must precede the legacy serverless integration bypass.
+    validateRecoveryConfig(data, ctx);
+    validateThumbnailConfig(data, ctx);
     // Skip strict Stripe and AWS validation on Vercel unless explicitly requested
     const isVercel =
       Boolean(process.env["VERCEL"]) ||
