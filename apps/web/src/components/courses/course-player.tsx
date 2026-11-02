@@ -13,6 +13,7 @@ import { getCourseMessages } from "@/lib/i18n/courses";
 import { useRemote } from "@/components/workspace/workspace-ui";
 import { CourseError, CourseLoading, EnrollmentButton } from "./course-ui";
 import { useLearningCourse } from "./course-learning-layout";
+import { LessonDuration } from "./lesson-duration";
 import { YouTubePlayer } from "./youtube-player";
 import { buttonVariants } from "@/components/ui/button";
 import styles from "./course.styles";
@@ -54,7 +55,10 @@ export function CoursePlayer({
         {t.backLibrary}
       </Link>
       <header>
-        <Link href={`/courses/${encodeURIComponent(course.slug)}`} className={styles.link}>
+        <Link
+          href={`/courses/${encodeURIComponent(course.slug)}`}
+          className={styles.link}
+        >
           {t.back}
         </Link>
         <h1 className={`${styles.heading} mt-3`}>{course.title}</h1>
@@ -87,7 +91,11 @@ export function CoursePlayer({
           ) : (
             <>
               {!auth.checking && !auth.error && (
-                <Playback key={`${id}:${lessonId}`} id={id} lessonId={lessonId} />
+                <Playback
+                  key={`${id}:${lessonId}`}
+                  id={id}
+                  lessonId={lessonId}
+                />
               )}
               <div className={styles.panel}>
                 <span className={styles.badge}>
@@ -168,6 +176,7 @@ export function CoursePlayer({
                             ? t.demo
                             : t.enrolled}
                     </span>
+                    <LessonDuration seconds={item.durationSeconds} />
                   </span>
                 </Link>
               </li>

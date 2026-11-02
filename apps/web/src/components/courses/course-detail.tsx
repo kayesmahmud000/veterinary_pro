@@ -19,6 +19,7 @@ import {
   EnrollmentButton,
   CourseEnrollmentDialog,
 } from "./course-ui";
+import { LessonDuration } from "./lesson-duration";
 import { CourseArtwork } from "./course-artwork";
 import { YouTubePlayer } from "./youtube-player";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -71,7 +72,9 @@ function CourseOverview({ course }: { course: Course }) {
   );
   const enrolled =
     !auth.checking && !auth.error && !!membership.data?.enrollment;
-  const firstDemo = course.lessons.find((item) => item.access === "PUBLIC_DEMO");
+  const firstDemo = course.lessons.find(
+    (item) => item.access === "PUBLIC_DEMO",
+  );
   useEffect(() => {
     if (demo) {
       demoPanel.current?.focus();
@@ -290,22 +293,25 @@ function CourseOverview({ course }: { course: Course }) {
                     </span>
                     {item.title}
                   </h3>
-                  <span className="inline-flex items-center gap-2 text-sm text-muted">
-                    {administrative || enrolled ? (
-                      <Check size={16} aria-hidden="true" />
-                    ) : item.access === "PUBLIC_DEMO" ? (
-                      <Play size={16} aria-hidden="true" />
-                    ) : (
-                      <LockKeyhole size={16} aria-hidden="true" />
-                    )}
-                    {administrative
-                      ? t.manageCourse
-                      : enrolled
-                        ? t.available
-                        : item.access === "PUBLIC_DEMO"
-                          ? t.demo
-                          : t.enrolled}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="inline-flex items-center gap-2 text-sm text-muted">
+                      {administrative || enrolled ? (
+                        <Check size={16} aria-hidden="true" />
+                      ) : item.access === "PUBLIC_DEMO" ? (
+                        <Play size={16} aria-hidden="true" />
+                      ) : (
+                        <LockKeyhole size={16} aria-hidden="true" />
+                      )}
+                      {administrative
+                        ? t.manageCourse
+                        : enrolled
+                          ? t.available
+                          : item.access === "PUBLIC_DEMO"
+                            ? t.demo
+                            : t.enrolled}
+                    </span>
+                    <LessonDuration seconds={item.durationSeconds} />
+                  </div>
                   {item.summary && (
                     <p className="m-0 break-words text-sm">{item.summary}</p>
                   )}

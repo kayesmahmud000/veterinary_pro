@@ -165,6 +165,13 @@ export const courseSchema = courseCardSchema.extend({
         ...lessonFields,
         id: courseId,
         position: z.number().int().positive(),
+        durationSeconds: z
+          .number()
+          .int()
+          .min(1)
+          .max(2147483647)
+          .nullable()
+          .optional(),
       }),
     )
     .max(100),

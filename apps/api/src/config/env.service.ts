@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { EnvConfig } from "./env.schema";
 
 export interface IEnvService {
+  readonly youtubeDataApiKey?: string;
   readonly cloudinaryThumbnailsEnabled: boolean;
   readonly cloudinaryCloudName?: string;
   readonly cloudinaryApiKey?: string;
@@ -50,6 +51,9 @@ export interface IEnvService {
 
 @Injectable()
 export class EnvService implements IEnvService {
+  get youtubeDataApiKey(): string | undefined {
+    return this.configService.get("YOUTUBE_DATA_API_KEY", { infer: true });
+  }
   get cloudinaryThumbnailsEnabled() {
     return this.configService.get("CLOUDINARY_THUMBNAILS_ENABLED", {
       infer: true,

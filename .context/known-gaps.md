@@ -1,5 +1,7 @@
 # Known gaps and documentation drift
 
+**Learner locale/player regression, 2026-11-02:** on current Next.js 15.5.28, the full controlled course browser suite fails its historical no-player-remount assertion after locale change. A separate isolated build using the unchanged HEAD player (without lesson-duration UI) reproduces player instances increasing from 1 to 2. Duration/AX checks pass in both locales and all viewport sizes; no locale/auth/player behavior was changed to mask this existing regression. [Reproduction and evidence](../docs/tasks/course-lesson-durations/plan.md).
+
 <<<<<<< HEAD
 Added 2026-10-21 ? [ADM-9 security follow-up](../docs/tasks/admin-release-dependencies/plan.md): the local production lockfile has no critical/high matches; three moderate matches retain code-specific non-exposure assessments. Next/React request compatibility and veterinarian SSE role/owner checks are implemented and real integrated acceptance passes. This does not deploy the fixes, apply the two missing migrations or establish hosted worker/provider acceptance; full ADM-9 remains open.
 

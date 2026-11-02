@@ -1,4 +1,5 @@
 import {
+  courseSchema,
   normalizeYouTubeVideoId,
   adminCurriculumWriteSchema,
   adminProductCreateSchema,
@@ -71,5 +72,75 @@ describe("YouTube course contracts", () => {
     expect(
       adminProductCreateSchema.safeParse({ ...input, priceCents: 100 }).success,
     ).toBe(true);
+  });
+});
+
+describe("Duration read compatibility", () => {
+  const id = "550e8400-e29b-41d4-a716-446655440001";
+  const lesson = {
+    id,
+    title: "Lesson",
+    summary: "",
+    position: 1,
+    access: "ENROLLED",
+  };
+  const course = {
+    id,
+    title: "Course",
+    slug: "course",
+    description: "Description",
+    provider: "YOUTUBE",
+    access: "FREE_ENROLLMENT",
+    lessonCount: 1,
+    demoCount: 0,
+    firstLessonId: id,
+    lessons: [lesson],
+  };
+  it("preserves positive durations while stripping private metadata", () => {
+    expect(
+      courseSchema.parse({
+        ...course,
+        lessons: [
+          {
+            ...lesson,
+            durationSeconds: 755,
+            youtubeVideoId: "PRIVATE_ID1",
+            apiKey: "secret",
+          },
+        ],
+      }).lessons[0],
+    ).toEqual({ ...lesson, durationSeconds: 755 });
+  });
+  it.each([0, -1, 1.5, 2147483648])(
+    "rejects invalid duration %s",
+    (durationSeconds) => {
+      expect(
+        courseSchema.safeParse({
+          ...course,
+          lessons: [{ ...lesson, durationSeconds }],
+        }).success,
+      ).toBe(false);
+    },
+  );
+  it("accepts legacy absence and null and rejects client-written durations", () => {
+    expect(courseSchema.safeParse(course).success).toBe(true);
+    expect(
+      courseSchema.safeParse({
+        ...course,
+        lessons: [{ ...lesson, durationSeconds: null }],
+      }).success,
+    ).toBe(true);
+    expect(
+      adminCurriculumWriteSchema.safeParse({
+        expectedVersion: 0,
+        lessons: [
+          {
+            ...lesson,
+            videoUrl: `https://youtu.be/${videoId}`,
+            durationSeconds: 755,
+          },
+        ],
+      }).success,
+    ).toBe(false);
   });
 });

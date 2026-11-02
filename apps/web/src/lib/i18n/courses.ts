@@ -1,5 +1,6 @@
 import type { Locale } from "./locale";
 const copy = {
+  durationLabel: ["Duration", "সময়"],
   enrollCourse: ["Enroll course", "কোর্সে এনরোল করুন"],
   confirmEnrollment: ["Confirm enrollment", "এনরোলমেন্ট নিশ্চিত করুন"],
   cancelEnrollment: ["Cancel", "বাতিল"],

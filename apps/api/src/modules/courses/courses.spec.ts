@@ -25,7 +25,11 @@ const row = () => ({
   ],
 });
 describe("YouTube learner access", () => {
-  let repo: any, users: any, audit: any, service: CoursesService;
+  let repo: any,
+    users: any,
+    audit: any,
+    durations: any,
+    service: CoursesService;
   beforeEach(() => {
     repo = {
       published: jest.fn(async () => row()),
@@ -54,11 +58,15 @@ describe("YouTube learner access", () => {
       lockById: jest.fn(async () => user()),
     };
     audit = { record: jest.fn() };
+    durations = {
+      lookup: jest.fn(async () => new Map([["PRIVATE_ID1", 755]])),
+    };
     service = new CoursesService(
       repo,
       users,
       { run: async (fn: any) => fn({}) } as any,
       audit,
+      durations,
     );
   });
   it("removes every source field from public outlines and cards", async () => {
@@ -137,5 +145,53 @@ describe("YouTube learner access", () => {
     await expect(service.bySlug("course-title")).rejects.toThrow();
     await expect(service.enroll(actor, id)).rejects.toThrow();
     expect(repo.enroll).not.toHaveBeenCalled();
+  });
+  it("adds optional time to public and own outlines without leaking sources or sharing membership", async () => {
+    expect((await service.bySlug("course-title")).lessons[0]).toHaveProperty(
+      "durationSeconds",
+      755,
+    );
+    const member = { id, productId: id, createdAt: new Date() };
+    repo.membership.mockResolvedValueOnce(member).mockResolvedValueOnce(null);
+    expect((await service.myDetail(actor, id)).enrollment?.id).toBe(id);
+    expect((await service.myDetail(actor, id)).enrollment).toBeNull();
+    expect(durations.lookup).toHaveBeenCalledWith(["PRIVATE_ID1"]);
+    expect(repo.enroll).not.toHaveBeenCalled();
+    expect(audit.record).not.toHaveBeenCalled();
+  });
+  it("maps a changed source to its own metadata and returns null for unknown values", async () => {
+    await service.bySlug("course-title");
+    repo.published.mockResolvedValue({
+      ...row(),
+      courseLessons: [
+        { ...row().courseLessons[0], youtubeVideoId: "OTHER_VID01" },
+      ],
+    });
+    const detail = await service.bySlug("course-title");
+    expect(detail.lessons[0]).toHaveProperty("durationSeconds", null);
+    expect(durations.lookup).toHaveBeenLastCalledWith(["OTHER_VID01"]);
+    expect(JSON.stringify(detail)).not.toContain("OTHER_VID01");
+  });
+  it("never looks up durations for missing or unauthorized courses", async () => {
+    repo.published.mockResolvedValue(null);
+    await expect(service.bySlug("course-title")).rejects.toThrow();
+    users.findById.mockResolvedValue(null);
+    await expect(service.myDetail(actor, id)).rejects.toThrow();
+    expect(durations.lookup).not.toHaveBeenCalled();
+  });
+  it("does no enrichment in catalog, library, enrollment or playback paths", async () => {
+    repo.library = jest.fn(async () => ({ items: [], nextCursor: null }));
+    await service.list({ limit: 20 });
+    await service.myCourses(actor, { limit: 20 });
+    await service.enroll(actor, id);
+    repo.lesson.mockResolvedValue({
+      ...row().courseLessons[0],
+      access: "PUBLIC_DEMO",
+      youtubeVideoId: "M7lc1UVf-VE",
+    });
+    await service.demoPlayback(id, lessonId);
+    repo.membership.mockResolvedValue({ id });
+    await service.lessonPlayback(actor, id, lessonId);
+    expect(durations.lookup).not.toHaveBeenCalled();
   });
 });

@@ -48,6 +48,13 @@ describe("EnvService (env.service.ts)", () => {
     service = module.get<EnvService>(EnvService);
   });
 
+  it("exposes the optional server-only YouTube key", () => {
+    (configService.get as jest.Mock).mockImplementation((key: string) =>
+      key === "YOUTUBE_DATA_API_KEY" ? "test-key" : undefined,
+    );
+    expect(service.youtubeDataApiKey).toBe("test-key");
+  });
+
   it("should be defined", () => {
     expect(service).toBeDefined();
   });
@@ -55,12 +62,14 @@ describe("EnvService (env.service.ts)", () => {
   it("should return typed values for environment accessors", () => {
     expect(service.nodeEnv).toBe("development");
     expect(service.port).toBe(3001);
-    expect(service.databaseUrl).toBe("postgresql://user:pass@localhost:5432/db");
+    expect(service.databaseUrl).toBe(
+      "postgresql://user:pass@localhost:5432/db",
+    );
     expect(service.redisUrl).toBe("redis://localhost:6379");
     expect(service.jwtAccessSecret).toBe("12345678901234567890123456789012");
     expect(service.jwtRefreshSecret).toBe("abcdefghijklmnopqrstuvwxyz123456");
     expect(service.aesPiiEncryptionKey).toBe(
-      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     );
     expect(service.hashPepper).toBe("pepper_secret_16_chars");
     expect(service.slowQueryThresholdMs).toBe(200);

@@ -1,15 +1,15 @@
 # YouTube lesson durations — API with short-lived cache
 
-Status: Planned; implementation not started.
-Updated: 2026-10-30. This revision supersedes the earlier persisted-metadata/backfill/scheduler design at the user's request.
+Status: Implemented and verified locally for duration behavior. Existing locale/player browser regression, configured-provider and deployment acceptance are recorded separately.
+Updated: 2026-11-02. This revision supersedes the earlier persisted-metadata/backfill/scheduler design at the user's request.
 
 ## Outcome and scope
 
 Show real YouTube duration beside each lesson in public course details and the enrolled player's lesson list. The backend fetches duration on demand and temporarily caches metadata. Existing courses work automatically from their existing video IDs.
 
-Planning only: no application implementation, credential provisioning, provider calls with credentials or deployment in this change. No database migration/storage, admin-save enrichment, backfill command, scheduled job, new Redis dependency, hidden players or manual duration input.
+The user authorized implementation on 2026-11-02. Implementation and controlled verification are in scope; real credential provisioning, credentialed provider acceptance and deployment remain separate. No database migration/storage, admin-save enrichment, backfill command, scheduled job, new Redis dependency, hidden players or manual duration input.
 
-## Confirmed current implementation
+## Confirmed baseline before implementation
 
 - `apps/api/src/modules/courses/courses.repository.ts` already selects the server-side `youtubeVideoId` for active published lesson outlines.
 - `courses.service.ts`: public `bySlug()` and authenticated `myDetail()` share `detail()`; catalog/library lists use `card()`. Enrichment belongs only in the two detail reads, after their current visibility/identity checks.
@@ -67,3 +67,9 @@ Deploy API/shared response support, then web. Configure the backend-only key and
 - [videos.list](https://developers.google.com/youtube/data/reference/rest/v3/videos/list): metadata batch query and quota accounting.
 - [Video resource duration](https://developers.google.com/youtube/data/reference/rest/v3/videos#contentDetails.duration): ISO 8601 values, including day-long videos.
 - [IFrame API](https://developers.google.com/youtube/iframe_api_reference#Retrieving_video_information): duration requires a loaded video's metadata; loading every lesson's player is unnecessary for this design.
+
+## Implementation notes — 2026-11-02
+
+`YouTubeDurationService` implements the source-keyed bounded singleton cache and native fetch. Course reads add only validated `durationSeconds`; shared `LessonDuration` renders localized visible time and screen-reader unit text. No schema, migration, admin-save, worker or scheduler changes. Configuration is optional and the active local env files contain no YouTube key; no configured-provider success is claimed.
+
+Review confirmed invalid/expired keys can be returned as HTTP 400 ([official error reference](https://developers.google.com/youtube/data/reference/rest/v3/core_errors)); the fixed validated query conservatively cools down on 400/401/403/429. Invalid per-video metadata gets the short failure TTL while valid items survive. Screen-reader labels use actual textual content rather than naming a generic span. See the adjacent plan's verification record for outcomes and limitations.

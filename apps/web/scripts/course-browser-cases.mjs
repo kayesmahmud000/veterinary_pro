@@ -32,6 +32,7 @@ const course = {
       summary: "",
       access: "ENROLLED",
       position: 1,
+      durationSeconds: 755,
     },
     {
       id: demoId,
@@ -39,6 +40,7 @@ const course = {
       summary: "",
       access: "PUBLIC_DEMO",
       position: 2,
+      durationSeconds: 93784,
     },
     {
       id: lastId,
@@ -361,6 +363,10 @@ export async function checkLearnerCourses({
   await call("Network.setBlockedURLs", {
     urls: ["*youtube-nocookie.com/*", "*youtube.com/iframe_api*"],
   });
+  let browserMetadataRequests = 0;
+  const unsubscribeMetadata = subscribe("Network.requestWillBeSent", event => {
+    if (event.request.url.startsWith("https://www.googleapis.com/youtube/")) browserMetadataRequests++;
+  });
   let imageRequests = 0,
     sessionUnavailable = false,
     previousLearner;
@@ -436,9 +442,10 @@ export async function checkLearnerCourses({
     await until(()=>evaluate(`document.querySelectorAll('[data-course-outline] li').length===25`),"Long lesson list");
     assert.equal(await evaluate(`(()=>{const list=document.querySelector('[data-course-outline] ol');return list.scrollHeight>list.clientHeight && list.clientHeight<=514;})()`),true,"Long lesson list scrolls inside a bounded panel");
     checks++;
+    const membershipReadsBefore=requests.filter(request=>request.route===`me/courses/${id}`).length;
     fixture.slowMembership=true;
     await go(`/courses/${course.slug}`);
-    await until(()=>evaluate(`!!document.querySelector('[data-course-demo-toggle]') && !document.querySelector('[data-course-enroll]')`),"Demo available during membership lookup");
+    await until(async()=>requests.filter(request=>request.route===`me/courses/${id}`).length>membershipReadsBefore && await evaluate(`!!document.querySelector('[data-course-demo-toggle]') && !document.querySelector('[data-course-enroll]')`),"Demo available during membership lookup after identity settles");
     await evaluate(`document.querySelector('[data-course-demo-toggle]').click()`);
     await until(()=>evaluate(`!!document.querySelector('[data-course-media] [data-youtube-player]')`),"Demo plays while membership loads");
     await until(()=>evaluate(`!!document.querySelector('[data-course-enroll]')`),"Membership lookup settles and action subtree changes");
@@ -555,6 +562,7 @@ export async function checkLearnerCourses({
           () => evaluate(`!!document.querySelector('[data-demo-lesson]')`),
           "Public course outline",
         );
+        await until(()=>evaluate(`!!document.querySelector('[data-course-media] [data-course-enroll]')`),"Course actions settle after session restoration");
         assert.equal(
           await evaluate(`!!document.querySelector('[data-locked-lesson]')`),
           true,
@@ -609,6 +617,14 @@ export async function checkLearnerCourses({
           false,
         );
         checks += 2;
+        const publicTimes=await evaluate(`Array.from(document.querySelectorAll('[data-course-outline] [data-course-duration-value]')).map(el=>el.textContent)`);
+        assert.deepEqual(publicTimes,locale==='bn'?['১২:৩৫','২৬:০৩:০৪']:['12:35','26:03:04'],"Public outline displays known durations and omits old-API missing time");
+        assert.equal(await evaluate(`document.querySelectorAll('[data-course-outline] [data-course-duration-label]').length`),2,"Duration units are labelled");
+        const durationAccessibility=await call("Accessibility.getFullAXTree");
+        await writeFile(path.join(temp,`course-duration-ax-${locale}-${width}.json`),JSON.stringify(durationAccessibility.nodes.filter(node=>node.role?.value==='StaticText').map(node=>node.name?.value)));
+        const spokenDurationText=durationAccessibility.nodes.filter(node=>node.role?.value==='StaticText').map(node=>node.name?.value??'').join('');
+        assert.equal(spokenDurationText.includes(locale==='bn'?'সময়: ১২ মিনিট, ৩৫ সেকেন্ড':'Duration: 12 minutes, 35 seconds'),true,"Screen reader receives textual duration units");
+        checks+=3;
         const beforeLocked = requests.length;
         await evaluate(
           `document.querySelector('[data-locked-lesson="${lastId}"]').click()`,
@@ -758,6 +774,8 @@ export async function checkLearnerCourses({
           true,
         );
         checks += 2;
+        assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('[data-course-curriculum] [data-course-duration-value]')).map(el=>el.textContent)`),locale==='bn'?['১২:৩৫','২৬:০৩:০৪']:['12:35','26:03:04'],"Player outline uses the same durations without extra players");
+        checks++;
         const outlines = requests.filter(
           (request) => request.route === `me/courses/${id}`,
         ).length;
@@ -1052,7 +1070,7 @@ export async function checkLearnerCourses({
       `document.querySelector('[data-locale-switcher] button[value="bn"]').click()`,
     );
     await until(
-      () => evaluate(`document.documentElement.lang==='bn'`),
+      () => evaluate(`document.documentElement.lang==='bn' && !!document.querySelector('[data-locale-switcher] button[value="en"]') && !!document.querySelector('[data-course-curriculum]') && !!document.querySelector('[data-youtube-player]')`),
       "Learner language switch",
     );
     assert.equal(
@@ -1065,7 +1083,7 @@ export async function checkLearnerCourses({
       `document.querySelector('[data-locale-switcher] button[value="en"]').click()`,
     );
     await until(
-      () => evaluate(`document.documentElement.lang==='en'`),
+      () => evaluate(`document.documentElement.lang==='en' && !!document.querySelector('[data-locale-switcher] button[value="bn"]') && !!document.querySelector('[data-course-curriculum]') && !!document.querySelector('[data-youtube-player]')`),
       "Restore English",
     );
     await evaluate(
@@ -1146,7 +1164,10 @@ export async function checkLearnerCourses({
       "Original learner enrollment restored",
     );
     checks++;
+    assert.equal(browserMetadataRequests,0,"Duration enrichment never calls the Data API from the browser");
+    checks++;
   } finally {
+    unsubscribeMetadata();
     if (previousLearner) replaceLearner(previousLearner);
     sessionUnavailable = false;
     unsubscribe();

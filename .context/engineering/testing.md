@@ -1,5 +1,7 @@
 # Validation and command reference
 
+Added 2026-11-02 lesson durations: provider/cache/config/course suites exercise optional metadata, limits, failures and safe projection; `scripts/check-course-durations.mjs` covers formatting/accessible output, and the course browser harness checks both lists and Chrome accessibility text in bn/en at 320/768/1440px. The full harness currently also reveals an independently reproduced existing locale/player remount under the current framework. [Commands, evidence and baseline limitation](../../docs/tasks/course-lesson-durations/plan.md).
+
 <<<<<<< HEAD
 Added 2026-10-21: `consultation-notification-access.spec.ts` exercises real Nest/SSE transport with controlled identity, real RolesGuard and stream allocation/delivery assertions. Next 15 isolated builds must run from inside the copied app; the four Next-launching browser harnesses also use that directory as cwd. [Current commands/evidence](../../docs/tasks/admin-release-dependencies/plan.md) and the [release runbook](../../docs/features/admin-release-acceptance/runbook.md) retain environment isolation.
 

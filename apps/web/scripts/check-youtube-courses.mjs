@@ -58,3 +58,16 @@ test('Bangla and short course slug routes retain exact identity and encode one u
  }
  for(const slug of ['../admin','foo/bar','foo?x=1','foo#bar','foo\\bar'])assert.equal(resolvePublicCourse(['slug',slug]),null);
 });
+
+test('public and own course BFFs retain valid duration and strip source metadata',async t=>{
+ const original=globalThis.fetch;t.after(()=>globalThis.fetch=original);
+ const payload={...course,lessons:[{...course.lessons[0],durationSeconds:755}],enrollment:null};
+ globalThis.fetch=async url=>Response.json({success:true,data:String(url).endsWith('auth/me')?identity:payload});
+ const publicResponse=await handleCourses(new NextRequest('http://localhost/api/courses/slug/synthetic-course'),['slug','synthetic-course']);
+ const ownResponse=await handleWorkspace(new NextRequest(`http://localhost/api/workspace/me/courses/${id}`,{headers:{Cookie:'vetralink_access=synthetic'}}),['me','courses',id]);
+ for(const res of [publicResponse,ownResponse]){
+  assert.equal(res.status,200);const data=await res.json();
+  assert.equal(data.data.lessons[0].durationSeconds,755);
+  assert.equal(JSON.stringify(data).includes('PRIVATE_ID1'),false);
+ }
+});

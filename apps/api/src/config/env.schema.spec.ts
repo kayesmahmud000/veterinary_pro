@@ -14,6 +14,12 @@ describe("Environment Schema & Validation (env.schema.ts)", () => {
     CORS_ORIGINS: "http://localhost:3000,http://localhost:3002",
   };
 
+  it("accepts an absent/blank optional YouTube key and trims a supplied key", () => {
+    expect(validateEnv(validDevConfig).YOUTUBE_DATA_API_KEY).toBeUndefined();
+    expect(validateEnv({ ...validDevConfig, YOUTUBE_DATA_API_KEY: "   " }).YOUTUBE_DATA_API_KEY).toBeUndefined();
+    expect(validateEnv({ ...validDevConfig, YOUTUBE_DATA_API_KEY: " test-key " }).YOUTUBE_DATA_API_KEY).toBe("test-key");
+  });
+
   it("should successfully validate and parse standard development configuration", () => {
     const config = validateEnv(validDevConfig);
 

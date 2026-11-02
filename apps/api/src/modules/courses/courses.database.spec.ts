@@ -1,3 +1,5 @@
+import { YouTubeDurationService } from "./youtube-duration.service";
+import { EnvService } from "../../config";
 import { randomUUID } from "crypto";
 import { PrismaClient } from "@prisma/client";
 import { JwtPayload, UserRole } from "@vetralink/shared-types";
@@ -50,6 +52,7 @@ if (url && !new URL(url).pathname.endsWith("/adm3_test"))
       new UserRepository(adapter, {} as never),
       new TransactionManager(adapter),
       audit,
+      new YouTubeDurationService({} as EnvService),
     );
   });
   beforeEach(async () => {

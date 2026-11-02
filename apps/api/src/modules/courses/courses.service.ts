@@ -14,6 +14,7 @@ import {
   coursePlaybackSchema,
   readCourseThumbnail,
 } from "@vetralink/shared-types";
+import { YouTubeDurationService } from "./youtube-duration.service";
 import { CoursesRepository } from "./courses.repository";
 import {
   USER_REPOSITORY,
@@ -42,6 +43,7 @@ export class CoursesService {
     @Inject(TRANSACTION_MANAGER)
     private readonly transactions: ITransactionManager,
     @Inject(AUDIT_LOG_REPOSITORY) private readonly audit: IAuditLogRepository,
+    private readonly durations: YouTubeDurationService,
   ) {}
   private async authorize(claims: JwtPayload, tx?: Prisma.TransactionClient) {
     const user = tx
@@ -64,9 +66,11 @@ export class CoursesService {
       ...row,
       provider: "YOUTUBE",
       access: "FREE_ENROLLMENT",
-      thumbnailUrl: readCourseThumbnail(row.metadata) ?? (demo
-        ? `https://i.ytimg.com/vi/${demo.youtubeVideoId}/hqdefault.jpg`
-        : null),
+      thumbnailUrl:
+        readCourseThumbnail(row.metadata) ??
+        (demo
+          ? `https://i.ytimg.com/vi/${demo.youtubeVideoId}/hqdefault.jpg`
+          : null),
       lessonCount: row.courseLessons.length,
       demoCount: row.courseLessons.filter((l) => l.access === "PUBLIC_DEMO")
         .length,
@@ -74,10 +78,20 @@ export class CoursesService {
         row.courseLessons.find((l) => l.access === "ENROLLED")?.id ?? null,
     });
   }
-  private detail(row: Outline) {
+  private async detail(row: Outline) {
+    const durations = await this.durations.lookup(
+      row.courseLessons.map((lesson) => lesson.youtubeVideoId),
+    );
     return courseSchema.parse({
       ...this.card(row),
-      lessons: row.courseLessons,
+      lessons: row.courseLessons.map((lesson) => ({
+        id: lesson.id,
+        title: lesson.title,
+        summary: lesson.summary,
+        position: lesson.position,
+        access: lesson.access,
+        durationSeconds: durations.get(lesson.youtubeVideoId) ?? null,
+      })),
     });
   }
   private async visible(key: { id?: string; slug?: string }) {
@@ -106,7 +120,7 @@ export class CoursesService {
     const row = await this.visible({ id }),
       membership = await this.repo.membership(claims.sub, id);
     return myCourseSchema.parse({
-      ...this.detail(row),
+      ...(await this.detail(row)),
       enrollment: membership ? this.enrollment(membership) : null,
     });
   }
