@@ -491,7 +491,6 @@ try {
   }
   if (process.env.WORKSPACE_BROWSER_FOCUS === "admin-release") {
     const context = { seed, go, call, evaluate, until, temp, requests, origin, users };
-<<<<<<< HEAD
     for (const [name, check] of [
       ["overview", checkAdminDashboard],
       ["directory", checkAdminDirectory],
@@ -505,31 +504,14 @@ try {
       console.log(`Checking controlled ${name} browser journeys.`);
       const count = await check(context);
       checks += count;
+      assert.deepEqual(exceptions, []);
       console.log(`Passed ${count} controlled ${name} browser checks.`);
     }
     assert.deepEqual(exceptions, []);
     console.log(`Passed ${checks} controlled administration browser checks. Screenshots: ${temp}`);
-=======
-    // Run every selected administration batch on the same production build.
-    // The default workspace run predates the later administrative batches.
-    for (const check of [
-      checkAdminDashboard,
-      checkAdminDirectory,
-      checkAdminCatalog,
-      checkAdminBilling,
-      checkAdminConsultations,
-      checkAdminFinance,
-      checkAdminCommunications,
-      checkAdminPlatform,
-    ]) {
-      checks += await check(context);
-      assert.deepEqual(exceptions, []);
-    }
-    console.log(`Passed ${checks} integrated admin release browser checks. Screenshots: ${temp}`);
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "unsaved") {
     checks += await checkUnsavedEditors({ seed, go, call, evaluate, until, temp, requests, setDialogHandler: (handler) => { dialogHandler = handler; } });
     assert.deepEqual(exceptions, []);
->>>>>>> f0dbce1bf6a67d4b4ab0e96331522ac1cc8df952
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "platform") {
     checks += await checkAdminPlatform({seed,go,call,evaluate,until,temp,requests});
     assert.deepEqual(exceptions, []);

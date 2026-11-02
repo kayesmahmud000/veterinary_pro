@@ -4,12 +4,12 @@ import { LearnerHeader } from "@/components/courses/learner-header";
 import siteStyles from "@/lib/ui/site.styles";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
-export default function LearnerLayout({
+export default async function LearnerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { messages } = getLocalization();
+  const { messages } = await getLocalization();
   return (
     <div className="min-h-screen bg-white">
       <a className={siteStyles["skip-link"]} href="#main-content">

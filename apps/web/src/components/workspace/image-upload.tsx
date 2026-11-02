@@ -55,7 +55,7 @@ export function ImageUpload({
     [state, setState] = useState<State>(initial),
     input = useRef<HTMLInputElement>(null),
     generation = useRef(0),
-    controller = useRef<AbortController>(),
+    controller = useRef<AbortController | undefined>(undefined),
     preview = useRef("");
   const commit = (next: State) => {
     setState(next);
