@@ -1,5 +1,7 @@
 # Validation and command reference
 
+Added 2026-11-02 enrollment management: scoped contract/service/HTTP tests accompany `admin-course-enrollments.database.spec.ts` (explicit task-owned loopback `/course_enrollments_test`) and `.redis.spec.ts` (explicit loopback port56479). Disposable migration/restore and real BFF integration scripts, plus browser focuses `admin-enrollments`, `admin-enrollment-counts` and `course-revalidation`, are documented in the [execution evidence](../../docs/features/admin-course-enrollments/plan.md) and [runbook](../../docs/features/admin-course-enrollments/runbook.md). Production enablement is separate; existing Redis-free suites and locale/player regression remain explicit.
+
 Added 2026-11-02 lesson durations: provider/cache/config/course suites exercise optional metadata, limits, failures and safe projection; `scripts/check-course-durations.mjs` covers formatting/accessible output, and the course browser harness checks both lists and Chrome accessibility text in bn/en at 320/768/1440px. The full harness currently also reveals an independently reproduced existing locale/player remount under the current framework. [Commands, evidence and baseline limitation](../../docs/tasks/course-lesson-durations/plan.md).
 
 <<<<<<< HEAD

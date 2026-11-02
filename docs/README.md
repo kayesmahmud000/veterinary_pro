@@ -1,5 +1,7 @@
 # Documentation and planning guide
 
+**Local enrollment-management implementation, 2026-11-02:** [Shared specification](features/admin-course-enrollments/spec.md) and [implementation plan](features/admin-course-enrollments/plan.md) cover course/user enrollment directories, audited add/revoke/restore, and direct administrative account creation with name/email/password before enrollment. API/web implementation has local PostgreSQL/Redis/browser evidence; target migration, flag enablement and deployment remain separate operator gates.
+
 <<<<<<< HEAD
 **ADM-9 security follow-up, 2026-10-21:** [Specification](tasks/admin-release-dependencies/spec.md) / [current evidence](tasks/admin-release-dependencies/plan.md) own the Next/React migration, patched spreadsheet/transport dependencies and veterinarian SSE access repair. The historical ADM-9 manifest remains unchanged; the follow-up binds the replacement candidate separately. Full release/provider/migration acceptance remains open.
 

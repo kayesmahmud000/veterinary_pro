@@ -10,35 +10,41 @@ export type Issues = Record<string, string>;
 export function useRemote<T>(
   path: string | null,
   schema: z.ZodType<T, any, any>,
+  options?: { retainDataOnReload?: boolean },
 ) {
+  const retainDataOnReload=options?.retainDataOnReload??false;
+  const lastPath=useRef<string|null>(null);
   const [result, setResult] = useState<WorkspaceResult<T>>({ status: 0 });
   const [scope, setScope] = useState<string | null>(null);
   const [loading, setLoading] = useState(true),
     [revision, revise] = useState(0);
   useEffect(() => {
     if (!path) {
+      lastPath.current=null;
       setLoading(false);
       setResult({ status: 0 });
       return;
     }
     let active = true;
+    const retain=retainDataOnReload && lastPath.current===path;
+    lastPath.current=path;
     setScope(path);
     setLoading(true);
-    setResult({ status: 0 });
+    if(!retain)setResult({ status: 0 });
     void workspaceRequest(path, schema).then((value) => {
       if (active) {
-        setResult(value);
+        setResult(previous=>retain && previous.data && value.status>=500?{...previous,status:value.status,code:value.code}:value);
         setLoading(false);
       }
     });
     return () => {
       active = false;
     };
-  }, [path, schema, revision]);
+  }, [path, schema, revision, retainDataOnReload]);
   const current = scope === path;
   return {
     ...(current ? result : { status: 0 }),
-    loading: !!path && (!current || loading),
+    loading: !!path && (!current || loading) && !(retainDataOnReload && current && result.data),
     reload: () => revise((v) => v + 1),
   };
 }

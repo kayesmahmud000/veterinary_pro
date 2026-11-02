@@ -1,4 +1,5 @@
 "use client";
+import {useEffect} from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -21,7 +22,9 @@ function Playback({ id, lessonId }: { id: string; lessonId: string }) {
   const data = useRemote(
     `me/courses/${id}/lessons/${lessonId}/playback`,
     coursePlaybackSchema,
+    {retainDataOnReload:true},
   );
+  useEffect(()=>{const refresh=()=>data.reload();window.addEventListener("focus",refresh);return()=>window.removeEventListener("focus",refresh);},[data.reload]);
   if (data.loading)
     return (
       <div
@@ -30,9 +33,9 @@ function Playback({ id, lessonId }: { id: string; lessonId: string }) {
         <CourseLoading />
       </div>
     );
-  if (data.code || !data.data)
+  if (!data.data)
     return <CourseError code={data.code ?? "NOT_FOUND"} retry={data.reload} />;
-  return <YouTubePlayer videoId={data.data.videoId} title={data.data.title} />;
+  return <>{data.code && <CourseError code={data.code} retry={data.reload}/>}<YouTubePlayer videoId={data.data.videoId} title={data.data.title} /></>;
 }
 export function CoursePlayer({
   id,
@@ -81,7 +84,7 @@ export function CoursePlayer({
                 <strong>{t.selectedLesson}: </strong>
                 {lesson.title}
               </p>
-              <EnrollmentButton
+              <EnrollmentButton revoked={course.enrollmentRestriction === "ADMIN_REVOKED"}
                 course={course}
                 enrolled={false}
                 lessonId={lessonId}

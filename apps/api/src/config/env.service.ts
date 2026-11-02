@@ -51,6 +51,7 @@ export interface IEnvService {
 
 @Injectable()
 export class EnvService implements IEnvService {
+  get adminCourseEnrollmentsEnabled(): boolean { return this.configService.get("ADMIN_COURSE_ENROLLMENTS_ENABLED", { infer: true }); }
   get youtubeDataApiKey(): string | undefined {
     return this.configService.get("YOUTUBE_DATA_API_KEY", { infer: true });
   }

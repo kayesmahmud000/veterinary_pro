@@ -1,5 +1,7 @@
 # Feature and requirement map
 
+Added 2026-11-02: [administrative course enrollment management](../../docs/features/admin-course-enrollments/spec.md) extends course counts with course/user directories, audited add/revoke/restore and direct name/email/password learner creation before atomic enrollment. Learner paths enforce ACTIVE membership; no invitation or mail dependency is added. [Local evidence and rollout](../../docs/features/admin-course-enrollments/plan.md) retain default-disabled enablement, target migration and known baseline regressions as separate gates.
+
 Paths below are relative to `apps/api/src/modules/` unless stated. “Present” means source exists, not that production integration was exercised. Exact routes, enums and response shapes must be read from controllers/shared contracts; task titles alone are insufficient.
 
 | Domain | Implementation and behavior | Existing task documentation |

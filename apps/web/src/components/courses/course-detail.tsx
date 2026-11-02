@@ -70,6 +70,7 @@ function CourseOverview({ course }: { course: Course }) {
       : null,
     myCourseSchema,
   );
+  useEffect(()=>{const refresh=()=>membership.reload();window.addEventListener("focus",refresh);return()=>window.removeEventListener("focus",refresh);},[membership.reload]);
   const enrolled =
     !auth.checking && !auth.error && !!membership.data?.enrollment;
   const firstDemo = course.lessons.find(
@@ -211,7 +212,7 @@ function CourseOverview({ course }: { course: Course }) {
                     />
                   </div>
                 ) : (
-                  <EnrollmentButton
+                  <EnrollmentButton revoked={membership.data?.enrollmentRestriction === "ADMIN_REVOKED"}
                     key={`${auth.user?.id ?? "public"}:${auth.user?.roleVersion ?? 0}`}
                     course={course}
                     enrolled={enrolled}

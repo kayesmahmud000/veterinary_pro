@@ -1,6 +1,7 @@
 "use client";
+import { Users } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Pencil, Eye, EyeOff, Globe, Trash2 } from "lucide-react";
 import {
   type AdminProduct,
@@ -126,6 +127,7 @@ function CourseManagement() {
     `admin/products?limit=20&type=VIDEO_COURSE&contentProvider=YOUTUBE${query ? `&${query}` : ""}${cursors.at(-1) ? `&cursor=${cursors.at(-1)}` : ""}`,
     adminProductListSchema,
   );
+  useEffect(()=>{const refresh=()=>data.reload();window.addEventListener("focus",refresh);window.addEventListener("vetralink-enrollments-updated",refresh);return()=>{window.removeEventListener("focus",refresh);window.removeEventListener("vetralink-enrollments-updated",refresh);};},[data.reload]);
   return (
     <div data-admin-courses-list className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -298,7 +300,7 @@ function CourseManagement() {
                               <div>
                                 <dt className="inline">{t.learners}: </dt>
                                 <dd className="m-0 inline tabular-nums">
-                                  {learners}
+                                  <Link href={`/admin/courses/${p.id}/learners`}>{learners}</Link>
                                 </dd>
                               </div>
                               <div>
@@ -324,13 +326,14 @@ function CourseManagement() {
                       {lessons}
                     </td>
                     <td className="hidden break-words px-3 py-4 tabular-nums xl:table-cell">
-                      {learners}
+                      <Link href={`/admin/courses/${p.id}/learners`} aria-label={`${t.learners}: ${p.title}`}>{learners}</Link>
                     </td>
                     <td className="hidden break-words px-3 py-4 text-muted xl:table-cell">
                       <time dateTime={p.updatedAt}>{updated}</time>
                     </td>
                     <td className="px-2 py-4 sm:px-3">
                       <div className="ml-auto grid w-fit grid-cols-2 gap-1 sm:grid-cols-4 xl:grid-cols-2 2xl:grid-cols-4">
+                        <Link href={`/admin/courses/${p.id}/learners`} className={cn(buttonVariants({variant:"outline"}),"box-border h-11 w-11 p-0")} aria-label={t.learners} title={t.learners}><Users size={18} aria-hidden="true"/></Link>
                         <Button
                           data-course-details
                           variant="outline"

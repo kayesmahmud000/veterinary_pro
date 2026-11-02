@@ -37,8 +37,9 @@ export class WorkflowException extends DomainException {
     public readonly errorCode: string,
     message: string,
     public readonly statusCode: number = 409,
+    details?: unknown,
   ) {
-    super(message);
+    super(message, details);
   }
 }
 

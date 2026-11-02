@@ -187,6 +187,7 @@ export const courseEnrollmentSchema = z.object({
 });
 export const myCourseSchema = courseSchema.extend({
   enrollment: courseEnrollmentSchema.nullable(),
+  enrollmentRestriction: z.literal("ADMIN_REVOKED").optional(),
 });
 export const courseLibrarySchema = z.object({
   items: z

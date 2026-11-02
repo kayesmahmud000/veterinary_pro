@@ -124,6 +124,12 @@ describe("YouTube learner access", () => {
     ).rejects.toThrow();
     expect(repo.lesson).not.toHaveBeenCalled();
   });
+  it("denies revoked self enrollment and playback, while returning the restriction", async () => {
+    repo.membership.mockResolvedValue({id,productId:id,createdAt:new Date(),status:"REVOKED"});
+    await expect(service.enroll(actor,id)).rejects.toMatchObject({errorCode:"COURSE_ENROLLMENT_REVOKED"});
+    await expect(service.lessonPlayback(actor,id,lessonId)).rejects.toMatchObject({errorCode:"COURSE_ENROLLMENT_REVOKED"});
+    expect(await service.myDetail(actor,id)).toMatchObject({enrollment:null,enrollmentRestriction:"ADMIN_REVOKED"});
+  });
   it("reuses existing enrollment without another write or audit", async () => {
     repo.membership.mockResolvedValue({
       id,

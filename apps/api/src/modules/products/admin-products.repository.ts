@@ -7,7 +7,7 @@ const courseRelations = {
   _count: {
     select: {
       courseLessons: { where: { deletedAt: null } },
-      courseEnrollments: true,
+      courseEnrollments: { where: { status: "ACTIVE", user: { deletedAt: null } } },
     },
   },
   courseLessons: {

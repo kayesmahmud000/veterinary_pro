@@ -12,6 +12,7 @@ import {
 export const EnvSchema = z
   .object({
     ...thumbnailConfigFields,
+    ADMIN_COURSE_ENROLLMENTS_ENABLED: recoveryBoolean.default(false),
     YOUTUBE_DATA_API_KEY: z.string().trim().transform(value => value || undefined).optional(),
     NODE_ENV: z
       .enum(["development", "staging", "production", "test"])

@@ -7,6 +7,7 @@ const id = "cc0e8400-e29b-41d4-a716-446655440001",
   lastId = "cc0e8400-e29b-41d4-a716-446655440007";
 const memberships = new Map();
 const fixture = {
+  revoked: false,
   failEnrollment: false,
   published: true,
   failCatalog: false,
@@ -161,11 +162,12 @@ export function handleCourseFixture(
     return true;
   }
   if (route === `me/courses/${id}`) {
-    const reply=()=>send(200, { ...course, enrollment: memberships.get(actorId) ?? null });
+    const reply=()=>send(200, { ...course, enrollment: fixture.revoked ? null : memberships.get(actorId) ?? null, ...(fixture.revoked?{enrollmentRestriction:"ADMIN_REVOKED"}:{}) });
     if(fixture.slowMembership)setTimeout(reply,2000);else reply();
     return true;
   }
   if (route === `me/courses/${id}/enrollment` && method === "POST") {
+    if(fixture.revoked){res.writeHead(403,{"Content-Type":"application/json"});res.end(JSON.stringify({errorDetails:{title:"COURSE_ENROLLMENT_REVOKED"}}));return true;}
     if (!memberships.has(actorId))
       memberships.set(actorId, {
         id: "cc0e8400-e29b-41d4-a716-446655440004",
@@ -204,7 +206,8 @@ export function handleCourseFixture(
     } else if (fixture.failPlayback) {
       fixture.failPlayback = false;
       send(503, null);
-    } else if (!memberships.has(actorId)) error("COURSE_ENROLLMENT_REQUIRED");
+    } else if (fixture.revoked) error("COURSE_ENROLLMENT_REVOKED");
+    else if (!memberships.has(actorId)) error("COURSE_ENROLLMENT_REQUIRED");
     else
       send(
         200,
@@ -1183,4 +1186,26 @@ export async function checkLearnerCourses({
     `Passed ${checks} learner course browser checks. Screenshots: ${temp}`,
   );
   return checks;
+}
+
+export async function checkCourseEnrollmentRevalidation({seed,go,call,evaluate,until,requests,users}) {
+ const script=await call("Page.addScriptToEvaluateOnNewDocument",{source:`window.__players=[];window.YT={Player:class{constructor(frame,options){this.frame=frame;window.__players.push(frame.src);setTimeout(()=>options.events.onReady(),0);}destroy(){this.frame.remove();}}};`});
+ await call("Network.setBlockedURLs",{urls:["*youtube-nocookie.com/*","*youtube.com/iframe_api*"]});
+ let checks=0;
+ try{for(const locale of ["en","bn"]){
+  fixture.revoked=false;fixture.published=true;fixture.slowPlayback=true;
+  memberships.set(users.get("LEARNER").id,{id:mainId,productId:id,createdAt:"2026-11-02T00:00:00Z"});
+  await seed("LEARNER",locale);await go(`/account/courses/${id}/lessons/${mainId}`);
+  await until(()=>evaluate(`!!document.querySelector('[data-youtube-player]')`),"Active learner playback");
+  const before=await evaluate("window.__players.length"),reads=requests.length;
+  await evaluate(`window.dispatchEvent(new Event('focus'))`);
+  await until(()=>requests.length>reads,"Focus membership revalidation");
+  await evaluate(`new Promise(r=>setTimeout(r,1000))`);
+  assert.equal(await evaluate("window.__players.length"),before,"Focus revalidation preserves authorized playback position");checks++;
+  fixture.revoked=true;await evaluate(`window.dispatchEvent(new Event('focus'))`);
+  await until(()=>evaluate(`!document.querySelector('[data-youtube-player]') && !document.querySelector('[data-course-enroll]') && !!document.querySelector('[data-course-watch]')`),"Revocation removes player and self-enroll action");checks++;
+  fixture.revoked=false;await evaluate(`window.dispatchEvent(new Event('focus'))`);
+  await until(()=>evaluate(`!!document.querySelector('[data-youtube-player]')`),"Restored membership resumes course");checks++;
+ }}finally{fixture.revoked=false;fixture.slowPlayback=false;await call("Page.removeScriptToEvaluateOnNewDocument",{identifier:script.identifier});await call("Network.setBlockedURLs",{urls:[]});}
+ console.log(`Passed ${checks} course revalidation checks.`);return checks;
 }

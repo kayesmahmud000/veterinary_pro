@@ -88,6 +88,9 @@ const farm = z.object({
   createdAt: instant,
 });
 const auditSnapshot = z.object({
+  enrollmentStatus:z.enum(["ACTIVE","REVOKED"]).optional(),
+  enrollmentVersion:z.number().int().nonnegative().optional(),
+  productId:z.string().uuid().optional(), targetUserId:z.string().uuid().optional(),
   status: z.nativeEnum(UserStatus).optional(),
   role: z.nativeEnum(UserRole).optional(),
   roleVersion: z.number().int().nonnegative().optional(),

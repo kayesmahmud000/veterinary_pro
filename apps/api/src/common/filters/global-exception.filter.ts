@@ -40,6 +40,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     // 1. Clean Architecture Domain Exceptions
     if (exception instanceof DomainException) {
       status = exception.statusCode;
+      if(exception.errorCode === "RATE_LIMITED") {
+        const retryAfter=(exception.details as {retryAfter?:unknown}|undefined)?.retryAfter;
+        if(typeof retryAfter === "number" && Number.isInteger(retryAfter) && retryAfter>0 && retryAfter<=3600)response.setHeader("Retry-After",String(retryAfter));
+      }
       message = exception.message;
       title = exception.errorCode;
       typeUri = `https://vetralink.pro/errors/${exception.errorCode.toLowerCase().replace(/_/g, "-")}`;

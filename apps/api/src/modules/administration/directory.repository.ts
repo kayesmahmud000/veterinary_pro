@@ -38,12 +38,14 @@ export const auditMetadataSelect = {
 } as const;
 // Unknown and security events require SUPER_ADMIN; never rely on a denylist.
 const reasonBearingActions = [
+  "COURSE_ENROLLMENT_ADDED", "COURSE_ENROLLMENT_REVOKED", "COURSE_ENROLLMENT_RESTORED", "USER_CREATED_BY_ADMIN",
   "ADMIN_SETTLEMENT_RECONCILED", "ADMIN_SETTLEMENT_BULK_RECONCILED", "ADMIN_REVIEW_MODERATED",
   "USER_SUSPENDED", "USER_REACTIVATED", "USER_SESSIONS_REVOKED",
   "SUBSCRIPTION_CANCELLATION_SCHEDULED", "SUBSCRIPTION_CANCELLATION_REVOKED", "SUBSCRIPTION_PLAN_UPDATED",
   "CONSULTATION_ADMIN_ASSIGNED", "CONSULTATION_ADMIN_AUTO_ASSIGNED", "CONSULTATION_ADMIN_CANCELLED",
 ];
 export const operationalAuditActions = [
+  "COURSE_ENROLLMENT_ADDED", "COURSE_ENROLLMENT_REVOKED", "COURSE_ENROLLMENT_RESTORED", "USER_CREATED_BY_ADMIN",
   "ADMIN_REPORT_EXPORTED", "ADMIN_AUDIT_EXPORTED",
   "CONTENT_DRAFT_CREATED", "CONTENT_DRAFT_SAVED", "CONTENT_PUBLISHED", "CONTENT_UNPUBLISHED",
   "ROLE_EMAIL_RETRY_REQUESTED", "SUPPORT_TICKET_CREATED", "SUPPORT_MESSAGE_ADDED", "SUPPORT_ADMIN_UPDATED",
@@ -95,6 +97,11 @@ function snapshot(v: unknown) {
     )
       safe[key] = value;
   }
+  for (const key of ["productId", "targetUserId"]) {
+    const v=row[key]; if(typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(v))safe[key]=v;
+  }
+  if(row.enrollmentStatus === "ACTIVE" || row.enrollmentStatus === "REVOKED")safe.enrollmentStatus=row.enrollmentStatus;
+  if(Number.isInteger(row.enrollmentVersion) && Number(row.enrollmentVersion)>=0)safe.enrollmentVersion=row.enrollmentVersion;
   // Only this feature's bounded support reason is displayed by detail().
   return safe;
 }

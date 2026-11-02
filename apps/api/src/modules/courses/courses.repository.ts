@@ -1,3 +1,4 @@
+import { CourseEnrollmentWriter } from "./course-enrollment-writer.service";
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { CourseQuery } from "@vetralink/shared-types";
@@ -80,19 +81,18 @@ export class CoursesRepository {
   membership(userId: string, productId: string, tx?: Prisma.TransactionClient) {
     return (tx ?? this.prisma).courseEnrollment.findUnique({
       where: { userId_productId: { userId, productId } },
-      select: { id: true, productId: true, createdAt: true },
+      select: { id: true, productId: true, createdAt: true, status:true },
     });
   }
-  enroll(userId: string, productId: string, tx: Prisma.TransactionClient) {
-    return tx.courseEnrollment.create({
-      data: { userId, productId },
-      select: { id: true, productId: true, createdAt: true },
-    });
+  async enroll(userId: string, productId: string, tx: Prisma.TransactionClient) {
+    const writer=new CourseEnrollmentWriter();
+    return (await writer.activateLocked(await writer.lock(productId,userId,tx),'SELF',undefined,tx)).enrollment;
   }
   async library(userId: string, query: Omit<CourseQuery, "search">) {
     const rows = await this.prisma.courseEnrollment.findMany({
       where: {
         userId,
+        status: "ACTIVE",
         product: visible,
         ...(query.cursor ? { id: { gt: query.cursor } } : {}),
       },

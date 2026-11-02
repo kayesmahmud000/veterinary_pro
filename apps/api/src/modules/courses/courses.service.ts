@@ -108,7 +108,7 @@ export class CoursesService {
     return this.detail(await this.visible({ slug }));
   }
   private enrollment(
-    row: NonNullable<Awaited<ReturnType<CoursesRepository["membership"]>>>,
+    row: {id:string;productId:string;createdAt:Date},
   ) {
     return courseEnrollmentSchema.parse({
       ...row,
@@ -121,7 +121,8 @@ export class CoursesService {
       membership = await this.repo.membership(claims.sub, id);
     return myCourseSchema.parse({
       ...(await this.detail(row)),
-      enrollment: membership ? this.enrollment(membership) : null,
+      enrollment: membership && membership.status!=="REVOKED" ? this.enrollment(membership) : null,
+      ...(membership?.status==="REVOKED"?{enrollmentRestriction:"ADMIN_REVOKED"}:{}),
     });
   }
   async enroll(claims: JwtPayload, id: string) {
@@ -130,6 +131,7 @@ export class CoursesService {
       if (!(await this.repo.lockPublished(id, tx)))
         throw new EntityNotFoundException("Course");
       const existing = await this.repo.membership(claims.sub, id, tx);
+      if (existing?.status === "REVOKED") throw new WorkflowException("COURSE_ENROLLMENT_REVOKED", "Course access was removed by an administrator.", 403);
       if (existing) return this.enrollment(existing);
       const row = await this.repo.enroll(claims.sub, id, tx);
       await this.audit.record(
@@ -182,7 +184,9 @@ export class CoursesService {
   ) {
     await this.authorize(claims);
     await this.visible({ id: productId });
-    if (!(await this.repo.membership(claims.sub, productId)))
+    const membership=await this.repo.membership(claims.sub, productId);
+    if(membership?.status==="REVOKED") throw new WorkflowException("COURSE_ENROLLMENT_REVOKED", "Course access was removed by an administrator.", 403);
+    if (!membership)
       throw new WorkflowException(
         "COURSE_ENROLLMENT_REQUIRED",
         "Enroll in this course to continue.",

@@ -345,6 +345,7 @@ model User {
 
   // Relations
   courseEnrollments CourseEnrollment[]
+  revokedCourseEnrollments CourseEnrollment[] @relation("EnrollmentRevoker")
   adminMediaUploads AdminMediaUpload[]
   refreshTokens        RefreshToken[]
   ownedFarms           Farm[]            @relation("FarmOwner")
@@ -1028,13 +1029,33 @@ enum CourseLessonAccess {
   ENROLLED
 }
 
+enum CourseEnrollmentStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum CourseEnrollmentSource {
+  SELF
+  ADMIN
+}
+
 model CourseEnrollment {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId String @map("user_id") @db.Uuid
   productId String @map("product_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  status CourseEnrollmentStatus @default(ACTIVE)
+  version Int @default(0)
+  source CourseEnrollmentSource @default(SELF)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  activatedAt DateTime @default(now()) @map("activated_at") @db.Timestamptz(6)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(6)
+  revokedById String? @map("revoked_by_id") @db.Uuid
+  revokedBy User? @relation("EnrollmentRevoker", fields: [revokedById], references: [id], onDelete: Restrict)
   user User @relation(fields: [userId], references: [id], onDelete: Restrict)
   product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  @@index([productId, status, id])
+  @@index([userId, status, id])
   @@unique([userId, productId])
   @@index([userId, id])
   @@map("course_enrollments")

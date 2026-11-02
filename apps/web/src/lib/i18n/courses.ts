@@ -51,6 +51,7 @@ const copy = {
   openLesson: ["Open lesson", "লেসন খুলুন"],
   unlockLesson: ["Unlock lesson", "লেসন চালু করুন"],
   selectedLesson: ["Selected lesson", "নির্বাচিত লেসন"],
+  revoked: ["Your access to this course was removed. Contact an administrator for restoration.", "এই কোর্সে আপনার প্রবেশাধিকার বন্ধ করা হয়েছে। ফিরিয়ে পেতে প্রশাসকের সঙ্গে যোগাযোগ করুন।"],
   enrollmentHeading: ["Start learning for free", "বিনামূল্যে শেখা শুরু করুন"],
   enrollmentAccount: [
     "Enroll using your signed-in account",

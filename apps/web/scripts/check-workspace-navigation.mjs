@@ -215,3 +215,11 @@ test("administrators manage courses separately from their personal library", () 
   for (const path of ["/admin/courses/not-an-id", `/admin/courses/${id}/unknown`, "/admin/courses?userId=another-user"])
     assert.equal(nav.validateWorkspaceReturnTo(path), null);
 });
+
+test('administrators retain an exact learner-management return path without admitting unknown subroutes',()=>{
+ const path='/admin/courses/11111111-1111-4111-8111-111111111111/learners';
+ assert.equal(nav.validateWorkspaceReturnTo(path),path);
+ assert.equal(nav.getPostLoginDestination(user('ADMIN'),path),path);
+ assert.notEqual(nav.getPostLoginDestination(user('LEARNER'),path),path);
+ assert.equal(nav.validateWorkspaceReturnTo(path+'/unknown'),null);
+});

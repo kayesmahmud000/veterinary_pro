@@ -70,6 +70,9 @@ export function handleDirectoryFixture(
     send(503, null);
     return true;
   }
+  if(parts.length===5 && kind==="users" && parts[4]==="courses") {
+    send(200,{user:account(),items:[],nextCursor:null});return true;
+  }
   if (parts.length === 3) {
     const row =
       kind === "farms"

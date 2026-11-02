@@ -1,3 +1,4 @@
+import { adminCourseEnrollmentQuerySchema, adminUserCourseQuerySchema, adminCourseEnrollmentListSchema, adminUserCourseListSchema, adminCourseCandidateQuerySchema, adminCourseCandidateListSchema, adminEnrollmentAddSchema, adminEnrollmentActionSchema, adminEnrollmentMutationResultSchema, adminCourseUserCreateSchema, adminCourseUserCreateResultSchema } from "@vetralink/shared-types";
 import { NextRequest, NextResponse } from "next/server";
 import { fetchWithDiagnostics } from "../api-diagnostics";
 import { z } from "zod";
@@ -124,6 +125,17 @@ export function resolveEndpoint(
   method: string,
 ): Endpoint | null {
   const key = path.join("/");
+  if(path[0]==="admin" && path[1]==="courses" && uuid.safeParse(path[2]).success){
+    if(path.length===4 && method==="GET" && ["enrollments","enrollment-candidates"].includes(path[3]))return {method,upstream:key,response:path[3]==="enrollments"?adminCourseEnrollmentListSchema:adminCourseCandidateListSchema,query:path[3]==="enrollments"?adminCourseEnrollmentQuerySchema:adminCourseCandidateQuerySchema};
+    if(method==="POST" && path[3]==="enrollments"){
+      if(path.length===4)return {method,upstream:key,body:adminEnrollmentAddSchema,response:adminEnrollmentMutationResultSchema,bodyLimit:8192};
+      if(path.length===5 && path[4]==="create-user")return {method,upstream:key,body:adminCourseUserCreateSchema,response:adminCourseUserCreateResultSchema,bodyLimit:8192};
+      if(path.length===6 && uuid.safeParse(path[4]).success && path[5]==="actions")return {method,upstream:key,body:adminEnrollmentActionSchema,response:adminEnrollmentMutationResultSchema,bodyLimit:8192};
+    }
+    return null;
+  }
+  if(path.length===5 && path[0]==="admin" && path[1]==="directory" && path[2]==="users" && uuid.safeParse(path[3]).success && path[4]==="courses" && method==="GET")return {method,upstream:key,query:adminUserCourseQuerySchema,response:adminUserCourseListSchema};
+
   if (path[0] === "admin" && path[1] === "platform") {
     if (path.length === 3 && method === "GET") {
       const response = path[2] === "settings" ? platformSettingsSchema : path[2] === "integrations" ? platformIntegrationsSchema : path[2] === "system" ? platformSystemSchema : path[2] === "reports" ? platformReportSchema : undefined;
@@ -706,6 +718,7 @@ export function resolveEndpoint(
   return null;
 }
 const errorCodes = new Set([
+  "ACCOUNT_EXISTS", "COURSE_NOT_ENROLLABLE", "COURSE_ENROLLMENT_REVOKED", "ENROLLMENT_VERSION_CONFLICT", "ENROLLMENTS_UNAVAILABLE", "RATE_LIMIT_UNAVAILABLE",
   "SETTINGS_CONFLICT",
   "SETTLEMENT_VERSION_CONFLICT",
   "SETTLEMENT_ACTION_UNAVAILABLE",
@@ -886,7 +899,7 @@ export async function handleWorkspace(
       );
       if (!identity.success) return reply({ code: "INVALID_RESPONSE" }, 502);
       const expectedActor = request.headers.get("X-Workspace-Actor");
-      if ((communicationsRoute || platformRoute) && request.method !== "GET" && expectedActor === null) return reply({ code: "AUTHORIZATION_CHANGED" }, 403);
+      if ((communicationsRoute || platformRoute || path[0]==="admin" && path[1]==="courses") && request.method !== "GET" && expectedActor === null) return reply({ code: "AUTHORIZATION_CHANGED" }, 403);
       currentUserId = identity.data.id;
       if (
         expectedActor !== null &&
@@ -1018,12 +1031,29 @@ export async function handleWorkspace(
                   : [400, 422].includes(response.status)
                     ? "VALIDATION_FAILED"
                     : "UNAVAILABLE";
-      return reply({ code }, response.status >= 500 ? 503 : response.status);
+      const failure=reply({ code }, response.status >= 500 ? 503 : response.status);
+      const retryAfter=response.headers.get("Retry-After");
+      if(response.status===429 && retryAfter && /^\d{1,4}$/.test(retryAfter) && Number(retryAfter)>0 && Number(retryAfter)<=3600)failure.headers.set("Retry-After",retryAfter);
+      return failure;
     }
     const parsed = endpoint.response.safeParse(
       record?.success === true ? record.data : undefined,
     );
     if (!parsed.success) return reply({ code: "INVALID_RESPONSE" }, 502);
+    if(path[0]==="admin" && path[1]==="courses" && path[3]==="enrollments") {
+      const data=parsed.data, input=body as Record<string,unknown>|undefined;
+      const valid=(row: {productId:string;userId:string;user:{id:string}})=>row.productId===path[2] && row.userId===row.user.id;
+      if(request.method==="GET") {
+        if(data.course.id!==path[2] || data.items.some((row: any)=>!valid(row)))return reply({code:"INVALID_RESPONSE"},502);
+      } else {
+        const row=data.enrollment;
+        if(!valid(row) || (path.length===6 && row.userId!==path[4]) || (path.length===4 && row.userId!==input?.userId))return reply({code:"INVALID_RESPONSE"},502);
+        if(path[4]==="create-user" && (row.user.email!==input?.email || row.user.name!==input?.name || row.user.role!=="LEARNER" || row.status!=="ACTIVE"))return reply({code:"INVALID_RESPONSE"},502);
+      }
+    }
+    if(path[0]==="admin" && path[1]==="directory" && path[2]==="users" && path[4]==="courses") {
+      if(parsed.data.user.id!==path[3] || parsed.data.items.some((row:any)=>row.userId!==path[3] || row.productId!==row.course.id))return reply({code:"INVALID_RESPONSE"},502);
+    }
     if (platformRoute) {
       const data = parsed.data;
       const input = body as Record<string, any> | undefined;

@@ -3,6 +3,8 @@
 Date: 2026-10-23. Status: implemented and verified locally; production migration/deployment remain separate.
 Owning feature: [YouTube courses](../../features/youtube-courses/spec.md). [Plan](plan.md).
 
+Local extension (2026-11-02): [administrative enrollment management](../../features/admin-course-enrollments/spec.md) / [plan](../../features/admin-course-enrollments/plan.md) adds individual learner directories, add/revoke/restore and direct name/email/password account creation before enrollment. Its contracts extend the count-only scope below; the linked plan owns current local verification and separate release gates.
+
 ## Scope and current evidence
 
 The user requests list-first management, a connected three-step information/lessons/review wizard, direct edit/delete/publish/unpublish/details, actual enrollment counts, role-appropriate public actions/navigation, responsive/loading/media handling and preservation of learner behavior. Prepare a plan then implement without a second approval gate. Unrelated recovery, notification clarification and ROADMAP work remain paused. Preserve all pre-existing dirty work and human-managed Git policy; no deployment, production content mutation or migration is authorized.

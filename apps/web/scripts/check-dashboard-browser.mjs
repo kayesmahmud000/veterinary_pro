@@ -1,3 +1,4 @@
+import {handleAdminEnrollmentsFixture,checkAdminEnrollments,checkEnrollmentCountsRefresh} from "./admin-course-enrollments-browser-cases.mjs";
 // Local production browser acceptance with synthetic identities and a controlled API.
 // This checks real Next components/BFF behavior, not deployed provider/database readiness.
 import { handleDirectoryFixture, checkAdminDirectory } from "./admin-directory-browser-cases.mjs";
@@ -7,7 +8,7 @@ import { handleFinanceFixture, checkAdminFinance } from "./admin-finance-browser
 import { handleCommunicationsFixture, checkAdminCommunications } from "./admin-communications-browser-cases.mjs";
 import { handlePlatformFixture, checkAdminPlatform } from "./admin-platform-browser-cases.mjs";
 import { checkUnsavedEditors } from "./unsaved-editor-browser-cases.mjs";
-import {handleCourseFixture,checkLearnerCourses,checkRealCourseProvider} from "./course-browser-cases.mjs";
+import {handleCourseFixture,checkLearnerCourses,checkRealCourseProvider,checkCourseEnrollmentRevalidation} from "./course-browser-cases.mjs";
 import { handleCatalogFixture, handleCatalogObject, checkAdminCatalog, checkAdminCourses } from "./admin-catalog-browser-cases.mjs";
 import assert from "node:assert/strict";
 import { handleAdminFixture, checkAdminDashboard } from "./admin-dashboard-browser-cases.mjs";
@@ -297,6 +298,7 @@ const upstream = http.createServer(async (req, res) => {
   }
   if (route === "users/me/role-requests")
     return send(200, { requests: [], nextCursor: null });
+  if(handleAdminEnrollmentsFixture(route,role,send,query,req.method,data))return;
   if(handleCourseFixture(route,role,send,query,req.method,data,res,users.get(role)?.id))return;
   if (handleCatalogFixture(route, role, send, query, req.method, data, res)) return;
   if (handleDirectoryFixture(route, role, send, query, req.method, data, res)) return;
@@ -526,6 +528,15 @@ try {
     assert.deepEqual(exceptions, []);
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "billing") {
     checks += await checkAdminBilling({seed,go,call,evaluate,until,temp,requests});
+    assert.deepEqual(exceptions, []);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "admin-enrollment-counts") {
+    checks += await checkEnrollmentCountsRefresh({seed,go,evaluate,until,requests});
+    assert.deepEqual(exceptions, []);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "course-revalidation") {
+    checks += await checkCourseEnrollmentRevalidation({seed,go,call,evaluate,until,requests,users});
+    assert.deepEqual(exceptions, []);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "admin-enrollments") {
+    checks += await checkAdminEnrollments({seed,go,call,evaluate,until,temp,requests});
     assert.deepEqual(exceptions, []);
   } else if (process.env.WORKSPACE_BROWSER_FOCUS === "admin-courses") {
     checks += await checkAdminCourses({seed,go,call,evaluate,until,temp,requests});

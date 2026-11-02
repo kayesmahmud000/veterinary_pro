@@ -18,6 +18,7 @@ import {
 } from "@/lib/i18n/admin-directory";
 import { WorkspaceGate } from "./workspace-gate";
 import { useRemote, Field } from "./workspace-ui";
+import { AdminUserCourses } from "./admin-course-enrollments";
 import { AdminAccountActions } from "./admin-account-actions";
 import styles from "./workspace.styles";
 const roles = [UserRole.ADMIN, UserRole.SUPER_ADMIN];
@@ -315,6 +316,7 @@ function DirectoryDetail({ kind, id }: { kind: DirectoryKind; id: string }) {
               )}
             </dl>
           </section>
+          {(kind === "users" || kind === "veterinarians") && <AdminUserCourses userId={id} />}
           {(kind === "users" || kind === "veterinarians") && (
             <>
               <section className={styles.card}>
