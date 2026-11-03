@@ -155,6 +155,13 @@ export async function checkAdminEnrollments({
           () => evaluate(`!!document.querySelector('[data-add-learner]')`),
           "Learner manager mounted",
         );
+        assert.equal(
+          await evaluate(
+            `document.querySelector('[data-enrollment-manager] h1')?.textContent`,
+          ),
+          "Synthetic managed course",
+        );
+        checks++;
         await evaluate(`document.querySelector('[data-add-learner]').click()`);
         await until(
           () => evaluate(`!!document.querySelector('[data-candidate-search]')`),
@@ -187,6 +194,46 @@ export async function checkAdminEnrollments({
               `document.querySelectorAll('[data-membership-row]').length===1`,
             ),
           "Added membership",
+        );
+        checks++;
+        const columns = await evaluate(
+          `Array.from(document.querySelectorAll('[data-enrollment-manager] th')).map(e=>e.textContent)`,
+        );
+        assert.deepEqual(
+          columns,
+          locale === "bn"
+            ? [
+                "নাম",
+                "ইমেইল",
+                "এনরোলমেন্টের অবস্থা",
+                "এনরোলমেন্টের তারিখ",
+                "পদক্ষেপ",
+              ]
+            : [
+                "Name",
+                "Email",
+                "Enrollment status",
+                "Enrollment dates",
+                "Actions",
+              ],
+        );
+        assert.equal(
+          await evaluate(
+            `document.querySelector('[data-membership-row] td:nth-child(2)')?.textContent`,
+          ),
+          "existing@example.test",
+        );
+        assert.equal(
+          await evaluate(
+            `document.querySelector('[data-membership-row]')?.cells.length`,
+          ),
+          5,
+        );
+        assert.equal(
+          await evaluate(
+            `!!document.querySelector('[data-enrollment-manager] [role="region"][tabindex="0"]')`,
+          ),
+          true,
         );
         checks++;
         await evaluate(

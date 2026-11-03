@@ -12,6 +12,7 @@ Apply [Senior Production/Incident or Production/Release Engineer](../roles/debug
 | Auth/PII | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_ACCESS_EXPIRATION`, `JWT_REFRESH_EXPIRATION`, `AES_PII_ENCRYPTION_KEY`, `HASH_PEPPER` |
 | Storage | `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET_MEDIA`, `S3_BUCKET_DELIVERIES`, `S3_ENDPOINT`, `S3_FORCE_PATH_STYLE` |
 | Lesson durations | Optional server-only `YOUTUBE_DATA_API_KEY`; bounded instance-memory metadata cache, no new Redis/job/migration. [Configuration and release limits](../../docs/tasks/course-lesson-durations/plan.md) |
+| Administrative course support | `ADMIN_COURSE_ENROLLMENTS_ENABLED` defaults false; missing/false returns503 `ENROLLMENTS_UNAVAILABLE` on the new admin enrollment endpoints. Enable on the backend deployment after migration/rollout, then redeploy; local env changes do not affect the live API. [Runbook](../../docs/features/admin-course-enrollments/runbook.md) |
 | Payments/media | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `MFS_WEBHOOK_SECRET`, `HLS_DRM_KEY_SECRET`, `DRM_TOKEN_EXPIRATION_SECONDS` |
 | Delivery/video | `CLOUDFRONT_DISTRIBUTION_DOMAIN`, `CLOUDFRONT_KEY_PAIR_ID`, `CLOUDFRONT_PRIVATE_KEY`, `CLOUDFRONT_URL_EXPIRATION_SECONDS`, `DAILY_API_KEY` |
 | Mail | `EMAIL_PROVIDER`, `EMAIL_FROM`, `RESEND_API_KEY`, `AWS_SES_REGION`, `API_BASE_URL` |

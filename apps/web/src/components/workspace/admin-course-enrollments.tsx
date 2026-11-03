@@ -1,11 +1,13 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Trash2 } from "lucide-react";
 import {
   UserRole,
   adminCourseEnrollmentListSchema,
   adminUserCourseListSchema,
   adminCourseCandidateListSchema,
+  adminProductSchema,
   type AdminCourseEnrollment,
   type AdminCourseCandidateList,
 } from "@vetralink/shared-types";
@@ -194,9 +196,14 @@ function MembershipDirectory({
       userId ? `admin/directory/users/${userId}/courses${suffix}` : null,
       adminUserCourseListSchema,
     );
+  const courseSummary = useRemote(
+    courseId && courseData.code ? `admin/products/${courseId}` : null,
+    adminProductSchema,
+  );
   const reload = () => {
     courseData.reload();
     userData.reload();
+    courseSummary.reload();
   };
   useEnrollmentRefresh(reload);
   const data = courseId ? courseData : userData;
@@ -219,7 +226,8 @@ function MembershipDirectory({
         course: courseData.data!.course,
       }))
     : userData.data?.items.map((r) => ({ ...r, user: userData.data!.user }));
-  const title = courseData.data?.course.title ?? t.courses;
+  const title =
+    courseData.data?.course.title ?? courseSummary.data?.title ?? t.title;
   return (
     <section data-enrollment-manager className="min-w-0 space-y-5">
       {courseId ? (
@@ -230,10 +238,12 @@ function MembershipDirectory({
           >
             {t.back}
           </Link>
-          <h1 className="break-words text-3xl font-semibold">{t.title}</h1>
+          <div className="space-y-2">
+            <p className="m-0 text-sm font-medium text-muted">{t.title}</p>
+            <h1 className="m-0 break-words text-3xl font-semibold">{title}</h1>
+          </div>
           {courseData.data && (
             <>
-              <h2 className="break-words text-xl">{title}</h2>
               <p>
                 {courseData.data.course.isPublished
                   ? t.published
@@ -326,113 +336,183 @@ function MembershipDirectory({
       ) : !rows?.length ? (
         <p role="status">{t.empty}</p>
       ) : (
-        <table className="w-full table-fixed border-collapse text-left">
-          <caption className="sr-only">
-            {courseId ? t.title : t.courses}
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col" className="p-2">
-                {courseId ? t.name : t.courses}
-              </th>
-              <th scope="col" className="w-24 p-2 text-right sm:w-44">
-                {t.actions}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const ordinary = !["ADMIN", "SUPER_ADMIN"].includes(
-                row.user.role,
-              );
-              return (
-                <tr
-                  key={row.id}
-                  data-membership-row
-                  className="border-0 border-t border-solid border-line align-top"
-                >
-                  <td className="min-w-0 break-words p-2">
-                    {courseId ? (
-                      <>
+        <div
+          className="max-w-full overflow-x-auto rounded-xl border border-solid border-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-green"
+          role="region"
+          aria-label={courseId ? t.title : t.courses}
+          tabIndex={0}
+        >
+          <table
+            className={
+              courseId
+                ? "w-full min-w-[64rem] table-fixed border-collapse text-left"
+                : "w-full table-fixed border-collapse text-left"
+            }
+          >
+            <caption className="sr-only">
+              {courseId ? `${title} · ${t.title}` : t.courses}
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col" className="p-3">
+                  {courseId ? t.name : t.courses}
+                </th>
+                {courseId && (
+                  <>
+                    <th scope="col" className="p-3">
+                      {t.email}
+                    </th>
+                    <th scope="col" className="w-36 p-3">
+                      {t.status}
+                    </th>
+                    <th scope="col" className="w-64 p-3">
+                      {t.dates}
+                    </th>
+                  </>
+                )}
+                <th scope="col" className="w-24 p-3 text-right sm:w-44">
+                  {t.actions}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => {
+                const ordinary = !["ADMIN", "SUPER_ADMIN"].includes(
+                  row.user.role,
+                );
+                const dates = (
+                  <div className="space-y-2 text-sm">
+                    <p className="m-0">
+                      {t.original}: {date(row.createdAt)}
+                    </p>
+                    <p className="m-0">
+                      {t.latest}: {date(row.activatedAt)}
+                    </p>
+                    {row.revokedAt && (
+                      <p className="m-0">
+                        {t.removedAt}: {date(row.revokedAt)}
+                      </p>
+                    )}
+                  </div>
+                );
+                return (
+                  <tr
+                    key={row.id}
+                    data-membership-row
+                    className="border-0 border-t border-solid border-line align-top"
+                  >
+                    <td className="min-w-0 break-words p-3">
+                      {courseId ? (
+                        <>
+                          <Link
+                            href={`/admin/users/${row.userId}`}
+                            className="font-semibold text-teal"
+                          >
+                            {row.user.name}
+                          </Link>
+                          <p className="mb-0 mt-2 text-sm text-muted">
+                            {t.account}:{" "}
+                            {enrollmentValue(row.user.status, auth.locale)}
+                          </p>
+                        </>
+                      ) : row.course.deletedAt ? (
+                        <strong>
+                          {row.course.title} · {t.unavailable}
+                        </strong>
+                      ) : (
                         <Link
-                          href={`/admin/users/${row.userId}`}
+                          href={`/admin/courses/${row.productId}/learners`}
                           className="font-semibold text-teal"
                         >
-                          {row.user.name}
+                          {row.course.title}
                         </Link>
-                        <div className="[overflow-wrap:anywhere]">
-                          {row.user.email}
-                        </div>
-                        <p className="my-1 text-sm">
-                          {t.account}:{" "}
-                          {enrollmentValue(row.user.status, auth.locale)}
-                        </p>
-                      </>
-                    ) : row.course.deletedAt ? (
-                      <strong>
-                        {row.course.title} · {t.unavailable}
-                      </strong>
-                    ) : (
-                      <Link
-                        href={`/admin/courses/${row.productId}/learners`}
-                        className="font-semibold text-teal"
-                      >
-                        {row.course.title}
-                      </Link>
-                    )}
-                    <p className="my-1 text-sm">
-                      {enrollmentValue(row.status, auth.locale)} ·{" "}
-                      {row.course.isPublished ? t.published : t.unpublished}
-                    </p>
-                    <p className="my-1 text-sm">
-                      {t.original}: {date(row.createdAt)}
-                      <br />
-                      {t.latest}: {date(row.activatedAt)}
-                      {row.revokedAt && (
+                      )}
+                      {!courseId && (
                         <>
-                          <br />
-                          {t.removedAt}: {date(row.revokedAt)}
+                          <p className="my-2 text-sm">
+                            {enrollmentValue(row.status, auth.locale)} ·{" "}
+                            {row.course.isPublished
+                              ? t.published
+                              : t.unpublished}
+                          </p>
+                          {dates}
                         </>
                       )}
-                    </p>
-                  </td>
-                  <td className="p-2 text-right">
-                    {ordinary &&
-                    !row.course.deletedAt &&
-                    (row.status === "ACTIVE" ||
-                      (row.course.isPublished &&
-                        row.user.status === "ACTIVE")) ? (
-                      <Button
-                        data-membership-remove={
-                          row.status === "ACTIVE" ? "" : undefined
-                        }
-                        data-membership-restore={
-                          row.status === "REVOKED" ? "" : undefined
-                        }
-                        variant="outline"
-                        className="w-full whitespace-normal px-2"
-                        onClick={() =>
-                          setAction({
-                            courseId: row.productId,
-                            courseTitle: row.course.title,
-                            user: row.user,
-                            action:
-                              row.status === "ACTIVE" ? "REMOVE" : "RESTORE",
-                            version: row.version,
-                          })
-                        }
-                      >
-                        {row.status === "ACTIVE" ? t.remove : t.restore}
-                      </Button>
-                    ) : (
-                      <small>{t.noAction}</small>
+                    </td>
+                    {courseId && (
+                      <>
+                        <td className="p-3 [overflow-wrap:anywhere]">
+                          {row.user.email}
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={
+                              row.status === "ACTIVE"
+                                ? "inline-flex rounded-full bg-green/10 px-3 py-1 text-sm font-medium text-green"
+                                : "inline-flex rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700"
+                            }
+                          >
+                            {enrollmentValue(row.status, auth.locale)}
+                          </span>
+                        </td>
+                        <td className="p-3">{dates}</td>
+                      </>
                     )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    <td className="p-3 text-right">
+                      {ordinary &&
+                      !row.course.deletedAt &&
+                      (row.status === "ACTIVE" ||
+                        (row.course.isPublished &&
+                          row.user.status === "ACTIVE")) ? (
+                        <Button
+                          type="button"
+                          data-membership-remove={
+                            row.status === "ACTIVE" ? "" : undefined
+                          }
+                          data-membership-restore={
+                            row.status === "REVOKED" ? "" : undefined
+                          }
+                          variant={
+                            row.status === "ACTIVE" ? "ghost" : "outline"
+                          }
+                          aria-label={
+                            row.status === "ACTIVE"
+                              ? `${t.remove}: ${row.user.name}`
+                              : undefined
+                          }
+                          title={row.status === "ACTIVE" ? t.remove : undefined}
+                          className={
+                            row.status === "ACTIVE"
+                              ? "h-11 w-11 shrink-0 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 focus-visible:outline-red-600"
+                              : "w-full whitespace-normal px-2"
+                          }
+                          onClick={() =>
+                            setAction({
+                              courseId: row.productId,
+                              courseTitle: row.course.title,
+                              user: row.user,
+                              action:
+                                row.status === "ACTIVE" ? "REMOVE" : "RESTORE",
+                              version: row.version,
+                            })
+                          }
+                        >
+                          {row.status === "ACTIVE" ? (
+                            <Trash2 size={18} aria-hidden="true" />
+                          ) : (
+                            t.restore
+                          )}
+                        </Button>
+                      ) : (
+                        <small>{t.noAction}</small>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
       <div className="flex flex-wrap gap-3">
         {cursors.length > 1 && (

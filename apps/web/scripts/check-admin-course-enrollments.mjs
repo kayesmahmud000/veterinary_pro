@@ -12,6 +12,7 @@ function compile(file, overrides = {}) {
       compilerOptions: {
         module: ts.ModuleKind.CommonJS,
         target: ts.ScriptTarget.ES2020,
+        jsx: ts.JsxEmit.ReactJSX,
       },
     },
   );
@@ -71,6 +72,90 @@ const input = {
   actorPassword: "actor-sentinel",
   reason: "Requested enrollment",
 };
+function renderDirectory(locale, unavailable = false) {
+  const React = require("react"),
+    { renderToStaticMarkup } = require("react-dom/server"),
+    course = { id, title: "Synthetic dairy management", isPublished: true },
+    { AdminCourseEnrollments } = compile(
+      "../src/components/workspace/admin-course-enrollments.tsx",
+      {
+        "next/link": {
+          default: ({ children, ...props }) =>
+            React.createElement("a", props, children),
+        },
+        "@/components/auth/auth-provider": {
+          useAuth: () => ({ locale, user: identity }),
+        },
+        "@/lib/i18n/admin-course-enrollments": compile(
+          "../src/lib/i18n/admin-course-enrollments.ts",
+        ),
+        "@/components/ui/button": {
+          Button: ({ children, variant, ...props }) =>
+            React.createElement("button", props, children),
+          buttonVariants: () => "",
+        },
+        "./workspace-gate": { WorkspaceGate: ({ children }) => children },
+        "./workspace-ui": {
+          useRemote: (path) => ({
+            loading: false,
+            reload() {},
+            ...(path?.startsWith("admin/products/")
+              ? { data: course }
+              : unavailable
+                ? { code: "ENROLLMENTS_UNAVAILABLE", status: 503 }
+                : {
+                    data: {
+                      course,
+                      items: [membership],
+                      activeCount: 1,
+                      revokedCount: 0,
+                      nextCursor: null,
+                    },
+                  }),
+          }),
+          Field: ({ label, children }) =>
+            React.createElement("div", null, label, children),
+        },
+        "./admin-course-dialog": {},
+        "./admin-course-enrollment-actions": {},
+        "./admin-course-user-create": {},
+      },
+    );
+  return renderToStaticMarkup(
+    React.createElement(AdminCourseEnrollments, { courseId: id }),
+  );
+}
+test("course roster identifies the course and separates learner fields into table columns in both languages", () => {
+  for (const [locale, expectedHeaders] of [
+    [
+      "en",
+      ["Name", "Email", "Enrollment status", "Enrollment dates", "Actions"],
+    ],
+    [
+      "bn",
+      ["নাম", "ইমেইল", "এনরোলমেন্টের অবস্থা", "এনরোলমেন্টের তারিখ", "পদক্ষেপ"],
+    ],
+  ]) {
+    const html = renderDirectory(locale);
+    assert.match(html, /<h1[^>]*>Synthetic dairy management<\/h1>/);
+    const headers = [...html.matchAll(/<th\s[^>]*>(.*?)<\/th>/g)].map(
+      (match) => match[1],
+    );
+    assert.deepEqual(headers, expectedHeaders);
+    assert.match(html, /<td[^>]*>new@example\.test<\/td>/);
+    assert.equal([...html.matchAll(/<td\s/g)].length, 5);
+    assert.match(html, /data-membership-remove/);
+  }
+});
+test("course title remains available when the enrollment feature is disabled", () => {
+  const html = renderDirectory("en", true);
+  assert.match(html, /<h1[^>]*>Synthetic dairy management<\/h1>/);
+  assert.match(
+    html,
+    /role="alert"[^>]*>Enrollment management is currently unavailable\./,
+  );
+  assert.doesNotMatch(html, /data-membership-row/);
+});
 const path = ["admin", "courses", id, "enrollments", "create-user"];
 function req(
   body = input,
@@ -193,8 +278,18 @@ test("forwards bounded retry timing without forwarding upstream bodies", async (
   assert.equal(response.headers.get("Retry-After"), "900");
   assert.deepEqual(await response.json(), { code: "RATE_LIMITED" });
 });
-test('rejects a successful mutation response bound to a different course or user',async t=>{
- const original=globalThis.fetch;t.after(()=>globalThis.fetch=original);
- globalThis.fetch=async url=>String(url).endsWith('auth/me')?Response.json({success:true,data:identity}):Response.json({success:true,data:{accountCreated:true,enrollment:{...membership,productId:userId}}});
- assert.equal((await handleWorkspace(req(),path)).status,502);
+test("rejects a successful mutation response bound to a different course or user", async (t) => {
+  const original = globalThis.fetch;
+  t.after(() => (globalThis.fetch = original));
+  globalThis.fetch = async (url) =>
+    String(url).endsWith("auth/me")
+      ? Response.json({ success: true, data: identity })
+      : Response.json({
+          success: true,
+          data: {
+            accountCreated: true,
+            enrollment: { ...membership, productId: userId },
+          },
+        });
+  assert.equal((await handleWorkspace(req(), path)).status, 502);
 });

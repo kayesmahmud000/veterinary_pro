@@ -51,6 +51,10 @@ Apply backend/API, database, security, frontend/UX and QA review perspectives. T
 
 ## User experience
 
+The remove-from-course row action uses a red trash icon with a localized accessible name identifying the learner, a hover title and a44px target. Clicking it retains the existing reason/password confirmation dialog. Restore remains a labelled action.
+
+2026-11-03 roster refinement: make the selected course name the primary page heading. Show course learners in a semantic table with separate Name, Email, Enrollment status, Enrollment dates and Actions columns; preserve account status, original/latest activation dates and removal dates. Keep horizontal overflow inside a keyboard-accessible table region on narrow screens. When enrollment reads fail, obtain the title from the independently authorized admin product-detail endpoint; do not fabricate learner rows or hide the actual enrollment error. Keep the embedded user-centric course list and existing audited actions. Both languages remain supported.
+
 1. `/admin/courses`: the actual learner count and a named management action link to `/admin/courses/[id]/learners`; retain the responsive semantic course table. Do not fetch each row's learners on list load.
 2. The learner page shows course title/publication, unfiltered active/revoked totals and a paginated table with name/email, account status, membership status, original/latest enrollment dates and actions. Filters: name/email and ACTIVE/REVOKED/ALL; default ACTIVE. Default20/max100 rows, cursor paging. ACTIVE counts include nondeleted suspended accounts' active memberships; show account status separately. Omit deleted identities from lists/counts while retaining stored history.
 3. A learner name opens existing `/admin/users/[id]`, with a paginated Courses section and the same remove/restore actions. Include course publication/deletion status and membership dates. Historical soft-deleted courses remain visible as unavailable, with no public link or write action.

@@ -34,6 +34,7 @@ const copy = {
   status: ["Enrollment status", "এনরোলমেন্টের অবস্থা"],
   account: ["Account status", "অ্যাকাউন্টের অবস্থা"],
   original: ["First enrolled", "প্রথম এনরোলমেন্ট"],
+  dates: ["Enrollment dates", "এনরোলমেন্টের তারিখ"],
   latest: ["Latest activation", "সর্বশেষ সক্রিয় হয়েছে"],
   removedAt: ["Removed on", "বাদ দেওয়া হয়েছে"],
   actions: ["Actions", "পদক্ষেপ"],

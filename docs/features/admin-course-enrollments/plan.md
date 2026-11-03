@@ -10,7 +10,13 @@
 
 **Spec:** [spec.md](spec.md). Date/revision:2026-11-02 / `471875f`. Status: implemented locally; operator release gates remain. The user's explicit direct-account-creation choice supersedes the initial invitation proposal and its nine-task execution draft. The revised plan has seven tasks.
 
+**Scoped database repair,2026-11-03:** the user separately authorized the configured-database enrollment migration after missing `course_enrollments.status` caused admin product/library reads to fail. Only `20261102090000_admin_course_enrollments` was applied. Six legacy enrollments were preserved, real product/library reads passed, and the other four pending migrations were excluded. [Repair evidence and remaining session/release limits](execution.md#authorized-repair-outcome--2026-11-03). This does not enable the administrative feature flag or certify a new application deployment.
+
+**Enrollment availability and roster follow-up,2026-11-03:** the subsequent503 with `ENROLLMENTS_UNAVAILABLE` is the existing default-disabled `ADMIN_COURSE_ENROLLMENTS_ENABLED` gate, not the repaired database column. Keep the gate/authorization/Redis protections; document the backend environment variable and redeployment requirement, and allow it through Turbo's strict environment. The current workspace has no Vercel credentials, so provider-side enablement remains with the operator. Implement the requested course-name heading and separate-column learner table, plus a product-detail title fallback when the enrollment endpoint is unavailable. Verify rendered bn/en success/error states, styles/types, isolated production build and the existing ADMIN/SUPER_ADMIN browser flow at320/768/1440px. No additional migrations or live account/enrollment mutations are authorized by this UI follow-up.
+
 ## Global constraints
+
+2026-11-03 icon refinement: replace the remove row button text with the existing Lucide trash icon in red; retain its localized accessible name,44px target and existing confirmation flow. Verify the existing rendered/boundary suites, styles/build and administrative enrollment browser flow. No backend or live configuration changes.
 
 - New account inputs are name/email/newUserPassword; administrator confirmation uses a separate actorPassword. Never call public AuthService.register or replace administrator cookies.
 - Fixed new role LEARNER/status ACTIVE/isEmailVerified=false; no session/refresh token or invitation record. Existing account roles/credentials remain unchanged.

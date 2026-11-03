@@ -10,6 +10,10 @@ Feature: [specification](spec.md). Execution/verification: [plan](plan.md), [led
 4. Configure healthy shared Redis and `REDIS_ENABLED=true`; the new endpoints fail closed when distributed limits are disabled/unavailable. Set `ADMIN_COURSE_ENROLLMENTS_ENABLED=true` on the API only after authorized migration/rollout smoke checks. Default is false. No mail provider, new public auth endpoint or invitation worker is needed.
 5. As authorized synthetic ADMIN and SUPER_ADMIN identities, inspect `/admin/courses`, open a course's learners, create a synthetic learner and enroll it, use its ordinary login, remove/restore membership, and verify both directories/counts and redacted audit history. Ensure no learner session replaces the administrator session. Remove the synthetic test membership through the normal audited action.
 
+### Enrollment directory returns503 after the schema migration
+
+`ENROLLMENTS_UNAVAILABLE` is returned by the feature gate before the directory query when `ADMIN_COURSE_ENROLLMENTS_ENABLED` is missing/false. In the **backend** Vercel project, set this variable to `true` for the intended deployment environment and create a new deployment; existing deployments retain their original environment. A local `.env` edit does not change the live API used by localhost web. The example files keep the safe default false, and Turbo explicitly passes the variable through. Keep current-role/password/version checks and distributed Redis limits enabled; `RATE_LIMIT_UNAVAILABLE` is a separate failure requiring healthy Redis. Do not change the feature's default or bypass the gate to hide a deployment configuration issue.
+
 ## Operator behavior
 
 Direct creation always creates a LEARNER/ACTIVE account with unverified email and then its selected course membership inside one transaction. The administrator supplies credentials directly; the application never emails or returns a password. Existing-email conflict requires explicit existing-user selection; it never resets credentials or restores revoked access.
