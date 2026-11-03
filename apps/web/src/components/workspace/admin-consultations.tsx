@@ -1,4 +1,12 @@
 "use client";
+import {
+  ArrowLeft as ActionArrowLeft,
+  ChevronLeft as ActionChevronLeft,
+  ChevronRight as ActionChevronRight,
+  Eye as ActionEye,
+  RefreshCw as ActionRefreshCw,
+  Search as ActionSearch,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -56,10 +64,13 @@ function ErrorNotice({ code, retry }: { code?: string; retry?: () => void }) {
       {retry && (
         <button
           data-consultation-retry
-          className={styles.secondary}
+          className={styles.iconButton}
           onClick={retry}
+          aria-label={t.retry}
+          title={t.retry}
+          data-icon-action
         >
-          {t.retry}
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       )}
     </div>
@@ -162,14 +173,24 @@ function ConsultationList({ section }: { section: Section }) {
           </Field>
         </div>
         <div className={styles.actions}>
-          <button className={styles.primary}>{t.apply}</button>
+          <button
+            className={styles.iconButton}
+            aria-label={t.apply}
+            title={t.apply}
+            data-icon-action
+          >
+            <ActionSearch size={18} aria-hidden="true" />
+          </button>
           <button
             type="button"
-            className={styles.secondary}
+            className={styles.iconButton}
             disabled={data.loading}
             onClick={data.reload}
+            aria-label={t.refresh}
+            title={t.refresh}
+            data-icon-action
           >
-            {t.refresh}
+            <ActionRefreshCw size={18} aria-hidden="true" />
           </button>
         </div>
       </form>
@@ -203,10 +224,13 @@ function ConsultationList({ section }: { section: Section }) {
                 <small>{row.id}</small>
               </div>
               <Link
-                className={styles.secondary}
+                className={styles.iconButton}
                 href={`/admin/${section}/${row.id}`}
+                aria-label={t.details}
+                title={t.details}
+                data-icon-action
               >
-                {t.details}
+                <ActionEye size={18} aria-hidden="true" />
               </Link>
             </li>
           ))}
@@ -216,7 +240,7 @@ function ConsultationList({ section }: { section: Section }) {
         {(cursors.length > 0 || params.has("cursor")) && (
           <button
             data-consultation-previous
-            className={styles.secondary}
+            className={styles.iconButton}
             disabled={data.loading}
             onClick={() => {
               const next = new URLSearchParams(raw),
@@ -226,14 +250,17 @@ function ConsultationList({ section }: { section: Section }) {
               setCursors((v) => v.slice(0, -1));
               navigate(next);
             }}
+            aria-label={t.previous}
+            title={t.previous}
+            data-icon-action
           >
-            {t.previous}
+            <ActionChevronLeft size={18} aria-hidden="true" />
           </button>
         )}
         {data.data?.nextCursor && (
           <button
             data-consultation-next
-            className={styles.secondary}
+            className={styles.iconButton}
             disabled={data.loading}
             onClick={() => {
               const next = new URLSearchParams(raw);
@@ -241,8 +268,11 @@ function ConsultationList({ section }: { section: Section }) {
               next.set("cursor", data.data!.nextCursor!);
               navigate(next);
             }}
+            aria-label={t.next}
+            title={t.next}
+            data-icon-action
           >
-            {t.next}
+            <ActionChevronRight size={18} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -465,10 +495,13 @@ function SupportForm({
               {candidates.data?.truncated && <p>{t.candidateLimit}</p>}
               <button
                 type="button"
-                className={styles.secondary}
+                className={styles.iconButton}
                 onClick={candidates.reload}
+                aria-label={t.refresh}
+                title={t.refresh}
+                data-icon-action
               >
-                {t.refresh}
+                <ActionRefreshCw size={18} aria-hidden="true" />
               </button>
             </>
           )}
@@ -565,10 +598,13 @@ function SupportForm({
               <button
                 type="button"
                 data-consultation-reload
-                className={styles.secondary}
+                className={styles.iconButton}
                 onClick={reload}
+                aria-label={t.refresh}
+                title={t.refresh}
+                data-icon-action
               >
-                {t.refresh}
+                <ActionRefreshCw size={18} aria-hidden="true" />
               </button>
             )}
             <button
@@ -636,8 +672,14 @@ function ConsultationRecord({ section, id }: { section: Section; id: string }) {
     );
   return (
     <div data-consultation-detail className="space-y-6">
-      <Link className={styles.secondary} href={`/admin/${section}`}>
-        {t.back}
+      <Link
+        className={styles.iconButton}
+        href={`/admin/${section}`}
+        aria-label={t.back}
+        title={t.back}
+        data-icon-action
+      >
+        <ActionArrowLeft size={18} aria-hidden="true" />
       </Link>
       <p className="break-all text-sm text-muted">{id}</p>
       {saved && (
@@ -709,11 +751,14 @@ function ConsultationRecord({ section, id }: { section: Section; id: string }) {
       </section>
       <button
         data-consultation-refresh
-        className={styles.secondary}
+        className={styles.iconButton}
         disabled={remote.loading}
         onClick={reload}
+        aria-label={t.refresh}
+        title={t.refresh}
+        data-icon-action
       >
-        {t.refresh}
+        <ActionRefreshCw size={18} aria-hidden="true" />
       </button>
     </div>
   );

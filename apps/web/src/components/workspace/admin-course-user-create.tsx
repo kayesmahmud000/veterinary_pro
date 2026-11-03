@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import {
   adminCourseUserCreateSchema,
   adminCourseUserCreateResultSchema,
@@ -186,9 +187,17 @@ export function AdminCourseUserCreate({
           variant="outline"
           disabled={busy}
           aria-pressed={show}
+          size="icon"
+          aria-label={show ? t.hide : t.show}
+          title={show ? t.hide : t.show}
+          data-icon-action
           onClick={() => setShow((v) => !v)}
         >
-          {show ? t.hide : t.show}
+          {show ? (
+            <EyeOff size={18} aria-hidden="true" />
+          ) : (
+            <Eye size={18} aria-hidden="true" />
+          )}
         </Button>
         <Field name="new-learner-confirm" label={t.confirm}>
           <input

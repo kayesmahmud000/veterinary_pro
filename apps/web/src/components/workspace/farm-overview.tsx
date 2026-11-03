@@ -1,4 +1,6 @@
 "use client";
+import { RefreshCw as ActionRefreshCw } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { useState, type ReactNode } from "react";
 import type { z } from "zod";
 import { FarmType } from "@vetralink/shared-types";
@@ -52,10 +54,13 @@ function Metric<T>({
             </p>
             <button
               type="button"
-              className="min-h-11 border-0 bg-transparent text-sm font-semibold text-green"
+              className={buttonVariants({ variant: "outline", size: "icon" })}
               onClick={remote.reload}
+              aria-label={t.retry}
+              title={t.retry}
+              data-icon-action
             >
-              {t.retry}
+              <ActionRefreshCw size={18} aria-hidden="true" />
             </button>
           </>
         ) : remote.data !== undefined ? (

@@ -372,7 +372,7 @@ export async function checkAdminPlatform({
   checks++;
   platformState.conflict = false;
   await evaluate(
-    `(()=>{const original=window.confirm;window.confirm=()=>true;try{Array.from(document.querySelectorAll('[data-platform-action] button')).find(b=>b.textContent.includes('Reload')).click()}finally{window.confirm=original}})()`,
+    `(()=>{const original=window.confirm;window.confirm=()=>true;try{Array.from(document.querySelectorAll('[data-platform-action] button')).find(b=>(b.getAttribute('aria-label')||b.textContent).includes('Reload')).click()}finally{window.confirm=original}})()`,
   );
   await until(
     () => evaluate(`!!document.getElementById('organizationEn')`),

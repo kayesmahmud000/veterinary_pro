@@ -1,20 +1,18 @@
 "use client";
+import { RefreshCw as ActionRefreshCw } from "lucide-react";
 import { cn } from "@/lib/ui/cn";
 import { useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { z } from "zod";
+
 import {
   AnimalSpecies,
   FarmType,
-  FarmRole,
   farmOnboardingSchema,
   farmOnboardingStatusSchema,
-  addFarmMemberSchema,
-  farmMemberSchema,
 } from "@vetralink/shared-types";
 import { useAuth } from "@/components/auth/auth-provider";
-import { memberListSchema, type Question } from "@/lib/workspace/contracts";
+import { type Question } from "@/lib/workspace/contracts";
 import { workspaceRequest } from "@/lib/workspace/client";
 import type { WorkspaceMessages } from "@/lib/i18n/workspace";
 import {
@@ -138,8 +136,14 @@ export function FarmOnboarding({
     return (
       <>
         <Notice code={status.code} t={t} />
-        <button className={cn(styles.secondary)} onClick={status.reload}>
-          {t.retry}
+        <button
+          className={styles.iconButton}
+          onClick={status.reload}
+          aria-label={t.retry}
+          title={t.retry}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       </>
     );
@@ -268,11 +272,14 @@ export function FarmOnboarding({
               {pending ? t.saving : t.finishSetup}
             </button>
             <button
-              className={cn(styles.secondary)}
+              className={styles.iconButton}
               type="button"
               onClick={status.reload}
+              aria-label={t.retry}
+              title={t.retry}
+              data-icon-action
             >
-              {t.retry}
+              <ActionRefreshCw size={18} aria-hidden="true" />
             </button>
           </div>
         </fieldset>

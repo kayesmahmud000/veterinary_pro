@@ -1,4 +1,5 @@
 "use client";
+import { RefreshCw as ActionRefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Loader2, VideoOff } from "lucide-react";
 import { loadYouTube, youtubeEmbedUrl } from "@/lib/courses/youtube-player";
@@ -113,8 +114,12 @@ export function YouTubePlayer({
               variant="outline"
               className="shrink-0"
               onClick={() => setRevision((v) => v + 1)}
+              aria-label={t.retry}
+              title={t.retry}
+              data-icon-action
+              size="icon"
             >
-              {t.retry}
+              <ActionRefreshCw size={18} aria-hidden="true" />
             </Button>
           </div>
         )}

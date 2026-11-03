@@ -1,4 +1,8 @@
 "use client";
+import {
+  ChevronLeft as ActionChevronLeft,
+  ChevronRight as ActionChevronRight,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { BookOpen, ArrowRight } from "lucide-react";
@@ -57,16 +61,24 @@ function Library() {
             variant="outline"
             disabled={data.loading}
             onClick={() => setCursors((v) => v.slice(0, -1))}
+            aria-label={t.previous}
+            title={t.previous}
+            data-icon-action
+            size="icon"
           >
-            {t.previous}
+            <ActionChevronLeft size={18} aria-hidden="true" />
           </Button>
         )}
         {!data.loading && data.data?.nextCursor && (
           <Button
             variant="outline"
             onClick={() => setCursors((v) => [...v, data.data!.nextCursor!])}
+            aria-label={t.next}
+            title={t.next}
+            data-icon-action
+            size="icon"
           >
-            {t.next}
+            <ActionChevronRight size={18} aria-hidden="true" />
           </Button>
         )}
       </nav>

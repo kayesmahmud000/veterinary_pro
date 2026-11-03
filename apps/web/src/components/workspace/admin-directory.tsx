@@ -1,4 +1,12 @@
 "use client";
+import {
+  ArrowLeft as ActionArrowLeft,
+  ChevronLeft as ActionChevronLeft,
+  ChevronRight as ActionChevronRight,
+  Eye as ActionEye,
+  RefreshCw as ActionRefreshCw,
+  Search as ActionSearch,
+} from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { z } from "zod";
@@ -31,8 +39,14 @@ function ErrorState({ code, retry }: { code?: string; retry: () => void }) {
   return (
     <div className={styles.error}>
       <p role="alert">{code === "NOT_FOUND" ? t.missing : t.unavailable}</p>
-      <button className={styles.secondary} onClick={retry}>
-        {t.retry}
+      <button
+        className={styles.iconButton}
+        onClick={retry}
+        aria-label={t.retry}
+        title={t.retry}
+        data-icon-action
+      >
+        <ActionRefreshCw size={18} aria-hidden="true" />
       </button>
     </div>
   );
@@ -145,8 +159,14 @@ function DirectoryList({ kind }: { kind: DirectoryKind }) {
           )}
         </div>
         <div className={styles.actions}>
-          <button className={styles.primary} type="submit">
-            {t.apply}
+          <button
+            className={styles.iconButton}
+            type="submit"
+            aria-label={t.apply}
+            title={t.apply}
+            data-icon-action
+          >
+            <ActionSearch size={18} aria-hidden="true" />
           </button>
         </div>
         {code && <p role="alert">{t.errors.VALIDATION_FAILED}</p>}
@@ -184,10 +204,13 @@ function DirectoryList({ kind }: { kind: DirectoryKind }) {
                   )}
                 </div>
                 <Link
-                  className={styles.secondary}
+                  className={styles.iconButton}
                   href={`${root(kind)}/${row.id}`}
+                  aria-label={t.details}
+                  title={t.details}
+                  data-icon-action
                 >
-                  {t.details}
+                  <ActionEye size={18} aria-hidden="true" />
                 </Link>
               </li>
             ))}
@@ -196,29 +219,38 @@ function DirectoryList({ kind }: { kind: DirectoryKind }) {
       )}
       <div className={styles.actions}>
         <button
-          className={styles.secondary}
+          className={styles.iconButton}
           disabled={data.loading}
           onClick={data.reload}
+          aria-label={t.retry}
+          title={t.retry}
+          data-icon-action
         >
-          {t.retry}
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
         {cursors.length > 1 && (
           <button
-            className={styles.secondary}
+            className={styles.iconButton}
             disabled={data.loading}
             onClick={() => setCursors((c) => c.slice(0, -1))}
+            aria-label={t.previous}
+            title={t.previous}
+            data-icon-action
           >
-            {t.previous}
+            <ActionChevronLeft size={18} aria-hidden="true" />
           </button>
         )}
         {data.data?.nextCursor && (
           <button
             data-directory-next
-            className={styles.secondary}
+            className={styles.iconButton}
             disabled={data.loading}
             onClick={() => setCursors((c) => [...c, data.data!.nextCursor!])}
+            aria-label={t.next}
+            title={t.next}
+            data-icon-action
           >
-            {t.next}
+            <ActionChevronRight size={18} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -256,8 +288,14 @@ function DirectoryDetail({ kind, id }: { kind: DirectoryKind; id: string }) {
   );
   return (
     <div className="space-y-6" data-admin-detail={kind}>
-      <Link className={styles.secondary} href={root(kind)}>
-        {t.back}
+      <Link
+        className={styles.iconButton}
+        href={root(kind)}
+        aria-label={t.back}
+        title={t.back}
+        data-icon-action
+      >
+        <ActionArrowLeft size={18} aria-hidden="true" />
       </Link>
       {feedback && (
         <p role={feedback === "SAVED" ? "status" : "alert"}>
@@ -316,7 +354,9 @@ function DirectoryDetail({ kind, id }: { kind: DirectoryKind; id: string }) {
               )}
             </dl>
           </section>
-          {(kind === "users" || kind === "veterinarians") && <AdminUserCourses userId={id} />}
+          {(kind === "users" || kind === "veterinarians") && (
+            <AdminUserCourses userId={id} />
+          )}
           {(kind === "users" || kind === "veterinarians") && (
             <>
               <section className={styles.card}>
@@ -429,8 +469,14 @@ function DirectoryDetail({ kind, id }: { kind: DirectoryKind; id: string }) {
               ))}
             </>
           )}
-          <button className={styles.secondary} onClick={detail.reload}>
-            {t.retry}
+          <button
+            className={styles.iconButton}
+            onClick={detail.reload}
+            aria-label={t.retry}
+            title={t.retry}
+            data-icon-action
+          >
+            <ActionRefreshCw size={18} aria-hidden="true" />
           </button>
         </>
       )}

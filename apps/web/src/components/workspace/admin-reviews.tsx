@@ -1,4 +1,12 @@
 "use client";
+import {
+  ArrowLeft as ActionArrowLeft,
+  ChevronLeft as ActionChevronLeft,
+  ChevronRight as ActionChevronRight,
+  Eye as ActionEye,
+  RefreshCw as ActionRefreshCw,
+  Search as ActionSearch,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -115,15 +123,25 @@ function ReviewList() {
           </Field>
         </div>
         <div className={styles.actions}>
-          <button className={styles.primary}>{t.apply}</button>
+          <button
+            className={styles.iconButton}
+            aria-label={t.apply}
+            title={t.apply}
+            data-icon-action
+          >
+            <ActionSearch size={18} aria-hidden="true" />
+          </button>
           <button
             data-finance-reload
             type="button"
-            className={styles.secondary}
+            className={styles.iconButton}
             onClick={remote.reload}
             disabled={remote.loading}
+            aria-label={t.refresh}
+            title={t.refresh}
+            data-icon-action
           >
-            {t.refresh}
+            <ActionRefreshCw size={18} aria-hidden="true" />
           </button>
         </div>
       </form>
@@ -152,10 +170,13 @@ function ReviewList() {
                 <small>{row.id}</small>
               </div>
               <Link
-                className={styles.secondary}
+                className={styles.iconButton}
                 href={`/admin/reviews/${row.id}`}
+                aria-label={t.details}
+                title={t.details}
+                data-icon-action
               >
-                {t.details}
+                <ActionEye size={18} aria-hidden="true" />
               </Link>
             </li>
           ))}
@@ -165,7 +186,7 @@ function ReviewList() {
         {(cursors.length > 0 || params.has("cursor")) && (
           <button
             data-review-previous
-            className={styles.secondary}
+            className={styles.iconButton}
             disabled={remote.loading}
             onClick={() => {
               const next = new URLSearchParams(raw),
@@ -175,14 +196,17 @@ function ReviewList() {
               setCursors((v) => v.slice(0, -1));
               navigate(next);
             }}
+            aria-label={t.previous}
+            title={t.previous}
+            data-icon-action
           >
-            {t.previous}
+            <ActionChevronLeft size={18} aria-hidden="true" />
           </button>
         )}
         {remote.data?.nextCursor && (
           <button
             data-review-next
-            className={styles.secondary}
+            className={styles.iconButton}
             disabled={remote.loading}
             onClick={() => {
               const next = new URLSearchParams(raw);
@@ -190,8 +214,11 @@ function ReviewList() {
               next.set("cursor", remote.data!.nextCursor!);
               navigate(next);
             }}
+            aria-label={t.next}
+            title={t.next}
+            data-icon-action
           >
-            {t.next}
+            <ActionChevronRight size={18} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -216,8 +243,14 @@ function ReviewRecord({ id }: { id: string }) {
     );
   return (
     <div data-review-detail className="space-y-6">
-      <Link className={styles.secondary} href="/admin/reviews">
-        {t.back}
+      <Link
+        className={styles.iconButton}
+        href="/admin/reviews"
+        aria-label={t.back}
+        title={t.back}
+        data-icon-action
+      >
+        <ActionArrowLeft size={18} aria-hidden="true" />
       </Link>
       {saved && (
         <p data-finance-saved role="status">
@@ -283,11 +316,14 @@ function ReviewRecord({ id }: { id: string }) {
       <History items={row.history} truncated={row.historyTruncated} />
       <button
         data-finance-reload
-        className={styles.secondary}
+        className={styles.iconButton}
         disabled={remote.loading}
         onClick={remote.reload}
+        aria-label={t.refresh}
+        title={t.refresh}
+        data-icon-action
       >
-        {t.refresh}
+        <ActionRefreshCw size={18} aria-hidden="true" />
       </button>
     </div>
   );

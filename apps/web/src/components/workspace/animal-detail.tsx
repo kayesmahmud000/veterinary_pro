@@ -1,4 +1,9 @@
 "use client";
+import {
+  ArrowLeft as ActionArrowLeft,
+  Pencil as ActionPencil,
+  RefreshCw as ActionRefreshCw,
+} from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -22,10 +27,13 @@ export function AnimalDetail({ id }: { id: string }) {
     [saved, setSaved] = useState(false);
   const back = (
     <Link
-      className="inline-flex min-h-11 items-center text-green"
+      className={styles.iconButton}
       href={`/app/farms/${farmId}/animals`}
+      aria-label={t.back}
+      title={t.back}
+      data-icon-action
     >
-      {t.back}
+      <ActionArrowLeft size={18} aria-hidden="true" />
     </Link>
   );
   if (animal.loading) return <Notice text={shared.loading} t={shared} />;
@@ -34,8 +42,15 @@ export function AnimalDetail({ id }: { id: string }) {
       <>
         {back}
         <Notice code={animal.code} t={shared} />
-        <Button variant="outline" onClick={animal.reload}>
-          {shared.retry}
+        <Button
+          variant="outline"
+          onClick={animal.reload}
+          aria-label={shared.retry}
+          title={shared.retry}
+          data-icon-action
+          size="icon"
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </Button>
       </>
     );
@@ -95,8 +110,12 @@ export function AnimalDetail({ id }: { id: string }) {
                 setEditing(true);
                 setSaved(false);
               }}
+              aria-label={t.edit}
+              title={t.edit}
+              data-icon-action
+              size="icon"
             >
-              {t.edit}
+              <ActionPencil size={18} aria-hidden="true" />
             </Button>
           )}
         </section>

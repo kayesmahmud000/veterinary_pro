@@ -1,3 +1,4 @@
+import { checkIconActions } from "./icon-action-browser-cases.mjs";
 import {handleAdminEnrollmentsFixture,checkAdminEnrollments,checkEnrollmentCountsRefresh} from "./admin-course-enrollments-browser-cases.mjs";
 // Local production browser acceptance with synthetic identities and a controlled API.
 // This checks real Next components/BFF behavior, not deployed provider/database readiness.
@@ -491,7 +492,10 @@ try {
     await cookie("vetralink_refresh", "r-" + role);
     await cookie("vetralink-locale", locale);
   }
-  if (process.env.WORKSPACE_BROWSER_FOCUS === "admin-release") {
+  if (process.env.WORKSPACE_BROWSER_FOCUS === "icon-actions") {
+    checks += await checkIconActions({ seed, go, call, evaluate, until, temp });
+    assert.deepEqual(exceptions, []);
+  } else if (process.env.WORKSPACE_BROWSER_FOCUS === "admin-release") {
     const context = { seed, go, call, evaluate, until, temp, requests, origin, users };
     for (const [name, check] of [
       ["overview", checkAdminDashboard],

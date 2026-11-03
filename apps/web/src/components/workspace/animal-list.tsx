@@ -1,4 +1,9 @@
 "use client";
+import {
+  ChevronLeft as ActionChevronLeft,
+  ChevronRight as ActionChevronRight,
+  RefreshCw as ActionRefreshCw,
+} from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AnimalSpecies, AnimalStatus } from "@vetralink/shared-types";
@@ -99,8 +104,15 @@ export function AnimalList() {
       ) : remote.code ? (
         <>
           <Notice code={remote.code} t={shared} />
-          <Button variant="outline" onClick={remote.reload}>
-            {shared.retry}
+          <Button
+            variant="outline"
+            onClick={remote.reload}
+            aria-label={shared.retry}
+            title={shared.retry}
+            data-icon-action
+            size="icon"
+          >
+            <ActionRefreshCw size={18} aria-hidden="true" />
           </Button>
         </>
       ) : (
@@ -143,10 +155,13 @@ export function AnimalList() {
             >
               {remote.data.meta.page > 1 && (
                 <Link
-                  className="inline-flex min-h-11 items-center text-green"
+                  className={styles.iconButton}
                   href={pageLink(remote.data.meta.page - 1)}
+                  aria-label={t.previous}
+                  title={t.previous}
+                  data-icon-action
                 >
-                  {t.previous}
+                  <ActionChevronLeft size={18} aria-hidden="true" />
                 </Link>
               )}
               <span>
@@ -155,10 +170,13 @@ export function AnimalList() {
               </span>
               {remote.data.meta.page < remote.data.meta.totalPages && (
                 <Link
-                  className="inline-flex min-h-11 items-center text-green"
+                  className={styles.iconButton}
                   href={pageLink(remote.data.meta.page + 1)}
+                  aria-label={t.next}
+                  title={t.next}
+                  data-icon-action
                 >
-                  {t.next}
+                  <ActionChevronRight size={18} aria-hidden="true" />
                 </Link>
               )}
             </nav>

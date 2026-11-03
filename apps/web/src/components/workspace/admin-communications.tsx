@@ -1,5 +1,13 @@
 "use client";
 import {
+  ArrowLeft as ActionArrowLeft,
+  ChevronRight as ActionChevronRight,
+  ChevronsLeft as ActionChevronsLeft,
+  Pencil as ActionPencil,
+  RefreshCw as ActionRefreshCw,
+  Search as ActionSearch,
+} from "lucide-react";
+import {
   useEffect,
   useId,
   useMemo,
@@ -112,8 +120,14 @@ function Feedback({ code, reload }: { code: string; reload?: () => void }) {
     <div className={styles.error}>
       <p role="alert">{communicationsError(auth.locale, code)}</p>
       {reload && (
-        <button className={styles.secondary} onClick={reload}>
-          {t.retry}
+        <button
+          className={styles.iconButton}
+          onClick={reload}
+          aria-label={t.retry}
+          title={t.retry}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       )}
     </div>
@@ -300,7 +314,7 @@ function ConfirmationForm<T>({
       <Feedback code={code} />
       {blocked && (
         <button
-          className={styles.secondary}
+          className={styles.iconButton}
           onClick={() => {
             if (onReload() === false) return;
             setPassword("");
@@ -308,8 +322,11 @@ function ConfirmationForm<T>({
             setBlocked(false);
             setCode("");
           }}
+          aria-label={t.refresh}
+          title={t.refresh}
+          data-icon-action
         >
-          {t.refresh}
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       )}
       {confirm && (
@@ -389,7 +406,14 @@ function Filters({
           ))}
         </select>
       </Field>
-      <button className={styles.secondary}>{t.apply}</button>
+      <button
+        className={styles.iconButton}
+        aria-label={t.apply}
+        title={t.apply}
+        data-icon-action
+      >
+        <ActionSearch size={18} aria-hidden="true" />
+      </button>
     </form>
   );
 }
@@ -403,12 +427,24 @@ function Pager({
   const { t } = useCopy();
   return (
     <div className="flex flex-wrap gap-3">
-      <button className={styles.secondary} onClick={() => change("")}>
-        {t.first}
+      <button
+        className={styles.iconButton}
+        onClick={() => change("")}
+        aria-label={t.first}
+        title={t.first}
+        data-icon-action
+      >
+        <ActionChevronsLeft size={18} aria-hidden="true" />
       </button>
       {next && (
-        <button className={styles.secondary} onClick={() => change(next)}>
-          {t.next}
+        <button
+          className={styles.iconButton}
+          onClick={() => change(next)}
+          aria-label={t.next}
+          title={t.next}
+          data-icon-action
+        >
+          <ActionChevronRight size={18} aria-hidden="true" />
         </button>
       )}
     </div>
@@ -623,10 +659,13 @@ function ContentDetail({ id }: { id: string }) {
   return (
     <>
       <Link
-        className={"font-semibold text-green underline underline-offset-4"}
+        className={styles.iconButton}
         href="/admin/content"
+        aria-label={t.back}
+        title={t.back}
+        data-icon-action
       >
-        {t.back}
+        <ActionArrowLeft size={18} aria-hidden="true" />
       </Link>
       <Feedback code={remote.code} reload={remote.reload} />
       {!remote.data ? (
@@ -678,9 +717,11 @@ function ContentEditor({
   }, [loading, row]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(row.draft),
     stale = draftVersion !== row.version;
-  const confirmDiscard = useUnsavedChanges(dirty,
+  const confirmDiscard = useUnsavedChanges(
+    dirty,
     (auth.locale === "bn" ? workspaceBn : workspaceEn).discardUnsaved,
-    () => setDraft(row.draft));
+    () => setDraft(row.draft),
+  );
   function reloadDraft() {
     if (!confirmDiscard()) return false;
     reloadPhase.current = 1;
@@ -757,11 +798,14 @@ function ContentEditor({
         )}
         {stale && <p role="alert">{t.stale}</p>}
         <button
-          className={styles.secondary}
+          className={styles.iconButton}
           data-content-reload
           onClick={reloadDraft}
+          aria-label={t.reloadDraft}
+          title={t.reloadDraft}
+          data-icon-action
         >
-          {t.reloadDraft}
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       </section>
       <section className={`${styles.card} space-y-4`}>
@@ -770,7 +814,17 @@ function ContentEditor({
       </section>
       {row.kind === "VET" && (
         <section className={`${styles.card} ${styles.formFields} space-y-4`}>
-          <p>{t.subjectUserId}: <Link className="font-semibold text-green underline" href={`/admin/veterinarians/${row.subjectUserId}`} target="_blank" rel="noreferrer">{row.subjectUserId}</Link></p>
+          <p>
+            {t.subjectUserId}:{" "}
+            <Link
+              className="font-semibold text-green underline"
+              href={`/admin/veterinarians/${row.subjectUserId}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {row.subjectUserId}
+            </Link>
+          </p>
           <label>
             <input
               type="checkbox"
@@ -1076,11 +1130,12 @@ function TicketList({ own }: { own: boolean }) {
                 {t.stale}{" "}
                 <Link
                   href={`${base}/${createId.current}`}
-                  className={
-                    "font-semibold text-green underline underline-offset-4"
-                  }
+                  className={styles.iconButton}
+                  aria-label={t.edit}
+                  title={t.edit}
+                  data-icon-action
                 >
-                  {t.edit}
+                  <ActionPencil size={18} aria-hidden="true" />
                 </Link>
               </p>
             )}
@@ -1097,10 +1152,13 @@ function TicketDetail({ id, own }: { id: string; own: boolean }) {
   return (
     <>
       <Link
-        className={"font-semibold text-green underline underline-offset-4"}
+        className={styles.iconButton}
         href={own ? "/account/support" : "/admin/support"}
+        aria-label={t.back}
+        title={t.back}
+        data-icon-action
       >
-        {t.back}
+        <ActionArrowLeft size={18} aria-hidden="true" />
       </Link>
       <Feedback code={remote.code} reload={remote.reload} />
       {!remote.data ? (
@@ -1217,11 +1275,14 @@ function TicketEditor({
         )}
         <p>{date(row.updatedAt)}</p>
         <button
-          className={styles.secondary}
+          className={styles.iconButton}
           disabled={loading}
           onClick={reload}
+          aria-label={t.refresh}
+          title={t.refresh}
+          data-icon-action
         >
-          {t.refresh}
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       </section>
       <section className={`${styles.card} space-y-4`}>

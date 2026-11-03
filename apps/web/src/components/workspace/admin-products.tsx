@@ -1,4 +1,13 @@
 "use client";
+import { Eye as ActionEye } from "lucide-react";
+import {
+  ArrowLeft as ActionArrowLeft,
+  ChevronLeft as ActionChevronLeft,
+  ChevronRight as ActionChevronRight,
+  Pencil as ActionPencil,
+  RefreshCw as ActionRefreshCw,
+  Search as ActionSearch,
+} from "lucide-react";
 import { cn } from "@/lib/ui/cn";
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -17,11 +26,7 @@ import {
   type AdminProductAction,
 } from "@vetralink/shared-types";
 import { useAuth } from "@/components/auth/auth-provider";
-import {
-  getCatalogMessages,
-  catalogLabel,
-  type CatalogMessages,
-} from "@/lib/i18n/admin-catalog";
+import { getCatalogMessages, catalogLabel } from "@/lib/i18n/admin-catalog";
 import { getAdminCourseMessages } from "@/lib/i18n/admin-courses";
 import { workspaceBn, workspaceEn } from "@/lib/i18n/workspace";
 import { workspaceRequest } from "@/lib/workspace/client";
@@ -40,8 +45,14 @@ export function CatalogError({
     <div className={styles.error}>
       <p role="alert">{(t as Record<string, string>)[code] ?? t.DEFAULT}</p>
       {retry && (
-        <button className={styles.secondary} onClick={retry}>
-          {t.retry}
+        <button
+          className={styles.iconButton}
+          onClick={retry}
+          aria-label={t.retry}
+          title={t.retry}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       )}
     </div>
@@ -60,10 +71,16 @@ function ProductList({ coursesOnly = false }: { coursesOnly?: boolean }) {
       adminProductListSchema,
     );
   return (
-    <div data-admin-products data-admin-courses-list={coursesOnly || undefined} className="space-y-6">
-      {!coursesOnly && <Link className={styles.primary} href="/admin/products/new">
-        {t.newProduct}
-      </Link>}
+    <div
+      data-admin-products
+      data-admin-courses-list={coursesOnly || undefined}
+      className="space-y-6"
+    >
+      {!coursesOnly && (
+        <Link className={styles.primary} href="/admin/products/new">
+          {t.newProduct}
+        </Link>
+      )}
       <form
         className={styles.card}
         onSubmit={(e) => {
@@ -87,7 +104,10 @@ function ProductList({ coursesOnly = false }: { coursesOnly?: boolean }) {
               }
             />
           </Field>
-          {(coursesOnly ? (["publication"] as const) : (["type", "publication"] as const)).map((key) => (
+          {(coursesOnly
+            ? (["publication"] as const)
+            : (["type", "publication"] as const)
+          ).map((key) => (
             <Field name={`catalog-${key}`} key={key} label={t[key]}>
               <select
                 id={`catalog-${key}`}
@@ -110,7 +130,14 @@ function ProductList({ coursesOnly = false }: { coursesOnly?: boolean }) {
           ))}
         </div>
         <div className={styles.actions}>
-          <button className={styles.primary}>{t.apply}</button>
+          <button
+            className={styles.iconButton}
+            aria-label={t.apply}
+            title={t.apply}
+            data-icon-action
+          >
+            <ActionSearch size={18} aria-hidden="true" />
+          </button>
         </div>
       </form>
       {data.loading ? (
@@ -131,19 +158,33 @@ function ProductList({ coursesOnly = false }: { coursesOnly?: boolean }) {
                       {catalogLabel(t, p.type)} ·{" "}
                       {p.isPublished ? t.PUBLISHED : t.DRAFT}
                     </small>
-                    {coursesOnly ? <small>{course.YOUTUBE}</small> : <small>
-                      {p.currency}{" "}
-                      {new Intl.NumberFormat(
-                        auth.locale === "bn" ? "bn-BD" : "en-GB",
-                        { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-                      ).format((p.discountPriceCents ?? p.priceCents) / 100)}
-                    </small>}
+                    {coursesOnly ? (
+                      <small>{course.YOUTUBE}</small>
+                    ) : (
+                      <small>
+                        {p.currency}{" "}
+                        {new Intl.NumberFormat(
+                          auth.locale === "bn" ? "bn-BD" : "en-GB",
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          },
+                        ).format((p.discountPriceCents ?? p.priceCents) / 100)}
+                      </small>
+                    )}
                   </div>
                   <Link
-                    className={styles.secondary}
-                    href={coursesOnly ? `/admin/courses/${p.id}` : `/admin/products/${p.id}`}
+                    className={styles.iconButton}
+                    href={
+                      coursesOnly
+                        ? `/admin/courses/${p.id}`
+                        : `/admin/products/${p.id}`
+                    }
+                    aria-label={coursesOnly ? course.manage : t.details}
+                    title={coursesOnly ? course.manage : t.details}
+                    data-icon-action
                   >
-                    {coursesOnly ? course.manage : t.details}
+                    <ActionEye size={18} aria-hidden="true" />
                   </Link>
                 </li>
               ))}
@@ -152,26 +193,38 @@ function ProductList({ coursesOnly = false }: { coursesOnly?: boolean }) {
         </section>
       )}
       <div className={styles.actions}>
-        <button className={styles.secondary} onClick={data.reload}>
-          {t.refresh}
+        <button
+          className={styles.iconButton}
+          onClick={data.reload}
+          aria-label={t.refresh}
+          title={t.refresh}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
         {cursors.length > 1 && (
           <button
-            className={styles.secondary}
+            className={styles.iconButton}
             disabled={data.loading}
             onClick={() => setCursors((c) => c.slice(0, -1))}
+            aria-label={t.previous}
+            title={t.previous}
+            data-icon-action
           >
-            {t.previous}
+            <ActionChevronLeft size={18} aria-hidden="true" />
           </button>
         )}
         {data.data?.nextCursor && (
           <button
-            className={styles.secondary}
+            className={styles.iconButton}
             data-product-next
             disabled={data.loading}
             onClick={() => setCursors((c) => [...c, data.data!.nextCursor!])}
+            aria-label={t.next}
+            title={t.next}
+            data-icon-action
           >
-            {t.next}
+            <ActionChevronRight size={18} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -214,7 +267,12 @@ function ProductForm({
                 : String(product.discountPriceCents),
           }
         : coursesOnly
-          ? { ...empty, type: ProductType.VIDEO_COURSE, contentProvider: ProductContentProvider.YOUTUBE, priceCents: "0" }
+          ? {
+              ...empty,
+              type: ProductType.VIDEO_COURSE,
+              contentProvider: ProductContentProvider.YOUTUBE,
+              priceCents: "0",
+            }
           : empty,
     ),
     [busy, setBusy] = useState(false),
@@ -255,14 +313,26 @@ function ProductForm({
       parsed.data,
     );
     setBusy(false);
-    if (result.data) router.push(coursesOnly ? `/admin/courses/${result.data.id}` : `/admin/products/${result.data.id}`);
+    if (result.data)
+      router.push(
+        coursesOnly
+          ? `/admin/courses/${result.data.id}`
+          : `/admin/products/${result.data.id}`,
+      );
     else setCode(result.code ?? "DEFAULT");
   }
   const change = (key: string, value: string) => {
     setValues((v) => {
-      const next = {...v,[key]:value};
-      if (key === "type" && value !== ProductType.VIDEO_COURSE) next.contentProvider = ProductContentProvider.INTERNAL;
-      if (key === "contentProvider" && value === ProductContentProvider.YOUTUBE) { next.priceCents="0"; next.discountPriceCents=""; }
+      const next = { ...v, [key]: value };
+      if (key === "type" && value !== ProductType.VIDEO_COURSE)
+        next.contentProvider = ProductContentProvider.INTERNAL;
+      if (
+        key === "contentProvider" &&
+        value === ProductContentProvider.YOUTUBE
+      ) {
+        next.priceCents = "0";
+        next.discountPriceCents = "";
+      }
       return next;
     });
     setCode("");
@@ -275,28 +345,58 @@ function ProductForm({
       onSubmit={submit}
       aria-busy={busy}
     >
-      {code && (coursesOnly && code === "VALIDATION_FAILED" ? <p role="alert" className={styles.error}>{course.invalidDetails}</p> : <CatalogError code={code} />)}
+      {code &&
+        (coursesOnly && code === "VALIDATION_FAILED" ? (
+          <p role="alert" className={styles.error}>
+            {course.invalidDetails}
+          </p>
+        ) : (
+          <CatalogError code={code} />
+        ))}
       {code === "PRODUCT_VERSION_CONFLICT" && reload && (
-        <button type="button" className={styles.secondary} onClick={reload}>
-          {t.refresh}
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={reload}
+          aria-label={t.refresh}
+          title={t.refresh}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       )}
       <fieldset disabled={busy} className={cn(styles.formFields, "space-y-5")}>
-        {!coursesOnly && values.type === ProductType.VIDEO_COURSE && <Field name="product-provider" label={course.source}>
-          <select id="product-provider" disabled={!!product} value={values.contentProvider} onChange={e=>change("contentProvider",e.target.value)}>
-            <option value="INTERNAL">{course.INTERNAL}</option><option value="YOUTUBE">{course.YOUTUBE}</option>
-          </select>
-        </Field>}
-        {values.contentProvider === ProductContentProvider.YOUTUBE && <p>{coursesOnly ? course.draftHint : course.free}</p>}
-        <div className={cn(styles.grid, coursesOnly && "[&>div:last-child]:col-span-full")}>
-          {(
-            coursesOnly ? ["title", "slug", "description"] as const : [
-              "title",
-              "slug",
-              "description",
-              "priceCents",
-              "discountPriceCents",
-            ] as const
+        {!coursesOnly && values.type === ProductType.VIDEO_COURSE && (
+          <Field name="product-provider" label={course.source}>
+            <select
+              id="product-provider"
+              disabled={!!product}
+              value={values.contentProvider}
+              onChange={(e) => change("contentProvider", e.target.value)}
+            >
+              <option value="INTERNAL">{course.INTERNAL}</option>
+              <option value="YOUTUBE">{course.YOUTUBE}</option>
+            </select>
+          </Field>
+        )}
+        {values.contentProvider === ProductContentProvider.YOUTUBE && (
+          <p>{coursesOnly ? course.draftHint : course.free}</p>
+        )}
+        <div
+          className={cn(
+            styles.grid,
+            coursesOnly && "[&>div:last-child]:col-span-full",
+          )}
+        >
+          {(coursesOnly
+            ? (["title", "slug", "description"] as const)
+            : ([
+                "title",
+                "slug",
+                "description",
+                "priceCents",
+                "discountPriceCents",
+              ] as const)
           ).map((key) => (
             <Field key={key} name={`product-${key}`} label={t[key]}>
               {key === "description" ? (
@@ -313,13 +413,18 @@ function ProductForm({
                 <input
                   id={`product-${key}`}
                   type={key.endsWith("Cents") ? "number" : "text"}
-                  disabled={key.endsWith("Cents") && values.contentProvider === ProductContentProvider.YOUTUBE}
+                  disabled={
+                    key.endsWith("Cents") &&
+                    values.contentProvider === ProductContentProvider.YOUTUBE
+                  }
                   min={0}
                   max={key.endsWith("Cents") ? 2147483647 : undefined}
                   step={1}
                   required={key !== "discountPriceCents"}
                   minLength={key === "title" || key === "slug" ? 3 : undefined}
-                  pattern={key === "slug" ? "[a-z0-9]+(?:-[a-z0-9]+)*" : undefined}
+                  pattern={
+                    key === "slug" ? "[a-z0-9]+(?:-[a-z0-9]+)*" : undefined
+                  }
                   maxLength={key === "title" ? 255 : 200}
                   value={values[key]}
                   onChange={(e) => change(key, e.target.value)}
@@ -327,40 +432,61 @@ function ProductForm({
               )}
             </Field>
           ))}
-          {!coursesOnly && (["type", "currency", "minSubscriptionTier"] as const).map((key) => (
-            <Field key={key} name={`product-${key}`} label={t[key]}>
-              <select
-                id={`product-${key}`}
-                disabled={(key === "type" && !!product) || (key === "minSubscriptionTier" && values.contentProvider === ProductContentProvider.YOUTUBE)}
-                value={values[key]}
-                onChange={(e) => change(key, e.target.value)}
-              >
-                {(key === "type"
-                  ? Object.values(ProductType)
-                  : key === "currency"
-                    ? Array.from(
-                        new Set(["BDT", "USD", "EUR", "GBP", values.currency]),
-                      )
-                    : Object.values(SubscriptionTier)
-                ).map((v) => (
-                  <option key={v} value={v}>
-                    {catalogLabel(t, v)}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          ))}
+          {!coursesOnly &&
+            (["type", "currency", "minSubscriptionTier"] as const).map(
+              (key) => (
+                <Field key={key} name={`product-${key}`} label={t[key]}>
+                  <select
+                    id={`product-${key}`}
+                    disabled={
+                      (key === "type" && !!product) ||
+                      (key === "minSubscriptionTier" &&
+                        values.contentProvider ===
+                          ProductContentProvider.YOUTUBE)
+                    }
+                    value={values[key]}
+                    onChange={(e) => change(key, e.target.value)}
+                  >
+                    {(key === "type"
+                      ? Object.values(ProductType)
+                      : key === "currency"
+                        ? Array.from(
+                            new Set([
+                              "BDT",
+                              "USD",
+                              "EUR",
+                              "GBP",
+                              values.currency,
+                            ]),
+                          )
+                        : Object.values(SubscriptionTier)
+                    ).map((v) => (
+                      <option key={v} value={v}>
+                        {catalogLabel(t, v)}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              ),
+            )}
         </div>
         <div className={styles.actions}>
           <button className={styles.primary} type="submit" disabled={busy}>
             {busy ? t.saving : coursesOnly ? course.createAndContinue : t.save}
           </button>
-          {!coursesOnly && <Link
-            className={styles.secondary}
-            href={product ? `/admin/products/${product.id}` : "/admin/products"}
-          >
-            {t.back}
-          </Link>}
+          {!coursesOnly && (
+            <Link
+              className={styles.iconButton}
+              href={
+                product ? `/admin/products/${product.id}` : "/admin/products"
+              }
+              aria-label={t.back}
+              title={t.back}
+              data-icon-action
+            >
+              <ActionArrowLeft size={18} aria-hidden="true" />
+            </Link>
+          )}
         </div>
       </fieldset>
     </form>
@@ -414,13 +540,39 @@ function ProductDetail({ id, edit }: { id: string; edit: boolean }) {
   return (
     <div data-product-detail className="space-y-6">
       <div className={styles.actions}>
-        <Link className={styles.secondary} href="/admin/products">
-          {t.back}
+        <Link
+          className={styles.iconButton}
+          href="/admin/products"
+          aria-label={t.back}
+          title={t.back}
+          data-icon-action
+        >
+          <ActionArrowLeft size={18} aria-hidden="true" />
         </Link>
-        <Link className={styles.secondary} href={`/admin/products/${id}/edit`}>
-          {t.edit}
+        <Link
+          className={styles.iconButton}
+          href={`/admin/products/${id}/edit`}
+          aria-label={t.edit}
+          title={t.edit}
+          data-icon-action
+        >
+          <ActionPencil size={18} aria-hidden="true" />
         </Link>
-        {p.contentProvider === ProductContentProvider.YOUTUBE ? <Link className={styles.primary} href={`/admin/products/${id}/curriculum`}>{course.manage}</Link> : <Link className={styles.primary} href={`/admin/media?productId=${id}`}>{t.upload}</Link>}
+        {p.contentProvider === ProductContentProvider.YOUTUBE ? (
+          <Link
+            className={styles.primary}
+            href={`/admin/products/${id}/curriculum`}
+          >
+            {course.manage}
+          </Link>
+        ) : (
+          <Link
+            className={styles.primary}
+            href={`/admin/media?productId=${id}`}
+          >
+            {t.upload}
+          </Link>
+        )}
       </div>
       {code && <CatalogError code={code} />}
       {saved && <p role="status">{t.saved}</p>}
@@ -438,8 +590,13 @@ function ProductDetail({ id, edit }: { id: string; edit: boolean }) {
           }).format((p.discountPriceCents ?? p.priceCents) / 100)}
         </p>
         <p>
-          {p.contentProvider === ProductContentProvider.YOUTUBE ? course.source : t.asset}:{" "}
-          {p.contentProvider === ProductContentProvider.YOUTUBE ? course.YOUTUBE : p.contentS3Key ? (
+          {p.contentProvider === ProductContentProvider.YOUTUBE
+            ? course.source
+            : t.asset}
+          :{" "}
+          {p.contentProvider === ProductContentProvider.YOUTUBE ? (
+            course.YOUTUBE
+          ) : p.contentS3Key ? (
             <code className="break-all">{p.contentS3Key}</code>
           ) : (
             t.noAsset
@@ -453,7 +610,13 @@ function ProductDetail({ id, edit }: { id: string; edit: boolean }) {
             timeZone: "Asia/Dhaka",
           }).format(new Date(p.updatedAt))}
         </p>
-        {p.type === ProductType.VIDEO_COURSE && <p>{p.contentProvider === ProductContentProvider.YOUTUBE ? course.free : t.curriculum}</p>}
+        {p.type === ProductType.VIDEO_COURSE && (
+          <p>
+            {p.contentProvider === ProductContentProvider.YOUTUBE
+              ? course.free
+              : t.curriculum}
+          </p>
+        )}
       </section>
       <form
         className={styles.card}
@@ -505,8 +668,14 @@ function ProductDetail({ id, edit }: { id: string; edit: boolean }) {
           </button>
         </fieldset>
       </form>
-      <button className={styles.secondary} onClick={data.reload}>
-        {t.refresh}
+      <button
+        className={styles.iconButton}
+        onClick={data.reload}
+        aria-label={t.refresh}
+        title={t.refresh}
+        data-icon-action
+      >
+        <ActionRefreshCw size={18} aria-hidden="true" />
       </button>
       {confirmation && (
         <Confirmation
@@ -560,11 +729,15 @@ export function AdminCourses() {
       <WorkspaceGate allowedRoles={[UserRole.ADMIN, UserRole.SUPER_ADMIN]}>
         <div className="space-y-10">
           <section aria-labelledby="create-course-heading">
-            <h2 id="create-course-heading" className="text-xl font-semibold">{t.createHeading}</h2>
+            <h2 id="create-course-heading" className="text-xl font-semibold">
+              {t.createHeading}
+            </h2>
             <ProductForm coursesOnly />
           </section>
           <section aria-labelledby="manage-courses-heading">
-            <h2 id="manage-courses-heading" className="text-xl font-semibold">{t.listHeading}</h2>
+            <h2 id="manage-courses-heading" className="text-xl font-semibold">
+              {t.listHeading}
+            </h2>
             <ProductList coursesOnly />
           </section>
         </div>

@@ -1,4 +1,8 @@
 "use client";
+import {
+  RefreshCw as ActionRefreshCw,
+  Trash2 as ActionTrash2,
+} from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 import {
@@ -218,16 +222,25 @@ export function ImageUpload({
                   !!courseThumbnailFileError(state.file)
                 }
                 onClick={() => state.file && void choose([state.file])}
+                aria-label={t.retry}
+                title={t.retry}
+                data-icon-action
+                size="icon"
               >
-                {t.retry}
+                <ActionRefreshCw size={18} aria-hidden="true" />
               </Button>
               <Button
                 data-thumbnail-discard
                 type="button"
                 variant="outline"
+                className="text-red-600 hover:bg-red-50 hover:text-red-700 focus-visible:outline-red-600"
                 onClick={discard}
+                aria-label={t.discard}
+                title={t.discard}
+                data-icon-action
+                size="icon"
               >
-                {t.discard}
+                <ActionTrash2 size={18} aria-hidden="true" />
               </Button>
             </>
           )}

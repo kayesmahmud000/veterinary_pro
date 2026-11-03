@@ -1,5 +1,7 @@
 "use client";
 
+import { X as ActionX } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/ui/cn";
 import siteStyles from "@/lib/ui/site.styles";
 import Image from "next/image";
@@ -364,13 +366,16 @@ export function SearchableFaq({
         {query && (
           <button
             type="button"
-            className={cn(ui.inlineButton)}
+            className={buttonVariants({ variant: "outline", size: "icon" })}
             onClick={() => {
               setQuery("");
               input.current?.focus();
             }}
+            aria-label={copy.clear}
+            title={copy.clear}
+            data-icon-action
           >
-            {copy.clear}
+            <ActionX size={18} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -415,7 +420,11 @@ export function FeatureExplorer({
     >
       <div>
         <p className={cn(ui.helper)}>{copy.hint}</p>
-        <div className={cn(ui.featureChoices)} role="group" aria-label={copy.label}>
+        <div
+          className={cn(ui.featureChoices)}
+          role="group"
+          aria-label={copy.label}
+        >
           {sections.map((section, index) => (
             <button
               key={section.title}

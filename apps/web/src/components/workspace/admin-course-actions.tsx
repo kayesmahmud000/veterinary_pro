@@ -1,4 +1,5 @@
 "use client";
+import { RefreshCw as ActionRefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   type AdminProduct,
@@ -113,8 +114,12 @@ export function AdminCourseAction({
                   close();
                   reload();
                 }}
+                aria-label={t.reload}
+                title={t.reload}
+                data-icon-action
+                size="icon"
               >
-                {t.reload}
+                <ActionRefreshCw size={18} aria-hidden="true" />
               </Button>
             )}
           </>

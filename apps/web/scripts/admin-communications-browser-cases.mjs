@@ -419,7 +419,7 @@ export async function checkAdminCommunications({
   checks++;
   communicationsState.conflict = false;
   await evaluate(
-    `(()=>{const original=window.confirm;window.confirm=()=>true;try{Array.from(document.querySelectorAll('main button')).find(b=>b.textContent.includes('Reload saved draft')).click()}finally{window.confirm=original}})()`,
+    `(()=>{const original=window.confirm;window.confirm=()=>true;try{Array.from(document.querySelectorAll('main button')).find(b=>(b.getAttribute('aria-label')||b.textContent).includes('Reload saved draft')).click()}finally{window.confirm=original}})()`,
   );
   await until(
     () =>

@@ -1,5 +1,7 @@
 "use client";
 
+import { RefreshCw as ActionRefreshCw } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/ui/cn";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -334,14 +336,17 @@ export function AuthDialog() {
                 sessionError !== "session_expired")) && (
               <button
                 type="button"
-                className={cn(styles.inlineButton)}
+                className={buttonVariants({ variant: "outline", size: "icon" })}
                 disabled={pending || checking}
                 onClick={() => {
                   setError(undefined);
                   void restore();
                 }}
+                aria-label={t.retry}
+                title={t.retry}
+                data-icon-action
               >
-                {t.retry}
+                <ActionRefreshCw size={18} aria-hidden="true" />
               </button>
             )}
           </div>

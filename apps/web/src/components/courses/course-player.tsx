@@ -1,13 +1,12 @@
 "use client";
-import {useEffect} from "react";
-import Link from "next/link";
 import {
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
-  Play,
-  BookOpen,
+  ArrowLeft as ActionArrowLeft,
+  ChevronLeft as ActionChevronLeft,
+  ChevronRight as ActionChevronRight,
 } from "lucide-react";
+import { useEffect } from "react";
+import Link from "next/link";
+import { ArrowLeft, Play, BookOpen } from "lucide-react";
 import { coursePlaybackSchema } from "@vetralink/shared-types";
 import { useAuth } from "@/components/auth/auth-provider";
 import { getCourseMessages } from "@/lib/i18n/courses";
@@ -22,9 +21,13 @@ function Playback({ id, lessonId }: { id: string; lessonId: string }) {
   const data = useRemote(
     `me/courses/${id}/lessons/${lessonId}/playback`,
     coursePlaybackSchema,
-    {retainDataOnReload:true},
+    { retainDataOnReload: true },
   );
-  useEffect(()=>{const refresh=()=>data.reload();window.addEventListener("focus",refresh);return()=>window.removeEventListener("focus",refresh);},[data.reload]);
+  useEffect(() => {
+    const refresh = () => data.reload();
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, [data.reload]);
   if (data.loading)
     return (
       <div
@@ -35,7 +38,12 @@ function Playback({ id, lessonId }: { id: string; lessonId: string }) {
     );
   if (!data.data)
     return <CourseError code={data.code ?? "NOT_FOUND"} retry={data.reload} />;
-  return <>{data.code && <CourseError code={data.code} retry={data.reload}/>}<YouTubePlayer videoId={data.data.videoId} title={data.data.title} /></>;
+  return (
+    <>
+      {data.code && <CourseError code={data.code} retry={data.reload} />}
+      <YouTubePlayer videoId={data.data.videoId} title={data.data.title} />
+    </>
+  );
 }
 export function CoursePlayer({
   id,
@@ -60,9 +68,12 @@ export function CoursePlayer({
       <header>
         <Link
           href={`/courses/${encodeURIComponent(course.slug)}`}
-          className={styles.link}
+          className={buttonVariants({ variant: "outline", size: "icon" })}
+          aria-label={t.back}
+          title={t.back}
+          data-icon-action
         >
-          {t.back}
+          <ActionArrowLeft size={18} aria-hidden="true" />
         </Link>
         <h1 className={`${styles.heading} mt-3`}>{course.title}</h1>
       </header>
@@ -84,7 +95,8 @@ export function CoursePlayer({
                 <strong>{t.selectedLesson}: </strong>
                 {lesson.title}
               </p>
-              <EnrollmentButton revoked={course.enrollmentRestriction === "ADMIN_REVOKED"}
+              <EnrollmentButton
+                revoked={course.enrollmentRestriction === "ADMIN_REVOKED"}
                 course={course}
                 enrolled={false}
                 lessonId={lessonId}
@@ -120,20 +132,30 @@ export function CoursePlayer({
               >
                 {index > 0 && (
                   <Link
-                    className={buttonVariants({ variant: "outline" })}
+                    className={buttonVariants({
+                      variant: "outline",
+                      size: "icon",
+                    })}
                     href={`/account/courses/${id}/lessons/${course.lessons[index - 1].id}`}
+                    aria-label={t.previous}
+                    title={t.previous}
+                    data-icon-action
                   >
-                    <ChevronLeft size={18} aria-hidden="true" />
-                    {t.previous}
+                    <ActionChevronLeft size={18} aria-hidden="true" />
                   </Link>
                 )}
                 {index + 1 < course.lessons.length && (
                   <Link
-                    className={`${buttonVariants()} ml-auto`}
+                    className={`${buttonVariants({
+                      variant: "outline",
+                      size: "icon",
+                    })} ml-auto`}
                     href={`/account/courses/${id}/lessons/${course.lessons[index + 1].id}`}
+                    aria-label={t.next}
+                    title={t.next}
+                    data-icon-action
                   >
-                    {t.next}
-                    <ChevronRight size={18} aria-hidden="true" />
+                    <ActionChevronRight size={18} aria-hidden="true" />
                   </Link>
                 )}
               </nav>

@@ -1,7 +1,8 @@
 "use client";
 
+import { RefreshCw as ActionRefreshCw } from "lucide-react";
 import Link from "next/link";
-import { ArrowUpRight, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Eye, ShieldCheck } from "lucide-react";
 import { UserRole } from "@vetralink/shared-types";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
@@ -32,8 +33,16 @@ function SectionError({ retry }: { retry: () => void }) {
       <p role="alert" className="text-sm text-muted">
         {t.unavailable}
       </p>
-      <Button data-admin-retry variant="outline" onClick={retry}>
-        {t.retry}
+      <Button
+        data-admin-retry
+        variant="outline"
+        onClick={retry}
+        aria-label={t.retry}
+        title={t.retry}
+        data-icon-action
+        size="icon"
+      >
+        <ActionRefreshCw size={18} aria-hidden="true" />
       </Button>
     </div>
   );
@@ -66,10 +75,33 @@ function Overview() {
     >
       <p className="mt-0 text-muted">{t.intro}</p>
       <section className={`${styles.card} flex flex-wrap gap-4`}>
-        {(["metrics", "reports", ...(auth.user?.role === UserRole.SUPER_ADMIN ? ["settings", "system"] : [])] as const).map(kind => <Link className={styles.secondary} key={kind} href={`/admin/${kind}`}>{platformMessages(auth.locale)[kind as "metrics" | "reports" | "settings" | "system"]}</Link>)}
+        {(
+          [
+            "metrics",
+            "reports",
+            ...(auth.user?.role === UserRole.SUPER_ADMIN
+              ? ["settings", "system"]
+              : []),
+          ] as const
+        ).map((kind) => (
+          <Link className={styles.secondary} key={kind} href={`/admin/${kind}`}>
+            {
+              platformMessages(auth.locale)[
+                kind as "metrics" | "reports" | "settings" | "system"
+              ]
+            }
+          </Link>
+        ))}
       </section>
-      <section data-admin-communications-shortcut className={`${styles.card} flex flex-wrap gap-4`}>
-        {(["content", "notifications", "support"] as const).map((kind) => <Link key={kind} className={styles.secondary} href={`/admin/${kind}`}>{communicationsMessages(auth.locale)[kind]}</Link>)}
+      <section
+        data-admin-communications-shortcut
+        className={`${styles.card} flex flex-wrap gap-4`}
+      >
+        {(["content", "notifications", "support"] as const).map((kind) => (
+          <Link key={kind} className={styles.secondary} href={`/admin/${kind}`}>
+            {communicationsMessages(auth.locale)[kind]}
+          </Link>
+        ))}
       </section>
       <Card
         data-admin-course-shortcut
@@ -79,8 +111,14 @@ function Overview() {
           <h2 className="m-0 text-xl font-semibold">{courses.courses}</h2>
           <p className="mb-0 mt-2 text-sm text-muted">{courses.intro}</p>
         </div>
-        <Link className={styles.primary} href="/admin/courses">
-          {courses.createAndContinue}
+        <Link
+          className={styles.iconButton}
+          href="/admin/courses"
+          aria-label={courses.courses}
+          title={courses.courses}
+          data-icon-action
+        >
+          <ArrowUpRight size={18} aria-hidden="true" />
         </Link>
       </Card>
       <Card
@@ -91,8 +129,14 @@ function Overview() {
           <h2 className="m-0 text-xl font-semibold">{billing.billing}</h2>
           <p className="mb-0 mt-2 text-sm text-muted">{billing.intro}</p>
         </div>
-        <Link className={styles.primary} href="/admin/orders">
-          {billing.details}
+        <Link
+          className={styles.iconButton}
+          href="/admin/orders"
+          aria-label={billing.details}
+          title={billing.details}
+          data-icon-action
+        >
+          <Eye size={18} aria-hidden="true" />
         </Link>
       </Card>
       <Card
@@ -105,8 +149,14 @@ function Overview() {
           </h2>
           <p className="mb-0 mt-2 text-sm text-muted">{consultations.intro}</p>
         </div>
-        <Link className={styles.primary} href="/admin/triage">
-          {consultations.triage}
+        <Link
+          className={styles.iconButton}
+          href="/admin/triage"
+          aria-label={consultations.triage}
+          title={consultations.triage}
+          data-icon-action
+        >
+          <ArrowUpRight size={18} aria-hidden="true" />
         </Link>
       </Card>
       <Card

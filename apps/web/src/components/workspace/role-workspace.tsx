@@ -1,4 +1,9 @@
 "use client";
+import {
+  ChevronRight as ActionChevronRight,
+  Eye as ActionEye,
+  RefreshCw as ActionRefreshCw,
+} from "lucide-react";
 import { cn } from "@/lib/ui/cn";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -103,8 +108,14 @@ export function RoleApplication({
     return (
       <>
         <Notice code={existing.code} t={t} />
-        <button className={cn(styles.secondary)} onClick={existing.reload}>
-          {t.retry}
+        <button
+          className={styles.iconButton}
+          onClick={existing.reload}
+          aria-label={t.retry}
+          title={t.retry}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       </>
     );
@@ -155,10 +166,13 @@ export function RoleApplication({
               <Notice code={questionnaire.code} t={t} />
               <button
                 type="button"
-                className={cn(styles.secondary)}
+                className={styles.iconButton}
                 onClick={questionnaire.reload}
+                aria-label={t.retry}
+                title={t.retry}
+                data-icon-action
               >
-                {t.retry}
+                <ActionRefreshCw size={18} aria-hidden="true" />
               </button>
             </>
           ) : questionnaire.loading ||
@@ -188,7 +202,10 @@ export function RoleApplication({
             >
               {pending ? t.saving : t.submit}
             </button>
-            <Link className={cn(styles.secondary)} href="/account/role-requests">
+            <Link
+              className={cn(styles.secondary)}
+              href="/account/role-requests"
+            >
               {t.applicationsTitle}
             </Link>
           </div>
@@ -240,19 +257,25 @@ export function RoleHistory({
     <>
       <div className={cn(styles.actions)}>
         {auth.user?.role === UserRole.LEARNER && (
-          <Link className={cn(styles.primary)} href="/account/role-requests/new">
+          <Link
+            className={cn(styles.primary)}
+            href="/account/role-requests/new"
+          >
             {t.newApplication}
           </Link>
         )}
         <button
           type="button"
-          className={cn(styles.secondary)}
+          className={styles.iconButton}
           onClick={() => {
             reload();
             void auth.restore();
           }}
+          aria-label={t.refresh}
+          title={t.refresh}
+          data-icon-action
         >
-          {t.refresh}
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
         {!id && (
           <Field name="history-status" label={t.filter}>
@@ -309,10 +332,13 @@ export function RoleHistory({
               </>
             ) : (
               <Link
-                className={cn(styles.secondary)}
+                className={styles.iconButton}
                 href={`/account/role-requests/${request.id}`}
+                aria-label={t.details}
+                title={t.details}
+                data-icon-action
               >
-                {t.details}
+                <ActionEye size={18} aria-hidden="true" />
               </Link>
             )}
             {request.status === "APPROVED" &&
@@ -338,10 +364,13 @@ export function RoleHistory({
       {!id && list.data?.nextCursor && (
         <div className={cn(styles.actions)}>
           <button
-            className={cn(styles.secondary)}
+            className={styles.iconButton}
             onClick={() => setCursor(list.data!.nextCursor!)}
+            aria-label={t.next}
+            title={t.next}
+            data-icon-action
           >
-            {t.next}
+            <ActionChevronRight size={18} aria-hidden="true" />
           </button>
         </div>
       )}
@@ -425,10 +454,13 @@ export function ReviewQueue({
                     </small>
                   </div>
                   <Link
-                    className={cn(styles.secondary)}
+                    className={styles.iconButton}
                     href={`/admin/role-requests/${request.id}`}
+                    aria-label={t.details}
+                    title={t.details}
+                    data-icon-action
                   >
-                    {t.details}
+                    <ActionEye size={18} aria-hidden="true" />
                   </Link>
                 </li>
               ))}
@@ -437,15 +469,24 @@ export function ReviewQueue({
         </section>
       )}
       <div className={cn(styles.actions)}>
-        <button className={cn(styles.secondary)} onClick={queue.reload}>
-          {t.refresh}
+        <button
+          className={styles.iconButton}
+          onClick={queue.reload}
+          aria-label={t.refresh}
+          title={t.refresh}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
         {queue.data?.nextCursor && (
           <button
-            className={cn(styles.secondary)}
+            className={styles.iconButton}
             onClick={() => setCursor(queue.data!.nextCursor!)}
+            aria-label={t.next}
+            title={t.next}
+            data-icon-action
           >
-            {t.next}
+            <ActionChevronRight size={18} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -533,8 +574,14 @@ export function ApplicationReview({
     return (
       <>
         <Notice code={detail.code ?? "NOT_FOUND"} t={t} />
-        <button className={cn(styles.secondary)} onClick={detail.reload}>
-          {t.retry}
+        <button
+          className={styles.iconButton}
+          onClick={detail.reload}
+          aria-label={t.retry}
+          title={t.retry}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       </>
     );
@@ -665,11 +712,14 @@ export function ApplicationReview({
                 {decision === "APPROVED" ? t.approve : t.reject}
               </button>
               <button
-                className={cn(styles.secondary)}
+                className={styles.iconButton}
                 type="button"
                 onClick={detail.reload}
+                aria-label={t.refresh}
+                title={t.refresh}
+                data-icon-action
               >
-                {t.refresh}
+                <ActionRefreshCw size={18} aria-hidden="true" />
               </button>
             </div>
           </fieldset>

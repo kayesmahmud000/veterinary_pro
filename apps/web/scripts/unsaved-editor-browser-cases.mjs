@@ -499,7 +499,7 @@ export async function checkUnsavedEditors({
     await set("en-body", "Keep this draft after cancelled recovery reload");
     await confirm(false);
     await evaluate(
-      `Array.from((${section}).querySelectorAll('button')).find(b=>b.textContent==='Reload latest record').click()`,
+      `Array.from((${section}).querySelectorAll('button')).find(b=>(b.getAttribute('aria-label')||b.textContent)==='Reload latest record').click()`,
     );
     check(
       await prompts(),

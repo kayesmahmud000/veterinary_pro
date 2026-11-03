@@ -1,8 +1,10 @@
+import { ArrowLeft as ActionArrowLeft } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/ui/cn";
 import siteStyles from "@/lib/ui/site.styles";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight, Download } from "lucide-react";
+import { ArrowUpRight, Download } from "lucide-react";
 import { getLocalization } from "@/lib/i18n/server";
 import { formatNumber } from "@/lib/i18n/locale";
 import { guideDefinitions, readingMinutes } from "@/lib/learning-guides";
@@ -11,25 +13,27 @@ import ui from "@/components/marketing/showcase.styles";
 type GuideIndex = 0 | 1 | 2;
 
 export async function getGuideMetadata(index: GuideIndex): Promise<Metadata> {
-  const { messages } = (await getLocalization());
+  const { messages } = await getLocalization();
   const article = messages.resources.articles[index];
   return { title: article.title, description: article.description };
 }
 
 export async function GuideArticle({ index }: { index: GuideIndex }) {
   const guide = guideDefinitions[index];
-  const { messages, locale } = (await getLocalization());
+  const { messages, locale } = await getLocalization();
   const copy = messages.resources;
   const article = copy.articles[index];
   return (
     <main id="main-content" className={cn(siteStyles["container"])}>
       <article className={cn(ui.article)}>
         <Link
-          className={cn(siteStyles["text-link"])}
+          className={buttonVariants({ variant: "outline", size: "icon" })}
           href={`/learning?topic=${guide.topic}#guides`}
+          aria-label={copy.back}
+          title={copy.back}
+          data-icon-action
         >
-          <ArrowLeft size={18} aria-hidden="true" />
-          {copy.back}
+          <ActionArrowLeft size={18} aria-hidden="true" />
         </Link>
         <div className={cn(ui.articleMeta)}>
           <span>{copy.format}</span>

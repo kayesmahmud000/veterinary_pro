@@ -1,5 +1,9 @@
 "use client";
 import {
+  RefreshCw as ActionRefreshCw,
+  Search as ActionSearch,
+} from "lucide-react";
+import {
   useEffect,
   useId,
   useMemo,
@@ -36,7 +40,10 @@ import {
 } from "@/lib/i18n/admin-platform";
 import { workspaceBn, workspaceEn } from "@/lib/i18n/workspace";
 import { formatReportAmount } from "@/lib/i18n/report-amount";
-import { validateReportRange, type ReportRangeIssues } from "@/lib/workspace/report-range";
+import {
+  validateReportRange,
+  type ReportRangeIssues,
+} from "@/lib/workspace/report-range";
 import { WorkspaceGate } from "./workspace-gate";
 import { Confirmation, Field, useRemote } from "./workspace-ui";
 import { useUnsavedChanges } from "./use-unsaved-changes";
@@ -256,8 +263,14 @@ function Action<T>({
       </form>
       <Feedback code={code} />
       {blocked && (
-        <button className={styles.secondary} onClick={reload}>
-          {t.refresh}
+        <button
+          className={styles.iconButton}
+          onClick={reload}
+          aria-label={t.refresh}
+          title={t.refresh}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       )}
       {confirm && (
@@ -297,15 +310,29 @@ function SettingsForm({
   };
   const [fields, setFields] = useState(initial);
   const [baseline, setBaseline] = useState(initial);
-  const dirty = (Object.keys(fields) as (keyof typeof fields)[]).some((k) => fields[k] !== baseline[k]);
-  const confirmDiscard = useUnsavedChanges(dirty,
+  const dirty = (Object.keys(fields) as (keyof typeof fields)[]).some(
+    (k) => fields[k] !== baseline[k],
+  );
+  const confirmDiscard = useUnsavedChanges(
+    dirty,
     (auth.locale === "bn" ? workspaceBn : workspaceEn).discardUnsaved,
-    () => setFields(baseline));
-  const reloadSaved = () => { if (confirmDiscard()) reload(); };
+    () => setFields(baseline),
+  );
+  const reloadSaved = () => {
+    if (confirmDiscard()) reload();
+  };
   return (
     <>
-      <button className={styles.secondary} data-settings-reload disabled={pending} onClick={reloadSaved}>
-        {t.refresh}
+      <button
+        className={styles.iconButton}
+        data-settings-reload
+        disabled={pending}
+        onClick={reloadSaved}
+        aria-label={t.refresh}
+        title={t.refresh}
+        data-icon-action
+      >
+        <ActionRefreshCw size={18} aria-hidden="true" />
       </button>
       <p>
         {t.version}: {record.version}
@@ -351,7 +378,10 @@ function SettingsForm({
         input={{ ...fields, expectedVersion: record.version }}
         schema={platformSettingsSaveSchema}
         response={platformSettingsSchema}
-        saved={() => { setBaseline(fields); saved(); }}
+        saved={() => {
+          setBaseline(fields);
+          saved();
+        }}
         reload={reloadSaved}
         onPending={setPending}
       >
@@ -379,9 +409,17 @@ function Settings() {
           {t.saved}
         </p>
       )}
-      {!r.data && <button className={styles.secondary} onClick={r.reload}>
-        {t.refresh}
-      </button>}
+      {!r.data && (
+        <button
+          className={styles.iconButton}
+          onClick={r.reload}
+          aria-label={t.refresh}
+          title={t.refresh}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
+        </button>
+      )}
       <Feedback code={r.code} />
       {r.loading ? (
         <p role="status">{t.loading}</p>
@@ -414,8 +452,14 @@ function Integrations() {
   return (
     <>
       <p>{t.integrationNote}</p>
-      <button className={styles.secondary} onClick={r.reload}>
-        {t.refresh}
+      <button
+        className={styles.iconButton}
+        onClick={r.reload}
+        aria-label={t.refresh}
+        title={t.refresh}
+        data-icon-action
+      >
+        <ActionRefreshCw size={18} aria-hidden="true" />
       </button>
       <Feedback code={r.code} />
       {r.loading ? (
@@ -518,8 +562,14 @@ function System() {
   return (
     <>
       <p>{t.systemNote}</p>
-      <button className={styles.secondary} onClick={reload}>
-        {t.refresh}
+      <button
+        className={styles.iconButton}
+        onClick={reload}
+        aria-label={t.refresh}
+        title={t.refresh}
+        data-icon-action
+      >
+        <ActionRefreshCw size={18} aria-hidden="true" />
       </button>
       <Feedback code={r.code} />
       {r.loading ? (
@@ -600,7 +650,8 @@ function ReportView({ report }: { report: PlatformReport }) {
                 {t.count}: {number(r.count)}
               </span>
               <span className="min-w-0 [overflow-wrap:anywhere]">
-                {t.amount}: {formatReportAmount(r.totalMinor, r.currency, auth.locale)}
+                {t.amount}:{" "}
+                {formatReportAmount(r.totalMinor, r.currency, auth.locale)}
               </span>
             </li>
           ))}
@@ -654,7 +705,11 @@ function ReportView({ report }: { report: PlatformReport }) {
       <section className={styles.card}>
         <h2>{t.estimatedMrr}</h2>
         <p className="text-2xl font-semibold [overflow-wrap:anywhere]">
-          {formatReportAmount(report.subscriptions.estimatedMrr.totalMinor, report.subscriptions.estimatedMrr.currency, auth.locale)}
+          {formatReportAmount(
+            report.subscriptions.estimatedMrr.totalMinor,
+            report.subscriptions.estimatedMrr.currency,
+            auth.locale,
+          )}
         </p>
         <p>{t.mrrNote}</p>
       </section>
@@ -774,10 +829,15 @@ function Reports({ exports }: { exports: boolean }) {
   };
   const changed = JSON.stringify(draft) !== JSON.stringify(query);
   const errorMessages = {
-    required: t.dateRequired, calendar: t.dateCalendar, order: t.dateOrder,
-    length: t.dateLength, future: t.dateFuture, timezone: t.dateTimezone,
+    required: t.dateRequired,
+    calendar: t.dateCalendar,
+    order: t.dateOrder,
+    length: t.dateLength,
+    future: t.dateFuture,
+    timezone: t.dateTimezone,
   };
-  const error = (key: keyof ReportRangeIssues) => issues[key] ? errorMessages[issues[key]!] : undefined;
+  const error = (key: keyof ReportRangeIssues) =>
+    issues[key] ? errorMessages[issues[key]!] : undefined;
   function changeRange(next: typeof draft) {
     touched.current = true;
     setDraft(next);
@@ -798,10 +858,13 @@ function Reports({ exports }: { exports: boolean }) {
           const result = validateReportRange(draft);
           if (!result.success) {
             setIssues(result.issues);
-            const first = (["from", "to", "timezone"] as const).find(k => result.issues[k]);
-            requestAnimationFrame(() => first && document.getElementById(first)?.focus());
-          }
-          else {
+            const first = (["from", "to", "timezone"] as const).find(
+              (k) => result.issues[k],
+            );
+            requestAnimationFrame(
+              () => first && document.getElementById(first)?.focus(),
+            );
+          } else {
             touched.current = true;
             setIssues({});
             setQuery(result.data);
@@ -809,7 +872,11 @@ function Reports({ exports }: { exports: boolean }) {
           }
         }}
       >
-        {Object.keys(issues).length > 0 && <p role="alert" data-report-date-errors className={styles.error}>{t.dateValidation}</p>}
+        {Object.keys(issues).length > 0 && (
+          <p role="alert" data-report-date-errors className={styles.error}>
+            {t.dateValidation}
+          </p>
+        )}
         <div className={styles.grid}>
           {(["from", "to"] as const).map((k) => (
             <Field key={k} name={k} label={t[k]} error={error(k)}>
@@ -845,14 +912,36 @@ function Reports({ exports }: { exports: boolean }) {
             </select>
           </Field>
         </div>
-        <button className={`${styles.primary} mt-4`} type="submit">
-          {t.apply}
+        <button
+          className={styles.iconButton}
+          type="submit"
+          aria-label={t.apply}
+          title={t.apply}
+          data-icon-action
+        >
+          <ActionSearch size={18} aria-hidden="true" />
         </button>
       </form>
-      {changed && <p role="status" data-report-unapplied className={styles.notice}>{t.unappliedDates}</p>}
-      {r.code === "VALIDATION_FAILED" ? <p role="alert" className={styles.error}>{t.dateRejected}</p> : <Feedback code={r.code} />}
-      <button className={styles.secondary} onClick={reload}>
-        {t.refresh}
+      {changed && (
+        <p role="status" data-report-unapplied className={styles.notice}>
+          {t.unappliedDates}
+        </p>
+      )}
+      {r.code === "VALIDATION_FAILED" ? (
+        <p role="alert" className={styles.error}>
+          {t.dateRejected}
+        </p>
+      ) : (
+        <Feedback code={r.code} />
+      )}
+      <button
+        className={styles.iconButton}
+        onClick={reload}
+        aria-label={t.refresh}
+        title={t.refresh}
+        data-icon-action
+      >
+        <ActionRefreshCw size={18} aria-hidden="true" />
       </button>
       {r.loading ? (
         <p role="status">{t.loading}</p>

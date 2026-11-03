@@ -1,4 +1,5 @@
 "use client";
+import { RefreshCw as ActionRefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
@@ -64,13 +65,20 @@ export function CourseError({
           ? t.missing
           : code === "COURSE_ENROLLMENT_REVOKED"
             ? t.revoked
-          : code === "COURSE_ENROLLMENT_REQUIRED"
-            ? t.locked
-            : t.error}
+            : code === "COURSE_ENROLLMENT_REQUIRED"
+              ? t.locked
+              : t.error}
       </p>
       {retry && (
-        <Button variant="outline" onClick={retry}>
-          {t.retry}
+        <Button
+          variant="outline"
+          onClick={retry}
+          aria-label={t.retry}
+          title={t.retry}
+          data-icon-action
+          size="icon"
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </Button>
       )}
     </div>
@@ -109,7 +117,7 @@ export function EnrollmentButton({
     active = useRef(true);
   useEffect(() => {
     active.current = true;
-  return () => {
+    return () => {
       active.current = false;
     };
   }, []);
@@ -120,7 +128,14 @@ export function EnrollmentButton({
     ? `/account/courses/${course.id}/lessons/${target}`
     : "/account/courses";
   async function enroll() {
-    if (submitting.current || auth.checking || auth.error || revoked || code==="COURSE_ENROLLMENT_REVOKED") return;
+    if (
+      submitting.current ||
+      auth.checking ||
+      auth.error ||
+      revoked ||
+      code === "COURSE_ENROLLMENT_REVOKED"
+    )
+      return;
     if (!auth.user) {
       auth.open("login", destination);
       return;
@@ -197,7 +212,8 @@ export function EnrollmentButton({
         {busy ? t.enrolling : (buttonLabel ?? t.enroll)}
       </Button>
     );
-  if(revoked || code === "COURSE_ENROLLMENT_REVOKED") return <p role="status">{t.revoked}</p>;
+  if (revoked || code === "COURSE_ENROLLMENT_REVOKED")
+    return <p role="status">{t.revoked}</p>;
   return (
     <div
       className={compact ? "min-w-0 space-y-3" : "space-y-4"}
@@ -217,8 +233,15 @@ export function EnrollmentButton({
       {auth.error && (
         <div>
           <p role="alert">{t.membershipError}</p>
-          <Button variant="outline" onClick={() => void auth.restore()}>
-            {t.retry}
+          <Button
+            variant="outline"
+            onClick={() => void auth.restore()}
+            aria-label={t.retry}
+            title={t.retry}
+            data-icon-action
+            size="icon"
+          >
+            <ActionRefreshCw size={18} aria-hidden="true" />
           </Button>
         </div>
       )}
@@ -303,8 +326,12 @@ export function CourseEnrollmentDialog({
                 variant="outline"
                 disabled={auth.checking}
                 onClick={() => void auth.restore()}
+                aria-label={t.retry}
+                title={t.retry}
+                data-icon-action
+                size="icon"
               >
-                {t.retry}
+                <ActionRefreshCw size={18} aria-hidden="true" />
               </Button>
             </div>
           )}

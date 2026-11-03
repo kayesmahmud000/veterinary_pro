@@ -478,7 +478,7 @@ export async function checkAdminCatalog({
   checks += 2;
   state.processing = "completed";
   await evaluate(
-    `Array.from(document.querySelectorAll('main button')).find(b=>b.textContent.trim()==='Refresh status').click()`,
+    `Array.from(document.querySelectorAll('main button')).find(b=>(b.getAttribute('aria-label')||b.textContent).trim()==='Refresh status').click()`,
   );
   await until(
     () => evaluate(`!!document.querySelector('[data-attach-upload]')`),

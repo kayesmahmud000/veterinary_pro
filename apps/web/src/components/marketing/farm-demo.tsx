@@ -1,5 +1,7 @@
 "use client";
 
+import { Pencil as ActionPencil } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/ui/cn";
 import siteStyles from "@/lib/ui/site.styles";
 import { useId, useState } from "react";
@@ -110,9 +112,15 @@ export function FarmDemo({
                 );
               })}
             </div>
-            <button type="button" className={cn(ui.reset)} onClick={reset}>
-              <RotateCcw size={15} aria-hidden="true" />
-              <span>{copy.reset}</span>
+            <button
+              type="button"
+              className={buttonVariants({ variant: "outline", size: "icon" })}
+              onClick={reset}
+              aria-label={copy.reset}
+              title={copy.reset}
+              data-icon-action
+            >
+              <RotateCcw size={18} aria-hidden="true" />
             </button>
           </div>
           <div id={`${id}-panel`} className={cn(ui.demoPanel)}>
@@ -215,7 +223,10 @@ export function FarmDemo({
                       )}
                     </div>
                     <div>
-                      <label className={cn(ui.inputLabel)} htmlFor={`${id}-price`}>
+                      <label
+                        className={cn(ui.inputLabel)}
+                        htmlFor={`${id}-price`}
+                      >
                         {copy.price}
                       </label>
                       <input
@@ -231,7 +242,10 @@ export function FarmDemo({
                         }
                       />
                       {rate === null && (
-                        <p id={`${id}-price-error`} className={cn(ui.fieldError)}>
+                        <p
+                          id={`${id}-price-error`}
+                          className={cn(ui.fieldError)}
+                        >
                           {copy.invalidPrice}
                         </p>
                       )}
@@ -294,7 +308,11 @@ export function FarmDemo({
                             <div
                               className={cn(
                                 ui.bar,
-                                daily === 0 ? "h-0" : days === 30 && span === 7 ? "h-[70px]" : "h-[90px]",
+                                daily === 0
+                                  ? "h-0"
+                                  : days === 30 && span === 7
+                                    ? "h-[70px]"
+                                    : "h-[90px]",
                               )}
                             />
                             <small>
@@ -319,11 +337,16 @@ export function FarmDemo({
                   </div>
                   <button
                     type="button"
-                    className={cn(ui.inlineButton)}
+                    className={buttonVariants({
+                      variant: "outline",
+                      size: "icon",
+                    })}
                     onClick={() => setView(1)}
+                    aria-label={copy.edit}
+                    title={copy.edit}
+                    data-icon-action
                   >
-                    {copy.edit}
-                    <ArrowUpRight size={16} aria-hidden="true" />
+                    <ActionPencil size={18} aria-hidden="true" />
                   </button>
                 </div>
                 {projection ? (
@@ -367,7 +390,10 @@ export function FarmDemo({
               <span className={cn(siteStyles["status-dot"])} />
               {copy.localNote}
             </p>
-            <Link className={cn(siteStyles["text-link"])} href="/farm-management">
+            <Link
+              className={cn(siteStyles["text-link"])}
+              href="/farm-management"
+            >
               {copy.explore}
               <ArrowUpRight size={16} aria-hidden="true" />
             </Link>

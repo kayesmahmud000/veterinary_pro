@@ -1,4 +1,12 @@
 "use client";
+import {
+  ArrowLeft as ActionArrowLeft,
+  ChevronLeft as ActionChevronLeft,
+  ChevronRight as ActionChevronRight,
+  Eye as ActionEye,
+  RefreshCw as ActionRefreshCw,
+  Search as ActionSearch,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -158,15 +166,25 @@ function SettlementList({ vetId }: { vetId?: string }) {
           </Field>
         </div>
         <div className={styles.actions}>
-          <button className={styles.primary}>{t.apply}</button>
+          <button
+            className={styles.iconButton}
+            aria-label={t.apply}
+            title={t.apply}
+            data-icon-action
+          >
+            <ActionSearch size={18} aria-hidden="true" />
+          </button>
           <button
             data-finance-reload
             type="button"
-            className={styles.secondary}
+            className={styles.iconButton}
             disabled={list.loading || summary.loading}
             onClick={reload}
+            aria-label={t.refresh}
+            title={t.refresh}
+            data-icon-action
           >
-            {t.refresh}
+            <ActionRefreshCw size={18} aria-hidden="true" />
           </button>
         </div>
       </form>
@@ -274,10 +292,13 @@ function SettlementList({ vetId }: { vetId?: string }) {
                       )}
                     </div>
                     <Link
-                      className={styles.secondary}
+                      className={styles.iconButton}
                       href={`/admin/settlements/${row.id}`}
+                      aria-label={t.details}
+                      title={t.details}
+                      data-icon-action
                     >
-                      {t.details}
+                      <ActionEye size={18} aria-hidden="true" />
                     </Link>
                   </li>
                 );
@@ -336,7 +357,7 @@ function SettlementList({ vetId }: { vetId?: string }) {
             {(cursors.length > 0 || params.has("cursor")) && (
               <button
                 data-settlement-previous
-                className={styles.secondary}
+                className={styles.iconButton}
                 disabled={list.loading}
                 onClick={() => {
                   const next = new URLSearchParams(raw),
@@ -346,14 +367,17 @@ function SettlementList({ vetId }: { vetId?: string }) {
                   setCursors((v) => v.slice(0, -1));
                   navigate(next);
                 }}
+                aria-label={t.previous}
+                title={t.previous}
+                data-icon-action
               >
-                {t.previous}
+                <ActionChevronLeft size={18} aria-hidden="true" />
               </button>
             )}
             {list.data?.nextCursor && (
               <button
                 data-settlement-next
-                className={styles.secondary}
+                className={styles.iconButton}
                 disabled={list.loading}
                 onClick={() => {
                   const next = new URLSearchParams(raw);
@@ -361,8 +385,11 @@ function SettlementList({ vetId }: { vetId?: string }) {
                   next.set("cursor", list.data!.nextCursor!);
                   navigate(next);
                 }}
+                aria-label={t.next}
+                title={t.next}
+                data-icon-action
               >
-                {t.next}
+                <ActionChevronRight size={18} aria-hidden="true" />
               </button>
             )}
           </div>
@@ -397,8 +424,14 @@ function SettlementRecord({ id }: { id: string }) {
     );
   return (
     <div data-settlement-detail className="space-y-6">
-      <Link className={styles.secondary} href="/admin/settlements">
-        {t.back}
+      <Link
+        className={styles.iconButton}
+        href="/admin/settlements"
+        aria-label={t.back}
+        title={t.back}
+        data-icon-action
+      >
+        <ActionArrowLeft size={18} aria-hidden="true" />
       </Link>
       {saved && (
         <p data-finance-saved role="status">
@@ -503,11 +536,14 @@ function SettlementRecord({ id }: { id: string }) {
       <History items={row.history} truncated={row.historyTruncated} />
       <button
         data-finance-reload
-        className={styles.secondary}
+        className={styles.iconButton}
         disabled={remote.loading}
         onClick={reload}
+        aria-label={t.refresh}
+        title={t.refresh}
+        data-icon-action
       >
-        {t.refresh}
+        <ActionRefreshCw size={18} aria-hidden="true" />
       </button>
     </div>
   );

@@ -1,4 +1,5 @@
 "use client";
+import { RefreshCw as ActionRefreshCw } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { z } from "zod";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -66,8 +67,15 @@ export function FinanceError({
     <div className={styles.error}>
       <p role="alert">{financeError(locale, code)}</p>
       {retry && (
-        <button data-finance-retry className={styles.secondary} onClick={retry}>
-          {t.retry}
+        <button
+          data-finance-retry
+          className={styles.iconButton}
+          onClick={retry}
+          aria-label={t.retry}
+          title={t.retry}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       )}
     </div>
@@ -370,14 +378,17 @@ export function FinanceAction<T>({
         <button
           type="button"
           data-finance-reload
-          className={styles.secondary}
+          className={styles.iconButton}
           onClick={() => {
             setConfirm(false);
             setPassword("");
             onReload();
           }}
+          aria-label={t.refresh}
+          title={t.refresh}
+          data-icon-action
         >
-          {t.refresh}
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       )}
       {confirm && (

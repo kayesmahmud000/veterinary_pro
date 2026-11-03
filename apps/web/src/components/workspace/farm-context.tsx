@@ -1,4 +1,5 @@
 "use client";
+import { RefreshCw as ActionRefreshCw } from "lucide-react";
 import {
   createContext,
   useContext,
@@ -198,8 +199,14 @@ export function FarmBoundary({ children }: { children: ReactNode }) {
     return (
       <>
         <Notice code={context.code} t={t} />
-        <button className={styles.secondary} onClick={context.reload}>
-          {t.retry}
+        <button
+          className={styles.iconButton}
+          onClick={context.reload}
+          aria-label={t.retry}
+          title={t.retry}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       </>
     );

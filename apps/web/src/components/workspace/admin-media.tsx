@@ -1,4 +1,11 @@
 "use client";
+import {
+  ArrowLeft as ActionArrowLeft,
+  ChevronLeft as ActionChevronLeft,
+  ChevronRight as ActionChevronRight,
+  Eye as ActionEye,
+  RefreshCw as ActionRefreshCw,
+} from "lucide-react";
 import { cn } from "@/lib/ui/cn";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -226,7 +233,9 @@ function MediaInventory() {
                 {drafts.loading ? t.loading : t.selectProduct}
               </option>
               {[...extra, ...options]
-                .filter((p) => !p.isPublished && p.contentProvider !== "YOUTUBE")
+                .filter(
+                  (p) => !p.isPublished && p.contentProvider !== "YOUTUBE",
+                )
                 .map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.title} · {catalogLabel(t, p.type)}
@@ -257,7 +266,15 @@ function MediaInventory() {
         <TransferProgress busy={transfer.busy} progress={transfer.progress} />
         {session && (
           <div className={styles.actions}>
-            <Link href={`/admin/media/uploads/${session.id}`}>{t.details}</Link>
+            <Link
+              href={`/admin/media/uploads/${session.id}`}
+              aria-label={t.details}
+              title={t.details}
+              data-icon-action
+              className={styles.iconButton}
+            >
+              <ActionEye size={18} aria-hidden="true" />
+            </Link>
             {session.state !== "UPLOADED" && (
               <button
                 className={styles.secondary}
@@ -296,10 +313,13 @@ function MediaInventory() {
                   </small>
                 </div>
                 <Link
-                  className={styles.secondary}
+                  className={styles.iconButton}
                   href={`/admin/media/uploads/${row.id}`}
+                  aria-label={t.details}
+                  title={t.details}
+                  data-icon-action
                 >
-                  {t.details}
+                  <ActionEye size={18} aria-hidden="true" />
                 </Link>
               </li>
             ))}
@@ -307,23 +327,35 @@ function MediaInventory() {
         )}
       </section>
       <div className={styles.actions}>
-        <button className={styles.secondary} onClick={list.reload}>
-          {t.refresh}
+        <button
+          className={styles.iconButton}
+          onClick={list.reload}
+          aria-label={t.refresh}
+          title={t.refresh}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
         {cursors.length > 1 && (
           <button
-            className={styles.secondary}
+            className={styles.iconButton}
             onClick={() => setCursors((c) => c.slice(0, -1))}
+            aria-label={t.previous}
+            title={t.previous}
+            data-icon-action
           >
-            {t.previous}
+            <ActionChevronLeft size={18} aria-hidden="true" />
           </button>
         )}
         {list.data?.nextCursor && (
           <button
-            className={styles.secondary}
+            className={styles.iconButton}
             onClick={() => setCursors((c) => [...c, list.data!.nextCursor!])}
+            aria-label={t.next}
+            title={t.next}
+            data-icon-action
           >
-            {t.next}
+            <ActionChevronRight size={18} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -385,8 +417,14 @@ function MediaDetail({ id }: { id: string }) {
       (!video || row.processingState === "completed");
   return (
     <div data-upload-detail className="space-y-6">
-      <Link className={styles.secondary} href="/admin/media">
-        {t.backMedia}
+      <Link
+        className={styles.iconButton}
+        href="/admin/media"
+        aria-label={t.backMedia}
+        title={t.backMedia}
+        data-icon-action
+      >
+        <ActionArrowLeft size={18} aria-hidden="true" />
       </Link>
       {(code || transfer.code) && <CatalogError code={code || transfer.code} />}
       {saved && <p role="status">{t.saved}</p>}
@@ -456,11 +494,14 @@ function MediaDetail({ id }: { id: string }) {
                   />
                 </Field>
                 <button
-                  className={styles.primary}
+                  className={styles.iconButton}
                   disabled={!file || transfer.busy}
                   onClick={() => void resume()}
+                  aria-label={t.retryUpload}
+                  title={t.retryUpload}
+                  data-icon-action
                 >
-                  {t.retryUpload}
+                  <ActionRefreshCw size={18} aria-hidden="true" />
                 </button>
               </>
             )}
@@ -508,11 +549,14 @@ function MediaDetail({ id }: { id: string }) {
         </section>
       )}
       <button
-        className={styles.secondary}
+        className={styles.iconButton}
         disabled={pending || transfer.busy}
         onClick={data.reload}
+        aria-label={t.refresh}
+        title={t.refresh}
+        data-icon-action
       >
-        {t.refresh}
+        <ActionRefreshCw size={18} aria-hidden="true" />
       </button>
       {confirmation && (
         <Confirmation

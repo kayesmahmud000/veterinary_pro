@@ -1,4 +1,10 @@
 "use client";
+import {
+  ChevronLeft as ActionChevronLeft,
+  ChevronRight as ActionChevronRight,
+  Search as ActionSearch,
+  X as ActionX,
+} from "lucide-react";
 import Link from "next/link";
 import { isAdministrativeRole } from "@/lib/workspace/navigation";
 import { useState } from "react";
@@ -99,18 +105,29 @@ export function CourseCatalog() {
               />
             </div>
           </div>
-          <Button type="submit" className="min-h-12">
-            {t.apply}
+          <Button
+            type="submit"
+            className="h-12 w-12"
+            aria-label={t.apply}
+            title={t.apply}
+            data-icon-action
+            size="icon"
+          >
+            <ActionSearch size={18} aria-hidden="true" />
           </Button>
           {(query || search) && (
             <Button
               type="button"
               data-course-clear
               variant="outline"
-              className="min-h-12"
+              className="h-12 w-12"
               onClick={clear}
+              aria-label={t.clear}
+              title={t.clear}
+              data-icon-action
+              size="icon"
             >
-              {t.clear}
+              <ActionX size={18} aria-hidden="true" />
             </Button>
           )}
         </form>
@@ -147,8 +164,15 @@ export function CourseCatalog() {
             <h3>{query ? t.noResults : t.empty}</h3>
             <p>{query ? t.noResultsHint : t.checkBack}</p>
             {query && (
-              <Button variant="outline" onClick={clear}>
-                {t.clear}
+              <Button
+                variant="outline"
+                onClick={clear}
+                aria-label={t.clear}
+                title={t.clear}
+                data-icon-action
+                size="icon"
+              >
+                <ActionX size={18} aria-hidden="true" />
               </Button>
             )}
           </div>
@@ -176,16 +200,24 @@ export function CourseCatalog() {
             variant="outline"
             disabled={data.loading}
             onClick={() => setCursors((v) => v.slice(0, -1))}
+            aria-label={t.previous}
+            title={t.previous}
+            data-icon-action
+            size="icon"
           >
-            {t.previous}
+            <ActionChevronLeft size={18} aria-hidden="true" />
           </Button>
         )}
         {!data.loading && data.data?.nextCursor && (
           <Button
             variant="outline"
             onClick={() => setCursors((v) => [...v, data.data!.nextCursor!])}
+            aria-label={t.next}
+            title={t.next}
+            data-icon-action
+            size="icon"
           >
-            {t.next}
+            <ActionChevronRight size={18} aria-hidden="true" />
           </Button>
         )}
       </nav>

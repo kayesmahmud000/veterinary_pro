@@ -1,7 +1,10 @@
+import {
+  RotateCcw as ActionRotateCcw,
+  Search as ActionSearch,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Search } from "lucide-react";
-import { cn } from "@/lib/ui/cn";
+
 import { getLocalization } from "@/lib/i18n/server";
 
 export async function PublicFilters({
@@ -25,7 +28,7 @@ export async function PublicFilters({
   allLabel: string;
   options: readonly { value: string; label: string }[];
 }) {
-  const { messages } = (await getLocalization());
+  const { messages } = await getLocalization();
   const t = messages.publicPages;
   return (
     <form
@@ -72,12 +75,23 @@ export async function PublicFilters({
         </select>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button type="submit">
-          <Search size={16} aria-hidden="true" />
-          {t.apply}
+        <Button
+          type="submit"
+          aria-label={t.apply}
+          title={t.apply}
+          data-icon-action
+          size="icon"
+        >
+          <ActionSearch size={18} aria-hidden="true" />
         </Button>
-        <a href={action} className={cn(buttonVariants({ variant: "outline" }))}>
-          {t.reset}
+        <a
+          href={action}
+          className={buttonVariants({ variant: "outline", size: "icon" })}
+          aria-label={t.reset}
+          title={t.reset}
+          data-icon-action
+        >
+          <ActionRotateCcw size={18} aria-hidden="true" />
         </a>
       </div>
     </form>

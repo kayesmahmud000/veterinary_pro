@@ -1,4 +1,5 @@
 "use client";
+import { RefreshCw as ActionRefreshCw } from "lucide-react";
 import Link from "next/link";
 import { farmOnboardingStatusSchema, UserRole } from "@vetralink/shared-types";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -14,8 +15,14 @@ export function FarmDiscovery() {
     return (
       <>
         <Notice code={farms.code} t={t} />
-        <button className={styles.secondary} onClick={farms.reload}>
-          {t.retry}
+        <button
+          className={styles.iconButton}
+          onClick={farms.reload}
+          aria-label={t.retry}
+          title={t.retry}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       </>
     );

@@ -1,4 +1,10 @@
 "use client";
+import {
+  ChevronRight as ActionChevronRight,
+  Eye as ActionEye,
+  RefreshCw as ActionRefreshCw,
+  Search as ActionSearch,
+} from "lucide-react";
 import { cn } from "@/lib/ui/cn";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { z } from "zod";
@@ -139,8 +145,14 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
           />
         </Field>
         <div className={cn(styles.actions)}>
-          <button className={cn(styles.primary)} disabled={pending}>
-            {t.findTarget}
+          <button
+            className={styles.iconButton}
+            disabled={pending}
+            aria-label={t.findTarget}
+            title={t.findTarget}
+            data-icon-action
+          >
+            <ActionSearch size={18} aria-hidden="true" />
           </button>
         </div>
       </form>
@@ -150,8 +162,14 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
         ) : target.code ? (
           <>
             <Notice code={target.code} t={t} />
-            <button className={cn(styles.secondary)} onClick={target.reload}>
-              {t.retry}
+            <button
+              className={styles.iconButton}
+              onClick={target.reload}
+              aria-label={t.retry}
+              title={t.retry}
+              data-icon-action
+            >
+              <ActionRefreshCw size={18} aria-hidden="true" />
             </button>
           </>
         ) : (
@@ -170,7 +188,10 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
                 <Notice code="TARGET_INELIGIBLE" t={t} />
               ) : (
                 <form onSubmit={review} noValidate aria-busy={pending}>
-                  <fieldset className={cn(styles.formFields)} disabled={pending}>
+                  <fieldset
+                    className={cn(styles.formFields)}
+                    disabled={pending}
+                  >
                     <div className={cn(styles.grid)}>
                       <Field
                         name="action"
@@ -256,11 +277,14 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
                         {actionLabel(action)}
                       </button>
                       <button
-                        className={cn(styles.secondary)}
+                        className={styles.iconButton}
                         type="button"
                         onClick={target.reload}
+                        aria-label={t.refresh}
+                        title={t.refresh}
+                        data-icon-action
                       >
-                        {t.refresh}
+                        <ActionRefreshCw size={18} aria-hidden="true" />
                       </button>
                     </div>
                   </fieldset>
@@ -287,13 +311,23 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
             />
           </Field>
           <div className={cn(styles.actions)}>
-            <button className={cn(styles.secondary)}>{t.search}</button>
+            <button
+              className={styles.iconButton}
+              aria-label={t.search}
+              title={t.search}
+              data-icon-action
+            >
+              <ActionSearch size={18} aria-hidden="true" />
+            </button>
             <button
               type="button"
-              className={cn(styles.secondary)}
+              className={styles.iconButton}
               onClick={list.reload}
+              aria-label={t.refresh}
+              title={t.refresh}
+              data-icon-action
             >
-              {t.refresh}
+              <ActionRefreshCw size={18} aria-hidden="true" />
             </button>
           </div>
         </form>
@@ -313,15 +347,18 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
                 </div>
                 <button
                   type="button"
-                  className={cn(styles.secondary)}
+                  className={styles.iconButton}
                   disabled={pending}
                   onClick={() => {
                     setTargetPath(`admin/users/${row.id}`);
                     setSuccess(false);
                     setCode(undefined);
                   }}
+                  aria-label={t.details}
+                  title={t.details}
+                  data-icon-action
                 >
-                  {t.details}
+                  <ActionEye size={18} aria-hidden="true" />
                 </button>
               </li>
             ))}
@@ -330,10 +367,13 @@ export function AdministrativeAccess({ t }: { t: WorkspaceMessages }) {
         {list.data?.nextCursor && (
           <div className={cn(styles.actions)}>
             <button
-              className={cn(styles.secondary)}
+              className={styles.iconButton}
               onClick={() => setCursor(list.data!.nextCursor!)}
+              aria-label={t.next}
+              title={t.next}
+              data-icon-action
             >
-              {t.next}
+              <ActionChevronRight size={18} aria-hidden="true" />
             </button>
           </div>
         )}

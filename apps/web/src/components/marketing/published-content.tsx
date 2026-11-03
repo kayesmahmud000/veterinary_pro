@@ -1,3 +1,7 @@
+import {
+  ArrowLeft as ActionArrowLeft,
+  ChevronRight as ActionChevronRight,
+} from "lucide-react";
 import Link from "next/link";
 import {
   publicEditorialSchema,
@@ -19,7 +23,7 @@ const bases: Record<string, string> = {
   VET: "/doctors",
 };
 export async function PublishedArticle({ entry }: { entry: PublicEditorial }) {
-  const { locale } = (await getLocalization()),
+  const { locale } = await getLocalization(),
     t = communicationsMessages(locale);
   return (
     <PublicPage
@@ -29,10 +33,13 @@ export async function PublishedArticle({ entry }: { entry: PublicEditorial }) {
     >
       <EditorialText content={entry.content} locale={locale} hideHeading />
       <Link
-        className={buttonVariants({ variant: "outline" })}
+        className={buttonVariants({ variant: "outline", size: "icon" })}
         href={entry.kind === "FAQ" ? "/help" : bases[entry.kind]}
+        aria-label={t.back}
+        title={t.back}
+        data-icon-action
       >
-        {t.back}
+        <ActionArrowLeft size={18} aria-hidden="true" />
       </Link>
     </PublicPage>
   );
@@ -46,7 +53,7 @@ export async function PublishedDetail({
 }) {
   const r = await publishedEntry(kind, slug),
     parsed = publicEditorialSchema.safeParse(r.data),
-    { locale } = (await getLocalization()),
+    { locale } = await getLocalization(),
     t = communicationsMessages(locale);
   if (parsed.success) return <PublishedArticle entry={parsed.data} />;
   return r.status === 404 ? (
@@ -78,7 +85,7 @@ export async function PublishedCatalog({
     },
     result = await publishedEntries(kind, values),
     parsed = publicEditorialListSchema.safeParse(result.data),
-    { locale } = (await getLocalization()),
+    { locale } = await getLocalization(),
     t = communicationsMessages(locale);
   if (
     embedded &&
@@ -123,10 +130,13 @@ export async function PublishedCatalog({
           )}
           {parsed.data.nextCursor && (
             <Link
-              className={buttonVariants({ variant: "outline" })}
+              className={buttonVariants({ variant: "outline", size: "icon" })}
               href={`${kind === "FAQ" ? "/help" : bases[kind]}?${new URLSearchParams({ ...(search ? { q: search } : {}), cursor: parsed.data.nextCursor })}`}
+              aria-label={t.next}
+              title={t.next}
+              data-icon-action
             >
-              {t.next}
+              <ActionChevronRight size={18} aria-hidden="true" />
             </Link>
           )}
         </>

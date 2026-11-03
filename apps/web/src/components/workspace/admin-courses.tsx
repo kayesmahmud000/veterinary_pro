@@ -1,4 +1,11 @@
 "use client";
+import {
+  ChevronLeft as ActionChevronLeft,
+  ChevronRight as ActionChevronRight,
+  Pencil as ActionPencil,
+  RefreshCw as ActionRefreshCw,
+  Search as ActionSearch,
+} from "lucide-react";
 import { Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -101,8 +108,14 @@ export function AdminCourseDetails({
               ))}
             </ol>
           )}
-          <Link className={buttonVariants()} href={`/admin/courses/${id}`}>
-            {t.edit}
+          <Link
+            className={styles.iconButton}
+            href={`/admin/courses/${id}`}
+            aria-label={t.edit}
+            title={t.edit}
+            data-icon-action
+          >
+            <ActionPencil size={18} aria-hidden="true" />
           </Link>
         </div>
       )}
@@ -127,7 +140,15 @@ function CourseManagement() {
     `admin/products?limit=20&type=VIDEO_COURSE&contentProvider=YOUTUBE${query ? `&${query}` : ""}${cursors.at(-1) ? `&cursor=${cursors.at(-1)}` : ""}`,
     adminProductListSchema,
   );
-  useEffect(()=>{const refresh=()=>data.reload();window.addEventListener("focus",refresh);window.addEventListener("vetralink-enrollments-updated",refresh);return()=>{window.removeEventListener("focus",refresh);window.removeEventListener("vetralink-enrollments-updated",refresh);};},[data.reload]);
+  useEffect(() => {
+    const refresh = () => data.reload();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("vetralink-enrollments-updated", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("vetralink-enrollments-updated", refresh);
+    };
+  }, [data.reload]);
   return (
     <div data-admin-courses-list className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -175,7 +196,14 @@ function CourseManagement() {
             <option value="PUBLISHED">{t.live}</option>
           </select>
         </Field>
-        <Button>{common.apply}</Button>
+        <Button
+          aria-label={common.apply}
+          title={common.apply}
+          data-icon-action
+          size="icon"
+        >
+          <ActionSearch size={18} aria-hidden="true" />
+        </Button>
       </form>
       {notice && (
         <p role="status" className={styles.notice}>
@@ -221,7 +249,10 @@ function CourseManagement() {
                     label: common.updatedAt,
                     classes: "hidden xl:table-cell xl:w-[12%]",
                   },
-                  { label: t.actions, classes: "w-28 text-right sm:w-52 xl:w-[18%]" },
+                  {
+                    label: t.actions,
+                    classes: "w-28 text-right sm:w-52 xl:w-[18%]",
+                  },
                 ].map(({ label, classes }) => (
                   <th
                     key={label}
@@ -300,7 +331,11 @@ function CourseManagement() {
                               <div>
                                 <dt className="inline">{t.learners}: </dt>
                                 <dd className="m-0 inline tabular-nums">
-                                  <Link href={`/admin/courses/${p.id}/learners`}>{learners}</Link>
+                                  <Link
+                                    href={`/admin/courses/${p.id}/learners`}
+                                  >
+                                    {learners}
+                                  </Link>
                                 </dd>
                               </div>
                               <div>
@@ -326,14 +361,29 @@ function CourseManagement() {
                       {lessons}
                     </td>
                     <td className="hidden break-words px-3 py-4 tabular-nums xl:table-cell">
-                      <Link href={`/admin/courses/${p.id}/learners`} aria-label={`${t.learners}: ${p.title}`}>{learners}</Link>
+                      <Link
+                        href={`/admin/courses/${p.id}/learners`}
+                        aria-label={`${t.learners}: ${p.title}`}
+                      >
+                        {learners}
+                      </Link>
                     </td>
                     <td className="hidden break-words px-3 py-4 text-muted xl:table-cell">
                       <time dateTime={p.updatedAt}>{updated}</time>
                     </td>
                     <td className="px-2 py-4 sm:px-3">
                       <div className="ml-auto grid w-fit grid-cols-2 gap-1 sm:grid-cols-4 xl:grid-cols-2 2xl:grid-cols-4">
-                        <Link href={`/admin/courses/${p.id}/learners`} className={cn(buttonVariants({variant:"outline"}),"box-border h-11 w-11 p-0")} aria-label={t.learners} title={t.learners}><Users size={18} aria-hidden="true"/></Link>
+                        <Link
+                          href={`/admin/courses/${p.id}/learners`}
+                          className={cn(
+                            buttonVariants({ variant: "outline" }),
+                            "box-border h-11 w-11 p-0",
+                          )}
+                          aria-label={t.learners}
+                          title={t.learners}
+                        >
+                          <Users size={18} aria-hidden="true" />
+                        </Link>
                         <Button
                           data-course-details
                           variant="outline"
@@ -402,24 +452,40 @@ function CourseManagement() {
         </div>
       )}
       <div className="flex flex-wrap gap-3">
-        <Button variant="outline" onClick={data.reload} disabled={data.loading}>
-          {common.refresh}
+        <Button
+          variant="outline"
+          onClick={data.reload}
+          disabled={data.loading}
+          aria-label={common.refresh}
+          title={common.refresh}
+          data-icon-action
+          size="icon"
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </Button>
         {cursors.length > 1 && (
           <Button
             variant="outline"
             disabled={data.loading}
             onClick={() => setCursors((v) => v.slice(0, -1))}
+            aria-label={common.previous}
+            title={common.previous}
+            data-icon-action
+            size="icon"
           >
-            {common.previous}
+            <ActionChevronLeft size={18} aria-hidden="true" />
           </Button>
         )}
         {!data.loading && data.data?.nextCursor && (
           <Button
             variant="outline"
             onClick={() => setCursors((v) => [...v, data.data!.nextCursor!])}
+            aria-label={common.next}
+            title={common.next}
+            data-icon-action
+            size="icon"
           >
-            {common.next}
+            <ActionChevronRight size={18} aria-hidden="true" />
           </Button>
         )}
       </div>

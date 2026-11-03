@@ -174,8 +174,12 @@ const styles = {
     "items-center",
     "mt-[26px]",
     "[&_>_.workspace-grid]:w-full",
-    "max-[640.01px]:[&_>_*]:grow",
+    "max-[640.01px]:[&_>_*:not([data-icon-action])]:grow",
   ].join(" "),
+  iconButton:
+    "box-border inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-solid border-line bg-white p-0 text-ink transition-colors hover:bg-[#eff2eb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber disabled:cursor-not-allowed disabled:opacity-50",
+  iconDanger:
+    "box-border inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-solid border-red-200 bg-white p-0 text-red-600 transition-colors hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:cursor-not-allowed disabled:opacity-50",
   primary: [
     "inline-flex",
     "items-center",

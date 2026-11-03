@@ -1,4 +1,5 @@
 "use client";
+import { RefreshCw as ActionRefreshCw } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { UserRole, UserStatus } from "@vetralink/shared-types";
@@ -52,14 +53,7 @@ export function WorkspaceGate({
     // Back navigation may restore a cached workspace without running middleware.
     // Use the same public handoff as a signed-out server request.
     router.replace(protectedEntryUrl(destination));
-  }, [
-    auth.user,
-    auth.checking,
-    auth.error,
-    pathname,
-    query,
-    router,
-  ]);
+  }, [auth.user, auth.checking, auth.error, pathname, query, router]);
   useEffect(() => {
     if (!auth.checking && !auth.error && setup)
       router.replace("/account/farm-onboarding");
@@ -78,7 +72,15 @@ export function WorkspaceGate({
           <p role="alert">{t.unavailable}</p>
         </CardHeader>
         <CardContent>
-          <Button onClick={() => void auth.restore()}>{t.retry}</Button>
+          <Button
+            onClick={() => void auth.restore()}
+            aria-label={t.retry}
+            title={t.retry}
+            data-icon-action
+            size="icon"
+          >
+            <ActionRefreshCw size={18} aria-hidden="true" />
+          </Button>
         </CardContent>
       </Card>
     );

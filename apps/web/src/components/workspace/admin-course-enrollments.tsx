@@ -1,7 +1,14 @@
 "use client";
+import {
+  ArrowLeft as ActionArrowLeft,
+  ChevronLeft as ActionChevronLeft,
+  ChevronRight as ActionChevronRight,
+  RefreshCw as ActionRefreshCw,
+  Search as ActionSearch,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, RotateCcw } from "lucide-react";
 import {
   UserRole,
   adminCourseEnrollmentListSchema,
@@ -93,7 +100,14 @@ function Candidates({
               onChange={(e) => setSearch(e.target.value)}
             />
           </Field>
-          <Button>{t.find}</Button>
+          <Button
+            aria-label={t.find}
+            title={t.find}
+            data-icon-action
+            size="icon"
+          >
+            <ActionSearch size={18} aria-hidden="true" />
+          </Button>
         </form>
         {invalid && <p role="alert">{t.validation}</p>}
         {applied &&
@@ -139,16 +153,24 @@ function Candidates({
             <Button
               variant="outline"
               onClick={() => setCursors((v) => v.slice(0, -1))}
+              aria-label={t.previous}
+              title={t.previous}
+              data-icon-action
+              size="icon"
             >
-              {t.previous}
+              <ActionChevronLeft size={18} aria-hidden="true" />
             </Button>
           )}
           {data.data?.nextCursor && (
             <Button
               variant="outline"
               onClick={() => setCursors((v) => [...v, data.data!.nextCursor!])}
+              aria-label={t.next}
+              title={t.next}
+              data-icon-action
+              size="icon"
             >
-              {t.next}
+              <ActionChevronRight size={18} aria-hidden="true" />
             </Button>
           )}
           <Button type="button" variant="outline" onClick={create}>
@@ -233,10 +255,13 @@ function MembershipDirectory({
       {courseId ? (
         <>
           <Link
-            className={buttonVariants({ variant: "outline" })}
+            className={buttonVariants({ variant: "outline", size: "icon" })}
             href="/admin/courses"
+            aria-label={t.back}
+            title={t.back}
+            data-icon-action
           >
-            {t.back}
+            <ActionArrowLeft size={18} aria-hidden="true" />
           </Link>
           <div className="space-y-2">
             <p className="m-0 text-sm font-medium text-muted">{t.title}</p>
@@ -322,11 +347,25 @@ function MembershipDirectory({
                 onChange={(e) => setSearch(e.target.value)}
               />
             </Field>
-            <Button>{t.find}</Button>
+            <Button
+              aria-label={t.find}
+              title={t.find}
+              data-icon-action
+              size="icon"
+            >
+              <ActionSearch size={18} aria-hidden="true" />
+            </Button>
           </form>
         )}
-        <Button variant="outline" onClick={reload}>
-          {t.retry}
+        <Button
+          variant="outline"
+          onClick={reload}
+          aria-label={t.retry}
+          title={t.retry}
+          data-icon-action
+          size="icon"
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </Button>
       </div>
       {data.loading ? (
@@ -475,16 +514,14 @@ function MembershipDirectory({
                           variant={
                             row.status === "ACTIVE" ? "ghost" : "outline"
                           }
-                          aria-label={
-                            row.status === "ACTIVE"
-                              ? `${t.remove}: ${row.user.name}`
-                              : undefined
-                          }
-                          title={row.status === "ACTIVE" ? t.remove : undefined}
+                          aria-label={`${row.status === "ACTIVE" ? t.remove : t.restore}: ${row.user.name}`}
+                          title={row.status === "ACTIVE" ? t.remove : t.restore}
+                          data-icon-action
+                          size="icon"
                           className={
                             row.status === "ACTIVE"
                               ? "h-11 w-11 shrink-0 p-0 text-red-600 hover:bg-red-50 hover:text-red-700 focus-visible:outline-red-600"
-                              : "w-full whitespace-normal px-2"
+                              : "text-green"
                           }
                           onClick={() =>
                             setAction({
@@ -500,7 +537,7 @@ function MembershipDirectory({
                           {row.status === "ACTIVE" ? (
                             <Trash2 size={18} aria-hidden="true" />
                           ) : (
-                            t.restore
+                            <RotateCcw size={18} aria-hidden="true" />
                           )}
                         </Button>
                       ) : (
@@ -520,8 +557,12 @@ function MembershipDirectory({
             variant="outline"
             disabled={data.loading}
             onClick={() => setCursors((v) => v.slice(0, -1))}
+            aria-label={t.previous}
+            title={t.previous}
+            data-icon-action
+            size="icon"
           >
-            {t.previous}
+            <ActionChevronLeft size={18} aria-hidden="true" />
           </Button>
         )}
         {data.data?.nextCursor && (
@@ -529,8 +570,12 @@ function MembershipDirectory({
             variant="outline"
             disabled={data.loading}
             onClick={() => setCursors((v) => [...v, data.data!.nextCursor!])}
+            aria-label={t.next}
+            title={t.next}
+            data-icon-action
+            size="icon"
           >
-            {t.next}
+            <ActionChevronRight size={18} aria-hidden="true" />
           </Button>
         )}
       </div>

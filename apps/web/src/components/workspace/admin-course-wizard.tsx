@@ -1,9 +1,14 @@
 "use client";
+import {
+  ArrowLeft as ActionArrowLeft,
+  ChevronLeft as ActionChevronLeft,
+  RefreshCw as ActionRefreshCw,
+} from "lucide-react";
 import Link from "next/link";
 import { ImageUpload, type ImageUploadState } from "./image-upload";
 import { uploadCourseThumbnail } from "@/lib/workspace/thumbnail-upload";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
 import {
   UserRole,
   ProductType,
@@ -338,10 +343,12 @@ function Wizard({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/admin/courses"
-          className={buttonVariants({ variant: "outline" })}
+          className={styles.iconButton}
+          aria-label={t.backCourses}
+          title={t.backCourses}
+          data-icon-action
         >
-          <ArrowLeft size={17} aria-hidden="true" />
-          {t.backCourses}
+          <ActionArrowLeft size={18} aria-hidden="true" />
         </Link>
         {product && (
           <span className="rounded-full bg-white px-4 py-2 text-sm font-semibold">
@@ -395,8 +402,12 @@ function Wizard({
               variant="outline"
               disabled={busy}
               onClick={() => void reload()}
+              aria-label={common.refresh}
+              title={common.refresh}
+              data-icon-action
+              size="icon"
             >
-              {common.refresh}
+              <ActionRefreshCw size={18} aria-hidden="true" />
             </Button>
           )}
           {!product && pendingCreateSlug && (
@@ -601,8 +612,12 @@ function Wizard({
               variant="outline"
               disabled={busy || lessonState.busy}
               onClick={() => setStep(1)}
+              aria-label={t.previous}
+              title={t.previous}
+              data-icon-action
+              size="icon"
             >
-              {t.previous}
+              <ActionChevronLeft size={18} aria-hidden="true" />
             </Button>
             <Button
               data-course-review
@@ -662,8 +677,12 @@ function Wizard({
               variant="outline"
               disabled={busy}
               onClick={() => setStep(2)}
+              aria-label={t.previous}
+              title={t.previous}
+              data-icon-action
+              size="icon"
             >
-              {t.previous}
+              <ActionChevronLeft size={18} aria-hidden="true" />
             </Button>
             <Button
               data-course-save-draft
@@ -696,8 +715,14 @@ function Wizard({
             </Link>
           </div>
           {notice && (
-            <Link className={buttonVariants()} href="/admin/courses">
-              {t.backCourses}
+            <Link
+              className={styles.iconButton}
+              href="/admin/courses"
+              aria-label={t.backCourses}
+              title={t.backCourses}
+              data-icon-action
+            >
+              <ActionArrowLeft size={18} aria-hidden="true" />
             </Link>
           )}
         </section>

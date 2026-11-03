@@ -1,4 +1,12 @@
 "use client";
+import {
+  ArrowLeft as ActionArrowLeft,
+  ChevronLeft as ActionChevronLeft,
+  ChevronRight as ActionChevronRight,
+  Eye as ActionEye,
+  RefreshCw as ActionRefreshCw,
+  Search as ActionSearch,
+} from "lucide-react";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import {
@@ -61,8 +69,14 @@ function ErrorNotice({ code, retry }: { code?: string; retry?: () => void }) {
         {code && code in t ? billingLabel(t, code) : t.unavailable}
       </p>
       {retry && (
-        <button className={styles.secondary} onClick={retry}>
-          {t.retry}
+        <button
+          className={styles.iconButton}
+          onClick={retry}
+          aria-label={t.retry}
+          title={t.retry}
+          data-icon-action
+        >
+          <ActionRefreshCw size={18} aria-hidden="true" />
         </button>
       )}
     </div>
@@ -123,7 +137,14 @@ function BillingList({ kind }: { kind: BillingKind }) {
           </Field>
         </div>
         <div className={styles.actions}>
-          <button className={styles.primary}>{t.apply}</button>
+          <button
+            className={styles.iconButton}
+            aria-label={t.apply}
+            title={t.apply}
+            data-icon-action
+          >
+            <ActionSearch size={18} aria-hidden="true" />
+          </button>
         </div>
       </form>
       {kind === "dunning" && (
@@ -162,10 +183,13 @@ function BillingList({ kind }: { kind: BillingKind }) {
                   <small>{row.id}</small>
                 </div>
                 <Link
-                  className={styles.secondary}
+                  className={styles.iconButton}
                   href={`/admin/${kind}/${row.id}`}
+                  aria-label={t.details}
+                  title={t.details}
+                  data-icon-action
                 >
-                  {t.details}
+                  <ActionEye size={18} aria-hidden="true" />
                 </Link>
               </li>
             ))}
@@ -174,20 +198,26 @@ function BillingList({ kind }: { kind: BillingKind }) {
       <div className={styles.actions}>
         {cursors.length > 1 && (
           <button
-            className={styles.secondary}
+            className={styles.iconButton}
             disabled={data.loading}
             onClick={() => setCursors((v) => v.slice(0, -1))}
+            aria-label={t.previous}
+            title={t.previous}
+            data-icon-action
           >
-            {t.previous}
+            <ActionChevronLeft size={18} aria-hidden="true" />
           </button>
         )}
         {data.data?.nextCursor && (
           <button
-            className={styles.secondary}
+            className={styles.iconButton}
             disabled={data.loading}
             onClick={() => setCursors((v) => [...v, data.data!.nextCursor!])}
+            aria-label={t.next}
+            title={t.next}
+            data-icon-action
           >
-            {t.next}
+            <ActionChevronRight size={18} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -235,10 +265,13 @@ function Facts({ row }: { row: BillingDetail }) {
       [
         t.subscription,
         <Link
-          className={styles.secondary}
+          className={styles.iconButton}
           href={`/admin/subscriptions/${row.subscriptionId}`}
+          aria-label={t.details}
+          title={t.details}
+          data-icon-action
         >
-          {t.details}
+          <ActionEye size={18} aria-hidden="true" />
         </Link>,
       ],
     );
@@ -478,8 +511,14 @@ function BillingRecord({ kind, id }: { kind: BillingKind; id: string }) {
     return <ErrorNotice code={data.code} retry={data.reload} />;
   return (
     <div data-billing-detail={kind} className="space-y-6">
-      <Link className={styles.secondary} href={`/admin/${kind}`}>
-        {t.back}
+      <Link
+        className={styles.iconButton}
+        href={`/admin/${kind}`}
+        aria-label={t.back}
+        title={t.back}
+        data-icon-action
+      >
+        <ActionArrowLeft size={18} aria-hidden="true" />
       </Link>
       <p className="break-all text-sm text-muted">{id}</p>
       {saved && <p role="status">{t.saved}</p>}
@@ -545,13 +584,16 @@ function BillingRecord({ kind, id }: { kind: BillingKind; id: string }) {
         </section>
       )}
       <button
-        className={styles.secondary}
+        className={styles.iconButton}
         onClick={() => {
           setSaved(false);
           data.reload();
         }}
+        aria-label={t.refresh}
+        title={t.refresh}
+        data-icon-action
       >
-        {t.refresh}
+        <ActionRefreshCw size={18} aria-hidden="true" />
       </button>
     </div>
   );

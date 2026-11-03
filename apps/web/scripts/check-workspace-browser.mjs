@@ -388,7 +388,7 @@ try {
     201,
   );
   await client.evaluate(
-    "[...document.querySelectorAll('main button')].find(b=>b.textContent.trim()==='Refresh account').click()",
+    "[...document.querySelectorAll('main button')].find(b=>(b.getAttribute('aria-label')||b.textContent).trim()==='Refresh account').click()",
   );
   await until(
     () =>

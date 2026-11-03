@@ -1,4 +1,11 @@
 "use client";
+import {
+  ArrowDown as ActionArrowDown,
+  ArrowUp as ActionArrowUp,
+  RefreshCw as ActionRefreshCw,
+  Trash2 as ActionTrash2,
+  X as ActionX,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { YouTubePlayer } from "@/components/courses/youtube-player";
 import Link from "next/link";
@@ -293,29 +300,38 @@ export function CourseLessonEditor({
             <div className={styles.actions}>
               <button
                 type="button"
-                className={styles.secondary}
+                className={styles.iconButton}
                 disabled={index === 0}
                 onClick={() => move(index, -1)}
+                aria-label={t.up}
+                title={t.up}
+                data-icon-action
               >
-                {t.up}
+                <ActionArrowUp size={18} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                className={styles.secondary}
+                className={styles.iconButton}
                 disabled={index === rows.length - 1}
                 onClick={() => move(index, 1)}
+                aria-label={t.down}
+                title={t.down}
+                data-icon-action
               >
-                {t.down}
+                <ActionArrowDown size={18} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                className={styles.secondary}
+                className={styles.iconDanger}
                 onClick={() => {
                   if (window.confirm(t.removeConfirm))
                     change(rows.filter((r) => r.key !== row.key));
                 }}
+                aria-label={t.remove}
+                title={t.remove}
+                data-icon-action
               >
-                {t.remove}
+                <ActionTrash2 size={18} aria-hidden="true" />
               </button>
             </div>
           </fieldset>
@@ -353,12 +369,15 @@ export function CourseLessonEditor({
             type="button"
             data-reload-lessons
             disabled={busy || locked}
-            className={styles.secondary}
+            className={styles.iconButton}
             onClick={() => {
               if (embedded || !dirty || confirmDiscard()) reload();
             }}
+            aria-label={t.reload}
+            title={t.reload}
+            data-icon-action
           >
-            {t.reload}
+            <ActionRefreshCw size={18} aria-hidden="true" />
           </button>
         </div>
       </form>
@@ -408,10 +427,13 @@ export function CourseLessonEditor({
               )}
               <button
                 type="button"
-                className={styles.secondary}
+                className={styles.iconButton}
                 onClick={() => setPreview(null)}
+                aria-label={t.close}
+                title={t.close}
+                data-icon-action
               >
-                {t.close}
+                <ActionX size={18} aria-hidden="true" />
               </button>
             </>
           )}

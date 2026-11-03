@@ -1,4 +1,5 @@
 "use client";
+import { RefreshCw as ActionRefreshCw } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { getFarmMessages } from "@/lib/i18n/farm";
 import {
@@ -73,8 +74,12 @@ export function FarmWriteNotice({
         variant="outline"
         onClick={onRetry}
         disabled={loading}
+        aria-label={t.refresh}
+        title={t.refresh}
+        data-icon-action
+        size="icon"
       >
-        {t.refresh}
+        <ActionRefreshCw size={18} aria-hidden="true" />
       </Button>
     </div>
   );

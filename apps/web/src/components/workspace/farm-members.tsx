@@ -1,4 +1,5 @@
 "use client";
+import { RefreshCw as ActionRefreshCw } from "lucide-react";
 import { useRef, useState, type FormEvent } from "react";
 import {
   FarmRole,
@@ -86,11 +87,14 @@ export function FarmMembers({ t }: { t: WorkspaceMessages }) {
               </ul>
             )}
             <button
-              className={cn(styles.secondary)}
+              className={styles.iconButton}
               type="button"
               onClick={members.reload}
+              aria-label={t.refresh}
+              title={t.refresh}
+              data-icon-action
             >
-              {t.refresh}
+              <ActionRefreshCw size={18} aria-hidden="true" />
             </button>
           </section>
           {[FarmRole.OWNER, FarmRole.MANAGER].includes(farm.role) && (
